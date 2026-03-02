@@ -1,0 +1,8 @@
+# Empêcher l'exécution de PHP dans les uploads
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<FilesMatch "\.php$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
