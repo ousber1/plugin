@@ -90,8 +90,35 @@ $stats_rapide = getStats();
                         </a>
                     </li>
 
+                    <li class="nav-section">MARKETING & SEO</li>
+
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'seo' ? 'active' : '' ?>" href="index.php?page=seo">
+                            <i class="bi bi-search"></i>
+                            <span>Outils SEO</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'seo_kit' ? 'active' : '' ?>" href="index.php?page=seo_kit">
+                            <i class="bi bi-tools"></i>
+                            <span>SEO Kit</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'pixels' ? 'active' : '' ?>" href="index.php?page=pixels">
+                            <i class="bi bi-broadcast"></i>
+                            <span>Pixels & Tracking</span>
+                        </a>
+                    </li>
+
                     <li class="nav-section">PARAMÈTRES</li>
 
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'import_export' ? 'active' : '' ?>" href="index.php?page=import_export">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <span>Import / Export</span>
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link <?= $page === 'villes' ? 'active' : '' ?>" href="index.php?page=villes">
                             <i class="bi bi-geo-alt"></i>

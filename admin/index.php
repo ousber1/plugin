@@ -42,6 +42,7 @@ $pages_admin = [
     'clients', 'client_detail',
     'devis', 'devis_detail', 'devis_nouveau',
     'depenses', 'rapports',
+    'seo', 'seo_kit', 'pixels', 'import_export',
     'parametres', 'villes', 'admins', 'notifications'
 ];
 
