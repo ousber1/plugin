@@ -5,9 +5,9 @@
  */
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'berradi_print');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'lobefuthkh_print');
+define('DB_USER', 'lobefuthkh_print');
+define('DB_PASS', '1993AZaz@az');
 define('DB_CHARSET', 'utf8mb4');
 
 // Connexion PDO

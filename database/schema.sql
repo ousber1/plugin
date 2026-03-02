@@ -3,8 +3,8 @@
 -- Système de Gestion de Services d'Impression
 -- =============================================
 
-CREATE DATABASE IF NOT EXISTS berradi_print CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE berradi_print;
+CREATE DATABASE IF NOT EXISTS lobefuthkh_print CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE lobefuthkh_print;
 
 -- =============================================
 -- Table: Administrateurs
