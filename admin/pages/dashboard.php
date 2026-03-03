@@ -37,6 +37,8 @@ $top_produits = $db->query("SELECT cl.designation, SUM(cl.quantite) as total_qte
     <li class="nav-item"><a class="nav-link <?= $last_tab === 'footer' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=footer">Footer <?= $last_tab === 'footer' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
     <li class="nav-item"><a class="nav-link <?= $last_tab === 'social' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=social">Réseaux sociaux <?= $last_tab === 'social' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
     <li class="nav-item"><a class="nav-link <?= $last_tab === 'custom' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=custom">Code personnalisé <?= $last_tab === 'custom' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'invoices' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=invoices">Factures & Devis <?= $last_tab === 'invoices' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'orders' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=orders">Commandes Imprimées <?= $last_tab === 'orders' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
 </ul>
 <?php if ($last_tab): unset($_SESSION['last_customizer_tab']); endif; ?>
 

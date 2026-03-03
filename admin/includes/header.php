@@ -212,6 +212,9 @@ $stats_rapide = getStats();
                             <li><a class="dropdown-item" href="index.php?page=header_footer&tab=footer"><i class="bi bi-layout-sidebar me-2"></i>Footer</a></li>
                             <li><a class="dropdown-item" href="index.php?page=header_footer&tab=social"><i class="bi bi-share-fill me-2"></i>Réseaux sociaux</a></li>
                             <li><a class="dropdown-item" href="index.php?page=header_footer&tab=custom"><i class="bi bi-code-slash me-2"></i>Code personnalisé</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="index.php?page=header_footer&tab=invoices"><i class="bi bi-file-earmark-text me-2"></i>Factures & Devis</a></li>
+                                <li><a class="dropdown-item" href="index.php?page=header_footer&tab=orders"><i class="bi bi-printer me-2"></i>Commandes Imprimées</a></li>
                         </ul>
                     </div>
 
