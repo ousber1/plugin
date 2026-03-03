@@ -61,7 +61,34 @@ $footer_tiktok = getParametre('footer_tiktok', '');
 $footer_linkedin = getParametre('footer_linkedin', '');
 
 $whatsapp_active = getParametre('whatsapp_float_active', 0);
+$whatsapp_float_number = getParametre('whatsapp_float_number', '');
 $whatsapp_message = urlencode(getParametre('whatsapp_float_message', 'Bonjour, je souhaite avoir des informations sur vos services d\'impression.'));
+
+// determine base WhatsApp link for topbar and float
+$whatsapp_url_param = getParametre('whatsapp_url', '');
+$whatsapp_number_param = getParametre('whatsapp', '');
+if ($whatsapp_url_param) {
+    $top_whatsapp_link = $whatsapp_url_param;
+} elseif ($whatsapp_number_param) {
+    // ensure it's formatted for wa.me
+    $num = preg_replace('/[^0-9]/', '', $whatsapp_number_param);
+    $top_whatsapp_link = 'https://wa.me/' . $num;
+} else {
+    $num = preg_replace('/[^0-9]/', '', APP_PHONE);
+    $top_whatsapp_link = 'https://wa.me/' . $num;
+}
+
+// float link uses whatsapp_float_number if provided, else top link
+if ($whatsapp_float_number) {
+    if (filter_var($whatsapp_float_number, FILTER_VALIDATE_URL)) {
+        $float_whatsapp_link = $whatsapp_float_number;
+    } else {
+        $num = preg_replace('/[^0-9]/', '', $whatsapp_float_number);
+        $float_whatsapp_link = 'https://wa.me/' . $num;
+    }
+} else {
+    $float_whatsapp_link = $top_whatsapp_link;
+}
 
 $_custom_css = getParametre('custom_css', '');
 $_custom_js_head = getParametre('custom_js_head', '');
@@ -340,7 +367,7 @@ $_custom_js_body = getParametre('custom_js_body', '');
                             <?= nombreArticlesPanier() ?>
                         </span>
                     </a>
-                    <a href="https://wa.me/<?= str_replace(['+', ' ', '-'], '', APP_PHONE) ?>" class="btn btn-success btn-sm" target="_blank">
+                    <a href="<?= htmlspecialchars($top_whatsapp_link) ?>" class="btn btn-success btn-sm" target="_blank">
                         <i class="bi bi-whatsapp me-1"></i> WhatsApp
                     </a>
                 </div>

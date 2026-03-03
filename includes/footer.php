@@ -66,7 +66,7 @@
 
     <!-- WhatsApp Floating Button -->
     <?php if ($whatsapp_active): ?>
-    <a href="https://wa.me/<?= str_replace(['+', ' ', '-'], '', APP_PHONE) ?>?text=<?= $whatsapp_message ?>"
+    <a href="<?= htmlspecialchars($float_whatsapp_link) ?>?text=<?= $whatsapp_message ?>"
        class="whatsapp-float" target="_blank" title="Contactez-nous sur WhatsApp">
         <i class="bi bi-whatsapp"></i>
     </a>

@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
         'footer_facebook', 'footer_instagram', 'footer_twitter', 'footer_youtube', 'footer_tiktok', 'footer_linkedin',
         'footer_col1_title', 'footer_col2_title',
         'footer_bg_color', 'footer_text_color',
-        'whatsapp_float_active', 'whatsapp_float_message',
+        'whatsapp_float_active', 'whatsapp_float_number', 'whatsapp_float_message',
         'custom_css', 'custom_js_head', 'custom_js_body'
     ];
 
@@ -64,7 +64,7 @@ $keys = [
     'footer_facebook', 'footer_instagram', 'footer_twitter', 'footer_youtube', 'footer_tiktok', 'footer_linkedin',
     'footer_col1_title', 'footer_col2_title',
     'footer_bg_color', 'footer_text_color',
-    'whatsapp_float_active', 'whatsapp_float_message',
+    'whatsapp_float_active', 'whatsapp_float_number', 'whatsapp_float_message',
     'custom_css', 'custom_js_head', 'custom_js_body'
 ];
 foreach ($keys as $k) {
@@ -78,12 +78,66 @@ $tab = $_GET['tab'] ?? 'header';
     <h4 class="fw-bold mb-0"><i class="bi bi-layout-text-window-reverse me-2"></i>Header / Footer</h4>
 </div>
 
+<!-- preview panel -->
+<div class="mb-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h6 class="fw-bold">Aperçu rapide</h6>
+            <div class="preview-header py-2 px-3 mb-3" style="background: <?= htmlspecialchars($p['header_bg_color'] ?: '#ffffff') ?>; color: <?= htmlspecialchars($p['header_text_color'] ?: '#212529') ?>;">
+                <?= $p['site_logo'] ? '<img src="../'.htmlspecialchars($p['site_logo']).'" style="height:24px;object-fit:contain;" alt="logo">' : '<span class="fw-bold">'.APP_NAME.'</span>' ?>
+                <span class="ms-3">Navigation (Accueil | Services | Contact)</span>
+            </div>
+            <div class="preview-footer py-3 px-3" style="background: <?= htmlspecialchars($p['footer_bg_color'] ?: '#1a1a2e') ?>; color: <?= htmlspecialchars($p['footer_text_color'] ?: '#ffffff') ?>;">
+                <small><?= htmlspecialchars($p['footer_about'] ?: 'Texte de pied de page exemple') ?></small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <ul class="nav nav-tabs mb-4">
     <li class="nav-item"><a class="nav-link <?= $tab === 'header' ? 'active' : '' ?>" href="?page=header_footer&tab=header">Header</a></li>
     <li class="nav-item"><a class="nav-link <?= $tab === 'footer' ? 'active' : '' ?>" href="?page=header_footer&tab=footer">Footer</a></li>
     <li class="nav-item"><a class="nav-link <?= $tab === 'social' ? 'active' : '' ?>" href="?page=header_footer&tab=social">Réseaux sociaux</a></li>
     <li class="nav-item"><a class="nav-link <?= $tab === 'custom' ? 'active' : '' ?>" href="?page=header_footer&tab=custom">Code personnalisé</a></li>
 </ul>
+
+<!-- color helpers script loaded for both header and footer tabs -->
+<script>
+function bindColorPicker(inputId) {
+    const colorInput = document.getElementById(inputId);
+    if (!colorInput) return;
+    const textField = colorInput.nextElementSibling;
+    colorInput.addEventListener('input', () => {
+        if (textField) textField.value = colorInput.value;
+        updatePreview();
+    });
+}
+
+function updatePreview() {
+    const hb = document.getElementById('header_bg_color')?.value;
+    const ht = document.getElementById('header_text_color')?.value;
+    const fb = document.getElementById('footer_bg_color')?.value;
+    const ft = document.getElementById('footer_text_color')?.value;
+    const ph = document.querySelector('.preview-header');
+    const pf = document.querySelector('.preview-footer');
+    if (ph) {
+        if (hb) ph.style.background = hb;
+        if (ht) ph.style.color = ht;
+    }
+    if (pf) {
+        if (fb) pf.style.background = fb;
+        if (ft) pf.style.color = ft;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    bindColorPicker('header_bg_color');
+    bindColorPicker('header_text_color');
+    bindColorPicker('footer_bg_color');
+    bindColorPicker('footer_text_color');
+    updatePreview();
+});
+</script>
 
 <form method="POST" enctype="multipart/form-data">
     <?= csrfField() ?>
@@ -141,14 +195,14 @@ $tab = $_GET['tab'] ?? 'header';
                         <div class="col-md-6">
                             <label class="form-label">Couleur de fond</label>
                             <div class="input-group">
-                                <input type="color" name="header_bg_color" class="form-control form-control-color" value="<?= $p['header_bg_color'] ?: '#ffffff' ?>">
+                                <input type="color" id="header_bg_color" name="header_bg_color" class="form-control form-control-color" value="<?= $p['header_bg_color'] ?: '#ffffff' ?>">
                                 <input type="text" class="form-control" value="<?= $p['header_bg_color'] ?: '#ffffff' ?>" readonly>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Couleur du texte</label>
                             <div class="input-group">
-                                <input type="color" name="header_text_color" class="form-control form-control-color" value="<?= $p['header_text_color'] ?: '#212529' ?>">
+                                <input type="color" id="header_text_color" name="header_text_color" class="form-control form-control-color" value="<?= $p['header_text_color'] ?: '#212529' ?>">
                                 <input type="text" class="form-control" value="<?= $p['header_text_color'] ?: '#212529' ?>" readonly>
                             </div>
                         </div>
@@ -202,14 +256,14 @@ $tab = $_GET['tab'] ?? 'header';
                         <div class="col-md-6">
                             <label class="form-label">Couleur de fond</label>
                             <div class="input-group">
-                                <input type="color" name="footer_bg_color" class="form-control form-control-color" value="<?= $p['footer_bg_color'] ?: '#1a1a2e' ?>">
+                                <input type="color" id="footer_bg_color" name="footer_bg_color" class="form-control form-control-color" value="<?= $p['footer_bg_color'] ?: '#1a1a2e' ?>">
                                 <input type="text" class="form-control" value="<?= $p['footer_bg_color'] ?: '#1a1a2e' ?>" readonly>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Couleur du texte</label>
                             <div class="input-group">
-                                <input type="color" name="footer_text_color" class="form-control form-control-color" value="<?= $p['footer_text_color'] ?: '#ffffff' ?>">
+                                <input type="color" id="footer_text_color" name="footer_text_color" class="form-control form-control-color" value="<?= $p['footer_text_color'] ?: '#ffffff' ?>">
                                 <input type="text" class="form-control" value="<?= $p['footer_text_color'] ?: '#ffffff' ?>" readonly>
                             </div>
                         </div>
@@ -223,6 +277,11 @@ $tab = $_GET['tab'] ?? 'header';
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" name="whatsapp_float_active" id="whatsapp_float_active" value="1" <?= $p['whatsapp_float_active'] ? 'checked' : '' ?>>
                         <label class="form-check-label" for="whatsapp_float_active">Afficher le bouton WhatsApp flottant</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Numéro ou lien WhatsApp</label>
+                        <input type="text" name="whatsapp_float_number" class="form-control" value="<?= htmlspecialchars($p['whatsapp_float_number'] ?? '') ?>" placeholder="+2126XXXXXXXX ou https://wa.me/2126XXXXXXXX">
+                        <small class="text-muted">Laisser vide pour utiliser le numéro principal.</small>
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Message pré-rempli</label>
