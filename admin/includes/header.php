@@ -80,6 +80,12 @@ $stats_rapide = getStats();
                             <span>Catégories</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= in_array($page, ['pages', 'page_edit']) ? 'active' : '' ?>" href="index.php?page=pages">
+                            <i class="bi bi-file-earmark-richtext"></i>
+                            <span>Pages</span>
+                        </a>
+                    </li>
 
                     <li class="nav-section">FINANCES</li>
 

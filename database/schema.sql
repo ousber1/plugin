@@ -239,6 +239,23 @@ CREATE TABLE IF NOT EXISTS parametres (
 ) ENGINE=InnoDB;
 
 -- =============================================
+-- Table: Pages Personnalisées
+-- =============================================
+CREATE TABLE IF NOT EXISTS pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titre VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    contenu TEXT,
+    meta_title VARCHAR(255) DEFAULT NULL,
+    meta_description TEXT DEFAULT NULL,
+    show_in_menu TINYINT(1) DEFAULT 0,
+    actif TINYINT(1) DEFAULT 1,
+    ordre INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =============================================
 -- Table: Messages / Notifications
 -- =============================================
 CREATE TABLE IF NOT EXISTS notifications (

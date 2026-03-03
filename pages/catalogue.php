@@ -85,10 +85,22 @@ $produits = $stmt->fetchAll();
                            class="list-group-item list-group-item-action <?= !$categorie_active ? 'active' : '' ?>">
                             <i class="bi bi-grid me-2"></i>Tous les services
                         </a>
-                        <?php foreach ($categories as $cat): ?>
+                        <?php foreach ($categories as $cat):
+                            $cat_icon = '';
+                            if (!empty($cat['image']) && file_exists(__DIR__ . '/../uploads/categories/' . $cat['image'])) {
+                                $cat_icon = 'uploads/categories/' . $cat['image'];
+                            }
+                        ?>
                         <a href="index.php?page=catalogue&cat=<?= $cat['slug'] ?>"
                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?= ($categorie_active && $categorie_active['id'] == $cat['id']) ? 'active' : '' ?>">
-                            <span><i class="<?= $cat['icone'] ?> me-2"></i><?= $cat['nom'] ?></span>
+                            <span>
+                                <?php if ($cat_icon): ?>
+                                <img src="<?= $cat_icon ?>" alt="" style="width:20px;height:20px;object-fit:contain;" class="me-2">
+                                <?php else: ?>
+                                <i class="<?= $cat['icone'] ?> me-2"></i>
+                                <?php endif; ?>
+                                <?= htmlspecialchars($cat['nom']) ?>
+                            </span>
                             <span class="badge bg-primary rounded-pill"><?= $cat['nb_produits'] ?></span>
                         </a>
                         <?php endforeach; ?>
@@ -113,11 +125,22 @@ $produits = $stmt->fetchAll();
                 </div>
                 <?php else: ?>
                 <div class="row g-4">
-                    <?php foreach ($produits as $prod): ?>
+                    <?php foreach ($produits as $prod):
+                        $prod_img = '';
+                        if (!empty($prod['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $prod['image'])) {
+                            $prod_img = 'uploads/produits/' . $prod['image'];
+                        }
+                    ?>
                     <div class="col-md-6 col-lg-4">
                         <div class="card border-0 shadow-sm h-100 product-card">
-                            <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center position-relative" style="height: 180px;">
-                                <i class="bi bi-printer fs-1 text-primary"></i>
+                            <div class="position-relative">
+                                <?php if ($prod_img): ?>
+                                <img src="<?= $prod_img ?>" alt="<?= htmlspecialchars($prod['nom']) ?>" class="card-img-top" style="height:180px;object-fit:cover;">
+                                <?php else: ?>
+                                <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center" style="height: 180px;">
+                                    <i class="bi bi-printer fs-1 text-primary"></i>
+                                </div>
+                                <?php endif; ?>
                                 <?php if ($prod['populaire']): ?>
                                 <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">
                                     <i class="bi bi-star-fill me-1"></i>Populaire

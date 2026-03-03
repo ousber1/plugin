@@ -94,15 +94,24 @@ try {
             <p class="text-muted">Des solutions complètes pour tous vos besoins en impression</p>
         </div>
         <div class="row g-4">
-            <?php foreach ($categories as $cat): ?>
+            <?php foreach ($categories as $cat):
+                $cat_icon = '';
+                if (!empty($cat['image']) && file_exists(__DIR__ . '/../uploads/categories/' . $cat['image'])) {
+                    $cat_icon = 'uploads/categories/' . $cat['image'];
+                }
+            ?>
             <div class="col-lg-3 col-md-4 col-6">
                 <a href="index.php?page=catalogue&cat=<?= $cat['slug'] ?>" class="text-decoration-none">
                     <div class="card border-0 shadow-sm h-100 category-card">
                         <div class="card-body text-center p-4">
-                            <div class="icon-circle-lg bg-primary-soft mx-auto mb-3">
+                            <div class="icon-circle-lg bg-primary-soft mx-auto mb-3 d-flex align-items-center justify-content-center">
+                                <?php if ($cat_icon): ?>
+                                <img src="<?= $cat_icon ?>" alt="<?= htmlspecialchars($cat['nom']) ?>" style="width:48px;height:48px;object-fit:contain;">
+                                <?php else: ?>
                                 <i class="<?= $cat['icone'] ?> fs-2 text-primary"></i>
+                                <?php endif; ?>
                             </div>
-                            <h6 class="fw-bold text-dark"><?= $cat['nom'] ?></h6>
+                            <h6 class="fw-bold text-dark"><?= htmlspecialchars($cat['nom']) ?></h6>
                             <small class="text-muted"><?= mb_strimwidth($cat['description'], 0, 60, '...') ?></small>
                         </div>
                     </div>
@@ -122,12 +131,21 @@ try {
             <p class="text-muted">Les services les plus demandés par nos clients</p>
         </div>
         <div class="row g-4">
-            <?php foreach ($produits_populaires as $prod): ?>
+            <?php foreach ($produits_populaires as $prod):
+                $prod_img = '';
+                if (!empty($prod['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $prod['image'])) {
+                    $prod_img = 'uploads/produits/' . $prod['image'];
+                }
+            ?>
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card border-0 shadow-sm h-100 product-card">
+                    <?php if ($prod_img): ?>
+                    <img src="<?= $prod_img ?>" alt="<?= htmlspecialchars($prod['nom']) ?>" class="card-img-top" style="height:200px;object-fit:cover;">
+                    <?php else: ?>
                     <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center" style="height: 200px;">
                         <i class="bi bi-printer fs-1 text-primary"></i>
                     </div>
+                    <?php endif; ?>
                     <div class="card-body">
                         <span class="badge bg-primary-soft text-primary mb-2"><?= $prod['categorie_nom'] ?></span>
                         <h6 class="fw-bold"><?= $prod['nom'] ?></h6>

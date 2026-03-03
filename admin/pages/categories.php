@@ -90,7 +90,7 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead class="bg-light">
-                <tr><th>Image</th><th>Icône</th><th>Nom</th><th>Description</th><th class="text-center">Produits</th><th>Ordre</th><th>Statut</th><th>Actions</th></tr>
+                <tr><th>Icône</th><th>Nom</th><th>Description</th><th class="text-center">Produits</th><th>Ordre</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($categories as $cat):
@@ -105,14 +105,13 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
                 <tr class="<?= !$cat['actif'] ? 'opacity-50' : '' ?>">
                     <td>
                         <?php if ($cat_img): ?>
-                        <img src="<?= $cat_img ?>" alt="" class="rounded" style="width:40px;height:40px;object-fit:cover;">
+                        <img src="<?= $cat_img ?>" alt="" class="rounded" style="width:40px;height:40px;object-fit:contain;">
                         <?php else: ?>
                         <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                            <i class="bi bi-image text-muted small"></i>
+                            <i class="<?= htmlspecialchars($cat['icone']) ?> fs-4 text-primary"></i>
                         </div>
                         <?php endif; ?>
                     </td>
-                    <td><i class="<?= htmlspecialchars($cat['icone']) ?> fs-4 text-primary"></i></td>
                     <td class="fw-bold"><?= htmlspecialchars($cat['nom']) ?></td>
                     <td><small class="text-muted"><?= mb_strimwidth($cat['description'], 0, 60, '...') ?></small></td>
                     <td class="text-center"><span class="badge bg-primary"><?= $cat['nb_produits'] ?></span></td>
@@ -141,11 +140,15 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
                     <div class="mb-3"><label class="form-label">Nom *</label><input type="text" name="nom" class="form-control" required></div>
                     <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
                     <div class="mb-3">
-                        <label class="form-label">Image</label>
-                        <input type="file" name="image" class="form-control" accept="image/*">
-                        <small class="text-muted">JPG, PNG, GIF, WebP, SVG</small>
+                        <label class="form-label fw-semibold">Icône / Image (PNG, SVG)</label>
+                        <input type="file" name="image" class="form-control" accept="image/png,image/svg+xml,image/jpeg,image/gif,image/webp">
+                        <small class="text-muted">Téléchargez une icône PNG ou SVG pour cette catégorie. Format recommandé: 64x64px</small>
                     </div>
-                    <div class="mb-3"><label class="form-label">Icône Bootstrap</label><input type="text" name="icone" class="form-control" placeholder="bi-printer" value="bi-printer"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Icône de secours <small class="text-muted">(si pas d'image)</small></label>
+                        <input type="text" name="icone" class="form-control" placeholder="bi-printer" value="bi-printer">
+                        <small class="text-muted">Classe Bootstrap Icons ex: bi-printer, bi-image</small>
+                    </div>
                     <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="ordre" class="form-control" value="0"></div>
                 </div>
                 <div class="modal-footer">
@@ -168,16 +171,21 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
                     <div class="mb-3"><label class="form-label">Nom *</label><input type="text" name="nom" id="mod_nom" class="form-control" required></div>
                     <div class="mb-3"><label class="form-label">Description</label><textarea name="description" id="mod_desc" class="form-control" rows="2"></textarea></div>
                     <div class="mb-3">
-                        <label class="form-label">Image actuelle</label>
+                        <label class="form-label fw-semibold">Icône / Image actuelle</label>
                         <div id="mod_image_preview" class="mb-2"></div>
-                        <label class="form-label">Changer l'image</label>
-                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <label class="form-label">Changer l'icône / image</label>
+                        <input type="file" name="image" class="form-control" accept="image/png,image/svg+xml,image/jpeg,image/gif,image/webp">
+                        <small class="text-muted">PNG ou SVG recommandé. Format: 64x64px</small>
                         <div id="mod_delete_image_wrap" class="form-check mt-2" style="display:none;">
                             <input class="form-check-input" type="checkbox" name="supprimer_image" id="mod_supprimer_image" value="1">
                             <label class="form-check-label text-danger" for="mod_supprimer_image">Supprimer l'image</label>
                         </div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Icône Bootstrap</label><input type="text" name="icone" id="mod_icone" class="form-control"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Icône de secours <small class="text-muted">(si pas d'image)</small></label>
+                        <input type="text" name="icone" id="mod_icone" class="form-control">
+                        <small class="text-muted">Classe Bootstrap Icons ex: bi-printer</small>
+                    </div>
                     <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="ordre" id="mod_ordre" class="form-control"></div>
                     <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="actif" id="mod_actif"><label class="form-check-label" for="mod_actif">Actif</label></div>
                 </div>

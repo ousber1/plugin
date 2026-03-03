@@ -57,11 +57,26 @@ $categories = $db->query("SELECT * FROM categories ORDER BY ordre")->fetchAll();
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
-                    <tr><th>Produit</th><th>Catégorie</th><th class="text-end">Prix</th><th>Unité</th><th>Délai</th><th>Statut</th><th>Actions</th></tr>
+                    <tr><th style="width:60px">Image</th><th>Produit</th><th>Catégorie</th><th class="text-end">Prix</th><th>Unité</th><th>Délai</th><th>Statut</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($produits as $p): ?>
+                    <?php foreach ($produits as $p):
+                        $p_img = '';
+                        if (!empty($p['image'])) {
+                            $img_path = __DIR__ . '/../../uploads/produits/' . $p['image'];
+                            if (file_exists($img_path)) $p_img = '../uploads/produits/' . $p['image'];
+                        }
+                    ?>
                     <tr class="<?= !$p['actif'] ? 'opacity-50' : '' ?>">
+                        <td>
+                            <?php if ($p_img): ?>
+                            <img src="<?= $p_img ?>" alt="" class="rounded" style="width:45px;height:45px;object-fit:cover;">
+                            <?php else: ?>
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:45px;height:45px;">
+                                <i class="bi bi-image text-muted small"></i>
+                            </div>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <div class="fw-bold"><?= $p['nom'] ?></div>
                             <small class="text-muted"><?= $p['description_courte'] ?></small>

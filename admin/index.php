@@ -40,6 +40,7 @@ if ($page === 'logout') {
 $pages_admin = [
     'dashboard', 'commandes', 'commande_detail', 'commande_nouvelle',
     'produits', 'produit_edit', 'categories',
+    'pages', 'page_edit',
     'clients', 'client_detail',
     'devis', 'devis_detail', 'devis_nouveau', 'facture_devis',
     'depenses', 'rapports',

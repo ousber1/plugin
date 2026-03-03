@@ -34,12 +34,33 @@ if (in_array($page, $pages_publiques)) {
         include __DIR__ . '/includes/footer.php';
     }
 } else {
-    // Page 404
-    include __DIR__ . '/includes/header.php';
-    echo '<div class="container py-5 text-center">';
-    echo '<h1 class="display-1">404</h1>';
-    echo '<p class="lead">Page non trouvée</p>';
-    echo '<a href="index.php" class="btn btn-primary">Retour à l\'accueil</a>';
-    echo '</div>';
-    include __DIR__ . '/includes/footer.php';
+    // Check for dynamic pages from database
+    $dynamic_page = null;
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT * FROM pages WHERE slug = ? AND actif = 1");
+        $stmt->execute([$page]);
+        $dynamic_page = $stmt->fetch();
+    } catch (Exception $e) {}
+
+    if ($dynamic_page) {
+        include __DIR__ . '/includes/header.php';
+        echo '<section class="py-5">';
+        echo '<div class="container">';
+        echo '<nav aria-label="breadcrumb" class="mb-4"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="index.php">Accueil</a></li><li class="breadcrumb-item active">' . htmlspecialchars($dynamic_page['titre']) . '</li></ol></nav>';
+        echo '<h1 class="fw-bold mb-4">' . htmlspecialchars($dynamic_page['titre']) . '</h1>';
+        echo '<div class="page-content">' . $dynamic_page['contenu'] . '</div>';
+        echo '</div>';
+        echo '</section>';
+        include __DIR__ . '/includes/footer.php';
+    } else {
+        // Page 404
+        include __DIR__ . '/includes/header.php';
+        echo '<div class="container py-5 text-center">';
+        echo '<h1 class="display-1">404</h1>';
+        echo '<p class="lead">Page non trouvée</p>';
+        echo '<a href="index.php" class="btn btn-primary">Retour à l\'accueil</a>';
+        echo '</div>';
+        include __DIR__ . '/includes/footer.php';
+    }
 }

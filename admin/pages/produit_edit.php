@@ -116,13 +116,7 @@ if ($produit && !empty($produit['image'])) {
                         <div class="col-12">
                             <label class="form-label">Description complète</label>
                             <textarea name="description" id="description" class="form-control" rows="8"><?= htmlspecialchars($produit['description'] ?? '') ?></textarea>
-                            <small class="text-muted">Description détaillée du produit. Utilisez les boutons de formatage ci-dessous.</small>
-                            <div class="btn-group btn-group-sm mt-2">
-                                <button type="button" class="btn btn-outline-secondary" onclick="insertTag('**', '**')" title="Gras"><i class="bi bi-type-bold"></i></button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="insertTag('_', '_')" title="Italique"><i class="bi bi-type-italic"></i></button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="insertTag('\n- ', '')" title="Liste"><i class="bi bi-list-ul"></i></button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="insertTag('\n\n', '')" title="Paragraphe"><i class="bi bi-text-paragraph"></i></button>
-                            </div>
+                            <small class="text-muted">Éditeur riche : formatez votre description avec les outils ci-dessus.</small>
                         </div>
                     </div>
                 </div>
@@ -223,7 +217,19 @@ if ($produit && !empty($produit['image'])) {
     </div>
 </form>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
 <script>
+tinymce.init({
+    selector: '#description',
+    language: 'fr_FR',
+    height: 400,
+    menubar: false,
+    plugins: 'lists link image table code wordcount',
+    toolbar: 'undo redo | blocks | bold italic underline | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | link image table | code',
+    content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; }',
+    branding: false,
+    promotion: false
+});
 function previewImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -233,16 +239,5 @@ function previewImage(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
-function insertTag(before, after) {
-    const ta = document.getElementById('description');
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const text = ta.value;
-    const selected = text.substring(start, end);
-    ta.value = text.substring(0, start) + before + selected + after + text.substring(end);
-    ta.focus();
-    ta.selectionStart = start + before.length;
-    ta.selectionEnd = start + before.length + selected.length;
 }
 </script>

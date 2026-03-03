@@ -3,6 +3,7 @@
  * BERRADI PRINT - Customizer Facture & Devis avec Logo
  */
 $db = getDB();
+$tab = $_GET['tab'] ?? 'entreprise';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -37,11 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         setFlash('success', 'Paramètres de facturation sauvegardés.');
-        redirect('index.php?page=facture_devis');
+        redirect('index.php?page=facture_devis&tab=' . urlencode($tab));
     }
 }
-
-$tab = $_GET['tab'] ?? 'entreprise';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">

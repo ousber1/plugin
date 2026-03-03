@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
         'footer_facebook', 'footer_instagram', 'footer_twitter', 'footer_youtube', 'footer_tiktok', 'footer_linkedin',
         'footer_col1_title', 'footer_col2_title',
         'footer_bg_color', 'footer_text_color',
-        'whatsapp_float_active', 'whatsapp_float_message',
+        'whatsapp_number', 'whatsapp_float_active', 'whatsapp_float_message',
         'custom_css', 'custom_js_head', 'custom_js_body'
     ];
 
@@ -61,7 +61,7 @@ $keys = [
     'footer_facebook', 'footer_instagram', 'footer_twitter', 'footer_youtube', 'footer_tiktok', 'footer_linkedin',
     'footer_col1_title', 'footer_col2_title',
     'footer_bg_color', 'footer_text_color',
-    'whatsapp_float_active', 'whatsapp_float_message',
+    'whatsapp_number', 'whatsapp_float_active', 'whatsapp_float_message',
     'custom_css', 'custom_js_head', 'custom_js_body'
 ];
 foreach ($keys as $k) {
@@ -220,6 +220,11 @@ $tab = $_GET['tab'] ?? 'header';
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" name="whatsapp_float_active" id="whatsapp_float_active" value="1" <?= $p['whatsapp_float_active'] ? 'checked' : '' ?>>
                         <label class="form-check-label" for="whatsapp_float_active">Afficher le bouton WhatsApp flottant</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Numéro WhatsApp</label>
+                        <input type="text" name="whatsapp_number" class="form-control" value="<?= htmlspecialchars($p['whatsapp_number']) ?>" placeholder="+212 600-000000">
+                        <small class="text-muted">Numéro avec indicatif pays (ex: +212 612345678). Utilisé pour le bouton flottant et les liens WhatsApp du site.</small>
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Message pré-rempli</label>
