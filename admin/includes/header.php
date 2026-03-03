@@ -72,6 +72,12 @@ $stats_rapide = getStats();
                             <span>Pages</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'page_templates' ? 'active' : '' ?>" href="index.php?page=page_templates">
+                            <i class="bi bi-layout-text-window-reverse"></i>
+                            <span>Templates</span>
+                        </a>
+                    </li>
 
                     <li class="nav-section">CATALOGUE</li>
 
