@@ -38,6 +38,34 @@ $_px_tiktok_id = getParametre('pixel_tiktok_id', '');
 $_px_tiktok_active = getParametre('pixel_tiktok_active', '');
 $_px_snap_id = getParametre('pixel_snap_id', '');
 $_px_snap_active = getParametre('pixel_snap_active', '');
+
+// Header/Footer customizer params
+$site_logo = getParametre('site_logo', '');
+$site_favicon = getParametre('site_favicon', '');
+$header_bg_color = getParametre('header_bg_color', '#ffffff');
+$header_text_color = getParametre('header_text_color', '#212529');
+$header_announcement = getParametre('header_announcement', '');
+$header_announcement_active = getParametre('header_announcement_active', 0);
+
+$footer_about = getParametre('footer_about', "Votre partenaire de confiance pour tous vos besoins en impression au Maroc. Qualité professionnelle, prix compétitifs et livraison rapide.");
+$footer_col1_title = getParametre('footer_col1_title', 'Liens rapides');
+$footer_col2_title = getParametre('footer_col2_title', 'Contact');
+$footer_bg_color = getParametre('footer_bg_color', '#1a1a2e');
+$footer_text_color = getParametre('footer_text_color', '#ffffff');
+
+$footer_facebook = getParametre('footer_facebook', '');
+$footer_instagram = getParametre('footer_instagram', '');
+$footer_twitter = getParametre('footer_twitter', '');
+$footer_youtube = getParametre('footer_youtube', '');
+$footer_tiktok = getParametre('footer_tiktok', '');
+$footer_linkedin = getParametre('footer_linkedin', '');
+
+$whatsapp_active = getParametre('whatsapp_float_active', 0);
+$whatsapp_message = urlencode(getParametre('whatsapp_float_message', 'Bonjour, je souhaite avoir des informations sur vos services d\'impression.'));
+
+$_custom_css = getParametre('custom_css', '');
+$_custom_js_head = getParametre('custom_js_head', '');
+$_custom_js_body = getParametre('custom_js_body', '');
 ?>
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
@@ -45,6 +73,10 @@ $_px_snap_active = getParametre('pixel_snap_active', '');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($_seo_title) ?></title>
+
+    <?php if ($site_favicon): ?>
+    <link rel="icon" href="<?= htmlspecialchars($site_favicon) ?>">
+    <?php endif; ?>
 
     <?php if ($_seo_description): ?>
     <meta name="description" content="<?= htmlspecialchars($_seo_description) ?>">
@@ -55,6 +87,14 @@ $_px_snap_active = getParametre('pixel_snap_active', '');
     <meta name="robots" content="<?= $_seo_robots_index ?>, <?= $_seo_robots_follow ?>">
     <?php if ($_seo_canonical): ?>
     <link rel="canonical" href="<?= htmlspecialchars($_seo_canonical) ?>">
+    <?php endif; ?>
+
+    <?php if ($_custom_css): ?>
+    <style><?= $_custom_css ?></style>
+    <?php endif; ?>
+
+    <?php if ($_custom_js_head): ?>
+    <?= $_custom_js_head ?>
     <?php endif; ?>
 
     <!-- Open Graph -->
@@ -199,11 +239,20 @@ $_px_snap_active = getParametre('pixel_snap_active', '');
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<?= htmlspecialchars($_seo_gtm_id) ?>" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <?php endif; ?>
 
+    <!-- Header announcement -->
+    <?php if ($header_announcement_active && $header_announcement): ?>
+    <div class="announcement-bar text-center py-2" style="background: <?= htmlspecialchars($header_bg_color) ?>; color: <?= htmlspecialchars($header_text_color) ?>;">
+        <?= htmlspecialchars($header_announcement) ?>
+    </div>
+    <?php endif; ?>
+
+
+
     <?php if ($_seo_custom_body): ?>
     <?= $_seo_custom_body ?>
     <?php endif; ?>
     <!-- Barre supérieure -->
-    <div class="top-bar bg-dark text-white py-2 d-none d-md-block">
+    <div class="top-bar py-2 d-none d-md-block" style="background: <?= htmlspecialchars($header_bg_color) ?>; color: <?= htmlspecialchars($header_text_color) ?>;">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
@@ -225,11 +274,19 @@ $_px_snap_active = getParametre('pixel_snap_active', '');
     </div>
 
     <!-- Navigation principale -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg shadow-sm sticky-top" style="background: <?= htmlspecialchars($header_bg_color) ?>; color: <?= htmlspecialchars($header_text_color) ?>;">
+        <style>
+            .navbar .nav-link { color: <?= htmlspecialchars($header_text_color) ?> !important; }
+            .navbar .nav-link.active { font-weight: 600; }
+        </style>
         <div class="container">
-            <a class="navbar-brand fw-bold" href="index.php">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.php" style="color: <?= htmlspecialchars($header_text_color) ?>;">
                 <i class="bi bi-printer-fill text-primary me-2"></i>
-                <span class="brand-text"><?= APP_NAME ?></span>
+                <?php if ($site_logo): ?>
+                    <img src="<?= htmlspecialchars($site_logo) ?>" alt="<?= APP_NAME ?>" style="height:40px; object-fit:contain;" />
+                <?php else: ?>
+                    <span class="brand-text"><?= APP_NAME ?></span>
+                <?php endif; ?>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
