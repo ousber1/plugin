@@ -13,6 +13,9 @@ $stmt = $db->prepare("SELECT * FROM pages WHERE id = ?");
 $stmt->execute([$page_id]);
 $page = $stmt->fetch();
 
+// For TinyMCE (will be included in admin header)
+$use_wysiwyg = true;
+
 if (!$page) {
     setFlash('error', 'Page non trouvée.');
     redirect('index.php?page=pages');
@@ -101,9 +104,9 @@ if ($page['meta_image']) {
                         <input type="text" name="nom" class="form-control" value="<?= htmlspecialchars($page['nom']) ?>" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Contenu (HTML autorisé)</label>
-                        <textarea name="body" class="form-control" rows="12" style="font-family:monospace;"><?= htmlspecialchars($page['body']) ?></textarea>
-                        <small class="text-muted">Vous pouvez utiliser du HTML pour formater le contenu.</small>
+                        <label class="form-label">Contenu (WYSIWYG Editor)</label>
+                        <textarea id="page_body_editor" name="body" class="form-control" rows="12" style="font-family:monospace;"><?= htmlspecialchars($page['body']) ?></textarea>
+                        <small class="text-muted">Utilisez l'éditeur visuel pour formater votre contenu.</small>
                     </div>
                 </div>
             </div>
@@ -199,3 +202,23 @@ if ($page['meta_image']) {
         </div>
     </div>
 </form>
+
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
+<script>
+tinymce.init({
+    selector: '#page_body_editor',
+    height: 500,
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist',
+    toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | link image media table | align numlist bullist | checklist emoticons charmap | codesample | removeformat',
+    menubar: 'file edit view insert format tools table',
+    image_caption: true,
+    image_advtab: true,
+    link_context_toolbar: true,
+    content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; } h1 { font-size: 2rem; font-weight: 600; } h2 { font-size: 1.5rem; font-weight: 600; } h3 { font-size: 1.25rem; font-weight: 600; } table { border-collapse: collapse; } table th, table td { border: 1px solid #ddd; padding: 8px; }',
+    promotion: false,
+    relative_urls: false,
+    convert_urls: true,
+    paste_as_text: false,
+    branding: false
+});
+</script>

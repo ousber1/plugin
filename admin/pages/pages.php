@@ -138,7 +138,7 @@ $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
                         <div class="col-12"><label class="form-label">Nom *</label><input type="text" name="nom" class="form-control" required></div>
                         <div class="col-md-6"><label class="form-label">Slug (optionnel)</label><input type="text" name="slug" class="form-control" placeholder="laisser vide pour générer automatiquement"></div>
                         <div class="col-md-6"><label class="form-label">Template</label><select name="template" class="form-select"><option value="default">default</option></select></div>
-                        <div class="col-12"><label class="form-label">Contenu (HTML)</label><textarea name="body" class="form-control" rows="6"></textarea></div>
+                        <div class="col-12"><label class="form-label">Contenu (WYSIWYG)</label><textarea id="modal_body_editor" name="body" class="form-control" rows="6"></textarea></div>
                         <div class="col-md-6"><label class="form-label">Meta title</label><input type="text" name="meta_title" class="form-control"></div>
                         <div class="col-md-6"><label class="form-label">Meta description</label><input type="text" name="meta_description" class="form-control"></div>
                         <div class="col-12"><label class="form-label">Meta image</label><input type="file" name="meta_image" class="form-control" accept="image/*"></div>
@@ -151,3 +151,36 @@ $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
         </div>
     </div>
 </div>
+
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
+<script>
+// Initialize TinyMCE for create modal
+var initTinyMCE = function(selector) {
+    tinymce.init({
+        selector: selector,
+        height: 300,
+        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist',
+        toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | link image media table | align numlist bullist | checklist emoticons charmap | codesample | removeformat',
+        menubar: false,
+        image_caption: true,
+        link_context_toolbar: true,
+        content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; }',
+        promotion: false,
+        relative_urls: false,
+        convert_urls: true,
+        branding: false
+    });
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initTinyMCE('#modal_body_editor');
+});
+
+// Reinitialize when modal opens (in case it wasn't rendered initially)
+document.getElementById('modalAjouterPage').addEventListener('show.bs.modal', function() {
+    if (!tinymce.get('modal_body_editor')) {
+        initTinyMCE('#modal_body_editor');
+    }
+});
+</script>
