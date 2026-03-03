@@ -9,7 +9,7 @@ USE lobefuthkh_print;
 -- =============================================
 -- Table: Administrateurs
 -- =============================================
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE admins (
 -- =============================================
 -- Table: Clients
 -- =============================================
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE clients (
 -- =============================================
 -- Table: Catégories de Services
 -- =============================================
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(200) NOT NULL,
     slug VARCHAR(200) NOT NULL UNIQUE,
@@ -65,7 +65,7 @@ CREATE TABLE categories (
 -- =============================================
 -- Table: Produits / Services
 -- =============================================
-CREATE TABLE produits (
+CREATE TABLE IF NOT EXISTS produits (
     id INT AUTO_INCREMENT PRIMARY KEY,
     categorie_id INT NOT NULL,
     nom VARCHAR(300) NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE produits (
 -- =============================================
 -- Table: Options de Produit
 -- =============================================
-CREATE TABLE produit_options (
+CREATE TABLE IF NOT EXISTS produit_options (
     id INT AUTO_INCREMENT PRIMARY KEY,
     produit_id INT NOT NULL,
     nom_option VARCHAR(100) NOT NULL, -- Ex: Taille, Papier, Finition
@@ -106,7 +106,7 @@ CREATE TABLE produit_options (
 -- =============================================
 -- Table: Commandes
 -- =============================================
-CREATE TABLE commandes (
+CREATE TABLE IF NOT EXISTS commandes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     numero_commande VARCHAR(20) NOT NULL UNIQUE,
     client_id INT DEFAULT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE commandes (
 -- =============================================
 -- Table: Lignes de Commande
 -- =============================================
-CREATE TABLE commande_lignes (
+CREATE TABLE IF NOT EXISTS commande_lignes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     commande_id INT NOT NULL,
     produit_id INT DEFAULT NULL,
@@ -173,7 +173,7 @@ CREATE TABLE commande_lignes (
 -- =============================================
 -- Table: Historique des Commandes
 -- =============================================
-CREATE TABLE commande_historique (
+CREATE TABLE IF NOT EXISTS commande_historique (
     id INT AUTO_INCREMENT PRIMARY KEY,
     commande_id INT NOT NULL,
     statut_ancien VARCHAR(50),
@@ -188,7 +188,7 @@ CREATE TABLE commande_historique (
 -- =============================================
 -- Table: Devis
 -- =============================================
-CREATE TABLE devis (
+CREATE TABLE IF NOT EXISTS devis (
     id INT AUTO_INCREMENT PRIMARY KEY,
     numero_devis VARCHAR(20) NOT NULL UNIQUE,
     client_id INT DEFAULT NULL,
@@ -214,7 +214,7 @@ CREATE TABLE devis (
 -- =============================================
 -- Table: Dépenses
 -- =============================================
-CREATE TABLE depenses (
+CREATE TABLE IF NOT EXISTS depenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     categorie_depense VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
@@ -230,7 +230,7 @@ CREATE TABLE depenses (
 -- =============================================
 -- Table: Paramètres
 -- =============================================
-CREATE TABLE parametres (
+CREATE TABLE IF NOT EXISTS parametres (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cle VARCHAR(100) NOT NULL UNIQUE,
     valeur TEXT,
@@ -241,7 +241,7 @@ CREATE TABLE parametres (
 -- =============================================
 -- Table: Messages / Notifications
 -- =============================================
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(50) NOT NULL,
     titre VARCHAR(255) NOT NULL,
@@ -256,7 +256,7 @@ CREATE TABLE notifications (
 -- =============================================
 -- Table: Villes de livraison
 -- =============================================
-CREATE TABLE villes_livraison (
+CREATE TABLE IF NOT EXISTS villes_livraison (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     frais_livraison DECIMAL(10,2) NOT NULL DEFAULT 30.00,
@@ -269,11 +269,11 @@ CREATE TABLE villes_livraison (
 -- =============================================
 
 -- Admin par défaut (mot de passe: admin123)
-INSERT INTO admins (nom, prenom, email, telephone, mot_de_passe, role) VALUES
+INSERT IGNORE INTO admins (nom, prenom, email, telephone, mot_de_passe, role) VALUES
 ('Berradi', 'Admin', 'admin@berradiprint.ma', '+212600000000', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super_admin');
 
 -- Catégories de services d'impression
-INSERT INTO categories (nom, slug, description, icone, ordre) VALUES
+INSERT IGNORE INTO categories (nom, slug, description, icone, ordre) VALUES
 ('Cartes de Visite', 'cartes-de-visite', 'Cartes de visite professionnelles, différents formats et finitions', 'bi-person-vcard', 1),
 ('Flyers & Dépliants', 'flyers-depliants', 'Flyers, dépliants et prospectus pour votre communication', 'bi-file-earmark-richtext', 2),
 ('Affiches & Posters', 'affiches-posters', 'Affiches grand format et posters publicitaires', 'bi-image', 3),
@@ -288,7 +288,7 @@ INSERT INTO categories (nom, slug, description, icone, ordre) VALUES
 ('Grands Formats', 'grands-formats', 'Roll-up, X-banner, stands et PLV', 'bi-easel', 12);
 
 -- Produits d'exemple
-INSERT INTO produits (categorie_id, nom, slug, description, description_courte, prix_base, prix_unitaire, unite, quantite_min, delai_production, populaire, ordre) VALUES
+INSERT IGNORE INTO produits (categorie_id, nom, slug, description, description_courte, prix_base, prix_unitaire, unite, quantite_min, delai_production, populaire, ordre) VALUES
 -- Cartes de visite
 (1, 'Carte de Visite Standard', 'carte-visite-standard', 'Carte de visite 85x55mm sur papier couché 350g, impression recto verso en quadrichromie.', 'Carte 85x55mm - Couché 350g - Recto/Verso', 150.00, 1.50, 'lot de 100', 1, '24-48h', 1, 1),
 (1, 'Carte de Visite Premium', 'carte-visite-premium', 'Carte de visite premium avec pelliculage mat ou brillant, coins arrondis disponibles.', 'Premium - Pelliculage - Coins arrondis', 250.00, 2.50, 'lot de 100', 1, '48-72h', 1, 2),
@@ -356,7 +356,7 @@ INSERT INTO produits (categorie_id, nom, slug, description, description_courte, 
 (12, 'Totem Carton', 'totem-carton', 'Totem publicitaire en carton avec impression recto/verso.', 'Carton - Recto/Verso', 250.00, 250.00, 'pièce', 1, '3-5 jours', 0, 3);
 
 -- Villes de livraison au Maroc
-INSERT INTO villes_livraison (nom, frais_livraison, delai_livraison) VALUES
+INSERT IGNORE INTO villes_livraison (nom, frais_livraison, delai_livraison) VALUES
 ('Casablanca', 0.00, '24h'),
 ('Rabat', 25.00, '24-48h'),
 ('Marrakech', 30.00, '24-48h'),
@@ -380,7 +380,7 @@ INSERT INTO villes_livraison (nom, frais_livraison, delai_livraison) VALUES
 ('Autres villes', 50.00, '72-96h');
 
 -- Paramètres par défaut
-INSERT INTO parametres (cle, valeur, groupe) VALUES
+INSERT IGNORE INTO parametres (cle, valeur, groupe) VALUES
 ('nom_entreprise', 'BERRADI PRINT', 'general'),
 ('slogan', 'Services d\'Impression Professionnels', 'general'),
 ('email', 'contact@berradiprint.ma', 'general'),
@@ -462,5 +462,5 @@ INSERT INTO parametres (cle, valeur, groupe) VALUES
 ('pixel_snap_purchase', '1', 'pixel');
 
 -- Catégories de dépenses par défaut
-INSERT INTO depenses (categorie_depense, description, montant, date_depense) VALUES
+INSERT IGNORE INTO depenses (categorie_depense, description, montant, date_depense) VALUES
 ('Matière première', 'Stock initial papier et encres', 0.00, CURDATE());
