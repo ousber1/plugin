@@ -60,6 +60,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'Page créée avec succès.');
         redirect('index.php?page=pages');
     }
+
+    if (isset($_POST['delete_page'])) {
+        $delete_id = (int)$_POST['delete_id'];
+        
+        // Get page to find meta_image
+        $stmt = $db->prepare("SELECT meta_image FROM pages WHERE id = ?");
+        $stmt->execute([$delete_id]);
+        $del_page = $stmt->fetch();
+        
+        if ($del_page) {
+            // Delete meta image file if exists
+            if ($del_page['meta_image']) {
+                $img_path = __DIR__ . '/../../uploads/pages/' . $del_page['meta_image'];
+                if (file_exists($img_path)) {
+                    unlink($img_path);
+                }
+            }
+            
+            // Delete page from database
+            $stmt = $db->prepare("DELETE FROM pages WHERE id = ?");
+            $stmt->execute([$delete_id]);
+            setFlash('success', 'Page supprimée.');
+        }
+        
+        redirect('index.php?page=pages');
+    }
 }
 
 $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
@@ -87,7 +113,7 @@ $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
                     <td>
                         <a class="btn btn-sm btn-outline-primary" href="../pages.php?slug=<?= urlencode($p['slug']) ?>" target="_blank" title="Voir"><i class="bi bi-eye"></i></a>
                         <a class="btn btn-sm btn-outline-secondary" href="index.php?page=page_edit&id=<?= $p['id'] ?>" title="Éditer"><i class="bi bi-pencil"></i></a>
-                        <form method="POST" action="index.php?page=pages" style="display:inline-block;" onsubmit="return confirm('Supprimer cette page ?');">
+                        <form method="POST" style="display:inline-block;" onsubmit="return confirm('Êtes-vous sûr ? Cette action est irréversible.');">
                             <?= csrfField() ?>
                             <input type="hidden" name="delete_id" value="<?= $p['id'] ?>">
                             <button class="btn btn-sm btn-outline-danger" name="delete_page" title="Supprimer"><i class="bi bi-trash"></i></button>
