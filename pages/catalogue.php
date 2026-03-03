@@ -116,8 +116,12 @@ $produits = $stmt->fetchAll();
                     <?php foreach ($produits as $prod): ?>
                     <div class="col-md-6 col-lg-4">
                         <div class="card border-0 shadow-sm h-100 product-card">
-                            <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center position-relative" style="height: 180px;">
-                                <i class="bi bi-printer fs-1 text-primary"></i>
+                            <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center position-relative overflow-hidden" style="height: 200px;">
+                                <?php if (!empty($prod['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $prod['image'])): ?>
+                                    <img src="uploads/produits/<?= htmlspecialchars($prod['image']) ?>" alt="<?= htmlspecialchars($prod['nom']) ?>" style="width:100%;height:100%;object-fit:cover;">
+                                <?php else: ?>
+                                    <i class="bi bi-printer fs-1 text-primary"></i>
+                                <?php endif; ?>
                                 <?php if ($prod['populaire']): ?>
                                 <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">
                                     <i class="bi bi-star-fill me-1"></i>Populaire

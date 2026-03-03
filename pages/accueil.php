@@ -125,8 +125,12 @@ try {
             <?php foreach ($produits_populaires as $prod): ?>
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card border-0 shadow-sm h-100 product-card">
-                    <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center" style="height: 200px;">
-                        <i class="bi bi-printer fs-1 text-primary"></i>
+                    <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center overflow-hidden" style="height: 200px;">
+                        <?php if (!empty($prod['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $prod['image'])): ?>
+                            <img src="uploads/produits/<?= htmlspecialchars($prod['image']) ?>" alt="<?= htmlspecialchars($prod['nom']) ?>" style="width:100%;height:100%;object-fit:cover;">
+                        <?php else: ?>
+                            <i class="bi bi-printer fs-1 text-primary"></i>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body">
                         <span class="badge bg-primary-soft text-primary mb-2"><?= $prod['categorie_nom'] ?></span>

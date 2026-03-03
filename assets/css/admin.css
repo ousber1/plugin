@@ -193,6 +193,16 @@ body {
     }
 }
 
+/* Preview styles for customizer */
+.preview-header, .preview-footer {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+.preview-header img {
+    max-height: 24px;
+}
+
 /* Responsive */
 @media (max-width: 991.98px) {
     .admin-sidebar {
