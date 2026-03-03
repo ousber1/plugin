@@ -66,13 +66,16 @@ $templates = $db->query("SELECT * FROM page_templates ORDER BY ordre")->fetchAll
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
-            <thead class="bg-light"><tr><th>Nom</th><th>Description</th><th>Ordre</th><th>Actions</th></tr></thead>
+            <thead class="bg-light"><tr><th>Nom</th><th>Description</th><th>Ordre</th><th>Preview</th><th>Actions</th></tr></thead>
             <tbody>
                 <?php foreach ($templates as $t): ?>
                 <tr>
                     <td><?= htmlspecialchars($t['nom']) ?></td>
                     <td><?= htmlspecialchars($t['description']) ?></td>
                     <td><?= $t['ordre'] ?></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick='previewTemplate(<?= json_encode($t) ?>)'><i class="bi bi-eye"></i></button>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary" onclick='editTemplate(<?= json_encode($t) ?>)'><i class="bi bi-pencil"></i></button>
                         <form method="POST" style="display:inline-block;" onsubmit="return confirm('Supprimer ce template ?');">
@@ -110,6 +113,16 @@ $templates = $db->query("SELECT * FROM page_templates ORDER BY ordre")->fetchAll
     </div>
 </div>
 
+<!-- Preview modal -->
+<div class="modal fade" id="modalPreviewTemplate" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Aperçu du template</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="preview_body" style="white-space:pre-wrap;font-family:monospace;font-size:0.9rem;"></div>
+        </div>
+    </div>
+</div>
+
 <script>
 function editTemplate(t) {
     document.getElementById('temp_modal_title').textContent = 'Modifier le template';
@@ -120,6 +133,12 @@ function editTemplate(t) {
     document.getElementById('temp_ordre').value = t.ordre;
     document.getElementById('temp_contenu').value = t.contenu;
     var modal = new bootstrap.Modal(document.getElementById('modalAjouterTemplate'));
+    modal.show();
+}
+
+function previewTemplate(t) {
+    document.getElementById('preview_body').textContent = t.contenu;
+    var modal = new bootstrap.Modal(document.getElementById('modalPreviewTemplate'));
     modal.show();
 }
 </script>
