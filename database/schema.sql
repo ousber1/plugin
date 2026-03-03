@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS clients (
     prenom VARCHAR(100) NOT NULL,
     email VARCHAR(255) DEFAULT NULL,
     telephone VARCHAR(20) NOT NULL,
+    mot_de_passe VARCHAR(255) DEFAULT NULL,
     adresse TEXT,
     ville VARCHAR(100),
     code_postal VARCHAR(10),
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS clients (
     total_commandes INT DEFAULT 0,
     total_depense DECIMAL(12,2) DEFAULT 0.00,
     actif TINYINT(1) DEFAULT 1,
+    derniere_connexion DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -253,6 +255,27 @@ CREATE TABLE IF NOT EXISTS pages (
     ordre INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =============================================
+-- Table: Mouvements de Stock
+-- =============================================
+CREATE TABLE IF NOT EXISTS stock_mouvements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produit_id INT NOT NULL,
+    type_mouvement ENUM('entree', 'sortie', 'ajustement', 'commande', 'retour') NOT NULL,
+    quantite INT NOT NULL,
+    quantite_avant INT DEFAULT 0,
+    quantite_apres INT DEFAULT 0,
+    reference VARCHAR(100) DEFAULT NULL,
+    motif VARCHAR(255) DEFAULT NULL,
+    fournisseur VARCHAR(200) DEFAULT NULL,
+    cout_unitaire DECIMAL(10,2) DEFAULT NULL,
+    notes TEXT,
+    admin_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- =============================================

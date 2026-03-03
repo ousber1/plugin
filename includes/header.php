@@ -253,6 +253,26 @@ $_whatsapp_clean = str_replace(['+', ' ', '-', '(', ')'], '', $_whatsapp_number 
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
+                    <?php if (clientEstConnecte()): ?>
+                    <?php $_client_nav = clientConnecte(); ?>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span class="d-none d-md-inline"><?= htmlspecialchars($_client_nav['prenom'] ?? 'Mon compte') ?></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="index.php?page=compte"><i class="bi bi-speedometer2 me-2"></i>Mon espace</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=compte&tab=commandes"><i class="bi bi-cart-check me-2"></i>Mes commandes</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=compte&tab=profil"><i class="bi bi-person me-2"></i>Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="index.php?page=compte&action=logout"><i class="bi bi-box-arrow-right me-2"></i>Déconnexion</a></li>
+                        </ul>
+                    </div>
+                    <?php else: ?>
+                    <a href="index.php?page=compte-login" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-person me-1"></i> <span class="d-none d-md-inline">Connexion</span>
+                    </a>
+                    <?php endif; ?>
                     <?php $_show_cart = getParametre('header_show_cart', '1'); if ($_show_cart !== '0'): ?>
                     <a href="index.php?page=panier" class="btn btn-outline-primary position-relative">
                         <i class="bi bi-cart3"></i>

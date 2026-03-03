@@ -82,6 +82,59 @@ function adminConnecte() {
     return $stmt->fetch();
 }
 
+// ====== Customer Authentication ======
+function clientEstConnecte() {
+    return isset($_SESSION['client_id']) && !empty($_SESSION['client_id']);
+}
+
+function clientConnecte() {
+    if (!clientEstConnecte()) return null;
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM clients WHERE id = ? AND actif = 1");
+    $stmt->execute([$_SESSION['client_id']]);
+    return $stmt->fetch();
+}
+
+function clientLogin($email, $mot_de_passe) {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM clients WHERE email = ? AND actif = 1 AND mot_de_passe IS NOT NULL");
+    $stmt->execute([$email]);
+    $client = $stmt->fetch();
+    if ($client && password_verify($mot_de_passe, $client['mot_de_passe'])) {
+        $_SESSION['client_id'] = $client['id'];
+        $db->prepare("UPDATE clients SET derniere_connexion = NOW() WHERE id = ?")->execute([$client['id']]);
+        return $client;
+    }
+    return false;
+}
+
+function clientRegister($data) {
+    $db = getDB();
+    // Check if email already exists
+    $stmt = $db->prepare("SELECT id FROM clients WHERE email = ?");
+    $stmt->execute([$data['email']]);
+    if ($stmt->fetch()) return ['error' => 'Cette adresse email est déjà utilisée.'];
+
+    // Check if phone already exists with a password
+    $stmt = $db->prepare("SELECT id FROM clients WHERE telephone = ? AND mot_de_passe IS NOT NULL");
+    $stmt->execute([$data['telephone']]);
+    if ($stmt->fetch()) return ['error' => 'Ce numéro de téléphone est déjà associé à un compte.'];
+
+    $hash = password_hash($data['mot_de_passe'], PASSWORD_DEFAULT);
+    $stmt = $db->prepare("INSERT INTO clients (nom, prenom, email, telephone, mot_de_passe, adresse, ville, type_client) VALUES (?,?,?,?,?,?,?,?)");
+    $stmt->execute([
+        $data['nom'], $data['prenom'], $data['email'], $data['telephone'],
+        $hash, $data['adresse'] ?? '', $data['ville'] ?? '', $data['type_client'] ?? 'particulier'
+    ]);
+    $client_id = $db->lastInsertId();
+    $_SESSION['client_id'] = $client_id;
+    return ['success' => true, 'client_id' => $client_id];
+}
+
+function clientLogout() {
+    unset($_SESSION['client_id']);
+}
+
 // Redirection
 function redirect($url) {
     header("Location: $url");

@@ -19,7 +19,8 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 // Pages publiques
 $pages_publiques = [
     'accueil', 'catalogue', 'produit', 'panier', 'commander',
-    'confirmation', 'contact', 'devis', 'a-propos', 'suivi-commande'
+    'confirmation', 'contact', 'devis', 'a-propos', 'suivi-commande',
+    'compte', 'compte-login', 'compte-register'
 ];
 
 if (in_array($page, $pages_publiques)) {

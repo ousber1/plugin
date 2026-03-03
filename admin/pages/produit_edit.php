@@ -58,14 +58,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
     }
     $data['image'] = $image_name;
 
+    // Stock fields
+    $_has_stock_cols = false;
+    try { $db->query("SELECT stock_actif FROM produits LIMIT 1"); $_has_stock_cols = true; } catch (Exception $e) {}
+
     if ($produit_id && $produit) {
         $sql = "UPDATE produits SET categorie_id=?, nom=?, slug=?, description=?, description_courte=?, prix_base=?, prix_unitaire=?, unite=?, quantite_min=?, delai_production=?, populaire=?, actif=?, ordre=?, image=? WHERE id=?";
         $db->prepare($sql)->execute([...array_values($data), $produit_id]);
+        if ($_has_stock_cols) {
+            $db->prepare("UPDATE produits SET stock_actif=?, stock_quantite=?, stock_min=? WHERE id=?")->execute([
+                isset($_POST['stock_actif']) ? 1 : 0,
+                (int)($_POST['stock_quantite'] ?? 0),
+                (int)($_POST['stock_min'] ?? 0),
+                $produit_id
+            ]);
+        }
         setFlash('success', 'Produit mis à jour avec succès.');
     } else {
         $sql = "INSERT INTO produits (categorie_id, nom, slug, description, description_courte, prix_base, prix_unitaire, unite, quantite_min, delai_production, populaire, actif, ordre, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $db->prepare($sql)->execute(array_values($data));
         $produit_id = $db->lastInsertId();
+        if ($_has_stock_cols) {
+            $db->prepare("UPDATE produits SET stock_actif=?, stock_quantite=?, stock_min=? WHERE id=?")->execute([
+                isset($_POST['stock_actif']) ? 1 : 0,
+                (int)($_POST['stock_quantite'] ?? 0),
+                (int)($_POST['stock_min'] ?? 0),
+                $produit_id
+            ]);
+        }
         setFlash('success', 'Produit créé avec succès.');
     }
     redirect('index.php?page=produit_edit&id=' . $produit_id);
@@ -205,6 +225,41 @@ if ($produit && !empty($produit['image'])) {
                     </div>
                 </div>
             </div>
+
+            <!-- Stock Management -->
+            <?php
+            // Check if stock columns exist
+            $_has_stock = false;
+            try {
+                $db->query("SELECT stock_actif FROM produits LIMIT 1");
+                $_has_stock = true;
+            } catch (Exception $e) {}
+            if ($_has_stock):
+                $_stock_actif = $produit['stock_actif'] ?? 0;
+                $_stock_qte = $produit['stock_quantite'] ?? 0;
+                $_stock_min = $produit['stock_min'] ?? 0;
+            ?>
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white fw-bold"><i class="bi bi-box-seam me-2"></i>Stock</div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="stock_actif" id="stock_actif" <?= $_stock_actif ? 'checked' : '' ?> onchange="document.getElementById('stockFields').style.display = this.checked ? '' : 'none'">
+                        <label class="form-check-label" for="stock_actif">Activer le suivi de stock</label>
+                    </div>
+                    <div id="stockFields" style="<?= $_stock_actif ? '' : 'display:none' ?>">
+                        <div class="mb-3">
+                            <label class="form-label">Quantité en stock</label>
+                            <input type="number" name="stock_quantite" class="form-control" min="0" value="<?= $_stock_qte ?>">
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Stock minimum (alerte)</label>
+                            <input type="number" name="stock_min" class="form-control" min="0" value="<?= $_stock_min ?>">
+                            <small class="text-muted">Alerte quand le stock descend en dessous</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             <button type="submit" name="sauvegarder" class="btn btn-primary w-100 btn-lg mb-3">
                 <i class="bi bi-check-circle me-2"></i>Sauvegarder
             </button>
