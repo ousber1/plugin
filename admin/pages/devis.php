@@ -58,6 +58,7 @@ $statuts_devis = ['brouillon' => 'secondary', 'envoye' => 'info', 'accepte' => '
                     <td><small><?= dateFormatFr($d['created_at'], 'court') ?></small></td>
                     <td>
                         <div class="btn-group btn-group-sm">
+                            <a href="index.php?page=devis_detail&id=<?= $d['id'] ?>" class="btn btn-outline-primary" title="Voir / Imprimer"><i class="bi bi-eye"></i></a>
                             <?php if ($d['statut'] === 'brouillon'): ?>
                             <a href="index.php?page=devis&action=envoye&id=<?= $d['id'] ?>" class="btn btn-outline-info" title="Marquer envoyé"><i class="bi bi-send"></i></a>
                             <?php endif; ?>

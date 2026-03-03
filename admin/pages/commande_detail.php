@@ -92,8 +92,7 @@ $pr = prioriteLabel($cmd['priorite']);
         </h4>
     </div>
     <div class="d-flex gap-2">
-        <!-- Impression -->
-        <button onclick="window.print()" class="btn btn-outline-secondary">
+        <button onclick="imprimerCommande()" class="btn btn-outline-secondary">
             <i class="bi bi-printer me-1"></i>Imprimer
         </button>
     </div>
@@ -299,3 +298,127 @@ $pr = prioriteLabel($cmd['priorite']);
         </div>
     </div>
 </div>
+
+<!-- Print Template (hidden) -->
+<?php
+$_doc_color = getParametre('doc_couleur_primaire', '#2563eb');
+$_doc_logo = getParametre('doc_logo', '');
+$_doc_nom = getParametre('doc_entreprise_nom', APP_NAME);
+$_doc_adresse = getParametre('doc_entreprise_adresse', '');
+$_doc_ville = getParametre('doc_entreprise_ville', '');
+$_doc_tel = getParametre('doc_entreprise_tel', APP_PHONE);
+$_doc_email = getParametre('doc_entreprise_email', APP_EMAIL);
+$_doc_ice = getParametre('doc_entreprise_ice', '');
+$_doc_rc = getParametre('doc_entreprise_rc', '');
+$_doc_show_tva = getParametre('doc_show_tva', '1');
+$_doc_show_ice = getParametre('doc_show_ice', '1');
+$_doc_footer = getParametre('doc_footer_text', 'Merci pour votre confiance !');
+$_doc_conditions = getParametre('doc_conditions_paiement', '');
+?>
+<div id="printArea" style="display:none;">
+<div style="max-width:800px;margin:auto;padding:30px;font-family:Poppins,Arial,sans-serif;font-size:13px;color:#333;">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:25px;border-bottom:3px solid <?= $_doc_color ?>;padding-bottom:15px;">
+        <div>
+            <?php if ($_doc_logo): ?>
+            <img src="../<?= htmlspecialchars($_doc_logo) ?>" alt="Logo" style="max-height:55px;margin-bottom:8px;"><br>
+            <?php endif; ?>
+            <strong style="font-size:16px;color:<?= $_doc_color ?>;"><?= htmlspecialchars($_doc_nom) ?></strong><br>
+            <?php if ($_doc_adresse): ?><small><?= htmlspecialchars($_doc_adresse) ?></small><br><?php endif; ?>
+            <?php if ($_doc_ville): ?><small><?= htmlspecialchars($_doc_ville) ?></small><br><?php endif; ?>
+            <small>Tél: <?= htmlspecialchars($_doc_tel) ?></small>
+            <?php if ($_doc_email): ?><br><small><?= htmlspecialchars($_doc_email) ?></small><?php endif; ?>
+        </div>
+        <div style="text-align:right;">
+            <h2 style="color:<?= $_doc_color ?>;margin:0;font-size:22px;">BON DE COMMANDE</h2>
+            <p style="margin:5px 0;font-size:12px;">
+                N° <strong><?= $cmd['numero_commande'] ?></strong><br>
+                Date: <?= dateFormatFr($cmd['created_at'], 'court') ?><br>
+                Statut: <?= $st['label'] ?>
+            </p>
+        </div>
+    </div>
+
+    <!-- Client -->
+    <div style="display:flex;gap:20px;margin-bottom:20px;">
+        <div style="flex:1;background:#f8f9fa;padding:12px;border-radius:5px;">
+            <strong style="color:<?= $_doc_color ?>;font-size:11px;text-transform:uppercase;">Client</strong><br>
+            <strong><?= htmlspecialchars($cmd['client_nom']) ?></strong><br>
+            <small>Tél: <?= htmlspecialchars($cmd['client_telephone']) ?></small><br>
+            <?php if ($cmd['client_email']): ?><small><?= htmlspecialchars($cmd['client_email']) ?></small><br><?php endif; ?>
+            <small><?= htmlspecialchars($cmd['client_adresse']) ?>, <?= htmlspecialchars($cmd['client_ville']) ?></small>
+        </div>
+        <div style="flex:1;background:#f8f9fa;padding:12px;border-radius:5px;">
+            <strong style="color:<?= $_doc_color ?>;font-size:11px;text-transform:uppercase;">Livraison</strong><br>
+            <small>Type: <?= $cmd['type_livraison'] === 'livraison' ? 'Livraison à domicile' : 'Retrait en magasin' ?></small><br>
+            <small>Paiement: <?= $sp['label'] ?></small><br>
+            <?php if ($cmd['priorite'] !== 'normale'): ?><small>Priorité: <?= $pr['label'] ?></small><?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+        <thead>
+            <tr style="background:<?= $_doc_color ?>;color:#fff;">
+                <th style="padding:8px;text-align:left;font-size:12px;">Désignation</th>
+                <th style="padding:8px;text-align:center;width:70px;font-size:12px;">Qté</th>
+                <th style="padding:8px;text-align:right;width:110px;font-size:12px;">P.U.</th>
+                <th style="padding:8px;text-align:right;width:110px;font-size:12px;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($lignes as $l): ?>
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px;">
+                    <?= htmlspecialchars($l['designation']) ?>
+                    <?php if ($l['notes']): ?><br><small style="color:#666;"><?= htmlspecialchars($l['notes']) ?></small><?php endif; ?>
+                </td>
+                <td style="padding:8px;text-align:center;"><?= $l['quantite'] ?></td>
+                <td style="padding:8px;text-align:right;"><?= formatPrix($l['prix_unitaire']) ?></td>
+                <td style="padding:8px;text-align:right;font-weight:bold;"><?= formatPrix($l['prix_total']) ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div style="text-align:right;margin-bottom:20px;">
+        <table style="margin-left:auto;font-size:13px;">
+            <tr><td style="padding:4px 15px;">Sous-total HT</td><td style="padding:4px;font-weight:bold;"><?= formatPrix($cmd['sous_total']) ?></td></tr>
+            <?php if ($cmd['remise_montant'] > 0): ?>
+            <tr style="color:#dc3545;"><td style="padding:4px 15px;">Remise</td><td style="padding:4px;">-<?= formatPrix($cmd['remise_montant']) ?></td></tr>
+            <?php endif; ?>
+            <tr><td style="padding:4px 15px;">Frais de livraison</td><td style="padding:4px;"><?= $cmd['frais_livraison'] > 0 ? formatPrix($cmd['frais_livraison']) : 'Gratuit' ?></td></tr>
+            <?php if ($_doc_show_tva && $cmd['tva_montant'] > 0): ?>
+            <tr><td style="padding:4px 15px;">TVA (20%)</td><td style="padding:4px;"><?= formatPrix($cmd['tva_montant']) ?></td></tr>
+            <?php endif; ?>
+            <tr style="background:<?= $_doc_color ?>;color:#fff;">
+                <td style="padding:8px 15px;font-weight:bold;">Total TTC</td>
+                <td style="padding:8px;font-weight:bold;font-size:16px;"><?= formatPrix($cmd['total']) ?></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top:1px solid #ddd;padding-top:12px;font-size:11px;color:#666;">
+        <?php if ($_doc_conditions): ?><p style="margin:0 0 5px;"><?= htmlspecialchars($_doc_conditions) ?></p><?php endif; ?>
+        <?php if ($_doc_show_ice && $_doc_ice): ?><p style="margin:0 0 5px;">ICE: <?= htmlspecialchars($_doc_ice) ?> <?php if ($_doc_rc): ?>| RC: <?= htmlspecialchars($_doc_rc) ?><?php endif; ?></p><?php endif; ?>
+        <p style="text-align:center;margin-top:10px;color:<?= $_doc_color ?>;font-weight:600;"><?= htmlspecialchars($_doc_footer) ?></p>
+    </div>
+</div>
+</div>
+
+<script>
+function imprimerCommande() {
+    var printContent = document.getElementById('printArea').innerHTML;
+    var w = window.open('', '_blank', 'width=900,height=700');
+    w.document.write('<html><head><title>Commande #<?= $cmd['numero_commande'] ?></title>');
+    w.document.write('<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">');
+    w.document.write('<style>body{margin:0;padding:20px;} @media print{body{padding:0;} @page{margin:15mm;}}</style>');
+    w.document.write('</head><body>');
+    w.document.write(printContent);
+    w.document.write('</body></html>');
+    w.document.close();
+    setTimeout(function(){ w.print(); }, 500);
+}
+</script>

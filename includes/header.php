@@ -137,8 +137,11 @@ $_whatsapp_clean = str_replace(['+', ' ', '-', '(', ')'], '', $_whatsapp_number 
     <?php if ($_seo_custom_body): ?><?= $_seo_custom_body ?><?php endif; ?>
 
     <!-- Announcement Banner -->
-    <?php if ($_announcement_active && $_announcement_text): ?>
-    <div class="announcement-bar bg-warning text-dark text-center py-2 small fw-semibold">
+    <?php if ($_announcement_active && $_announcement_text):
+        $_ann_bg = getParametre('header_announcement_bg', '#ffc107');
+        $_ann_tc = getParametre('header_announcement_text_color', '#212529');
+    ?>
+    <div class="announcement-bar text-center py-2 small fw-semibold" style="background-color:<?= $_ann_bg ?>;color:<?= $_ann_tc ?>;">
         <div class="container">
             <i class="bi bi-megaphone me-2"></i><?= htmlspecialchars($_announcement_text) ?>
         </div>
@@ -146,26 +149,34 @@ $_whatsapp_clean = str_replace(['+', ' ', '-', '(', ')'], '', $_whatsapp_number 
     <?php endif; ?>
 
     <!-- Top Bar -->
+    <?php
+    $_topbar_active = getParametre('header_topbar_active', '1');
+    $_topbar_phone = getParametre('header_topbar_phone', '') ?: APP_PHONE;
+    $_topbar_email = getParametre('header_topbar_email', '') ?: APP_EMAIL;
+    $_topbar_hours = getParametre('header_topbar_hours', '') ?: 'Lundi - Samedi: 9h00 - 19h00';
+    $_topbar_location = getParametre('header_topbar_location', '') ?: APP_ADDRESS;
+    if ($_topbar_active): ?>
     <div class="top-bar bg-dark text-white py-2 d-none d-md-block">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <small>
-                        <i class="bi bi-telephone-fill me-1"></i> <?= APP_PHONE ?>
+                        <i class="bi bi-telephone-fill me-1"></i> <?= htmlspecialchars($_topbar_phone) ?>
                         <span class="mx-2">|</span>
-                        <i class="bi bi-envelope-fill me-1"></i> <?= APP_EMAIL ?>
+                        <i class="bi bi-envelope-fill me-1"></i> <?= htmlspecialchars($_topbar_email) ?>
                     </small>
                 </div>
                 <div class="col-md-6 text-end">
                     <small>
-                        <i class="bi bi-clock me-1"></i> Lundi - Samedi: 9h00 - 19h00
+                        <i class="bi bi-clock me-1"></i> <?= htmlspecialchars($_topbar_hours) ?>
                         <span class="mx-2">|</span>
-                        <i class="bi bi-geo-alt-fill me-1"></i> Maroc
+                        <i class="bi bi-geo-alt-fill me-1"></i> <?= htmlspecialchars($_topbar_location) ?>
                     </small>
                 </div>
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Navigation principale -->
     <nav class="navbar navbar-expand-lg shadow-sm sticky-top <?= ($_header_bg !== '#ffffff') ? 'navbar-main-custom' : 'navbar-light bg-white' ?>">
@@ -242,15 +253,19 @@ $_whatsapp_clean = str_replace(['+', ' ', '-', '(', ')'], '', $_whatsapp_number 
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
+                    <?php $_show_cart = getParametre('header_show_cart', '1'); if ($_show_cart !== '0'): ?>
                     <a href="index.php?page=panier" class="btn btn-outline-primary position-relative">
                         <i class="bi bi-cart3"></i>
                         <span class="badge bg-danger position-absolute top-0 start-100 translate-middle badge-panier" style="<?= nombreArticlesPanier() > 0 ? '' : 'display:none' ?>">
                             <?= nombreArticlesPanier() ?>
                         </span>
                     </a>
+                    <?php endif; ?>
+                    <?php $_show_wa_btn = getParametre('header_show_whatsapp_btn', '1'); if ($_show_wa_btn !== '0' && $_whatsapp_clean): ?>
                     <a href="https://wa.me/<?= $_whatsapp_clean ?>" class="btn btn-success btn-sm" target="_blank">
                         <i class="bi bi-whatsapp me-1"></i> <span class="d-none d-md-inline">WhatsApp</span>
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
