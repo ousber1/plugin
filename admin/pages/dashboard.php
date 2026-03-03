@@ -30,6 +30,16 @@ $top_produits = $db->query("SELECT cl.designation, SUM(cl.quantite) as total_qte
     </div>
 </div>
 
+<!-- Quick customizer tabs -->
+<?php $last_tab = $_SESSION['last_customizer_tab'] ?? null; ?>
+<ul class="nav nav-tabs mb-2">
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'header' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=header">Header <?= $last_tab === 'header' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'footer' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=footer">Footer <?= $last_tab === 'footer' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'social' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=social">Réseaux sociaux <?= $last_tab === 'social' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+    <li class="nav-item"><a class="nav-link <?= $last_tab === 'custom' ? 'active' : '' ?>" href="index.php?page=header_footer&tab=custom">Code personnalisé <?= $last_tab === 'custom' ? '<span class="badge-last-mod">Dernière modif</span>' : '' ?></a></li>
+</ul>
+<?php if ($last_tab): unset($_SESSION['last_customizer_tab']); endif; ?>
+
 <!-- Stats Cards -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">

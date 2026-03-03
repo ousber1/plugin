@@ -200,6 +200,21 @@ $stats_rapide = getStats();
                         </div>
                     </div>
 
+                    <!-- Customizer quick links -->
+                    <div class="dropdown">
+                        <button class="btn btn-light d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                            <i class="bi bi-paint-bucket"></i>
+                            <span class="d-none d-md-inline">Customizer</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="index.php?page=header_footer&tab=header"><i class="bi bi-layout-text-window-reverse me-2"></i>Header</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=header_footer&tab=footer"><i class="bi bi-layout-sidebar me-2"></i>Footer</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=header_footer&tab=social"><i class="bi bi-share-fill me-2"></i>Réseaux sociaux</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=header_footer&tab=custom"><i class="bi bi-code-slash me-2"></i>Code personnalisé</a></li>
+                        </ul>
+                    </div>
+
                     <!-- Profil -->
                     <div class="dropdown">
                         <button class="btn btn-light d-flex align-items-center gap-2" data-bs-toggle="dropdown">

@@ -214,3 +214,17 @@ body {
     background: rgba(255,255,255,0.2);
     border-radius: 4px;
 }
+
+/* Badge "Dernière modif" personnalisé */
+.badge-last-mod {
+    background-color: #16a34a; /* vert émeraude */
+    color: #ffffff;
+    font-size: 0.72rem;
+    padding: 0.18rem 0.4rem;
+    border-radius: 0.35rem;
+    vertical-align: baseline;
+}
+
+.nav-tabs .badge-last-mod {
+    margin-left: 0.5rem;
+}
