@@ -66,6 +66,13 @@ $stats_rapide = getStats();
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link <?= in_array($page, ['pages', 'page_edit']) ? 'active' : '' ?>" href="index.php?page=pages">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span>Pages</span>
+                        </a>
+                    </li>
+
                     <li class="nav-section">CATALOGUE</li>
 
                     <li class="nav-item">
