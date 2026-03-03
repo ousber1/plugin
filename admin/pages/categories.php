@@ -27,6 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $db->prepare("INSERT INTO categories (nom, slug, description, icone, ordre, image) VALUES (?,?,?,?,?,?)")->execute([$nom, $slug, $desc, $icone, $ordre, $image_name]);
+        $new_cat_id = $db->lastInsertId();
+        try {
+            $db->prepare("UPDATE categories SET meta_title=?, meta_description=? WHERE id=?")->execute([
+                clean($_POST['meta_title'] ?? '') ?: null,
+                clean($_POST['meta_description'] ?? '') ?: null,
+                $new_cat_id
+            ]);
+        } catch (Exception $e) {}
         setFlash('success', 'Catégorie ajoutée avec succès.');
         redirect('index.php?page=categories');
     }
@@ -71,10 +79,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $db->prepare("UPDATE categories SET nom=?, slug=?, description=?, icone=?, ordre=?, actif=?, image=? WHERE id=?")->execute([$nom, $slug, $desc, $icone, $ordre, $actif, $image_name, $cat_id]);
+        try {
+            $db->prepare("UPDATE categories SET meta_title=?, meta_description=? WHERE id=?")->execute([
+                clean($_POST['meta_title'] ?? '') ?: null,
+                clean($_POST['meta_description'] ?? '') ?: null,
+                $cat_id
+            ]);
+        } catch (Exception $e) {}
         setFlash('success', 'Catégorie mise à jour.');
         redirect('index.php?page=categories');
     }
 }
+
+// Auto-add meta columns
+try { $db->exec("ALTER TABLE categories ADD COLUMN IF NOT EXISTS meta_title VARCHAR(255) DEFAULT NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE categories ADD COLUMN IF NOT EXISTS meta_description TEXT DEFAULT NULL"); } catch (Exception $e) {}
 
 $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categorie_id = c.id) as nb_produits FROM categories c ORDER BY c.ordre")->fetchAll();
 ?>
@@ -150,6 +169,10 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
                         <small class="text-muted">Classe Bootstrap Icons ex: bi-printer, bi-image</small>
                     </div>
                     <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="ordre" class="form-control" value="0"></div>
+                    <hr>
+                    <h6 class="fw-bold small"><i class="bi bi-search me-1"></i>SEO (optionnel)</h6>
+                    <div class="mb-3"><label class="form-label small">Meta Title</label><input type="text" name="meta_title" class="form-control form-control-sm" maxlength="70" placeholder="Titre pour Google"></div>
+                    <div class="mb-3"><label class="form-label small">Meta Description</label><textarea name="meta_description" class="form-control form-control-sm" rows="2" maxlength="160" placeholder="Description pour Google"></textarea></div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" name="ajouter_categorie" class="btn btn-primary">Ajouter</button>
@@ -187,7 +210,11 @@ $categories = $db->query("SELECT c.*, (SELECT COUNT(*) FROM produits WHERE categ
                         <small class="text-muted">Classe Bootstrap Icons ex: bi-printer</small>
                     </div>
                     <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="ordre" id="mod_ordre" class="form-control"></div>
-                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="actif" id="mod_actif"><label class="form-check-label" for="mod_actif">Actif</label></div>
+                    <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="actif" id="mod_actif"><label class="form-check-label" for="mod_actif">Actif</label></div>
+                    <hr>
+                    <h6 class="fw-bold small"><i class="bi bi-search me-1"></i>SEO</h6>
+                    <div class="mb-3"><label class="form-label small">Meta Title</label><input type="text" name="meta_title" id="mod_meta_title" class="form-control form-control-sm" maxlength="70"></div>
+                    <div class="mb-3"><label class="form-label small">Meta Description</label><textarea name="meta_description" id="mod_meta_desc" class="form-control form-control-sm" rows="2" maxlength="160"></textarea></div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" name="modifier_categorie" class="btn btn-primary">Sauvegarder</button>
@@ -206,6 +233,8 @@ function modifierCat(cat) {
     document.getElementById('mod_ordre').value = cat.ordre;
     document.getElementById('mod_actif').checked = cat.actif == 1;
     document.getElementById('mod_supprimer_image').checked = false;
+    document.getElementById('mod_meta_title').value = cat.meta_title || '';
+    document.getElementById('mod_meta_desc').value = cat.meta_description || '';
 
     // Show image preview
     const preview = document.getElementById('mod_image_preview');

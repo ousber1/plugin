@@ -45,7 +45,7 @@ $pages_admin = [
     'devis', 'devis_detail', 'devis_nouveau', 'facture_devis',
     'depenses', 'rapports',
     'stock', 'stock_mouvement',
-    'seo', 'seo_kit', 'pixels', 'import_export',
+    'seo', 'seo_dynamique', 'seo_kit', 'pixels', 'import_export',
     'header_footer', 'smtp',
     'parametres', 'villes', 'admins', 'notifications'
 ];

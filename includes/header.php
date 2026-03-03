@@ -1,15 +1,19 @@
 <?php if (!defined('APP_NAME')) { require_once __DIR__ . '/../config/app.php'; require_once __DIR__ . '/../config/database.php'; require_once __DIR__ . '/../includes/functions.php'; } ?>
 <?php
-// Charger les paramètres SEO
-$_seo_title = getParametre('seo_meta_title', APP_NAME . ' - ' . APP_TAGLINE);
-$_seo_description = getParametre('seo_meta_description', '');
+// Charger les paramètres SEO (global defaults)
+$_seo_title_global = getParametre('seo_meta_title', APP_NAME . ' - ' . APP_TAGLINE);
+$_seo_desc_global = getParametre('seo_meta_description', '');
+
+// Apply dynamic per-page SEO if available
+$_seo_title = (!empty($_dynamic_seo['title'])) ? $_dynamic_seo['title'] : $_seo_title_global;
+$_seo_description = (!empty($_dynamic_seo['description'])) ? $_dynamic_seo['description'] : $_seo_desc_global;
 $_seo_keywords = getParametre('seo_meta_keywords', '');
 $_seo_canonical = getParametre('seo_canonical_url', APP_URL);
 $_seo_robots_index = getParametre('seo_robots_index', 'index');
 $_seo_robots_follow = getParametre('seo_robots_follow', 'follow');
 $_seo_og_title = getParametre('seo_og_title', $_seo_title);
 $_seo_og_description = getParametre('seo_og_description', $_seo_description);
-$_seo_og_image = getParametre('seo_og_image', '');
+$_seo_og_image = (!empty($_dynamic_seo['og_image'])) ? $_dynamic_seo['og_image'] : getParametre('seo_og_image', '');
 $_seo_twitter_card = getParametre('seo_twitter_card', 'summary');
 $_seo_ga_id = getParametre('seo_google_analytics', '');
 $_seo_gtm_id = getParametre('seo_google_tag_manager', '');

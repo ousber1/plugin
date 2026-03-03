@@ -73,6 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
                 $produit_id
             ]);
         }
+        // SEO meta fields
+        try {
+            $db->prepare("UPDATE produits SET meta_title=?, meta_description=? WHERE id=?")->execute([
+                clean($_POST['meta_title'] ?? '') ?: null,
+                clean($_POST['meta_description'] ?? '') ?: null,
+                $produit_id
+            ]);
+        } catch (Exception $e) {}
         setFlash('success', 'Produit mis à jour avec succès.');
     } else {
         $sql = "INSERT INTO produits (categorie_id, nom, slug, description, description_courte, prix_base, prix_unitaire, unite, quantite_min, delai_production, populaire, actif, ordre, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -86,6 +94,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
                 $produit_id
             ]);
         }
+        // SEO meta fields
+        try {
+            $db->prepare("UPDATE produits SET meta_title=?, meta_description=? WHERE id=?")->execute([
+                clean($_POST['meta_title'] ?? '') ?: null,
+                clean($_POST['meta_description'] ?? '') ?: null,
+                $produit_id
+            ]);
+        } catch (Exception $e) {}
         setFlash('success', 'Produit créé avec succès.');
     }
     redirect('index.php?page=produit_edit&id=' . $produit_id);
@@ -208,6 +224,27 @@ if ($produit && !empty($produit['image'])) {
                     </div>
                 </div>
             </div>
+
+            <!-- SEO -->
+            <?php
+            $_has_meta = false;
+            try { $db->query("SELECT meta_title FROM produits LIMIT 1"); $_has_meta = true; } catch (Exception $e) {}
+            if ($_has_meta):
+            ?>
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white fw-bold"><i class="bi bi-search me-2"></i>SEO</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Meta Title <small class="text-muted">(max 70 car.)</small></label>
+                        <input type="text" name="meta_title" class="form-control" maxlength="70" value="<?= htmlspecialchars($produit['meta_title'] ?? '') ?>" placeholder="<?= htmlspecialchars(($produit['nom'] ?? 'Produit') . ' - ' . APP_NAME) ?>">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Meta Description <small class="text-muted">(max 160 car.)</small></label>
+                        <textarea name="meta_description" class="form-control" rows="2" maxlength="160" placeholder="Description pour Google..."><?= htmlspecialchars($produit['meta_description'] ?? '') ?></textarea>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <!-- Sidebar -->

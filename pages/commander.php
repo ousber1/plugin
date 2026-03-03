@@ -12,6 +12,12 @@ if (empty($panier)) {
 
 $villes = getVillesLivraison();
 
+// Pre-fill from logged-in customer
+$_client_prefill = null;
+if (clientEstConnecte()) {
+    $_client_prefill = clientConnecte();
+}
+
 // Traitement de la commande
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) {
     verifyCsrf();
@@ -35,18 +41,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) 
     if ($type_livraison === 'livraison' && !$ville_id) $erreurs[] = 'Veuillez sélectionner une ville';
 
     if (empty($erreurs)) {
-        // Chercher ou créer le client
-        $stmt = $db->prepare("SELECT id FROM clients WHERE telephone = ?");
-        $stmt->execute([$telephone]);
-        $client = $stmt->fetch();
-
-        if ($client) {
-            $client_id = $client['id'];
+        // Use logged-in client or find/create
+        if ($_client_prefill) {
+            $client_id = $_client_prefill['id'];
             $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, '', $code_postal, $client_id]);
         } else {
-            $stmt = $db->prepare("INSERT INTO clients (nom, prenom, email, telephone, adresse, code_postal) VALUES (?,?,?,?,?,?)");
-            $stmt->execute([$nom, $prenom, $email, $telephone, $adresse, $code_postal]);
-            $client_id = $db->lastInsertId();
+            $stmt = $db->prepare("SELECT id FROM clients WHERE telephone = ?");
+            $stmt->execute([$telephone]);
+            $client = $stmt->fetch();
+            if ($client) {
+                $client_id = $client['id'];
+                $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, '', $code_postal, $client_id]);
+            } else {
+                $stmt = $db->prepare("INSERT INTO clients (nom, prenom, email, telephone, adresse, code_postal) VALUES (?,?,?,?,?,?)");
+                $stmt->execute([$nom, $prenom, $email, $telephone, $adresse, $code_postal]);
+                $client_id = $db->lastInsertId();
+            }
         }
 
         // Calcul frais livraison
@@ -141,22 +151,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) 
                             <i class="bi bi-person me-2"></i>Informations personnelles
                         </div>
                         <div class="card-body">
+                            <?php if ($_client_prefill): ?>
+                            <div class="alert alert-info py-2 mb-3 small">
+                                <i class="bi bi-person-check me-1"></i>Connecté en tant que <strong><?= htmlspecialchars($_client_prefill['prenom'] . ' ' . $_client_prefill['nom']) ?></strong>
+                            </div>
+                            <?php else: ?>
+                            <div class="alert alert-light py-2 mb-3 small border">
+                                <i class="bi bi-person me-1"></i>Vous avez un compte ? <a href="index.php?page=compte-login" class="fw-semibold">Connectez-vous</a> pour remplir automatiquement vos informations.
+                            </div>
+                            <?php endif; ?>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Prénom <span class="text-danger">*</span></label>
-                                    <input type="text" name="prenom" class="form-control" required value="<?= $_POST['prenom'] ?? '' ?>">
+                                    <input type="text" name="prenom" class="form-control" required value="<?= $_POST['prenom'] ?? ($_client_prefill['prenom'] ?? '') ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Nom <span class="text-danger">*</span></label>
-                                    <input type="text" name="nom" class="form-control" required value="<?= $_POST['nom'] ?? '' ?>">
+                                    <input type="text" name="nom" class="form-control" required value="<?= $_POST['nom'] ?? ($_client_prefill['nom'] ?? '') ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Téléphone <span class="text-danger">*</span></label>
-                                    <input type="tel" name="telephone" class="form-control" required placeholder="06XXXXXXXX" value="<?= $_POST['telephone'] ?? '' ?>">
+                                    <input type="tel" name="telephone" class="form-control" required placeholder="06XXXXXXXX" value="<?= $_POST['telephone'] ?? ($_client_prefill['telephone'] ?? '') ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" value="<?= $_POST['email'] ?? '' ?>">
+                                    <input type="email" name="email" class="form-control" value="<?= $_POST['email'] ?? ($_client_prefill['email'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
@@ -186,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) 
                                 <div class="row g-3">
                                     <div class="col-12">
                                         <label class="form-label">Adresse complète <span class="text-danger">*</span></label>
-                                        <textarea name="adresse" class="form-control" rows="2"><?= $_POST['adresse'] ?? '' ?></textarea>
+                                        <textarea name="adresse" class="form-control" rows="2"><?= $_POST['adresse'] ?? ($_client_prefill['adresse'] ?? '') ?></textarea>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ville <span class="text-danger">*</span></label>

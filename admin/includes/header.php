@@ -113,7 +113,13 @@ $stats_rapide = getStats();
                     <li class="nav-item">
                         <a class="nav-link <?= $page === 'seo' ? 'active' : '' ?>" href="index.php?page=seo">
                             <i class="bi bi-search"></i>
-                            <span>Outils SEO</span>
+                            <span>SEO Global</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'seo_dynamique' ? 'active' : '' ?>" href="index.php?page=seo_dynamique">
+                            <i class="bi bi-graph-up"></i>
+                            <span>SEO Dynamique</span>
                         </a>
                     </li>
                     <li class="nav-item">
