@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sauvegarder'])) {
     }
 
     setFlash('success', 'Paramètres sauvegardés avec succès.');
+    // marquer l'onglet modifié pour affichage rapide sur le dashboard
+    $current_tab = $_GET['tab'] ?? 'header';
+    $_SESSION['last_customizer_tab'] = $current_tab;
     redirect('index.php?page=header_footer');
 }
 

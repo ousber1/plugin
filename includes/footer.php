@@ -1,7 +1,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white pt-5 pb-3 mt-5">
+    <footer class="pt-5 pb-3 mt-5" style="background: <?= htmlspecialchars($footer_bg_color) ?>; color: <?= htmlspecialchars($footer_text_color) ?>;">
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-4">
@@ -9,17 +9,19 @@
                         <i class="bi bi-printer-fill text-primary me-2"></i><?= APP_NAME ?>
                     </h5>
                     <p class="text-light opacity-75">
-                        Votre partenaire de confiance pour tous vos besoins en impression au Maroc.
-                        Qualité professionnelle, prix compétitifs et livraison rapide.
+                        <?= nl2br(htmlspecialchars($footer_about)) ?>
                     </p>
                     <div class="d-flex gap-2 mt-3">
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-whatsapp"></i></a>
+                        <?php if ($footer_facebook): ?><a href="<?= htmlspecialchars($footer_facebook) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-facebook"></i></a><?php endif; ?>
+                        <?php if ($footer_instagram): ?><a href="<?= htmlspecialchars($footer_instagram) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-instagram"></i></a><?php endif; ?>
+                        <?php if ($footer_twitter): ?><a href="<?= htmlspecialchars($footer_twitter) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-twitter"></i></a><?php endif; ?>
+                        <?php if ($footer_youtube): ?><a href="<?= htmlspecialchars($footer_youtube) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-youtube"></i></a><?php endif; ?>
+                        <?php if ($footer_tiktok): ?><a href="<?= htmlspecialchars($footer_tiktok) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-tiktok"></i></a><?php endif; ?>
+                        <?php if ($footer_linkedin): ?><a href="<?= htmlspecialchars($footer_linkedin) ?>" class="btn btn-outline-light btn-sm" target="_blank"><i class="bi bi-linkedin"></i></a><?php endif; ?>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4">
-                    <h6 class="fw-bold mb-3">Navigation</h6>
+                    <h6 class="fw-bold mb-3"><?= htmlspecialchars($footer_col1_title) ?></h6>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="index.php" class="text-light text-decoration-none opacity-75">Accueil</a></li>
                         <li class="mb-2"><a href="index.php?page=catalogue" class="text-light text-decoration-none opacity-75">Nos Services</a></li>
@@ -37,7 +39,7 @@
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-4">
-                    <h6 class="fw-bold mb-3">Contact</h6>
+                    <h6 class="fw-bold mb-3"><?= htmlspecialchars($footer_col2_title) ?></h6>
                     <ul class="list-unstyled text-light opacity-75">
                         <li class="mb-2"><i class="bi bi-geo-alt me-2"></i><?= APP_ADDRESS ?></li>
                         <li class="mb-2"><i class="bi bi-telephone me-2"></i><?= APP_PHONE ?></li>
@@ -63,12 +65,17 @@
     </footer>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/<?= str_replace(['+', ' ', '-'], '', APP_PHONE) ?>?text=Bonjour, je souhaite avoir des informations sur vos services d'impression."
+    <?php if ($whatsapp_active): ?>
+    <a href="https://wa.me/<?= str_replace(['+', ' ', '-'], '', APP_PHONE) ?>?text=<?= $whatsapp_message ?>"
        class="whatsapp-float" target="_blank" title="Contactez-nous sur WhatsApp">
         <i class="bi bi-whatsapp"></i>
     </a>
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <?php if (isset($_custom_js_body) && $_custom_js_body): ?>
+    <?= $_custom_js_body ?>
+    <?php endif; ?>
 </body>
 </html>
