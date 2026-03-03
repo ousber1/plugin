@@ -76,19 +76,28 @@ $total = totalPanier();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($panier as $key => $item): ?>
+                                    <?php foreach ($panier as $key => $item):
+                                        $item_img = '';
+                                        if (!empty($item['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $item['image'])) {
+                                            $item_img = 'uploads/produits/' . $item['image'];
+                                        }
+                                    ?>
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
+                                                <?php if ($item_img): ?>
+                                                <img src="<?= $item_img ?>" alt="<?= htmlspecialchars($item['nom']) ?>" class="rounded me-3" style="width:50px;height:50px;object-fit:cover;">
+                                                <?php else: ?>
                                                 <div class="bg-primary-soft rounded d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;">
                                                     <i class="bi bi-printer text-primary"></i>
                                                 </div>
+                                                <?php endif; ?>
                                                 <div>
-                                                    <div class="fw-bold"><?= $item['nom'] ?></div>
+                                                    <div class="fw-bold"><?= htmlspecialchars($item['nom']) ?></div>
                                                     <?php if (!empty($item['options'])): ?>
                                                     <small class="text-muted">
                                                         <?php foreach ($item['options'] as $opt): ?>
-                                                            <?= $opt['nom'] ?>: <?= $opt['valeur'] ?><br>
+                                                            <?= htmlspecialchars($opt['nom']) ?>: <?= htmlspecialchars($opt['valeur']) ?><br>
                                                         <?php endforeach; ?>
                                                     </small>
                                                     <?php endif; ?>
@@ -101,7 +110,7 @@ $total = totalPanier();
                                                 <input type="hidden" name="item_key" value="<?= $key ?>">
                                                 <div class="input-group input-group-sm">
                                                     <input type="number" name="quantite" value="<?= $item['quantite'] ?>" min="1" class="form-control text-center" style="max-width:70px">
-                                                    <button type="submit" name="maj_quantite" class="btn btn-outline-primary btn-sm"><i class="bi bi-check"></i></button>
+                                                    <button type="submit" name="maj_quantite" value="1" class="btn btn-outline-primary btn-sm"><i class="bi bi-check"></i></button>
                                                 </div>
                                             </form>
                                         </td>
@@ -111,7 +120,7 @@ $total = totalPanier();
                                             <form method="POST" class="d-inline">
                                                 <?= csrfField() ?>
                                                 <input type="hidden" name="item_key" value="<?= $key ?>">
-                                                <button type="submit" name="supprimer" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <button type="submit" name="supprimer" value="1" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
@@ -129,7 +138,7 @@ $total = totalPanier();
                     </a>
                     <form method="POST" class="d-inline">
                         <?= csrfField() ?>
-                        <button type="submit" name="vider" class="btn btn-outline-danger">
+                        <button type="submit" name="vider" value="1" class="btn btn-outline-danger">
                             <i class="bi bi-trash me-2"></i>Vider le panier
                         </button>
                     </form>

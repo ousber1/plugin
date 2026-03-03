@@ -3,6 +3,7 @@
  * BERRADI PRINT - Panneau d'Administration
  */
 session_start();
+ob_start();
 
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
@@ -40,9 +41,10 @@ $pages_admin = [
     'dashboard', 'commandes', 'commande_detail', 'commande_nouvelle',
     'produits', 'produit_edit', 'categories',
     'clients', 'client_detail',
-    'devis', 'devis_detail', 'devis_nouveau',
+    'devis', 'devis_detail', 'devis_nouveau', 'facture_devis',
     'depenses', 'rapports',
     'seo', 'seo_kit', 'pixels', 'import_export',
+    'header_footer', 'smtp',
     'parametres', 'villes', 'admins', 'notifications'
 ];
 

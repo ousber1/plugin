@@ -48,9 +48,15 @@ $stats_rapide = getStats();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= in_array($page, ['devis', 'devis_detail', 'devis_nouveau']) ? 'active' : '' ?>" href="index.php?page=devis">
+                        <a class="nav-link <?= in_array($page, ['devis', 'devis_detail', 'devis_nouveau', 'facture_devis']) ? 'active' : '' ?>" href="index.php?page=devis">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Devis</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'facture_devis' ? 'active' : '' ?>" href="index.php?page=facture_devis">
+                            <i class="bi bi-file-earmark-ruled"></i>
+                            <span>Factures & Devis</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -113,6 +119,18 @@ $stats_rapide = getStats();
 
                     <li class="nav-section">PARAMÈTRES</li>
 
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'header_footer' ? 'active' : '' ?>" href="index.php?page=header_footer">
+                            <i class="bi bi-layout-text-window-reverse"></i>
+                            <span>Header / Footer</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $page === 'smtp' ? 'active' : '' ?>" href="index.php?page=smtp">
+                            <i class="bi bi-envelope-at"></i>
+                            <span>SMTP & Emails</span>
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link <?= $page === 'import_export' ? 'active' : '' ?>" href="index.php?page=import_export">
                             <i class="bi bi-arrow-left-right"></i>

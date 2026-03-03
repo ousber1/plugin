@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
     verifyCsrf();
     $quantite = max(1, (int)($_POST['quantite'] ?? 1));
     $opts = [];
-    if (!empty($_POST['options'])) {
+    if (!empty($_POST['options']) && is_array($_POST['options'])) {
         foreach ($_POST['options'] as $nom => $val) {
             $opts[] = ['nom' => $nom, 'valeur' => $val, 'prix_supplement' => 0];
         }
@@ -37,6 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
     ajouterAuPanier($produit_id, $quantite, $opts);
     setFlash('success', '<i class="bi bi-check-circle me-2"></i>Produit ajouté au panier avec succès !');
     redirect('index.php?page=produit&id=' . $produit_id);
+}
+
+// Image du produit
+$prod_image = '';
+if (!empty($produit['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $produit['image'])) {
+    $prod_image = 'uploads/produits/' . $produit['image'];
 }
 ?>
 
@@ -60,9 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
             <!-- Image / Visuel -->
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm">
+                    <?php if ($prod_image): ?>
+                    <img src="<?= $prod_image ?>" alt="<?= htmlspecialchars($produit['nom']) ?>" class="card-img-top" style="max-height:400px; object-fit:cover;">
+                    <?php else: ?>
                     <div class="card-body bg-primary-soft d-flex align-items-center justify-content-center" style="min-height: 350px;">
                         <i class="bi bi-printer display-1 text-primary"></i>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -108,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
                 </div>
 
                 <!-- Formulaire de commande -->
-                <form method="POST">
+                <form method="POST" action="index.php?page=produit&id=<?= $produit_id ?>">
                     <?= csrfField() ?>
 
                     <?php foreach ($options as $opt):
@@ -120,9 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
                         <select name="options[<?= htmlspecialchars($opt['nom_option']) ?>]" class="form-select" <?= $opt['obligatoire'] ? 'required' : '' ?>>
                             <option value="">-- Choisir --</option>
                             <?php foreach ($valeurs as $v): ?>
-                            <option value="<?= htmlspecialchars($v['valeur'] ?? $v) ?>">
-                                <?= htmlspecialchars($v['valeur'] ?? $v) ?>
-                                <?php if (!empty($v['prix_supplement'])): ?>
+                            <option value="<?= htmlspecialchars(is_array($v) ? ($v['valeur'] ?? '') : $v) ?>">
+                                <?= htmlspecialchars(is_array($v) ? ($v['valeur'] ?? '') : $v) ?>
+                                <?php if (is_array($v) && !empty($v['prix_supplement'])): ?>
                                     (+<?= formatPrix($v['prix_supplement']) ?>)
                                 <?php endif; ?>
                             </option>
@@ -144,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
                     </div>
 
                     <div class="d-flex gap-3">
-                        <button type="submit" name="ajouter_panier" class="btn btn-primary btn-lg">
+                        <button type="submit" name="ajouter_panier" value="1" class="btn btn-primary btn-lg">
                             <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
                         </button>
                         <a href="https://wa.me/<?= str_replace(['+', ' ', '-'], '', APP_PHONE) ?>?text=Bonjour, je suis intéressé par: <?= urlencode($produit['nom']) ?>"
@@ -158,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
                 <?php if ($produit['description']): ?>
                 <div class="mt-4 p-3 bg-light rounded">
                     <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-2"></i>Description</h6>
-                    <p class="mb-0 text-muted"><?= nl2br($produit['description']) ?></p>
+                    <div class="text-muted"><?= nl2br(htmlspecialchars($produit['description'])) ?></div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -169,12 +179,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_panier'])) {
         <div class="mt-5">
             <h3 class="fw-bold mb-4">Produits similaires</h3>
             <div class="row g-4">
-                <?php foreach ($similaires as $sim): ?>
+                <?php foreach ($similaires as $sim):
+                    $sim_img = (!empty($sim['image']) && file_exists(__DIR__ . '/../uploads/produits/' . $sim['image'])) ? 'uploads/produits/' . $sim['image'] : '';
+                ?>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm h-100 product-card">
+                        <?php if ($sim_img): ?>
+                        <img src="<?= $sim_img ?>" alt="<?= htmlspecialchars($sim['nom']) ?>" class="card-img-top" style="height:150px; object-fit:cover;">
+                        <?php else: ?>
                         <div class="card-img-top bg-primary-soft d-flex align-items-center justify-content-center" style="height: 150px;">
                             <i class="bi bi-printer fs-2 text-primary"></i>
                         </div>
+                        <?php endif; ?>
                         <div class="card-body">
                             <h6 class="fw-bold small"><?= $sim['nom'] ?></h6>
                             <span class="fw-bold text-primary"><?= formatPrix($sim['prix_base']) ?></span>
