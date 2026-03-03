@@ -4,7 +4,7 @@
  */
 $db = getDB();
 
-// Ensure pages table exists
+// Ensure tables exist
 $db->exec("CREATE TABLE IF NOT EXISTS pages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
@@ -19,6 +19,31 @@ $db->exec("CREATE TABLE IF NOT EXISTS pages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;");
+
+$db->exec("CREATE TABLE IF NOT EXISTS page_templates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    contenu LONGTEXT,
+    ordre INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;");
+
+// Insert default templates if not exists
+$templates_count = $db->query("SELECT COUNT(*) FROM page_templates")->fetchColumn();
+if ($templates_count == 0) {
+    $default_templates = [
+        ['landing', 'Page d\'accueil / Landing page', 1, '<section class="text-center py-5"><h1 class="display-4 fw-bold mb-4">Bienvenue</h1><p class="lead mb-4">Ceci est une page landing. Personnalisez-la selon vos besoins.</p><a href="#" class="btn btn-primary btn-lg">En savoir plus</a></section>'],
+        ['contact', 'Formulaire de contact', 2, '<section class="py-5"><h2 class="mb-4">Nous contacter</h2><p class="mb-4">Remplissez le formulaire ci-dessous pour nous envoyer un message.</p><form><div class="mb-3"><input type="text" class="form-control" placeholder="Votre nom" required></div><div class="mb-3"><input type="email" class="form-control" placeholder="Votre email" required></div><div class="mb-3"><textarea class="form-control" rows="5" placeholder="Votre message" required></textarea></div><button class="btn btn-primary" type="submit">Envoyer</button></form></section>'],
+        ['about', 'À propos de nous', 3, '<section class="py-5"><h2 class="mb-4">À propos de nous</h2><p>Qui sommes-nous ? Racontez votre histoire en quelques paragraphes.</p><h3 class="mt-4 mb-3">Notre mission</h3><p>Décrivez votre mission ici.</p><h3 class="mt-4 mb-3">Notre vision</h3><p>Décrivez votre vision ici.</p><h3 class="mt-4 mb-3">Nos valeurs</h3><ul><li>Valeur 1</li><li>Valeur 2</li><li>Valeur 3</li></ul></section>'],
+        ['services', 'Nos services', 4, '<section class="py-5"><h2 class="mb-4">Nos services</h2><div class="row g-4"><div class="col-md-6"><h3>Service 1</h3><p>Description du service 1</p></div><div class="col-md-6"><h3>Service 2</h3><p>Description du service 2</p></div><div class="col-md-6"><h3>Service 3</h3><p>Description du service 3</p></div><div class="col-md-6"><h3>Service 4</h3><p>Description du service 4</p></div></div></section>'],
+        ['faq', 'Questions Fréquemment Posées', 5, '<section class="py-5"><h2 class="mb-4">Questions Fréquemment Posées</h2><div class="accordion"><div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">Question 1 ?</button></h2><div id="faq1" class="accordion-collapse collapse show" data-bs-parent=".accordion"><div class="accordion-body">Réponse à la question 1...</div></div></div><div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">Question 2 ?</button></h2><div id="faq2" class="accordion-collapse collapse" data-bs-parent=".accordion"><div class="accordion-body">Réponse à la question 2...</div></div></div></div></section>']
+    ];
+    $stmt = $db->prepare("INSERT INTO page_templates (nom, description, ordre, contenu) VALUES (?,?,?,?)");
+    foreach ($default_templates as $t) {
+        $stmt->execute($t);
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -89,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
+$templates = $db->query("SELECT * FROM page_templates ORDER BY ordre")->fetchAll();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -137,7 +163,8 @@ $pages = $db->query("SELECT * FROM pages ORDER BY created_at DESC")->fetchAll();
                     <div class="row g-3">
                         <div class="col-12"><label class="form-label">Nom *</label><input type="text" name="nom" class="form-control" required></div>
                         <div class="col-md-6"><label class="form-label">Slug (optionnel)</label><input type="text" name="slug" class="form-control" placeholder="laisser vide pour générer automatiquement"></div>
-                        <div class="col-md-6"><label class="form-label">Template</label><select name="template" class="form-select"><option value="default">default</option></select></div>
+                        <div class="col-md-6"><label class="form-label">Template de départ</label><select id="template_select" name="template" class="form-select"><option value="">-- Vierge --</option><?php foreach ($templates as $t): ?><option value="<?= htmlspecialchars($t['nom']) ?>" data-content="<?= htmlspecialchars($t['contenu']) ?>"><?= htmlspecialchars($t['description'] ?: $t['nom']) ?></option><?php endforeach; ?></select></div>
+                        <div class="col-12" id="template_preview_wrap" style="display:none;"><div class="alert alert-info"><small><strong>Aperçu du template :</strong></small><div id="preview_content" style="font-size:0.85rem;max-height:120px;overflow-y:auto;"></div><button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="applyTemplate()">Appliquer ce template</button></div></div>
                         <div class="col-12"><label class="form-label">Contenu (WYSIWYG)</label><textarea id="modal_body_editor" name="body" class="form-control" rows="6"></textarea></div>
                         <div class="col-md-6"><label class="form-label">Meta title</label><input type="text" name="meta_title" class="form-control"></div>
                         <div class="col-md-6"><label class="form-label">Meta description</label><input type="text" name="meta_description" class="form-control"></div>
@@ -183,4 +210,32 @@ document.getElementById('modalAjouterPage').addEventListener('show.bs.modal', fu
         initTinyMCE('#modal_body_editor');
     }
 });
+
+// Template management
+var templateData = {};
+<?php foreach ($templates as $t): ?>
+templateData['<?= $t['nom'] ?>'] = <?= json_encode($t['contenu']) ?>;
+<?php endforeach; ?>
+
+document.getElementById('template_select').addEventListener('change', function() {
+    var selected = this.value;
+    var preview = document.getElementById('template_preview_wrap');
+    var content = document.getElementById('preview_content');
+    
+    if (selected && templateData[selected]) {
+        content.innerHTML = templateData[selected];
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+function applyTemplate() {
+    var selected = document.getElementById('template_select').value;
+    if (selected && templateData[selected]) {
+        tinymce.get('modal_body_editor').setContent(templateData[selected]);
+        // Scroll to editor
+        document.getElementById('modal_body_editor').scrollIntoView({ behavior: 'smooth' });
+    }
+}
 </script>
