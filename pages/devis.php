@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['envoyer_devis'])) {
     $entreprise = clean($_POST['entreprise'] ?? '');
     $adresse = clean($_POST['adresse'] ?? '');
     $ville = clean($_POST['ville'] ?? '');
+    $type_client = clean($_POST['type_client'] ?? 'particulier');
+    $contact_prefere = clean($_POST['contact_prefere'] ?? 'telephone');
     $service = clean($_POST['service'] ?? '');
     $produit_choisi = clean($_POST['produit_choisi'] ?? '');
     $description = clean($_POST['description'] ?? '');
@@ -43,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['envoyer_devis'])) {
         if ($adresse) $notes .= "Adresse: $adresse, $ville\n";
         if ($delai) $notes .= "Délai souhaité: $delai\n";
         if ($budget) $notes .= "Budget: $budget\n";
+        if ($type_client) $notes .= "Type de client: $type_client\n";
+        if ($contact_prefere) $notes .= "Moyen de contact préféré: $contact_prefere\n";
 
         // Link to client_id if logged in
         $client_id = null;
@@ -141,6 +145,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['envoyer_devis'])) {
                                 <div class="col-12">
                                     <label class="form-label">Adresse</label>
                                     <input type="text" name="adresse" class="form-control" value="<?= htmlspecialchars($_POST['adresse'] ?? ($_client_dv['adresse'] ?? '')) ?>" placeholder="Votre adresse complète">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Type de client</label>
+                                    <select name="type_client" class="form-select">
+                                        <option value="particulier" <?= (($_POST['type_client'] ?? $_client_dv['type_client'] ?? '') === 'particulier') ? 'selected' : '' ?>>Particulier</option>
+                                        <option value="entreprise" <?= (($_POST['type_client'] ?? $_client_dv['type_client'] ?? '') === 'entreprise') ? 'selected' : '' ?>>Entreprise</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Moyen de contact préféré</label>
+                                    <select name="contact_prefere" class="form-select">
+                                        <option value="">-- Sélectionner --</option>
+                                        <option value="telephone" <?= (($_POST['contact_prefere'] ?? '') === 'telephone') ? 'selected' : '' ?>>Téléphone</option>
+                                        <option value="email" <?= (($_POST['contact_prefere'] ?? '') === 'email') ? 'selected' : '' ?>>Email</option>
+                                        <option value="whatsapp" <?= (($_POST['contact_prefere'] ?? '') === 'whatsapp') ? 'selected' : '' ?>>WhatsApp</option>
+                                    </select>
                                 </div>
                             </div>
 

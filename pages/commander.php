@@ -41,27 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) 
     if ($type_livraison === 'livraison' && !$ville_id) $erreurs[] = 'Veuillez sélectionner une ville';
 
     if (empty($erreurs)) {
-        // Use logged-in client or find/create
-        if ($_client_prefill) {
-            $client_id = $_client_prefill['id'];
-            $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, '', $code_postal, $client_id]);
-        } else {
-            $stmt = $db->prepare("SELECT id FROM clients WHERE telephone = ?");
-            $stmt->execute([$telephone]);
-            $client = $stmt->fetch();
-            if ($client) {
-                $client_id = $client['id'];
-                $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, '', $code_postal, $client_id]);
-            } else {
-                $stmt = $db->prepare("INSERT INTO clients (nom, prenom, email, telephone, adresse, code_postal) VALUES (?,?,?,?,?,?)");
-                $stmt->execute([$nom, $prenom, $email, $telephone, $adresse, $code_postal]);
-                $client_id = $db->lastInsertId();
-            }
-        }
-
-        // Calcul frais livraison
+        // Get ville name first if delivery
         $frais_livraison = 0;
         $ville_nom = 'Retrait en magasin';
+        $ville_client = '';
         if ($type_livraison === 'livraison') {
             $frais_livraison = getFraisLivraison($ville_id);
             if ($total_panier >= FREE_DELIVERY_MIN) $frais_livraison = 0;
@@ -69,8 +52,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['valider_commande'])) 
             $stmt->execute([$ville_id]);
             $v = $stmt->fetch();
             $ville_nom = $v ? $v['nom'] : '';
+            $ville_client = $ville_nom; // Use ville name for client profile
         }
 
+        // Use logged-in client or find/create
+        if ($_client_prefill) {
+            $client_id = $_client_prefill['id'];
+            $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, $ville_client, $code_postal, $client_id]);
+        } else {
+            $stmt = $db->prepare("SELECT id FROM clients WHERE telephone = ?");
+            $stmt->execute([$telephone]);
+            $client = $stmt->fetch();
+            if ($client) {
+                $client_id = $client['id'];
+                $db->prepare("UPDATE clients SET nom=?, prenom=?, email=?, adresse=?, ville=?, code_postal=? WHERE id=?")->execute([$nom, $prenom, $email, $adresse, $ville_client, $code_postal, $client_id]);
+            } else {
+                $stmt = $db->prepare("INSERT INTO clients (nom, prenom, email, telephone, adresse, ville, code_postal) VALUES (?,?,?,?,?,?,?)");
+                $stmt->execute([$nom, $prenom, $email, $telephone, $adresse, $ville_client, $code_postal]);
+                $client_id = $db->lastInsertId();
+            }
+        }
+
+        // Calculate tax
         $tva = $total_panier * TAX_RATE;
         $total_final = $total_panier + $frais_livraison;
 

@@ -157,7 +157,87 @@ function getFlash() {
 
 // Gestion du panier
 function getPanier() {
-    return $_SESSION['panier'] ?? [];
+    // Load cart from session
+    if (!isset($_SESSION['panier'])) {
+        $_SESSION['panier'] = [];
+    }
+    
+    // If user is logged in and cart is empty, try to restore from DB
+    if (clientEstConnecte() && empty($_SESSION['panier'])) {
+        $_SESSION['panier'] = chargerPanierClient();
+    }
+    
+    return $_SESSION['panier'];
+}
+
+// Load saved cart from database for logged-in customer
+function chargerPanierClient() {
+    if (!clientEstConnecte()) return [];
+    
+    $db = getDB();
+    $client = clientConnecte();
+    if (!$client) return [];
+    
+    $panier = [];
+    try {
+        $stmt = $db->prepare("SELECT * FROM panier_client WHERE client_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$client['id']]);
+        $items = $stmt->fetchAll();
+        
+        foreach ($items as $item) {
+            $panier[$item['item_key']] = [
+                'produit_id' => $item['produit_id'],
+                'nom' => $item['nom'],
+                'quantite' => $item['quantite'],
+                'prix_unitaire' => $item['prix_unitaire'],
+                'prix_total' => $item['prix_total'],
+                'options' => json_decode($item['options'], true) ?? [],
+                'image' => $item['image'],
+                'unite' => $item['unite'],
+            ];
+        }
+    } catch (Exception $e) {
+        // Table might not exist yet
+    }
+    
+    return $panier;
+}
+
+// Save cart to database for logged-in customer
+function sauvegarderPanierClient() {
+    if (!clientEstConnecte()) return false;
+    
+    $db = getDB();
+    $client = clientConnecte();
+    if (!$client) return false;
+    
+    $panier = $_SESSION['panier'] ?? [];
+    
+    try {
+        // Clear old cart items
+        $db->prepare("DELETE FROM panier_client WHERE client_id = ?")->execute([$client['id']]);
+        
+        // Insert new items
+        foreach ($panier as $item_key => $item) {
+            $db->prepare("INSERT INTO panier_client (client_id, item_key, produit_id, nom, quantite, prix_unitaire, prix_total, options, image, unite) VALUES (?,?,?,?,?,?,?,?,?,?)")
+                ->execute([
+                    $client['id'],
+                    $item_key,
+                    $item['produit_id'],
+                    $item['nom'],
+                    $item['quantite'],
+                    $item['prix_unitaire'],
+                    $item['prix_total'],
+                    json_encode($item['options']),
+                    $item['image'],
+                    $item['unite'],
+                ]);
+        }
+        return true;
+    } catch (Exception $e) {
+        // Table might not exist yet, which is fine
+        return false;
+    }
 }
 
 function ajouterAuPanier($produit_id, $quantite, $options = []) {
@@ -194,15 +274,39 @@ function ajouterAuPanier($produit_id, $quantite, $options = []) {
             'unite' => $produit['unite'],
         ];
     }
+    
+    // Save to DB if user is logged in
+    if (clientEstConnecte()) {
+        sauvegarderPanierClient();
+    }
+    
     return true;
 }
 
 function supprimerDuPanier($item_key) {
     unset($_SESSION['panier'][$item_key]);
+    
+    // Sync to DB if user is logged in
+    if (clientEstConnecte()) {
+        sauvegarderPanierClient();
+    }
 }
 
 function viderPanier() {
     $_SESSION['panier'] = [];
+    
+    // Clear from DB if user is logged in
+    if (clientEstConnecte()) {
+        try {
+            $db = getDB();
+            $client = clientConnecte();
+            if ($client) {
+                $db->prepare("DELETE FROM panier_client WHERE client_id = ?")->execute([$client['id']]);
+            }
+        } catch (Exception $e) {
+            // Table might not exist
+        }
+    }
 }
 
 function totalPanier() {

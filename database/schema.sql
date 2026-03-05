@@ -50,6 +50,26 @@ CREATE TABLE IF NOT EXISTS clients (
 ) ENGINE=InnoDB;
 
 -- =============================================
+-- Table: Panier Client (Cart saved for logged-in users)
+-- =============================================
+CREATE TABLE IF NOT EXISTS panier_client (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    item_key VARCHAR(100) NOT NULL,
+    produit_id INT NOT NULL,
+    nom VARCHAR(300) NOT NULL,
+    quantite INT NOT NULL DEFAULT 1,
+    prix_unitaire DECIMAL(10,2) NOT NULL,
+    prix_total DECIMAL(12,2) NOT NULL,
+    options JSON DEFAULT NULL,
+    image VARCHAR(255) DEFAULT NULL,
+    unite VARCHAR(50) DEFAULT 'pièce',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =============================================
 -- Table: Catégories de Services
 -- =============================================
 CREATE TABLE IF NOT EXISTS categories (
