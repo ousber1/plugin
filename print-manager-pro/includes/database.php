@@ -90,6 +90,62 @@ class PMP_Database {
         ) {$charset_collate};";
         dbDelta( $sql_designs );
 
+        // Suppliers table
+        $table_suppliers = $wpdb->prefix . 'print_suppliers';
+        $sql_suppliers = "CREATE TABLE {$table_suppliers} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL DEFAULT '',
+            email varchar(255) DEFAULT NULL,
+            phone varchar(50) DEFAULT NULL,
+            address text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) {$charset_collate};";
+        dbDelta( $sql_suppliers );
+
+        // Clients table
+        $table_clients = $wpdb->prefix . 'print_clients';
+        $sql_clients = "CREATE TABLE {$table_clients} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned DEFAULT NULL,
+            company varchar(255) DEFAULT NULL,
+            phone varchar(50) DEFAULT NULL,
+            address text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY user_id (user_id)
+        ) {$charset_collate};";
+        dbDelta( $sql_clients );
+
+        // Quotes table
+        $table_quotes = $wpdb->prefix . 'print_quotes';
+        $sql_quotes = "CREATE TABLE {$table_quotes} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            client_id bigint(20) unsigned DEFAULT NULL,
+            quote_data longtext NOT NULL,
+            total decimal(12,2) NOT NULL DEFAULT 0.00,
+            status varchar(50) NOT NULL DEFAULT 'draft',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY client_id (client_id)
+        ) {$charset_collate};";
+        dbDelta( $sql_quotes );
+
+        // Workflow states table
+        $table_workflow = $wpdb->prefix . 'print_workflow';
+        $sql_workflow = "CREATE TABLE {$table_workflow} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL DEFAULT '',
+            slug varchar(255) NOT NULL DEFAULT '',
+            description text DEFAULT NULL,
+            sort_order int(10) unsigned NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY slug (slug)
+        ) {$charset_collate};";
+        dbDelta( $sql_workflow );
+
         update_option( 'pmp_db_version', PMP_VERSION );
     }
 
@@ -105,6 +161,10 @@ class PMP_Database {
             $wpdb->prefix . 'print_cost_settings',
             $wpdb->prefix . 'print_orders',
             $wpdb->prefix . 'print_designs',
+            $wpdb->prefix . 'print_suppliers',
+            $wpdb->prefix . 'print_clients',
+            $wpdb->prefix . 'print_quotes',
+            $wpdb->prefix . 'print_workflow',
         );
 
         foreach ( $tables as $table ) {

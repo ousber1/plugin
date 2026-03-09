@@ -17,7 +17,7 @@
             var self = this;
 
             // Price recalculation on any change
-            $('#pmp-format, #pmp-paper, #pmp-weight, #pmp-sides, #pmp-color, #pmp-quantity').on('change', function() {
+            $('#pmp-format, #pmp-paper, #pmp-weight, #pmp-sides, #pmp-color, #pmp-quantity, #pmp-orientation, #pmp-urgency, #pmp-delivery, #pmp-delivery-zone, #pmp-bat, #pmp-comments').on('change keyup', function() {
                 self.calculatePrice();
             });
 
@@ -60,6 +60,12 @@
                 weight: $('#pmp-weight').val() || '',
                 sides: $('#pmp-sides').val(),
                 color: $('#pmp-color').val(),
+                orientation: $('#pmp-orientation').val(),
+                urgency: $('#pmp-urgency').val(),
+                delivery: $('#pmp-delivery').val(),
+                delivery_zone: $('#pmp-delivery-zone').val(),
+                bat: $('#pmp-bat').is(':checked') ? 'yes' : 'no',
+                comments: $('#pmp-comments').val() || '',
                 quantity: $('#pmp-quantity').val(),
                 finishing: finishing
             };

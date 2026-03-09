@@ -7,6 +7,10 @@
 
     var PMP_Designer = {
         canvas: null,
+        history: [],
+        historyIndex: -1,
+        isHistoryAction: false,
+        zoomLevel: 1,
 
         init: function() {
             this.bindEvents();
@@ -81,6 +85,7 @@
         },
 
         openModal: function() {
+            $('body').addClass('pmp-modal-open');
             $('#pmp-designer-modal').fadeIn(200);
             if (!this.canvas) {
                 this.initCanvas();
@@ -89,6 +94,7 @@
 
         closeModal: function() {
             $('#pmp-designer-modal').fadeOut(200);
+            $('body').removeClass('pmp-modal-open');
         },
 
         initCanvas: function() {
@@ -100,6 +106,16 @@
 
             // Add safe zone guides
             this.addSafeZone();
+
+            // Track history for undo/redo
+            this.saveHistory();
+            var self = this;
+            this.canvas.on('object:added object:modified object:removed', function() {
+                if ( self.isHistoryAction ) {
+                    return;
+                }
+                self.saveHistory();
+            });
         },
 
         addSafeZone: function() {
@@ -132,11 +148,35 @@
                 case 'image':
                     $('#pmp-designer-image-input').click();
                     break;
+                case 'line':
+                    this.addLine();
+                    break;
                 case 'rect':
                     this.addRect();
                     break;
+                case 'triangle':
+                    this.addTriangle();
+                    break;
                 case 'circle':
                     this.addCircle();
+                    break;
+                case 'bring_forward':
+                    this.bringForward();
+                    break;
+                case 'send_backward':
+                    this.sendBackward();
+                    break;
+                case 'undo':
+                    this.undo();
+                    break;
+                case 'redo':
+                    this.redo();
+                    break;
+                case 'zoom_in':
+                    this.zoomIn();
+                    break;
+                case 'zoom_out':
+                    this.zoomOut();
                     break;
                 case 'delete':
                     this.deleteSelected();
@@ -225,12 +265,108 @@
             this.canvas.renderAll();
         },
 
+        addLine: function() {
+            var color = $('#pmp-designer-color').val();
+
+            var line = new fabric.Line([50, 100, 250, 100], {
+                left: 100,
+                top: 150,
+                stroke: color,
+                strokeWidth: 4,
+                selectable: true
+            });
+
+            this.canvas.add(line);
+            this.canvas.setActiveObject(line);
+            this.canvas.renderAll();
+        },
+
+        addTriangle: function() {
+            var color = $('#pmp-designer-color').val();
+
+            var triangle = new fabric.Triangle({
+                left: 180,
+                top: 140,
+                width: 120,
+                height: 100,
+                fill: color,
+                opacity: 0.8
+            });
+
+            this.canvas.add(triangle);
+            this.canvas.setActiveObject(triangle);
+            this.canvas.renderAll();
+        },
+
         deleteSelected: function() {
             var active = this.canvas.getActiveObject();
             if (active) {
                 this.canvas.remove(active);
                 this.canvas.renderAll();
             }
+        },
+
+        bringForward: function() {
+            var active = this.canvas.getActiveObject();
+            if (active) {
+                active.bringForward();
+                this.canvas.renderAll();
+            }
+        },
+
+        sendBackward: function() {
+            var active = this.canvas.getActiveObject();
+            if (active) {
+                active.sendBackwards();
+                this.canvas.renderAll();
+            }
+        },
+
+        undo: function() {
+            if ( this.historyIndex <= 0 ) {
+                return;
+            }
+            this.historyIndex--;
+            this.loadHistory();
+        },
+
+        redo: function() {
+            if ( this.historyIndex >= this.history.length - 1 ) {
+                return;
+            }
+            this.historyIndex++;
+            this.loadHistory();
+        },
+
+        saveHistory: function() {
+            // Remove any redo history when new action occurs
+            this.history = this.history.slice(0, this.historyIndex + 1);
+            this.history.push( JSON.stringify( this.canvas.toJSON() ) );
+            this.historyIndex = this.history.length - 1;
+        },
+
+        loadHistory: function() {
+            if ( this.historyIndex < 0 || this.historyIndex >= this.history.length ) {
+                return;
+            }
+            var state = this.history[ this.historyIndex ];
+            var self = this;
+            this.isHistoryAction = true;
+            this.canvas.loadFromJSON( state, this.canvas.renderAll.bind( this.canvas ), function() {
+                self.isHistoryAction = false;
+            } );
+        },
+
+        zoomIn: function() {
+            this.zoomLevel = Math.min( this.zoomLevel + 0.1, 3 );
+            this.canvas.setZoom( this.zoomLevel );
+            this.canvas.renderAll();
+        },
+
+        zoomOut: function() {
+            this.zoomLevel = Math.max( this.zoomLevel - 0.1, 0.5 );
+            this.canvas.setZoom( this.zoomLevel );
+            this.canvas.renderAll();
         },
 
         changeColor: function(color) {

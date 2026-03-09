@@ -31,6 +31,8 @@ $groups = array(
     'Marge et remises' => array( 'profit_margin', 'bulk_discount_100', 'bulk_discount_500', 'bulk_discount_1000', 'bulk_discount_5000' ),
     'Finitions' => array( 'finishing_lamination', 'finishing_uv_varnish', 'finishing_folding', 'finishing_cutting' ),
     'Multiplicateurs' => array( 'color_multiplier', 'recto_verso_multiplier' ),
+    'Urgence & Livraison' => array( 'urgency_multiplier_standard', 'urgency_multiplier_express', 'delivery_cost_standard', 'delivery_cost_express', 'delivery_cost_retrait', 'delivery_zone_casablanca', 'delivery_zone_rabat', 'delivery_zone_marrakech', 'delivery_zone_autres' ),
+    'Coûts papier (types)' => array( 'paper_cost_couche_mat', 'paper_cost_couche_brillant', 'paper_cost_offset', 'paper_cost_recycle', 'paper_cost_creation', 'paper_cost_kraft' ),
 );
 
 $settings_map = array();

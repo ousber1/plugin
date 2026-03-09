@@ -93,6 +93,7 @@ final class Print_Manager_Pro {
         PMP_Database::create_tables();
         $this->create_print_categories();
         $this->insert_default_cost_settings();
+        $this->create_default_print_product();
         flush_rewrite_rules();
     }
 
@@ -154,10 +155,103 @@ final class Print_Manager_Pro {
             array( 'setting_key' => 'finishing_cutting', 'setting_value' => '0.01', 'description' => 'Découpe par feuille (€)' ),
             array( 'setting_key' => 'color_multiplier', 'setting_value' => '1.5', 'description' => 'Multiplicateur couleur vs N/B' ),
             array( 'setting_key' => 'recto_verso_multiplier', 'setting_value' => '1.8', 'description' => 'Multiplicateur recto/verso' ),
+            array( 'setting_key' => 'urgency_multiplier_standard', 'setting_value' => '1.0', 'description' => 'Multiplicateur d\'urgence standard' ),
+            array( 'setting_key' => 'urgency_multiplier_express', 'setting_value' => '1.25', 'description' => 'Multiplicateur d\'urgence express' ),
+            array( 'setting_key' => 'delivery_cost_standard', 'setting_value' => '0', 'description' => 'Coût livraison standard' ),
+            array( 'setting_key' => 'delivery_cost_express', 'setting_value' => '60', 'description' => 'Coût livraison express' ),
+            array( 'setting_key' => 'delivery_cost_retrait', 'setting_value' => '0', 'description' => 'Coût retrait en magasin' ),
+            array( 'setting_key' => 'delivery_zone_casablanca', 'setting_value' => '0', 'description' => 'Frais de livraison Casablanca' ),
+            array( 'setting_key' => 'delivery_zone_rabat', 'setting_value' => '10', 'description' => 'Frais de livraison Rabat' ),
+            array( 'setting_key' => 'delivery_zone_marrakech', 'setting_value' => '15', 'description' => 'Frais de livraison Marrakech' ),
+            array( 'setting_key' => 'delivery_zone_autres', 'setting_value' => '20', 'description' => 'Frais de livraison autres villes' ),
+            array( 'setting_key' => 'paper_cost_couche_mat', 'setting_value' => '0.06', 'description' => 'Coût papier couché mat par feuille (€)' ),
+            array( 'setting_key' => 'paper_cost_couche_brillant', 'setting_value' => '0.07', 'description' => 'Coût papier couché brillant par feuille (€)' ),
+            array( 'setting_key' => 'paper_cost_offset', 'setting_value' => '0.05', 'description' => 'Coût papier offset par feuille (€)' ),
+            array( 'setting_key' => 'paper_cost_recycle', 'setting_value' => '0.05', 'description' => 'Coût papier recyclé par feuille (€)' ),
+            array( 'setting_key' => 'paper_cost_creation', 'setting_value' => '0.08', 'description' => 'Coût papier création par feuille (€)' ),
+            array( 'setting_key' => 'paper_cost_kraft', 'setting_value' => '0.07', 'description' => 'Coût papier kraft par feuille (€)' ),
         );
 
         foreach ( $defaults as $row ) {
             $wpdb->insert( $table, $row );
+        }
+    }
+
+    /**
+     * Create a default print product (created on plugin activation).
+     */
+    private function create_default_print_product() {
+        $products = array(
+            array(
+                'title'       => 'Cartes de visite - Print Manager Pro',
+                'slug'        => 'pmp-cartes-de-visite',
+                'content'     => 'Produit de démonstration pour cartes de visite. Modifiez les options d\'impression et les quantités selon vos besoins.',
+                'price'       => '50.00',
+                'formats'     => array( 'A6', 'A5' ),
+                'papers'      => array( 'couche_mat', 'couche_brillant' ),
+                'weights'     => array( '135', '170' ),
+                'finishings'  => array( 'lamination', 'rounded_corners' ),
+                'quantities'  => '50,100,250,500',
+                'category'    => 'Cartes de visite',
+            ),
+            array(
+                'title'       => 'Flyers - Print Manager Pro',
+                'slug'        => 'pmp-flyers',
+                'content'     => 'Produit de démonstration pour flyers. Modifiez les options d\'impression et les quantités selon vos besoins.',
+                'price'       => '100.00',
+                'formats'     => array( 'A5', 'A4' ),
+                'papers'      => array( 'offset', 'recycle' ),
+                'weights'     => array( '135', '170', '250' ),
+                'finishings'  => array( 'lamination', 'uv_varnish' ),
+                'quantities'  => '100,250,500,1000',
+                'category'    => 'Flyers',
+            ),
+        );
+
+        foreach ( $products as $product ) {
+            // Avoid creating duplicates.
+            if ( get_page_by_path( $product['slug'], OBJECT, 'product' ) ) {
+                continue;
+            }
+
+            $product_data = array(
+                'post_title'   => $product['title'],
+                'post_name'    => $product['slug'],
+                'post_content' => $product['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'product',
+            );
+
+            $product_id = wp_insert_post( $product_data );
+            if ( is_wp_error( $product_id ) || ! $product_id ) {
+                continue;
+            }
+
+            // Basic WooCommerce settings.
+            update_post_meta( $product_id, '_visibility', 'visible' );
+            update_post_meta( $product_id, '_stock_status', 'instock' );
+            update_post_meta( $product_id, '_regular_price', $product['price'] );
+            update_post_meta( $product_id, '_price', $product['price'] );
+
+            // Ensure product type is simple (WooCommerce)
+            wp_set_object_terms( $product_id, 'simple', 'product_type' );
+
+            // Print Manager Pro metadata (enabled by default).
+            update_post_meta( $product_id, '_pmp_is_print_product', 'yes' );
+            update_post_meta( $product_id, '_pmp_enable_designer', 'yes' );
+            update_post_meta( $product_id, '_pmp_enable_upload', 'yes' );
+            update_post_meta( $product_id, '_pmp_formats', $product['formats'] );
+            update_post_meta( $product_id, '_pmp_papers', $product['papers'] );
+            update_post_meta( $product_id, '_pmp_weights', $product['weights'] );
+            update_post_meta( $product_id, '_pmp_finishings', $product['finishings'] );
+            update_post_meta( $product_id, '_pmp_quantities', $product['quantities'] );
+
+            if ( ! empty( $product['category'] ) ) {
+                $term = get_term_by( 'name', $product['category'], 'product_cat' );
+                if ( $term && ! is_wp_error( $term ) ) {
+                    wp_set_object_terms( $product_id, (int) $term->term_id, 'product_cat' );
+                }
+            }
         }
     }
 
@@ -183,10 +277,30 @@ final class Print_Manager_Pro {
         add_submenu_page( 'pmp-dashboard', 'Revenus', 'Revenus', 'manage_options', 'pmp-revenue', array( $this, 'page_revenue' ) );
         add_submenu_page( 'pmp-dashboard', 'Statistiques', 'Statistiques', 'manage_options', 'pmp-statistics', array( $this, 'page_statistics' ) );
         add_submenu_page( 'pmp-dashboard', 'Paramètres tarification', 'Paramètres tarification', 'manage_options', 'pmp-cost-settings', array( $this, 'page_cost_settings' ) );
+        add_submenu_page( 'pmp-dashboard', 'Fournisseurs', 'Fournisseurs', 'manage_options', 'pmp-suppliers', array( $this, 'page_suppliers' ) );
+        add_submenu_page( 'pmp-dashboard', 'Clients', 'Clients', 'manage_options', 'pmp-clients', array( $this, 'page_clients' ) );
+        add_submenu_page( 'pmp-dashboard', 'Workflow commandes', 'Workflow commandes', 'manage_options', 'pmp-workflow', array( $this, 'page_workflow' ) );
+        add_submenu_page( 'pmp-dashboard', 'Devis', 'Devis', 'manage_options', 'pmp-quotes', array( $this, 'page_quotes' ) );
     }
 
     public function page_dashboard() {
         require_once PMP_PLUGIN_DIR . 'admin/dashboard.php';
+    }
+
+    public function page_suppliers() {
+        require_once PMP_PLUGIN_DIR . 'admin/suppliers.php';
+    }
+
+    public function page_clients() {
+        require_once PMP_PLUGIN_DIR . 'admin/clients.php';
+    }
+
+    public function page_workflow() {
+        require_once PMP_PLUGIN_DIR . 'admin/workflow.php';
+    }
+
+    public function page_quotes() {
+        require_once PMP_PLUGIN_DIR . 'admin/quotes.php';
     }
 
     public function page_machines() {
@@ -542,6 +656,50 @@ final class Print_Manager_Pro {
                 </select>
             </div>
 
+            <div class="pmp-config-group">
+                <label>Orientation</label>
+                <select name="pmp_orientation" id="pmp-orientation">
+                    <option value="portrait">Portrait</option>
+                    <option value="paysage">Paysage</option>
+                </select>
+            </div>
+
+            <div class="pmp-config-group">
+                <label>Urgence</label>
+                <select name="pmp_urgency" id="pmp-urgency">
+                    <option value="standard">Standard</option>
+                    <option value="express">Express</option>
+                </select>
+            </div>
+
+            <div class="pmp-config-group">
+                <label>Livraison</label>
+                <select name="pmp_delivery" id="pmp-delivery">
+                    <option value="standard">Standard (2-4 jours)</option>
+                    <option value="express">Express (1-2 jours)</option>
+                    <option value="retrait">Retrait en magasin</option>
+                </select>
+            </div>
+
+            <div class="pmp-config-group">
+                <label>Zone de livraison</label>
+                <select name="pmp_delivery_zone" id="pmp-delivery-zone">
+                    <option value="casablanca">Casablanca</option>
+                    <option value="rabat">Rabat</option>
+                    <option value="marrakech">Marrakech</option>
+                    <option value="autres">Autres villes</option>
+                </select>
+            </div>
+
+            <div class="pmp-config-group">
+                <label><input type="checkbox" name="pmp_bat" id="pmp-bat" value="yes"> Demander un BAT (Bon à Tirer)</label>
+            </div>
+
+            <div class="pmp-config-group">
+                <label>Commentaires</label>
+                <textarea name="pmp_comments" id="pmp-comments" rows="3" style="width:100%;max-width:400px;" placeholder="Ajoutez des informations supplémentaires..."></textarea>
+            </div>
+
             <div class="pmp-price-display">
                 <div class="pmp-price-loading" style="display:none;">Calcul en cours...</div>
                 <div class="pmp-calculated-price">
@@ -586,8 +744,16 @@ final class Print_Manager_Pro {
                         <div class="pmp-designer-toolbar">
                             <button type="button" class="pmp-tool-btn" data-tool="text" title="Ajouter du texte">T</button>
                             <button type="button" class="pmp-tool-btn" data-tool="image" title="Ajouter une image">&#128247;</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="line" title="Ligne">─</button>
                             <button type="button" class="pmp-tool-btn" data-tool="rect" title="Rectangle">&#9632;</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="triangle" title="Triangle">&#9650;</button>
                             <button type="button" class="pmp-tool-btn" data-tool="circle" title="Cercle">&#9679;</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="bring_forward" title="Avant-plan">⇧</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="send_backward" title="Arrière-plan">⇩</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="undo" title="Annuler">↶</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="redo" title="Rétablir">↷</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="zoom_in" title="Zoom +">+</button>
+                            <button type="button" class="pmp-tool-btn" data-tool="zoom_out" title="Zoom -">−</button>
                             <button type="button" class="pmp-tool-btn" data-tool="delete" title="Supprimer">&#128465;</button>
                             <input type="file" id="pmp-designer-image-input" accept="image/*" style="display:none;">
                             <input type="color" id="pmp-designer-color" value="#000000" title="Couleur">
@@ -623,7 +789,23 @@ final class Print_Manager_Pro {
             return $cart_item_data;
         }
 
-        $fields = array( 'pmp_format', 'pmp_paper', 'pmp_weight', 'pmp_sides', 'pmp_color', 'pmp_quantity', 'pmp_calculated_price', 'pmp_design_data', 'pmp_uploaded_file' );
+        $fields = array(
+            'pmp_format',
+            'pmp_paper',
+            'pmp_weight',
+            'pmp_sides',
+            'pmp_color',
+            'pmp_quantity',
+            'pmp_orientation',
+            'pmp_urgency',
+            'pmp_delivery',
+            'pmp_delivery_zone',
+            'pmp_bat',
+            'pmp_comments',
+            'pmp_calculated_price',
+            'pmp_design_data',
+            'pmp_uploaded_file'
+        );
 
         foreach ( $fields as $field ) {
             if ( isset( $_POST[ $field ] ) ) {
@@ -643,19 +825,31 @@ final class Print_Manager_Pro {
      */
     public function display_cart_item_data( $item_data, $cart_item ) {
         $labels = array(
-            'pmp_format'   => 'Format',
-            'pmp_paper'    => 'Papier',
-            'pmp_weight'   => 'Grammage',
-            'pmp_sides'    => 'Impression',
-            'pmp_color'    => 'Couleur',
-            'pmp_quantity' => 'Quantité',
+            'pmp_format'      => 'Format',
+            'pmp_paper'       => 'Papier',
+            'pmp_weight'      => 'Grammage',
+            'pmp_sides'       => 'Impression',
+            'pmp_color'       => 'Couleur',
+            'pmp_quantity'    => 'Quantité',
+            'pmp_orientation' => 'Orientation',
+            'pmp_urgency'     => 'Urgence',
+            'pmp_delivery'    => 'Livraison',
+            'pmp_delivery_zone' => 'Zone de livraison',
+            'pmp_bat'         => 'BAT demandé',
+            'pmp_comments'    => 'Commentaires',
         );
 
         foreach ( $labels as $key => $label ) {
             if ( isset( $cart_item[ $key ] ) && '' !== $cart_item[ $key ] ) {
+                $value = $cart_item[ $key ];
+
+                if ( 'pmp_bat' === $key ) {
+                    $value = ( 'yes' === $value || 'on' === $value ) ? 'Oui' : 'Non';
+                }
+
                 $item_data[] = array(
                     'key'   => $label,
-                    'value' => $cart_item[ $key ],
+                    'value' => $value,
                 );
             }
         }
@@ -674,7 +868,22 @@ final class Print_Manager_Pro {
      * Save order item meta.
      */
     public function save_order_item_meta( $item, $cart_item_key, $values, $order ) {
-        $meta_keys = array( 'pmp_format', 'pmp_paper', 'pmp_weight', 'pmp_sides', 'pmp_color', 'pmp_quantity', 'pmp_calculated_price', 'pmp_uploaded_file' );
+        $meta_keys = array(
+            'pmp_format',
+            'pmp_paper',
+            'pmp_weight',
+            'pmp_sides',
+            'pmp_color',
+            'pmp_quantity',
+            'pmp_orientation',
+            'pmp_urgency',
+            'pmp_delivery',
+            'pmp_delivery_zone',
+            'pmp_bat',
+            'pmp_comments',
+            'pmp_calculated_price',
+            'pmp_uploaded_file',
+        );
 
         foreach ( $meta_keys as $key ) {
             if ( isset( $values[ $key ] ) ) {

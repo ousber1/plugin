@@ -231,6 +231,11 @@
     justify-content: center;
 }
 
+/* Lock body scroll when modal is open */
+body.pmp-modal-open {
+    overflow: hidden;
+}
+
 .pmp-modal-content {
     background: #fff;
     border-radius: 12px;

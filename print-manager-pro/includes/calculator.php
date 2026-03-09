@@ -41,18 +41,26 @@ class PMP_Calculator {
      * @return array Price breakdown.
      */
     public function calculate( $params ) {
-        $quantity   = max( 1, absint( $params['quantity'] ) );
-        $sides      = isset( $params['sides'] ) ? $params['sides'] : 'recto';
-        $color      = isset( $params['color'] ) ? $params['color'] : 'color';
-        $finishing   = isset( $params['finishing'] ) ? (array) $params['finishing'] : array();
-        $weight     = isset( $params['weight'] ) ? intval( $params['weight'] ) : 135;
-        $format     = isset( $params['format'] ) ? $params['format'] : 'A4';
+        $quantity     = max( 1, absint( $params['quantity'] ) );
+        $sides        = isset( $params['sides'] ) ? $params['sides'] : 'recto';
+        $color        = isset( $params['color'] ) ? $params['color'] : 'color';
+        $finishing    = isset( $params['finishing'] ) ? (array) $params['finishing'] : array();
+        $weight       = isset( $params['weight'] ) ? intval( $params['weight'] ) : 135;
+        $format       = isset( $params['format'] ) ? $params['format'] : 'A4';
+        $orientation  = isset( $params['orientation'] ) ? $params['orientation'] : 'portrait';
+        $urgency      = isset( $params['urgency'] ) ? $params['urgency'] : 'standard';
+        $delivery     = isset( $params['delivery'] ) ? $params['delivery'] : 'standard';
+        $delivery_zone = isset( $params['delivery_zone'] ) ? $params['delivery_zone'] : 'casablanca';
 
         // Base costs per sheet
-        $paper_cost   = $this->get_setting( 'paper_cost_per_sheet', 0.05 );
-        $ink_cost     = $this->get_setting( 'ink_cost_per_sheet', 0.03 );
-        $machine_hourly = $this->get_setting( 'machine_cost_per_hour', 25.00 );
-        $sheets_per_hour = $this->get_setting( 'sheets_per_hour', 500 );
+        $base_paper_cost   = $this->get_setting( 'paper_cost_per_sheet', 0.05 );
+        $ink_cost          = $this->get_setting( 'ink_cost_per_sheet', 0.03 );
+        $machine_hourly    = $this->get_setting( 'machine_cost_per_hour', 25.00 );
+        $sheets_per_hour   = $this->get_setting( 'sheets_per_hour', 500 );
+
+        // Allow specific paper types to have their own cost
+        $paper_type_key = 'paper_cost_' . preg_replace( '/[^a-z0-9_]/', '', strtolower( $paper ) );
+        $paper_cost     = $this->get_setting( $paper_type_key, $base_paper_cost );
 
         // Weight multiplier (heavier paper costs more)
         $weight_multiplier = 1 + ( ( $weight - 90 ) * 0.003 );
@@ -141,6 +149,27 @@ class PMP_Calculator {
         $margin = $this->get_setting( 'profit_margin', 40 );
         $final_price = $discounted_cost * ( 1 + $margin / 100 );
 
+        // Urgency multiplier
+        $urgency_multiplier = ( 'express' === $urgency ) ? $this->get_setting( 'urgency_multiplier_express', 1.2 ) : $this->get_setting( 'urgency_multiplier_standard', 1.0 );
+        $final_price *= $urgency_multiplier;
+
+        // Delivery costs (zone + method)
+        $delivery_costs = array(
+            'standard' => $this->get_setting( 'delivery_cost_standard', 0 ),
+            'express'  => $this->get_setting( 'delivery_cost_express', 50 ),
+            'retrait'  => $this->get_setting( 'delivery_cost_retrait', 0 ),
+        );
+        $zone_costs = array(
+            'casablanca' => $this->get_setting( 'delivery_zone_casablanca', 0 ),
+            'rabat'      => $this->get_setting( 'delivery_zone_rabat', 0 ),
+            'marrakech'  => $this->get_setting( 'delivery_zone_marrakech', 0 ),
+            'autres'     => $this->get_setting( 'delivery_zone_autres', 20 ),
+        );
+        $delivery_cost = isset( $delivery_costs[ $delivery ] ) ? $delivery_costs[ $delivery ] : 0;
+        $zone_cost     = isset( $zone_costs[ $delivery_zone ] ) ? $zone_costs[ $delivery_zone ] : 0;
+
+        $final_price += $delivery_cost + $zone_cost;
+
         // Minimum price
         $final_price = max( $final_price, 5.00 );
 
@@ -155,6 +184,8 @@ class PMP_Calculator {
             'machine_cost'     => round( $machine_cost_per_sheet, 4 ),
             'finishing_cost'   => round( $finishing_cost, 4 ),
             'setup_cost'       => round( $setup_cost, 2 ),
+            'delivery_cost'    => round( $delivery_cost + $zone_cost, 2 ),
+            'urgency_multiplier' => round( $urgency_multiplier, 2 ),
             'discount_percent' => $discount_percent,
             'discount_amount'  => round( $discount_amount, 2 ),
             'margin_percent'   => $margin,
