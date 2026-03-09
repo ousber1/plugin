@@ -1,0 +1,158 @@
+/* Print Manager Pro - Admin Styles */
+.pmp-admin-wrap {
+    max-width: 1400px;
+}
+
+/* Dashboard Cards */
+.pmp-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.pmp-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: box-shadow 0.2s;
+}
+
+.pmp-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.pmp-card-icon {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.pmp-card-content h3 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    color: #1d2327;
+}
+
+.pmp-card-content p {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+.pmp-card-content h3.positive { color: #00a32a; }
+.pmp-card-content h3.negative { color: #d63638; }
+td.positive { color: #00a32a; font-weight: 600; }
+td.negative { color: #d63638; font-weight: 600; }
+th.positive { color: #00a32a; }
+th.negative { color: #d63638; }
+
+.pmp-card-revenue { border-left: 4px solid #2271b1; }
+.pmp-card-expenses { border-left: 4px solid #d63638; }
+.pmp-card-profit { border-left: 4px solid #00a32a; }
+.pmp-card-orders { border-left: 4px solid #dba617; }
+.pmp-card-machines { border-left: 4px solid #8c8f94; }
+
+/* Charts */
+.pmp-dashboard-charts,
+.pmp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.pmp-chart-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.pmp-chart-container h3 {
+    margin-top: 0;
+    color: #1d2327;
+}
+
+.pmp-chart-controls {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Tables */
+.pmp-table-section,
+.pmp-form-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.pmp-table-section h2,
+.pmp-form-section h2 {
+    margin-top: 0;
+}
+
+.pmp-dashboard-tables {
+    margin: 20px 0;
+}
+
+.pmp-table-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.pmp-table-container h3 {
+    margin-top: 0;
+}
+
+/* Forms */
+.pmp-admin-form .form-table th {
+    width: 200px;
+}
+
+/* Filters */
+.pmp-filters {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pmp-filters select,
+.pmp-filters input {
+    margin-right: 5px;
+}
+
+/* Status badges */
+.pmp-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pmp-status-active { background: #d4edda; color: #155724; }
+.pmp-status-maintenance { background: #fff3cd; color: #856404; }
+.pmp-status-inactive { background: #f8d7da; color: #721c24; }
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .pmp-dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+    .pmp-dashboard-charts,
+    .pmp-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

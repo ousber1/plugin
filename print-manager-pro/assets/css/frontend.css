@@ -1,0 +1,349 @@
+/* Print Manager Pro - Frontend Styles */
+
+/* Configurator */
+.pmp-configurator {
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    border-radius: 8px;
+    padding: 25px;
+    margin: 20px 0;
+}
+
+.pmp-configurator h3 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #1d2327;
+    border-bottom: 2px solid #2271b1;
+    padding-bottom: 10px;
+}
+
+.pmp-config-group {
+    margin-bottom: 18px;
+}
+
+.pmp-config-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+    font-size: 14px;
+}
+
+.pmp-config-group select,
+.pmp-config-group input[type="number"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 12px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.pmp-config-group select:focus,
+.pmp-config-group input:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.15);
+}
+
+/* Finishings */
+.pmp-finishings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pmp-finishing-option {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 400 !important;
+    transition: all 0.2s;
+}
+
+.pmp-finishing-option:hover {
+    border-color: #2271b1;
+    background: #f0f6fc;
+}
+
+.pmp-finishing-option input:checked + span,
+.pmp-finishing-option:has(input:checked) {
+    border-color: #2271b1;
+    background: #e7f0f7;
+}
+
+/* Price Display */
+.pmp-price-display {
+    background: #fff;
+    border: 2px solid #2271b1;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.pmp-price-loading {
+    color: #646970;
+    font-style: italic;
+}
+
+.pmp-unit-price-label,
+.pmp-total-price-label {
+    color: #646970;
+    font-size: 14px;
+}
+
+.pmp-unit-price {
+    font-size: 16px;
+    color: #1d2327;
+}
+
+.pmp-total-price {
+    font-size: 28px;
+    color: #2271b1;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+/* Upload Section */
+.pmp-upload-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e4e7;
+}
+
+.pmp-upload-section h4 {
+    margin-top: 0;
+    color: #1d2327;
+}
+
+.pmp-upload-info {
+    color: #646970;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+#pmp-file-upload {
+    padding: 10px;
+    border: 2px dashed #c3c4c7;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 400px;
+    background: #fff;
+    cursor: pointer;
+}
+
+#pmp-file-upload:hover {
+    border-color: #2271b1;
+}
+
+.pmp-upload-progress {
+    margin-top: 10px;
+}
+
+.pmp-progress-bar {
+    width: 100%;
+    max-width: 400px;
+    height: 8px;
+    background: #e2e4e7;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.pmp-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 4px;
+    transition: width 0.3s;
+    width: 0%;
+}
+
+.pmp-progress-text {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.pmp-upload-result {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.pmp-upload-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.pmp-upload-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Designer Section */
+.pmp-designer-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e4e7;
+}
+
+.pmp-designer-section h4 {
+    margin-top: 0;
+}
+
+.pmp-btn-designer {
+    background: #2271b1 !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+
+.pmp-btn-designer:hover {
+    background: #135e96 !important;
+}
+
+/* Modal */
+.pmp-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pmp-modal-content {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.pmp-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e2e4e7;
+}
+
+.pmp-modal-header h3 {
+    margin: 0;
+}
+
+.pmp-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #646970;
+    padding: 0;
+    line-height: 1;
+}
+
+.pmp-modal-close:hover {
+    color: #d63638;
+}
+
+.pmp-modal-body {
+    padding: 20px;
+}
+
+.pmp-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e2e4e7;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Designer Toolbar */
+.pmp-designer-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px;
+    background: #f0f0f1;
+    border-radius: 6px;
+}
+
+.pmp-tool-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.pmp-tool-btn:hover,
+.pmp-tool-btn.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+#pmp-designer-canvas {
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+#pmp-designer-color {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    padding: 2px;
+    cursor: pointer;
+}
+
+#pmp-designer-font-size {
+    padding: 8px;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .pmp-configurator {
+        padding: 15px;
+    }
+    .pmp-modal-content {
+        width: 95%;
+    }
+    .pmp-total-price {
+        font-size: 22px;
+    }
+}
