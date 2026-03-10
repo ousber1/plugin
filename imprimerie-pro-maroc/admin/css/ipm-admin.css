@@ -1,0 +1,371 @@
+/**
+ * Imprimerie Pro Maroc — Styles admin
+ */
+
+/* === Variables === */
+:root {
+    --ipm-admin-primary: #1a73e8;
+    --ipm-admin-secondary: #34a853;
+    --ipm-admin-accent: #ea4335;
+    --ipm-admin-bg: #f0f2f5;
+    --ipm-admin-white: #fff;
+    --ipm-admin-border: #e0e0e0;
+    --ipm-admin-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --ipm-admin-radius: 8px;
+}
+
+/* === Wrapper === */
+.ipm-admin-wrap {
+    max-width: 1400px;
+}
+
+.ipm-admin-wrap h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.ipm-admin-wrap h1 .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--ipm-admin-primary);
+}
+
+/* === Dashboard === */
+.ipm-dashboard {
+    margin-top: 16px;
+}
+
+.ipm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+    .ipm-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .ipm-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ipm-stat-card {
+    background: var(--ipm-admin-white);
+    border-radius: var(--ipm-admin-radius);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--ipm-admin-shadow);
+    border-left: 4px solid transparent;
+}
+
+.ipm-stat-orders { border-left-color: #2196F3; }
+.ipm-stat-revenue { border-left-color: #4CAF50; }
+.ipm-stat-quotes { border-left-color: #FF9800; }
+.ipm-stat-products { border-left-color: #9C27B0; }
+
+.ipm-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ipm-admin-bg);
+}
+
+.ipm-stat-orders .ipm-stat-icon { background: #E3F2FD; color: #2196F3; }
+.ipm-stat-revenue .ipm-stat-icon { background: #E8F5E9; color: #4CAF50; }
+.ipm-stat-quotes .ipm-stat-icon { background: #FFF3E0; color: #FF9800; }
+.ipm-stat-products .ipm-stat-icon { background: #F3E5F5; color: #9C27B0; }
+
+.ipm-stat-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.ipm-stat-content h3 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.ipm-stat-content p {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 13px;
+}
+
+/* Dashboard grid */
+.ipm-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .ipm-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ipm-dashboard-card {
+    background: var(--ipm-admin-white);
+    border-radius: var(--ipm-admin-radius);
+    padding: 20px;
+    box-shadow: var(--ipm-admin-shadow);
+}
+
+.ipm-dashboard-card h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ipm-admin-border);
+}
+
+/* Quick links */
+.ipm-quick-links {
+    background: var(--ipm-admin-white);
+    border-radius: var(--ipm-admin-radius);
+    padding: 20px;
+    box-shadow: var(--ipm-admin-shadow);
+}
+
+.ipm-quick-links h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+}
+
+.ipm-links-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ipm-quick-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--ipm-admin-bg);
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.ipm-quick-link:hover {
+    background: var(--ipm-admin-primary);
+    color: var(--ipm-admin-white);
+}
+
+.ipm-quick-link:hover .dashicons {
+    color: var(--ipm-admin-white);
+}
+
+.ipm-quick-link .dashicons {
+    color: var(--ipm-admin-primary);
+}
+
+/* === Status badges === */
+.ipm-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e0e0e0;
+}
+
+.ipm-status-new { background: #E3F2FD; color: #1565C0; }
+.ipm-status-pending { background: #FFF3E0; color: #E65100; }
+.ipm-status-sent { background: #F3E5F5; color: #7B1FA2; }
+.ipm-status-accepted { background: #E8F5E9; color: #2E7D32; }
+.ipm-status-refused { background: #FFEBEE; color: #C62828; }
+
+/* === Filtres === */
+.ipm-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px 0;
+}
+
+.ipm-filter-link {
+    padding: 6px 14px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #666;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.ipm-filter-link:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.ipm-filter-link.active {
+    background: var(--ipm-admin-primary);
+    color: var(--ipm-admin-white);
+}
+
+/* === Metabox === */
+.ipm-metabox {
+    padding: 10px;
+}
+
+.ipm-metabox-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--ipm-admin-border);
+}
+
+.ipm-metabox-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.ipm-metabox-section h4 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #333;
+}
+
+.ipm-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .ipm-options-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ipm-option-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--ipm-admin-bg);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.ipm-option-checkbox:hover {
+    background: #e0e0e0;
+}
+
+/* Gallery */
+#ipm-gallery-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ipm-gallery-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--ipm-admin-border);
+}
+
+.ipm-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ipm-remove-image {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+}
+
+/* === Tabs === */
+.ipm-settings-tabs .nav-tab-wrapper {
+    margin-bottom: 0;
+}
+
+.ipm-tab-content {
+    display: none;
+    background: var(--ipm-admin-white);
+    padding: 20px;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+}
+
+.ipm-tab-content.active {
+    display: block;
+}
+
+/* === Shipping table === */
+.ipm-shipping-table input[type="text"],
+.ipm-shipping-table input[type="number"] {
+    padding: 4px 8px;
+}
+
+.ipm-shipping-table .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.ipm-shipping-info {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.ipm-shipping-info h3 {
+    margin: 0 0 8px;
+}
+
+.ipm-shipping-info ul {
+    margin: 0;
+}
+
+.ipm-shipping-info li {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+/* === Quotes select === */
+.ipm-quote-status-select,
+.ipm-file-status-select {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}
