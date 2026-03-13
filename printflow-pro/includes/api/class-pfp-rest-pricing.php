@@ -19,7 +19,7 @@ class PFP_REST_Pricing {
 	 * Register routes.
 	 */
 	public function register_routes() {
-		register_rest_route( PFP_REST_API::NAMESPACE, '/pricing/calculate', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/pricing/calculate', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'calculate_price' ),
 			'permission_callback' => '__return_true',
@@ -42,7 +42,7 @@ class PFP_REST_Pricing {
 			),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/pricing/quantity-breaks/(?P<product_id>\d+)', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/pricing/quantity-breaks/(?P<product_id>\d+)', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_quantity_breaks' ),
 			'permission_callback' => '__return_true',

@@ -19,7 +19,7 @@ class PFP_REST_Inventory {
 	 * Register routes.
 	 */
 	public function register_routes() {
-		register_rest_route( PFP_REST_API::NAMESPACE, '/inventory/materials', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/inventory/materials', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_materials' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),
@@ -35,13 +35,13 @@ class PFP_REST_Inventory {
 			),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/inventory/materials/(?P<id>\d+)', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/inventory/materials/(?P<id>\d+)', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_material' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/inventory/materials/(?P<id>\d+)/stock', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/inventory/materials/(?P<id>\d+)/stock', array(
 			'methods'             => 'PUT',
 			'callback'            => array( $this, 'update_stock' ),
 			'permission_callback' => array( 'PFP_REST_API', 'admin_permissions_check' ),
@@ -62,7 +62,7 @@ class PFP_REST_Inventory {
 			),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/inventory/alerts', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/inventory/alerts', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_alerts' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),
@@ -78,7 +78,7 @@ class PFP_REST_Inventory {
 	public function get_materials( $request ) {
 		global $wpdb;
 
-		$table    = $wpdb->prefix . 'pfp_inventory';
+		$table    = $wpdb->prefix . 'pfp_materials';
 		$category = $request->get_param( 'category' );
 		$low_stock = $request->get_param( 'low_stock' );
 
@@ -91,7 +91,7 @@ class PFP_REST_Inventory {
 		}
 
 		if ( $low_stock ) {
-			$where[] = 'current_stock <= min_stock_level';
+			$where[] = 'quantity <= min_alert_qty';
 		}
 
 		$where_clause = implode( ' AND ', $where );
@@ -127,7 +127,7 @@ class PFP_REST_Inventory {
 		global $wpdb;
 
 		$id       = absint( $request->get_param( 'id' ) );
-		$table    = $wpdb->prefix . 'pfp_inventory';
+		$table    = $wpdb->prefix . 'pfp_materials';
 		$material = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ), ARRAY_A );
 
 		if ( ! $material ) {
@@ -151,14 +151,14 @@ class PFP_REST_Inventory {
 		$operation = $request->get_param( 'operation' );
 		$reason    = $request->get_param( 'reason' );
 
-		$table    = $wpdb->prefix . 'pfp_inventory';
+		$table    = $wpdb->prefix . 'pfp_materials';
 		$material = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ), ARRAY_A );
 
 		if ( ! $material ) {
 			return PFP_REST_API::error( 'not_found', __( 'Matériau introuvable.', 'printflow-pro' ), 404 );
 		}
 
-		$current = (float) $material['current_stock'];
+		$current = (float) $material['quantity'];
 
 		switch ( $operation ) {
 			case 'add':
@@ -175,7 +175,7 @@ class PFP_REST_Inventory {
 		$wpdb->update(
 			$table,
 			array(
-				'current_stock' => $new_stock,
+				'quantity' => $new_stock,
 				'updated_at'    => current_time( 'mysql' ),
 			),
 			array( 'id' => $id ),
@@ -184,19 +184,18 @@ class PFP_REST_Inventory {
 		);
 
 		// Log the stock movement.
-		$log_table = $wpdb->prefix . 'pfp_stock_log';
+		$log_table = $wpdb->prefix . 'pfp_stock_movements';
 		$wpdb->insert( $log_table, array(
-			'material_id'   => $id,
-			'operation'     => $operation,
-			'quantity'      => $quantity,
-			'stock_before'  => $current,
-			'stock_after'   => $new_stock,
-			'reason'        => $reason,
-			'user_id'       => get_current_user_id(),
-			'created_at'    => current_time( 'mysql' ),
+			'material_id'    => $id,
+			'type'           => $operation,
+			'quantity'       => $quantity,
+			'reference_type' => 'api',
+			'reason'         => $reason,
+			'user_id'        => get_current_user_id(),
+			'created_at'     => current_time( 'mysql' ),
 		) );
 
-		$material['current_stock'] = $new_stock;
+		$material['quantity'] = $new_stock;
 
 		return rest_ensure_response( $material );
 	}
@@ -210,9 +209,9 @@ class PFP_REST_Inventory {
 	public function get_alerts( $request ) {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . 'pfp_inventory';
+		$table  = $wpdb->prefix . 'pfp_materials';
 		$alerts = $wpdb->get_results(
-			"SELECT * FROM {$table} WHERE current_stock <= min_stock_level ORDER BY (current_stock / min_stock_level) ASC",
+			"SELECT * FROM {$table} WHERE quantity <= min_alert_qty ORDER BY (quantity / min_alert_qty) ASC",
 			ARRAY_A
 		);
 

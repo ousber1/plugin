@@ -19,7 +19,7 @@ class PFP_REST_Production {
 	 * Register routes.
 	 */
 	public function register_routes() {
-		register_rest_route( PFP_REST_API::NAMESPACE, '/production/jobs', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/production/jobs', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_jobs' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),
@@ -41,13 +41,13 @@ class PFP_REST_Production {
 			),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/production/jobs/(?P<order_id>\d+)', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/production/jobs/(?P<order_id>\d+)', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_job' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),
 		) );
 
-		register_rest_route( PFP_REST_API::NAMESPACE, '/production/jobs/(?P<order_id>\d+)/status', array(
+		register_rest_route( PFP_REST_API::API_NAMESPACE, '/production/jobs/(?P<order_id>\d+)/status', array(
 			'methods'             => 'PUT',
 			'callback'            => array( $this, 'update_job_status' ),
 			'permission_callback' => array( 'PFP_REST_API', 'staff_permissions_check' ),

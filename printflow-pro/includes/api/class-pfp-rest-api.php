@@ -20,7 +20,7 @@ class PFP_REST_API {
 	 *
 	 * @var string
 	 */
-	const NAMESPACE = 'printflow-pro/v1';
+	const API_NAMESPACE = 'printflow-pro/v1';
 
 	/**
 	 * Initialize REST API.
