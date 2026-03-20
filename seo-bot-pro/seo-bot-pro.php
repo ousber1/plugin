@@ -3,7 +3,7 @@
  * Plugin Name: SEO Bot Pro – AI SEO Optimizer
  * Plugin URI:  https://example.com/seo-bot-pro
  * Description: Automatically optimize SEO for WordPress posts, pages, and WooCommerce products using AI.
- * Version:     4.0.0
+ * Version:     5.0.0
  * Author:      SEO Bot Pro
  * Author URI:  https://example.com
  * License:     GPL-2.0-or-later
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SBP_VERSION', '4.0.0' );
+define( 'SBP_VERSION', '5.0.0' );
 define( 'SBP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SBP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SBP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );

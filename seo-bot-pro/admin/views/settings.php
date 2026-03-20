@@ -24,6 +24,10 @@ $enable_indexnow  = $settings['enable_indexnow'] ?? '0';
 $indexnow_key     = $settings['indexnow_api_key'] ?? '';
 $enable_freshness = $settings['enable_freshness'] ?? '0';
 $freshness_days   = $settings['freshness_days'] ?? 90;
+$google_verify    = $settings['google_verification'] ?? '';
+$bing_verify      = $settings['bing_verification'] ?? '';
+$enable_404       = $settings['enable_404_monitor'] ?? '0';
+$enable_breadcrumbs = $settings['enable_breadcrumbs'] ?? '0';
 
 settings_errors( 'sbp_settings' );
 ?>
@@ -237,6 +241,33 @@ settings_errors( 'sbp_settings' );
             </tr>
         </table>
 
+        <!-- ── Webmaster Verification ──────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Webmaster Verification', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="sbp-google-verify"><?php esc_html_e( 'Google Search Console', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-google-verify" name="sbp[google_verification]"
+                           value="<?php echo esc_attr( $google_verify ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'Verification code (content value only)', 'seo-bot-pro' ); ?>">
+                    <p class="description"><?php esc_html_e( 'Enter the content value from the Google meta tag verification.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="sbp-bing-verify"><?php esc_html_e( 'Bing Webmaster Tools', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-bing-verify" name="sbp[bing_verification]"
+                           value="<?php echo esc_attr( $bing_verify ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'Verification code (content value only)', 'seo-bot-pro' ); ?>">
+                    <p class="description"><?php esc_html_e( 'Enter the content value from the Bing meta tag verification.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
         <!-- ── Rank Booster ──────────────────────────── -->
         <h2 class="sbp-section-title"><?php esc_html_e( 'Rank Booster', 'seo-bot-pro' ); ?></h2>
         <table class="form-table">
@@ -262,6 +293,33 @@ settings_errors( 'sbp_settings' );
                            min="7" max="365" step="1" style="width:80px;">
                     <span><?php esc_html_e( 'days', 'seo-bot-pro' ); ?></span>
                     <p class="description"><?php esc_html_e( 'Content older than this many days is considered stale. (7-365)', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Additional Features ─────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Additional Features', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( '404 Monitor', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_404_monitor]" value="1"
+                            <?php checked( $enable_404, '1' ); ?>>
+                        <?php esc_html_e( 'Monitor 404 errors and log broken URLs for redirect management', 'seo-bot-pro' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'Tracks 404 hits so you can create redirects for broken links.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Breadcrumbs', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_breadcrumbs]" value="1"
+                            <?php checked( $enable_breadcrumbs, '1' ); ?>>
+                        <?php esc_html_e( 'Enable JSON-LD BreadcrumbList schema on all pages', 'seo-bot-pro' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'Outputs BreadcrumbList structured data for rich snippets in search results.', 'seo-bot-pro' ); ?></p>
                 </td>
             </tr>
         </table>

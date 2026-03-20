@@ -110,6 +110,16 @@ class SBP_Helpers {
         $freshness_days = intval( $input['freshness_days'] ?? 90 );
         $clean['freshness_days']   = max( 7, min( 365, $freshness_days ) );
 
+        // Verification codes
+        $clean['google_verification'] = sanitize_text_field( $input['google_verification'] ?? '' );
+        $clean['bing_verification']   = sanitize_text_field( $input['bing_verification'] ?? '' );
+
+        // 404 Monitor
+        $clean['enable_404_monitor'] = ! empty( $input['enable_404_monitor'] ) ? '1' : '0';
+
+        // Breadcrumbs
+        $clean['enable_breadcrumbs'] = ! empty( $input['enable_breadcrumbs'] ) ? '1' : '0';
+
         return $clean;
     }
 

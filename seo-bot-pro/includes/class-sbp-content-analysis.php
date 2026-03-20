@@ -117,9 +117,10 @@ class SBP_Content_Analysis {
 
         // 7. External links (5 pts)
         $max += 5;
-        if ( preg_match( '/<a\s[^>]*href=["\']https?:\/\//i', $content )
-             && ! preg_match( '/<a\s[^>]*href=["\']' . preg_quote( $home, '/' ) . '/i', $content )
-             || preg_match_all( '/<a\s[^>]*href=["\']https?:\/\//i', $content ) > 1 ) {
+        $all_links_count = preg_match_all( '/<a\s[^>]*href=["\']https?:\/\//i', $content );
+        $internal_count  = preg_match_all( '/<a\s[^>]*href=["\']' . preg_quote( $home, '/' ) . '/i', $content );
+        $external_count  = $all_links_count - $internal_count;
+        if ( $external_count > 0 ) {
             $checks[] = [ 'label' => __( 'External links', 'seo-bot-pro' ), 'pass' => true ];
             $score   += 5;
         } else {

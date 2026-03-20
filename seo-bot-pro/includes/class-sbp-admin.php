@@ -23,6 +23,7 @@ class SBP_Admin {
         add_submenu_page( 'sbp-dashboard', __( 'AI Post Generator', 'seo-bot-pro' ), __( 'AI Post Generator', 'seo-bot-pro' ), 'publish_posts', 'sbp-generator', [ $this, 'render_generator' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Bulk Optimize', 'seo-bot-pro' ), __( 'Bulk Optimize', 'seo-bot-pro' ), 'edit_posts', 'sbp-bulk', [ $this, 'render_bulk' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Rank Booster', 'seo-bot-pro' ), __( 'Rank Booster', 'seo-bot-pro' ), 'edit_posts', 'sbp-rank-booster', [ $this, 'render_rank_booster' ] );
+        add_submenu_page( 'sbp-dashboard', __( '404 Monitor', 'seo-bot-pro' ), __( '404 Monitor', 'seo-bot-pro' ), 'edit_posts', 'sbp-404-monitor', [ $this, 'render_404_monitor' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Settings', 'seo-bot-pro' ), __( 'Settings', 'seo-bot-pro' ), 'manage_options', 'sbp-settings', [ $this, 'render_settings' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Logs', 'seo-bot-pro' ), __( 'Logs', 'seo-bot-pro' ), 'edit_posts', 'sbp-logs', [ $this, 'render_logs' ] );
     }
@@ -35,6 +36,7 @@ class SBP_Admin {
             'seo-bot_page_sbp-logs',
             'seo-bot_page_sbp-generator',
             'seo-bot_page_sbp-rank-booster',
+            'seo-bot_page_sbp-404-monitor',
         ];
 
         $is_plugin_page = in_array( $hook, $plugin_pages, true );
@@ -96,6 +98,34 @@ class SBP_Admin {
             add_settings_error( 'sbp_settings', 'saved', __( 'Settings saved.', 'seo-bot-pro' ), 'updated' );
         }
         include SBP_PLUGIN_DIR . 'admin/views/settings.php';
+    }
+
+    public function render_404_monitor() {
+        // Handle form submissions
+        if ( isset( $_POST['sbp_add_redirect'] ) ) {
+            check_admin_referer( 'sbp_add_redirect', 'sbp_redirect_nonce' );
+            $monitor = new SBP_404_Monitor();
+            $monitor->add_redirect(
+                sanitize_text_field( $_POST['redirect_from'] ?? '' ),
+                esc_url_raw( $_POST['redirect_to'] ?? '' ),
+                absint( $_POST['redirect_code'] ?? 301 )
+            );
+            add_settings_error( 'sbp_settings', 'redirect_added', __( 'Redirect added.', 'seo-bot-pro' ), 'updated' );
+        }
+        if ( isset( $_POST['sbp_delete_redirect'] ) ) {
+            check_admin_referer( 'sbp_delete_redirect', 'sbp_redirect_nonce' );
+            $monitor = new SBP_404_Monitor();
+            $monitor->delete_redirect( absint( $_POST['redirect_index'] ?? 0 ) );
+            add_settings_error( 'sbp_settings', 'redirect_deleted', __( 'Redirect deleted.', 'seo-bot-pro' ), 'updated' );
+        }
+        if ( isset( $_POST['sbp_clear_404'] ) ) {
+            check_admin_referer( 'sbp_clear_404', 'sbp_404_nonce' );
+            $monitor = new SBP_404_Monitor();
+            $monitor->clear_logs();
+            add_settings_error( 'sbp_settings', 'logs_cleared', __( '404 logs cleared.', 'seo-bot-pro' ), 'updated' );
+        }
+        settings_errors( 'sbp_settings' );
+        include SBP_PLUGIN_DIR . 'admin/views/404-monitor.php';
     }
 
     public function render_logs() {

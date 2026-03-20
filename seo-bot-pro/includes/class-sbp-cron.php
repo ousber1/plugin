@@ -77,15 +77,8 @@ class SBP_Cron {
                 continue;
             }
 
-            // Apply meta
-            if ( ! empty( $result['meta_title'] ) ) {
-                update_post_meta( $pid, 'rank_math_title', sanitize_text_field( $result['meta_title'] ) );
-                update_post_meta( $pid, '_sbp_meta_title', sanitize_text_field( $result['meta_title'] ) );
-            }
-            if ( ! empty( $result['meta_description'] ) ) {
-                update_post_meta( $pid, 'rank_math_description', sanitize_text_field( $result['meta_description'] ) );
-                update_post_meta( $pid, '_sbp_meta_description', sanitize_text_field( $result['meta_description'] ) );
-            }
+            // Apply meta using the centralized method (handles all SEO plugins)
+            $api->apply_meta( $pid, $result );
 
             SBP_Logger::log( $pid, 'cron', 'success', wp_json_encode( $result ) );
 

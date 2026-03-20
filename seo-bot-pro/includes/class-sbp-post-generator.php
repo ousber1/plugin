@@ -90,8 +90,7 @@ class SBP_Post_Generator {
             $seo_result = $ai->optimize( $post_id );
             if ( ! is_wp_error( $seo_result ) ) {
                 $api = new SBP_REST_API();
-                // Use reflection to call private apply_meta
-                $this->apply_seo_meta( $post_id, $seo_result );
+                $api->apply_meta( $post_id, $seo_result );
                 SBP_Logger::log( $post_id, 'auto_seo', 'success', wp_json_encode( $seo_result ) );
             }
         }
@@ -113,46 +112,4 @@ class SBP_Post_Generator {
         ];
     }
 
-    /**
-     * Apply SEO meta (duplicated from REST API to avoid access issues).
-     */
-    private function apply_seo_meta( int $post_id, array $data ) {
-        $seo_plugin = SBP_Helpers::get_option( 'seo_plugin', 'rank_math' );
-        $enable_og  = SBP_Helpers::get_option( 'enable_og', '1' );
-
-        if ( ! empty( $data['meta_title'] ) ) {
-            $title = sanitize_text_field( $data['meta_title'] );
-            update_post_meta( $post_id, '_sbp_meta_title', $title );
-            if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
-                update_post_meta( $post_id, 'rank_math_title', $title );
-            }
-            if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
-                update_post_meta( $post_id, '_yoast_wpseo_title', $title );
-            }
-        }
-
-        if ( ! empty( $data['meta_description'] ) ) {
-            $desc = sanitize_text_field( $data['meta_description'] );
-            update_post_meta( $post_id, '_sbp_meta_description', $desc );
-            if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
-                update_post_meta( $post_id, 'rank_math_description', $desc );
-            }
-            if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
-                update_post_meta( $post_id, '_yoast_wpseo_metadesc', $desc );
-            }
-        }
-
-        if ( ! empty( $data['meta_keywords'] ) ) {
-            update_post_meta( $post_id, '_sbp_meta_keywords', sanitize_text_field( $data['meta_keywords'] ) );
-        }
-
-        if ( $enable_og === '1' ) {
-            if ( ! empty( $data['og_title'] ) ) {
-                update_post_meta( $post_id, '_sbp_og_title', sanitize_text_field( $data['og_title'] ) );
-            }
-            if ( ! empty( $data['og_description'] ) ) {
-                update_post_meta( $post_id, '_sbp_og_description', sanitize_text_field( $data['og_description'] ) );
-            }
-        }
-    }
 }
