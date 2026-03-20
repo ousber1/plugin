@@ -331,6 +331,162 @@
         container.html(html);
     }
 
+    // ── Generate excerpt button ─────────────────────
+    $(document).on('click', '.sbp-excerpt-btn', function () {
+        var btn    = $(this);
+        var postId = btn.data('post-id');
+        var result = $('#sbp-action-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.generating);
+
+        $.post(data.ajaxUrl, {
+            action:  'sbp_generate_excerpt',
+            nonce:   data.nonce,
+            post_id: postId
+        })
+        .done(function (res) {
+            if (res.success) {
+                result.html('<div class="sbp-result-success">Excerpt generated: ' + escHtml(res.data.excerpt) + '</div>');
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Rewrite content button ──────────────────────
+    $(document).on('click', '.sbp-rewrite-btn', function () {
+        var btn    = $(this);
+        var postId = btn.data('post-id');
+        var result = $('#sbp-action-result');
+
+        if (!confirm('This will rewrite the entire post content using AI. Continue?')) {
+            return;
+        }
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.rewriting);
+
+        $.post(data.ajaxUrl, {
+            action:  'sbp_rewrite_content',
+            nonce:   data.nonce,
+            post_id: postId
+        })
+        .done(function (res) {
+            if (res.success) {
+                result.html('<div class="sbp-result-success">Content rewritten successfully! Reload the editor to see changes.</div>');
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Save advanced SEO settings ──────────────────
+    $(document).on('click', '.sbp-save-advanced-btn', function () {
+        var btn    = $(this);
+        var postId = btn.data('post-id');
+        var result = $('#sbp-action-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.optimizing);
+
+        $.post(data.ajaxUrl, {
+            action:      'sbp_save_robots_meta',
+            nonce:       data.nonce,
+            post_id:     postId,
+            noindex:     $('#sbp-noindex').is(':checked') ? '1' : '0',
+            nofollow:    $('#sbp-nofollow').is(':checked') ? '1' : '0',
+            canonical:   $('#sbp-canonical').val(),
+            schema_type: $('#sbp-schema-type').val()
+        })
+        .done(function (res) {
+            if (res.success) {
+                result.html('<div class="sbp-result-success">' + data.i18n.saved + '</div>');
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── AI Post Generator page ──────────────────────
+    $('#sbp-generate-post-btn').on('click', function () {
+        var btn    = $(this);
+        var result = $('#sbp-gen-result');
+        var topic  = $('#sbp-gen-topic').val();
+
+        if (!topic) {
+            result.html('<div class="sbp-result-error">Please enter a topic.</div>');
+            return;
+        }
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.publishing);
+
+        $.post(data.ajaxUrl, {
+            action:       'sbp_generate_post',
+            nonce:        data.nonce,
+            topic:        topic,
+            post_type:    $('#sbp-gen-type').val(),
+            status:       $('#sbp-gen-status').val(),
+            category_id:  $('#sbp-gen-category').val(),
+            length:       $('#sbp-gen-length').val(),
+            auto_seo:     $('#sbp-gen-autoseo').is(':checked') ? '1' : '0',
+            auto_faq:     $('#sbp-gen-autofaq').is(':checked') ? '1' : '0',
+            instructions: $('#sbp-gen-instructions').val()
+        })
+        .done(function (res) {
+            if (res.success) {
+                var d    = res.data;
+                var html = '<div class="sbp-result-success">';
+                html += '<strong>Post created!</strong><br>';
+                html += 'Title: ' + escHtml(d.title) + '<br>';
+                if (d.edit_url) {
+                    html += '<a href="' + escAttr(d.edit_url) + '" class="button" target="_blank">Edit Post</a> ';
+                }
+                if (d.view_url) {
+                    html += '<a href="' + escAttr(d.view_url) + '" class="button" target="_blank">View Post</a>';
+                }
+                html += '</div>';
+                result.html(html);
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Generator: toggle category row based on post type ──
+    $('#sbp-gen-type').on('change', function () {
+        if ($(this).val() === 'post') {
+            $('.sbp-gen-category-row').show();
+        } else {
+            $('.sbp-gen-category-row').hide();
+        }
+    });
+
     // ── Bulk optimize ───────────────────────────────
     $('#sbp-select-all').on('change', function () {
         $('.sbp-post-check').prop('checked', this.checked);

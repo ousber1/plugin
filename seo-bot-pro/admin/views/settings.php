@@ -14,7 +14,8 @@ $temperature  = $settings['temperature'] ?? 0.4;
 $max_tokens   = $settings['max_tokens'] ?? 1024;
 $seo_plugin   = $settings['seo_plugin'] ?? 'rank_math';
 $enable_og    = $settings['enable_og'] ?? '1';
-$auto_publish = $settings['auto_optimize_publish'] ?? '0';
+$auto_publish   = $settings['auto_optimize_publish'] ?? '0';
+$enable_twitter = $settings['enable_twitter'] ?? '0';
 
 settings_errors( 'sbp_settings' );
 ?>
@@ -121,6 +122,17 @@ settings_errors( 'sbp_settings' );
                         <input type="checkbox" name="sbp[enable_og]" value="1"
                             <?php checked( $enable_og, '1' ); ?>>
                         <?php esc_html_e( 'Generate Open Graph (og:title, og:description) during optimization', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Twitter Cards', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_twitter]" value="1"
+                            <?php checked( $enable_twitter, '1' ); ?>>
+                        <?php esc_html_e( 'Generate Twitter Card meta tags (twitter:title, twitter:description) during optimization', 'seo-bot-pro' ); ?>
                     </label>
                 </td>
             </tr>

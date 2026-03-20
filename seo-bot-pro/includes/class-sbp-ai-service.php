@@ -235,6 +235,135 @@ class SBP_AI_Service {
         return $this->parse_json_response( $result );
     }
 
+    // ── Article generation ──────────────────────────
+
+    /**
+     * Generate a full article with AI.
+     *
+     * @return array|WP_Error  { title, content, excerpt, tags }
+     */
+    public function generate_article( string $topic, string $length = 'medium', string $instructions = '' ) {
+        $lang = $this->lang_label();
+
+        $word_targets = [
+            'short'  => '300-500',
+            'medium' => '800-1200',
+            'long'   => '1500-2500',
+        ];
+        $target = $word_targets[ $length ] ?? '800-1200';
+
+        $extra = $instructions ? "\nAdditional instructions: {$instructions}\n" : '';
+
+        $prompt = "You are an expert content writer and SEO specialist. Write a complete, well-structured blog article.\n\n"
+                . "Topic: {$topic}\n"
+                . "Language: {$lang}\n"
+                . "Tone: {$this->tone}\n"
+                . "Target length: {$target} words\n"
+                . "{$extra}\n"
+                . "Requirements:\n"
+                . "- Engaging, SEO-optimized title\n"
+                . "- Well-structured HTML content with H2 and H3 subheadings\n"
+                . "- Use <p>, <h2>, <h3>, <ul>, <li>, <strong>, <em> tags\n"
+                . "- Include an introduction and conclusion\n"
+                . "- Write a compelling 1-2 sentence excerpt\n"
+                . "- Suggest 3-5 relevant tags\n\n"
+                . "Return a JSON object with:\n"
+                . "- title (string): the article title\n"
+                . "- content (string): full HTML content\n"
+                . "- excerpt (string): 1-2 sentence summary\n"
+                . "- tags (array of strings): 3-5 tags\n\n"
+                . "Return ONLY valid JSON, no markdown code blocks.";
+
+        // Use higher max_tokens for article generation
+        $old_max = $this->max_tokens;
+        $this->max_tokens = max( $this->max_tokens, 4096 );
+
+        $result = $this->call_api( $prompt );
+
+        $this->max_tokens = $old_max;
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return $this->parse_json_response( $result );
+    }
+
+    /**
+     * Generate an excerpt for an existing post.
+     *
+     * @return string|WP_Error
+     */
+    public function generate_excerpt( int $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            return new WP_Error( 'not_found', __( 'Post not found.', 'seo-bot-pro' ) );
+        }
+
+        $plain = SBP_Helpers::content_to_plain( $post->post_content );
+        $lang  = $this->lang_label();
+
+        $prompt = "Write a compelling 1-2 sentence excerpt/summary for the following article. "
+                . "Language: {$lang}. Tone: {$this->tone}.\n\n"
+                . "Title: {$post->post_title}\n"
+                . "Content: {$plain}\n\n"
+                . "Return ONLY the excerpt text, nothing else.";
+
+        $result = $this->call_api( $prompt );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return sanitize_text_field( trim( $result, '"' ) );
+    }
+
+    /**
+     * Rewrite/improve existing content via AI.
+     *
+     * @return array|WP_Error  { content, excerpt }
+     */
+    public function rewrite_content( int $post_id, string $instructions = '' ) {
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            return new WP_Error( 'not_found', __( 'Post not found.', 'seo-bot-pro' ) );
+        }
+
+        $plain = SBP_Helpers::content_to_plain( $post->post_content );
+        $lang  = $this->lang_label();
+        $extra = $instructions ? "\nAdditional instructions: {$instructions}\n" : '';
+
+        $prompt = "You are an expert content writer. Rewrite and improve the following article to make it more engaging, "
+                . "better structured, and SEO-optimized.\n\n"
+                . "Title: {$post->post_title}\n"
+                . "Original content: {$plain}\n"
+                . "Language: {$lang}\n"
+                . "Tone: {$this->tone}\n"
+                . "{$extra}\n"
+                . "Requirements:\n"
+                . "- Improve readability and flow\n"
+                . "- Add H2/H3 subheadings if missing\n"
+                . "- Use proper HTML tags (<p>, <h2>, <h3>, <ul>, <li>, <strong>)\n"
+                . "- Keep the same topic and key information\n"
+                . "- Write a new compelling excerpt\n\n"
+                . "Return a JSON object with:\n"
+                . "- content (string): the rewritten HTML content\n"
+                . "- excerpt (string): new 1-2 sentence excerpt\n\n"
+                . "Return ONLY valid JSON, no markdown code blocks.";
+
+        $old_max = $this->max_tokens;
+        $this->max_tokens = max( $this->max_tokens, 4096 );
+
+        $result = $this->call_api( $prompt );
+
+        $this->max_tokens = $old_max;
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return $this->parse_json_response( $result );
+    }
+
     // ── Private helpers ─────────────────────────────
 
     private function lang_label(): string {

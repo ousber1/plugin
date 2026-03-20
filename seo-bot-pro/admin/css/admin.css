@@ -261,3 +261,67 @@
     font-size: 14px;
     padding: 4px 14px;
 }
+
+/* Advanced SEO section in meta box */
+.sbp-advanced-seo {
+    font-size: 12px;
+}
+
+.sbp-advanced-seo label {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.sbp-advanced-seo input[type="url"] {
+    margin-top: 4px;
+}
+
+.sbp-advanced-seo select {
+    margin-top: 4px;
+}
+
+/* Generator page */
+.sbp-generator-wrap {
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+.sbp-generator-wrap .form-table th {
+    width: 160px;
+    padding: 12px 10px 12px 0;
+}
+
+.sbp-generator-wrap .form-table td {
+    padding: 12px 10px;
+}
+
+.sbp-generator-wrap .button-hero {
+    font-size: 16px;
+    padding: 10px 30px;
+    height: auto;
+    line-height: 1.5;
+}
+
+#sbp-gen-result {
+    font-size: 14px;
+}
+
+#sbp-gen-result .sbp-result-success {
+    color: #155724;
+    background: #d4edda;
+    padding: 14px;
+    border-radius: 4px;
+    line-height: 1.8;
+}
+
+#sbp-gen-result .sbp-result-error {
+    color: #721c24;
+    background: #f8d7da;
+    padding: 14px;
+    border-radius: 4px;
+}
+
+#sbp-gen-result .button {
+    margin-top: 6px;
+    margin-right: 6px;
+}

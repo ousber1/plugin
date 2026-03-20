@@ -94,6 +94,9 @@ class SBP_Helpers {
         // Auto-optimize on publish
         $clean['auto_optimize_publish'] = ! empty( $input['auto_optimize_publish'] ) ? '1' : '0';
 
+        // Twitter Cards
+        $clean['enable_twitter'] = ! empty( $input['enable_twitter'] ) ? '1' : '0';
+
         return $clean;
     }
 

@@ -27,6 +27,8 @@ class SBP_Loader {
         require_once $dir . 'class-sbp-image-alt.php';
         require_once $dir . 'class-sbp-cron.php';
         require_once $dir . 'class-sbp-logger.php';
+        require_once $dir . 'class-sbp-post-generator.php';
+        require_once $dir . 'class-sbp-schema.php';
     }
 
     private function register_hooks() {
@@ -39,15 +41,23 @@ class SBP_Loader {
         $api = new SBP_REST_API();
         add_action( 'rest_api_init', [ $api, 'register_routes' ] );
 
-        // Meta box / editor button
+        // Meta box
         $meta = new SBP_Meta_Box();
         add_action( 'add_meta_boxes', [ $meta, 'register' ] );
+
+        // Schema markup
+        $schema = new SBP_Schema();
+        $schema->init();
+
+        // Robots meta output
+        add_action( 'wp_head', [ $this, 'output_robots_meta' ], 1 );
+        add_action( 'wp_head', [ $this, 'output_canonical' ], 1 );
 
         // CRON
         $cron = new SBP_Cron();
         add_action( 'sbp_daily_optimization', [ $cron, 'run' ] );
 
-        // AJAX endpoints (admin)
+        // AJAX endpoints
         add_action( 'wp_ajax_sbp_optimize_post', [ $api, 'ajax_optimize_post' ] );
         add_action( 'wp_ajax_sbp_bulk_optimize', [ $api, 'ajax_bulk_optimize' ] );
         add_action( 'wp_ajax_sbp_generate_faq', [ $api, 'ajax_generate_faq' ] );
@@ -56,6 +66,10 @@ class SBP_Loader {
         add_action( 'wp_ajax_sbp_analyze_content', [ $api, 'ajax_analyze_content' ] );
         add_action( 'wp_ajax_sbp_generate_keywords', [ $api, 'ajax_generate_keywords' ] );
         add_action( 'wp_ajax_sbp_optimize_slug', [ $api, 'ajax_optimize_slug' ] );
+        add_action( 'wp_ajax_sbp_generate_post', [ $api, 'ajax_generate_post' ] );
+        add_action( 'wp_ajax_sbp_generate_excerpt', [ $api, 'ajax_generate_excerpt' ] );
+        add_action( 'wp_ajax_sbp_rewrite_content', [ $api, 'ajax_rewrite_content' ] );
+        add_action( 'wp_ajax_sbp_save_robots_meta', [ $api, 'ajax_save_robots_meta' ] );
 
         // Auto-optimize on publish
         if ( SBP_Helpers::get_option( 'auto_optimize_publish' ) === '1' ) {
@@ -64,6 +78,45 @@ class SBP_Loader {
             if ( class_exists( 'WooCommerce' ) ) {
                 add_action( 'publish_product', [ $api, 'auto_optimize_on_publish' ], 10, 2 );
             }
+        }
+    }
+
+    /**
+     * Output robots noindex/nofollow in <head> when set via plugin meta.
+     */
+    public function output_robots_meta() {
+        if ( ! is_singular() ) {
+            return;
+        }
+        $post_id  = get_the_ID();
+        $noindex  = get_post_meta( $post_id, '_sbp_noindex', true );
+        $nofollow = get_post_meta( $post_id, '_sbp_nofollow', true );
+
+        $robots = [];
+        if ( $noindex === '1' ) {
+            $robots[] = 'noindex';
+        }
+        if ( $nofollow === '1' ) {
+            $robots[] = 'nofollow';
+        }
+
+        // Only output if SEO plugin is set to 'none' (other plugins handle their own)
+        if ( ! empty( $robots ) && SBP_Helpers::get_option( 'seo_plugin', 'rank_math' ) === 'none' ) {
+            echo '<meta name="robots" content="' . esc_attr( implode( ', ', $robots ) ) . "\" />\n";
+        }
+    }
+
+    /**
+     * Output canonical URL in <head> when set via plugin meta.
+     */
+    public function output_canonical() {
+        if ( ! is_singular() ) {
+            return;
+        }
+        $canonical = get_post_meta( get_the_ID(), '_sbp_canonical', true );
+
+        if ( $canonical && SBP_Helpers::get_option( 'seo_plugin', 'rank_math' ) === 'none' ) {
+            echo '<link rel="canonical" href="' . esc_url( $canonical ) . "\" />\n";
         }
     }
 }
