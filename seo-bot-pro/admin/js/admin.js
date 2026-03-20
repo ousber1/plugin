@@ -30,6 +30,13 @@
         }
     });
 
+    // ── Settings page: Image provider toggle ─────────
+    $('#sbp-image-provider').on('change', function () {
+        var prov = $(this).val();
+        $('.sbp-img-dalle-row, .sbp-img-unsplash-row, .sbp-img-pixabay-row, .sbp-img-pexels-row').hide();
+        $('.sbp-img-' + prov + '-row').show();
+    });
+
     // ── Single post optimize button ─────────────────
     $(document).on('click', '.sbp-optimize-btn', function () {
         var btn    = $(this);
@@ -502,6 +509,8 @@
 
                 if (d.image_generated) {
                     html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Featured Image:</span> <span class="sbp-text-success">Generated</span></div>';
+                } else if (d.image_error) {
+                    html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Featured Image:</span> <span class="sbp-text-danger">Failed: ' + escHtml(d.image_error) + '</span></div>';
                 }
                 if (d.has_links) {
                     html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Links:</span> <span class="sbp-text-success">Internal + External included</span></div>';

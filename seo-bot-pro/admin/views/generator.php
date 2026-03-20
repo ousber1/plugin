@@ -3,11 +3,35 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$ai         = new SBP_AI_Service();
-$configured = $ai->is_configured();
-$categories = get_categories( [ 'hide_empty' => false ] );
-$provider   = SBP_Helpers::get_option( 'provider', 'openai' );
-$has_openai = ! empty( SBP_Helpers::get_option( 'openai_api_key' ) );
+$ai             = new SBP_AI_Service();
+$configured     = $ai->is_configured();
+$categories     = get_categories( [ 'hide_empty' => false ] );
+$provider       = SBP_Helpers::get_option( 'provider', 'openai' );
+$image_provider = SBP_Helpers::get_option( 'image_provider', 'dalle' );
+$image_ready    = false;
+
+// Check if image provider is configured
+switch ( $image_provider ) {
+    case 'dalle':
+        $image_ready = ! empty( SBP_Helpers::get_option( 'openai_api_key' ) );
+        break;
+    case 'unsplash':
+        $image_ready = ! empty( SBP_Helpers::get_option( 'unsplash_api_key' ) );
+        break;
+    case 'pixabay':
+        $image_ready = ! empty( SBP_Helpers::get_option( 'pixabay_api_key' ) );
+        break;
+    case 'pexels':
+        $image_ready = ! empty( SBP_Helpers::get_option( 'pexels_api_key' ) );
+        break;
+}
+
+$image_labels = [
+    'dalle'    => 'DALL-E 3 (AI-generated)',
+    'unsplash' => 'Unsplash (free stock)',
+    'pixabay'  => 'Pixabay (free stock)',
+    'pexels'   => 'Pexels (free stock)',
+];
 ?>
 
 <div class="wrap sbp-wrap">
@@ -132,16 +156,33 @@ $has_openai = ! empty( SBP_Helpers::get_option( 'openai_api_key' ) );
                     <th><?php esc_html_e( 'Featured Image', 'seo-bot-pro' ); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" id="sbp-gen-autoimage" <?php echo $has_openai ? 'checked' : ''; ?>>
-                            <?php esc_html_e( 'Generate AI featured image with DALL-E 3', 'seo-bot-pro' ); ?>
+                            <input type="checkbox" id="sbp-gen-autoimage" <?php echo $image_ready ? 'checked' : ''; ?>>
+                            <?php
+                            printf(
+                                esc_html__( 'Auto-generate featured image via %s', 'seo-bot-pro' ),
+                                '<strong>' . esc_html( $image_labels[ $image_provider ] ?? 'DALL-E' ) . '</strong>'
+                            );
+                            ?>
                         </label>
-                        <?php if ( ! $has_openai ) : ?>
+                        <?php if ( ! $image_ready ) : ?>
                             <p class="description" style="color:#d63638;">
-                                <?php esc_html_e( 'Requires OpenAI API key (DALL-E). Add your OpenAI key in Settings even if using Claude for text.', 'seo-bot-pro' ); ?>
+                                <?php
+                                printf(
+                                    esc_html__( 'Image provider "%s" is not configured. %s to add your API key.', 'seo-bot-pro' ),
+                                    esc_html( $image_labels[ $image_provider ] ?? $image_provider ),
+                                    '<a href="' . esc_url( admin_url( 'admin.php?page=sbp-settings' ) ) . '">' . esc_html__( 'Go to Settings', 'seo-bot-pro' ) . '</a>'
+                                );
+                                ?>
                             </p>
                         <?php else : ?>
                             <p class="description">
-                                <?php esc_html_e( 'AI generates a unique, professional featured image based on article content. Uses DALL-E 3 (1792x1024).', 'seo-bot-pro' ); ?>
+                                <?php
+                                printf(
+                                    esc_html__( 'Provider: %s. Change in %s.', 'seo-bot-pro' ),
+                                    esc_html( $image_labels[ $image_provider ] ),
+                                    '<a href="' . esc_url( admin_url( 'admin.php?page=sbp-settings' ) ) . '">' . esc_html__( 'Settings', 'seo-bot-pro' ) . '</a>'
+                                );
+                                ?>
                             </p>
                         <?php endif; ?>
                     </td>

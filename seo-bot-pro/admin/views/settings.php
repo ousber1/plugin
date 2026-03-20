@@ -10,6 +10,10 @@ $claude_key   = $settings['claude_api_key'] ?? '';
 $model        = $settings['model'] ?? ( $provider === 'claude' ? 'claude-sonnet-4-6' : 'gpt-4o-mini' );
 $language     = $settings['language'] ?? 'en';
 $tone         = $settings['tone'] ?? 'professional';
+$image_provider   = $settings['image_provider'] ?? 'dalle';
+$unsplash_key     = $settings['unsplash_api_key'] ?? '';
+$pixabay_key      = $settings['pixabay_api_key'] ?? '';
+$pexels_key       = $settings['pexels_api_key'] ?? '';
 $temperature  = $settings['temperature'] ?? 0.4;
 $max_tokens   = $settings['max_tokens'] ?? 1024;
 $seo_plugin   = $settings['seo_plugin'] ?? 'rank_math';
@@ -109,6 +113,105 @@ settings_errors( 'sbp_settings' );
                             </option>
                         <?php endforeach; ?>
                     </select>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Image Generation ────────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Image Generation (Featured Images)', 'seo-bot-pro' ); ?></h2>
+        <p class="description" style="margin-bottom:10px;">
+            <?php esc_html_e( 'Configure the image provider for auto-generating featured images when creating posts with the AI Post Generator.', 'seo-bot-pro' ); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="sbp-image-provider"><?php esc_html_e( 'Image Provider', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <select id="sbp-image-provider" name="sbp[image_provider]">
+                        <option value="dalle" <?php selected( $image_provider, 'dalle' ); ?>>
+                            <?php esc_html_e( 'DALL-E 3 (OpenAI) — AI-generated unique images (paid, requires OpenAI key)', 'seo-bot-pro' ); ?>
+                        </option>
+                        <option value="unsplash" <?php selected( $image_provider, 'unsplash' ); ?>>
+                            <?php esc_html_e( 'Unsplash — Free high-quality stock photos', 'seo-bot-pro' ); ?>
+                        </option>
+                        <option value="pixabay" <?php selected( $image_provider, 'pixabay' ); ?>>
+                            <?php esc_html_e( 'Pixabay — Free stock photos (no attribution required)', 'seo-bot-pro' ); ?>
+                        </option>
+                        <option value="pexels" <?php selected( $image_provider, 'pexels' ); ?>>
+                            <?php esc_html_e( 'Pexels — Free stock photos', 'seo-bot-pro' ); ?>
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="sbp-img-dalle-row" <?php echo $image_provider !== 'dalle' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row"><?php esc_html_e( 'DALL-E Setup', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <p class="description">
+                        <?php esc_html_e( 'DALL-E uses your OpenAI API Key (configured above). Make sure you have billing enabled on your OpenAI account.', 'seo-bot-pro' ); ?>
+                        <br><strong><?php esc_html_e( 'Cost: ~$0.04 per image (1792x1024)', 'seo-bot-pro' ); ?></strong>
+                    </p>
+                </td>
+            </tr>
+
+            <tr class="sbp-img-unsplash-row" <?php echo $image_provider !== 'unsplash' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row">
+                    <label for="sbp-unsplash-key"><?php esc_html_e( 'Unsplash API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-unsplash-key" name="sbp[unsplash_api_key]"
+                           value="<?php echo esc_attr( $unsplash_key ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'Your Unsplash Access Key', 'seo-bot-pro' ); ?>">
+                    <p class="description">
+                        <?php
+                        printf(
+                            esc_html__( 'Free: 50 requests/hour. %1$sGet your key here%2$s → Create App → Copy "Access Key"', 'seo-bot-pro' ),
+                            '<a href="https://unsplash.com/developers" target="_blank" rel="noopener">',
+                            '</a>'
+                        );
+                        ?>
+                    </p>
+                </td>
+            </tr>
+
+            <tr class="sbp-img-pixabay-row" <?php echo $image_provider !== 'pixabay' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row">
+                    <label for="sbp-pixabay-key"><?php esc_html_e( 'Pixabay API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-pixabay-key" name="sbp[pixabay_api_key]"
+                           value="<?php echo esc_attr( $pixabay_key ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'Your Pixabay API Key', 'seo-bot-pro' ); ?>">
+                    <p class="description">
+                        <?php
+                        printf(
+                            esc_html__( 'Free: 100 requests/minute. %1$sGet your key here%2$s → Sign up → API docs → Your API Key', 'seo-bot-pro' ),
+                            '<a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener">',
+                            '</a>'
+                        );
+                        ?>
+                    </p>
+                </td>
+            </tr>
+
+            <tr class="sbp-img-pexels-row" <?php echo $image_provider !== 'pexels' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row">
+                    <label for="sbp-pexels-key"><?php esc_html_e( 'Pexels API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-pexels-key" name="sbp[pexels_api_key]"
+                           value="<?php echo esc_attr( $pexels_key ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'Your Pexels API Key', 'seo-bot-pro' ); ?>">
+                    <p class="description">
+                        <?php
+                        printf(
+                            esc_html__( 'Free: 200 requests/hour. %1$sGet your key here%2$s → Sign up → Image & Video API', 'seo-bot-pro' ),
+                            '<a href="https://www.pexels.com/api/" target="_blank" rel="noopener">',
+                            '</a>'
+                        );
+                        ?>
+                    </p>
                 </td>
             </tr>
         </table>

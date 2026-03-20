@@ -105,6 +105,7 @@ class SBP_Post_Generator {
         ] ) );
 
         $image_generated = false;
+        $image_error     = '';
 
         // Generate featured image
         if ( $auto_image ) {
@@ -113,12 +114,13 @@ class SBP_Post_Generator {
                 $image_prompt = "Professional blog featured image for article: {$title}. Clean, modern design, high quality.";
             }
 
-            $image_result = $this->generate_and_attach_image( $ai, $post_id, $title, $image_prompt );
+            $image_result = $this->generate_and_attach_image( $ai, $post_id, $title, $image_prompt, $topic );
             if ( ! is_wp_error( $image_result ) ) {
                 $image_generated = true;
                 SBP_Logger::log( $post_id, 'generate_image', 'success', 'Featured image generated' );
             } else {
-                SBP_Logger::log( $post_id, 'generate_image', 'error', $image_result->get_error_message() );
+                $image_error = $image_result->get_error_message();
+                SBP_Logger::log( $post_id, 'generate_image', 'error', $image_error );
             }
         }
 
@@ -148,6 +150,7 @@ class SBP_Post_Generator {
             'excerpt'         => $excerpt,
             'template'        => $template,
             'image_generated' => $image_generated,
+            'image_error'     => $image_error,
             'has_links'       => $auto_links,
         ];
     }
@@ -181,9 +184,9 @@ class SBP_Post_Generator {
      *
      * @return int|WP_Error  Attachment ID on success.
      */
-    private function generate_and_attach_image( SBP_AI_Service $ai, int $post_id, string $title, string $image_prompt ) {
-        // Generate image URL via DALL-E
-        $image_url = $ai->generate_image( $image_prompt );
+    private function generate_and_attach_image( SBP_AI_Service $ai, int $post_id, string $title, string $image_prompt, string $topic = '' ) {
+        // Generate/fetch image URL via configured provider
+        $image_url = $ai->generate_image( $image_prompt, $topic );
         if ( is_wp_error( $image_url ) ) {
             return $image_url;
         }

@@ -120,6 +120,15 @@ class SBP_Helpers {
         // Breadcrumbs
         $clean['enable_breadcrumbs'] = ! empty( $input['enable_breadcrumbs'] ) ? '1' : '0';
 
+        // Image generation
+        $allowed_img = [ 'dalle', 'unsplash', 'pixabay', 'pexels' ];
+        $clean['image_provider'] = in_array( $input['image_provider'] ?? 'dalle', $allowed_img, true )
+            ? $input['image_provider']
+            : 'dalle';
+        $clean['unsplash_api_key'] = sanitize_text_field( $input['unsplash_api_key'] ?? '' );
+        $clean['pixabay_api_key']  = sanitize_text_field( $input['pixabay_api_key'] ?? '' );
+        $clean['pexels_api_key']   = sanitize_text_field( $input['pexels_api_key'] ?? '' );
+
         return $clean;
     }
 

@@ -367,23 +367,50 @@ class SBP_AI_Service {
     // ── Image generation ───────────────────────────
 
     /**
-     * Generate an image using OpenAI DALL-E API.
+     * Generate/fetch an image based on the configured image provider.
      *
-     * @param string $prompt  Description of the image to generate.
-     * @param string $size    Image size: 1024x1024, 1792x1024, 1024x1792.
-     * @return string|WP_Error  URL of the generated image.
+     * Providers:
+     *  - dalle    : OpenAI DALL-E 3 (requires OpenAI key, paid)
+     *  - unsplash : Unsplash API (requires free Unsplash API key)
+     *  - pixabay  : Pixabay API (requires free Pixabay API key)
+     *  - pexels   : Pexels API (requires free Pexels API key)
+     *
+     * @param string $prompt   Description or search query for the image.
+     * @param string $topic    The article topic (used as fallback search query).
+     * @return string|WP_Error Image URL on success.
      */
-    public function generate_image( string $prompt, string $size = '1792x1024' ) {
-        // Image generation requires OpenAI API key (DALL-E)
+    public function generate_image( string $prompt, string $topic = '' ) {
+        $image_provider = SBP_Helpers::get_option( 'image_provider', 'dalle' );
+
+        switch ( $image_provider ) {
+            case 'unsplash':
+                return $this->fetch_unsplash_image( $topic ?: $prompt );
+
+            case 'pixabay':
+                return $this->fetch_pixabay_image( $topic ?: $prompt );
+
+            case 'pexels':
+                return $this->fetch_pexels_image( $topic ?: $prompt );
+
+            case 'dalle':
+            default:
+                return $this->generate_dalle_image( $prompt );
+        }
+    }
+
+    /**
+     * Generate image via OpenAI DALL-E 3.
+     */
+    private function generate_dalle_image( string $prompt ): string|\WP_Error {
         if ( empty( $this->openai_key ) ) {
-            return new WP_Error( 'no_api_key', __( 'OpenAI API key is required for image generation (DALL-E).', 'seo-bot-pro' ) );
+            return new WP_Error( 'no_api_key', __( 'OpenAI API key is required for DALL-E image generation. Add your key in Settings > OpenAI API Key.', 'seo-bot-pro' ) );
         }
 
         $body = [
             'model'  => 'dall-e-3',
             'prompt' => $prompt,
             'n'      => 1,
-            'size'   => $size,
+            'size'   => '1792x1024',
         ];
 
         $response = wp_remote_post( 'https://api.openai.com/v1/images/generations', [
@@ -396,22 +423,172 @@ class SBP_AI_Service {
         ] );
 
         if ( is_wp_error( $response ) ) {
-            return $response;
+            return new WP_Error( 'api_error', __( 'DALL-E connection failed: ', 'seo-bot-pro' ) . $response->get_error_message() );
         }
 
         $code = wp_remote_retrieve_response_code( $response );
         $data = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( $code !== 200 ) {
-            $msg = $data['error']['message'] ?? __( 'Image generation failed.', 'seo-bot-pro' );
-            return new WP_Error( 'api_error', $msg );
+            $msg = $data['error']['message'] ?? __( 'DALL-E API error.', 'seo-bot-pro' );
+            return new WP_Error( 'api_error', 'DALL-E: ' . $msg );
         }
 
         if ( empty( $data['data'][0]['url'] ) ) {
-            return new WP_Error( 'api_error', __( 'No image URL returned.', 'seo-bot-pro' ) );
+            return new WP_Error( 'api_error', __( 'DALL-E returned no image URL.', 'seo-bot-pro' ) );
         }
 
         return $data['data'][0]['url'];
+    }
+
+    /**
+     * Fetch image from Unsplash API (free).
+     */
+    private function fetch_unsplash_image( string $query ): string|\WP_Error {
+        $api_key = SBP_Helpers::get_option( 'unsplash_api_key' );
+        if ( empty( $api_key ) ) {
+            return new WP_Error( 'no_api_key', __( 'Unsplash API key not configured. Get a free key at unsplash.com/developers and add it in Settings.', 'seo-bot-pro' ) );
+        }
+
+        // Extract 2-3 key words for better search
+        $search = $this->simplify_search_query( $query );
+
+        $url = add_query_arg( [
+            'query'       => $search,
+            'orientation' => 'landscape',
+            'per_page'    => 1,
+            'client_id'   => $api_key,
+        ], 'https://api.unsplash.com/search/photos' );
+
+        $response = wp_remote_get( $url, [ 'timeout' => 30 ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'api_error', __( 'Unsplash connection failed: ', 'seo-bot-pro' ) . $response->get_error_message() );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( $code !== 200 ) {
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            return new WP_Error( 'api_error', 'Unsplash: ' . ( $data['errors'][0] ?? "HTTP {$code}" ) );
+        }
+
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( empty( $data['results'][0]['urls']['regular'] ) ) {
+            return new WP_Error( 'no_image', __( 'Unsplash: No images found for this topic. Try a different topic.', 'seo-bot-pro' ) );
+        }
+
+        return $data['results'][0]['urls']['regular'];
+    }
+
+    /**
+     * Fetch image from Pixabay API (free).
+     */
+    private function fetch_pixabay_image( string $query ): string|\WP_Error {
+        $api_key = SBP_Helpers::get_option( 'pixabay_api_key' );
+        if ( empty( $api_key ) ) {
+            return new WP_Error( 'no_api_key', __( 'Pixabay API key not configured. Get a free key at pixabay.com/api/docs/ and add it in Settings.', 'seo-bot-pro' ) );
+        }
+
+        $search = $this->simplify_search_query( $query );
+
+        $url = add_query_arg( [
+            'key'          => $api_key,
+            'q'            => $search,
+            'image_type'   => 'photo',
+            'orientation'  => 'horizontal',
+            'per_page'     => 3,
+            'safesearch'   => 'true',
+            'min_width'    => 1200,
+        ], 'https://pixabay.com/api/' );
+
+        $response = wp_remote_get( $url, [ 'timeout' => 30 ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'api_error', __( 'Pixabay connection failed: ', 'seo-bot-pro' ) . $response->get_error_message() );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( $code !== 200 ) {
+            return new WP_Error( 'api_error', "Pixabay: HTTP {$code}" );
+        }
+
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( empty( $data['hits'][0]['largeImageURL'] ) ) {
+            return new WP_Error( 'no_image', __( 'Pixabay: No images found for this topic. Try a different topic.', 'seo-bot-pro' ) );
+        }
+
+        return $data['hits'][0]['largeImageURL'];
+    }
+
+    /**
+     * Fetch image from Pexels API (free).
+     */
+    private function fetch_pexels_image( string $query ): string|\WP_Error {
+        $api_key = SBP_Helpers::get_option( 'pexels_api_key' );
+        if ( empty( $api_key ) ) {
+            return new WP_Error( 'no_api_key', __( 'Pexels API key not configured. Get a free key at pexels.com/api/ and add it in Settings.', 'seo-bot-pro' ) );
+        }
+
+        $search = $this->simplify_search_query( $query );
+
+        $url = add_query_arg( [
+            'query'       => $search,
+            'orientation' => 'landscape',
+            'per_page'    => 1,
+            'size'        => 'large',
+        ], 'https://api.pexels.com/v1/search' );
+
+        $response = wp_remote_get( $url, [
+            'timeout' => 30,
+            'headers' => [
+                'Authorization' => $api_key,
+            ],
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'api_error', __( 'Pexels connection failed: ', 'seo-bot-pro' ) . $response->get_error_message() );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( $code !== 200 ) {
+            return new WP_Error( 'api_error', "Pexels: HTTP {$code}" );
+        }
+
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( empty( $data['photos'][0]['src']['large2x'] ) ) {
+            return new WP_Error( 'no_image', __( 'Pexels: No images found for this topic. Try a different topic.', 'seo-bot-pro' ) );
+        }
+
+        return $data['photos'][0]['src']['large2x'];
+    }
+
+    /**
+     * Simplify a long prompt/topic into 2-3 keyword search query.
+     */
+    private function simplify_search_query( string $text ): string {
+        // Remove common stop words and keep 2-4 meaningful words
+        $stop_words = [ 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+            'may', 'might', 'shall', 'can', 'to', 'of', 'in', 'for', 'on', 'with', 'at',
+            'by', 'from', 'as', 'into', 'about', 'like', 'through', 'after', 'before',
+            'between', 'out', 'against', 'during', 'without', 'how', 'what', 'which',
+            'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'or', 'and', 'but',
+            'if', 'while', 'because', 'so', 'than', 'too', 'very', 'just', 'best', 'top',
+            'most', 'your', 'our', 'my', 'its', 'his', 'her', 'their', 'not', 'no', 'nor',
+            'only', 'own', 'same', 'also', 'other', 'each', 'every', 'both', 'few', 'more',
+            'many', 'such', 'all', 'any', 'some', 'new', 'old', 'why', 'when', 'where' ];
+
+        $words = preg_split( '/\s+/', strtolower( trim( $text ) ) );
+        $words = array_filter( $words, function( $w ) use ( $stop_words ) {
+            return strlen( $w ) > 2 && ! in_array( $w, $stop_words, true );
+        });
+
+        $words = array_values( $words );
+
+        return implode( ' ', array_slice( $words, 0, 3 ) );
     }
 
     /**
