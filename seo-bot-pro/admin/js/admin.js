@@ -11,7 +11,7 @@
         var provider = $(this).val();
 
         if (provider === 'claude') {
-            $('.sbp-openai-row').hide();
+            $('.sbp-openai-row').show(); // Keep visible – needed for DALL-E image generation
             $('.sbp-claude-row').show();
             $('.sbp-model-openai').hide().prop('selected', false);
             $('.sbp-model-claude').show();

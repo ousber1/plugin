@@ -54,7 +54,7 @@ settings_errors( 'sbp_settings' );
                 </td>
             </tr>
 
-            <tr class="sbp-openai-row" <?php echo $provider === 'claude' ? 'style="display:none;"' : ''; ?>>
+            <tr class="sbp-openai-row">
                 <th scope="row">
                     <label for="sbp-openai-key"><?php esc_html_e( 'OpenAI API Key', 'seo-bot-pro' ); ?></label>
                 </th>
@@ -62,7 +62,13 @@ settings_errors( 'sbp_settings' );
                     <input type="password" id="sbp-openai-key" name="sbp[openai_api_key]"
                            value="<?php echo esc_attr( $openai_key ); ?>"
                            class="regular-text" autocomplete="off">
-                    <p class="description"><?php esc_html_e( 'Get your key from platform.openai.com', 'seo-bot-pro' ); ?></p>
+                    <p class="description">
+                        <?php if ( $provider === 'claude' ) : ?>
+                            <?php esc_html_e( 'Optional but required for AI image generation (DALL-E 3). Get your key from platform.openai.com', 'seo-bot-pro' ); ?>
+                        <?php else : ?>
+                            <?php esc_html_e( 'Required for text generation + image generation (DALL-E 3). Get your key from platform.openai.com', 'seo-bot-pro' ); ?>
+                        <?php endif; ?>
+                    </p>
                 </td>
             </tr>
 
