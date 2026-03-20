@@ -1,0 +1,171 @@
+/* ── SEO Bot Pro Admin Styles ────────────────────── */
+
+.sbp-wrap {
+    max-width: 1100px;
+}
+
+/* Cards Grid */
+.sbp-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.sbp-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.sbp-card h3 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sbp-card-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1d2327;
+}
+
+/* Tables */
+.sbp-table {
+    margin-top: 10px;
+}
+
+.sbp-table th {
+    font-weight: 600;
+}
+
+/* Status badges */
+.sbp-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.sbp-status-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sbp-status-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Meta box */
+.sbp-meta-box button {
+    margin: 4px 4px 4px 0;
+}
+
+.sbp-meta-box hr {
+    margin: 12px 0;
+}
+
+/* Analysis result */
+#sbp-analysis-result .sbp-score {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+#sbp-analysis-result .sbp-score.score-good { color: #28a745; }
+#sbp-analysis-result .sbp-score.score-ok   { color: #ffc107; }
+#sbp-analysis-result .sbp-score.score-bad  { color: #dc3545; }
+
+#sbp-analysis-result .sbp-check {
+    padding: 3px 0;
+    font-size: 13px;
+}
+
+#sbp-analysis-result .sbp-check .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: text-bottom;
+}
+
+#sbp-analysis-result .sbp-check .dashicons-yes { color: #28a745; }
+#sbp-analysis-result .sbp-check .dashicons-no  { color: #dc3545; }
+
+.sbp-suggestions {
+    margin-top: 8px;
+    padding: 8px;
+    background: #fff3cd;
+    border-left: 3px solid #ffc107;
+    font-size: 12px;
+}
+
+.sbp-suggestions li {
+    margin-bottom: 3px;
+}
+
+/* Action result */
+#sbp-action-result {
+    font-size: 13px;
+}
+
+#sbp-action-result .sbp-result-success {
+    color: #155724;
+    background: #d4edda;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+#sbp-action-result .sbp-result-error {
+    color: #721c24;
+    background: #f8d7da;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Bulk progress */
+#sbp-bulk-progress {
+    font-weight: 600;
+}
+
+/* Spinner */
+.sbp-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #0073aa;
+    border-radius: 50%;
+    animation: sbp-spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+@keyframes sbp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Link suggestions */
+.sbp-link-suggestions {
+    margin-top: 8px;
+}
+
+.sbp-link-suggestions li {
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.sbp-link-suggestions a {
+    text-decoration: none;
+}
+
+/* Settings form */
+.form-table input.regular-text,
+.form-table select {
+    min-width: 300px;
+}
