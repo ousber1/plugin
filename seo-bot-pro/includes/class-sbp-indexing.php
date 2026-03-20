@@ -40,35 +40,67 @@ class SBP_Indexing {
     }
 
     /**
-     * Ping Google via their sitemap/blog ping endpoint.
+     * Ping Google via their sitemap submission endpoint.
      */
     public function ping_google( string $url ): array {
-        $ping_url = 'https://www.google.com/ping?sitemap=' . rawurlencode( $url );
+        $sitemap_url = $this->ensure_sitemap_url( $url );
+        $ping_url    = 'https://www.google.com/ping?sitemap=' . rawurlencode( $sitemap_url );
 
-        $response = wp_remote_get( $ping_url, [ 'timeout' => 15 ] );
+        $response = wp_remote_get( $ping_url, [
+            'timeout'    => 15,
+            'user-agent' => 'SEO Bot Pro/' . SBP_VERSION . ' (WordPress)',
+        ] );
 
         if ( is_wp_error( $response ) ) {
             return [ 'success' => false, 'error' => $response->get_error_message() ];
         }
 
         $code = wp_remote_retrieve_response_code( $response );
-        return [ 'success' => $code >= 200 && $code < 400, 'code' => $code ];
+        return [
+            'success' => $code >= 200 && $code < 400,
+            'code'    => $code,
+            'message' => $code >= 200 && $code < 400 ? 'Sitemap submitted' : 'HTTP ' . $code,
+        ];
     }
 
     /**
-     * Ping Bing via their URL submission endpoint.
+     * Ping Bing via their sitemap submission endpoint.
      */
     public function ping_bing( string $url ): array {
-        $ping_url = 'https://www.bing.com/ping?sitemap=' . rawurlencode( $url );
+        $sitemap_url = $this->ensure_sitemap_url( $url );
+        $ping_url    = 'https://www.bing.com/ping?sitemap=' . rawurlencode( $sitemap_url );
 
-        $response = wp_remote_get( $ping_url, [ 'timeout' => 15 ] );
+        $response = wp_remote_get( $ping_url, [
+            'timeout'    => 15,
+            'user-agent' => 'SEO Bot Pro/' . SBP_VERSION . ' (WordPress)',
+        ] );
 
         if ( is_wp_error( $response ) ) {
             return [ 'success' => false, 'error' => $response->get_error_message() ];
         }
 
         $code = wp_remote_retrieve_response_code( $response );
-        return [ 'success' => $code >= 200 && $code < 400, 'code' => $code ];
+        return [
+            'success' => $code >= 200 && $code < 400,
+            'code'    => $code,
+            'message' => $code >= 200 && $code < 400 ? 'Sitemap submitted' : 'HTTP ' . $code,
+        ];
+    }
+
+    /**
+     * Ensure we have a valid sitemap URL (not just homepage).
+     */
+    private function ensure_sitemap_url( string $url ): string {
+        // If the URL doesn't look like a sitemap, use the plugin's sitemap
+        if ( strpos( $url, 'sitemap' ) === false && strpos( $url, '.xml' ) === false ) {
+            // Check if plugin sitemap is enabled
+            if ( SBP_Helpers::get_option( 'enable_sitemap', '0' ) === '1' ) {
+                return home_url( '/sbp-sitemap.xml' );
+            }
+            // Fall back to WordPress default sitemap
+            return home_url( '/wp-sitemap.xml' );
+        }
+        return $url;
     }
 
     /**

@@ -426,13 +426,15 @@ class SBP_REST_API {
         }
 
         $indexing = new SBP_Indexing();
-        $url      = home_url( '/' );
-        $results  = $indexing->ping_all( $url );
 
-        // Also ping sitemap if enabled
+        // Use sitemap URL for search engine pings (not homepage)
         if ( SBP_Helpers::get_option( 'enable_sitemap', '0' ) === '1' ) {
-            $results['sitemap'] = $indexing->ping_sitemap();
+            $sitemap_url = home_url( '/sbp-sitemap.xml' );
+        } else {
+            $sitemap_url = home_url( '/wp-sitemap.xml' );
         }
+
+        $results = $indexing->ping_all( $sitemap_url );
 
         SBP_Logger::log( 0, 'ping_engines', 'success', wp_json_encode( $results ) );
         wp_send_json_success( $results );

@@ -571,12 +571,21 @@
         .done(function (res) {
             if (res.success) {
                 var d    = res.data;
-                var html = '<span class="sbp-text-success">';
-                if (d.google) html += 'Google: ' + (d.google.success ? 'OK' : 'Failed') + ' | ';
-                if (d.bing) html += 'Bing: ' + (d.bing.success ? 'OK' : 'Failed') + ' | ';
-                if (d.indexnow) html += 'IndexNow: ' + (d.indexnow.success ? 'OK' : 'Failed');
-                html += '</span>';
-                result.html(html);
+                var html = '';
+
+                function pingStatus(name, obj) {
+                    if (!obj) return '';
+                    var ok  = obj.success;
+                    var cls = ok ? 'sbp-text-success' : 'sbp-text-danger';
+                    var msg = ok ? 'OK' : (obj.error || obj.message || 'Failed');
+                    return '<span class="' + cls + '">' + name + ': ' + escHtml(msg) + '</span> ';
+                }
+
+                html += pingStatus('Google', d.google);
+                html += pingStatus('Bing', d.bing);
+                html += pingStatus('IndexNow', d.indexnow);
+
+                result.html(html || '<span class="sbp-text-danger">No engines configured</span>');
             } else {
                 result.html('<span class="sbp-text-danger">' + (res.data.message || 'Error') + '</span>');
             }
