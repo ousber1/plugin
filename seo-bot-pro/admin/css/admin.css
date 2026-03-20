@@ -4,10 +4,18 @@
     max-width: 1100px;
 }
 
+/* Section titles */
+.sbp-section-title {
+    margin-top: 30px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dcdcde;
+    font-size: 16px;
+}
+
 /* Cards Grid */
 .sbp-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 16px;
     margin: 20px 0;
 }
@@ -22,7 +30,7 @@
 
 .sbp-card h3 {
     margin: 0 0 8px;
-    font-size: 13px;
+    font-size: 12px;
     color: #646970;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -32,6 +40,31 @@
     font-size: 32px;
     font-weight: 700;
     color: #1d2327;
+}
+
+/* Provider badge */
+.sbp-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sbp-badge-openai {
+    background: #10a37f;
+    color: #fff;
+}
+
+.sbp-badge-claude {
+    background: #d97706;
+    color: #fff;
+}
+
+.sbp-provider-badge {
+    margin: 0 0 8px;
 }
 
 /* Tables */
@@ -63,28 +96,57 @@
 }
 
 /* Meta box */
-.sbp-meta-box button {
-    margin: 4px 4px 4px 0;
+.sbp-meta-box .sbp-meta-info {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.sbp-meta-box .sbp-meta-info p {
+    margin: 4px 0;
+}
+
+.sbp-meta-box .sbp-action-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 10px 0;
+}
+
+.sbp-meta-box .sbp-action-group button {
+    font-size: 11px;
+    padding: 2px 8px;
 }
 
 .sbp-meta-box hr {
     margin: 12px 0;
 }
 
+.sbp-keywords-list {
+    font-size: 11px;
+    color: #646970;
+    word-break: break-word;
+}
+
 /* Analysis result */
 #sbp-analysis-result .sbp-score {
     font-size: 28px;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 #sbp-analysis-result .sbp-score.score-good { color: #28a745; }
 #sbp-analysis-result .sbp-score.score-ok   { color: #ffc107; }
 #sbp-analysis-result .sbp-score.score-bad  { color: #dc3545; }
 
+#sbp-analysis-result .sbp-word-count {
+    font-size: 12px;
+    color: #646970;
+    margin-bottom: 8px;
+}
+
 #sbp-analysis-result .sbp-check {
-    padding: 3px 0;
-    font-size: 13px;
+    padding: 2px 0;
+    font-size: 12px;
 }
 
 #sbp-analysis-result .sbp-check .dashicons {
@@ -109,6 +171,23 @@
     margin-bottom: 3px;
 }
 
+.sbp-suggestions strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Readability section */
+.sbp-readability {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.sbp-readability h4 {
+    margin: 0 0 6px;
+    font-size: 13px;
+}
+
 /* Action result */
 #sbp-action-result {
     font-size: 13px;
@@ -126,6 +205,13 @@
     background: #f8d7da;
     padding: 8px;
     border-radius: 4px;
+}
+
+#sbp-action-result code {
+    background: #f0f0f1;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
 }
 
 /* Bulk progress */
@@ -168,4 +254,10 @@
 .form-table input.regular-text,
 .form-table select {
     min-width: 300px;
+}
+
+/* Dashboard provider card */
+.sbp-card .sbp-badge {
+    font-size: 14px;
+    padding: 4px 14px;
 }

@@ -47,16 +47,14 @@ class SBP_REST_API {
         SBP_Logger::log( $post_id, 'optimize', 'success', wp_json_encode( $result ) );
 
         return new WP_REST_Response( [
-            'success' => true,
-            'data'    => $result,
+            'success'  => true,
+            'provider' => $ai->get_provider(),
+            'data'     => $result,
         ] );
     }
 
     // ── AJAX endpoints ──────────────────────────────
 
-    /**
-     * Optimize a single post via AJAX.
-     */
     public function ajax_optimize_post() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -83,9 +81,6 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
-    /**
-     * Bulk optimize via AJAX (processes one at a time, called per-post from JS).
-     */
     public function ajax_bulk_optimize() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -112,9 +107,6 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
-    /**
-     * Generate FAQ via AJAX.
-     */
     public function ajax_generate_faq() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -139,9 +131,6 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
-    /**
-     * Suggest internal links via AJAX.
-     */
     public function ajax_suggest_links() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -164,9 +153,6 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
-    /**
-     * Fix image ALTs via AJAX.
-     */
     public function ajax_fix_image_alts() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -191,9 +177,6 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
-    /**
-     * Analyze content via AJAX.
-     */
     public function ajax_analyze_content() {
         check_ajax_referer( 'sbp_nonce', 'nonce' );
 
@@ -214,23 +197,182 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
+    /**
+     * Generate keywords via AJAX.
+     */
+    public function ajax_generate_keywords() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+        if ( ! $post_id ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid post ID.', 'seo-bot-pro' ) ] );
+        }
+
+        $ai     = new SBP_AI_Service();
+        $result = $ai->generate_keywords( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            SBP_Logger::log( $post_id, 'keywords', 'error', $result->get_error_message() );
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+        }
+
+        // Store keywords as post meta
+        if ( ! empty( $result['primary'] ) ) {
+            update_post_meta( $post_id, '_sbp_focus_keyword', sanitize_text_field( $result['primary'] ) );
+
+            // Rank Math focus keyword
+            $seo_plugin = SBP_Helpers::get_option( 'seo_plugin', 'rank_math' );
+            if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
+                update_post_meta( $post_id, 'rank_math_focus_keyword', sanitize_text_field( $result['primary'] ) );
+            }
+            if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
+                update_post_meta( $post_id, '_yoast_wpseo_focuskw', sanitize_text_field( $result['primary'] ) );
+            }
+        }
+        if ( ! empty( $result['keywords'] ) && is_array( $result['keywords'] ) ) {
+            $kw_string = implode( ', ', array_map( 'sanitize_text_field', $result['keywords'] ) );
+            update_post_meta( $post_id, '_sbp_keywords', $kw_string );
+        }
+
+        SBP_Logger::log( $post_id, 'keywords', 'success', wp_json_encode( $result ) );
+        wp_send_json_success( $result );
+    }
+
+    /**
+     * Optimize slug via AJAX.
+     */
+    public function ajax_optimize_slug() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+        if ( ! $post_id ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid post ID.', 'seo-bot-pro' ) ] );
+        }
+
+        $ai     = new SBP_AI_Service();
+        $result = $ai->optimize_slug( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+        }
+
+        // Apply the slug
+        if ( ! empty( $result['slug'] ) ) {
+            $slug = sanitize_title( $result['slug'] );
+            wp_update_post( [
+                'ID'        => $post_id,
+                'post_name' => $slug,
+            ] );
+            $result['slug']      = $slug;
+            $result['permalink'] = get_permalink( $post_id );
+        }
+
+        SBP_Logger::log( $post_id, 'slug', 'success', wp_json_encode( $result ) );
+        wp_send_json_success( $result );
+    }
+
+    /**
+     * Called on post publish to auto-optimize.
+     */
+    public function auto_optimize_on_publish( int $post_id, WP_Post $post ) {
+        // Only for supported post types
+        if ( ! in_array( $post->post_type, SBP_Helpers::post_types(), true ) ) {
+            return;
+        }
+
+        // Skip if already optimized
+        if ( get_post_meta( $post_id, '_sbp_meta_title', true ) ) {
+            return;
+        }
+
+        $ai = new SBP_AI_Service();
+        if ( ! $ai->is_configured() ) {
+            return;
+        }
+
+        $result = $ai->optimize( $post_id );
+        if ( is_wp_error( $result ) ) {
+            SBP_Logger::log( $post_id, 'auto_publish', 'error', $result->get_error_message() );
+            return;
+        }
+
+        $this->apply_meta( $post_id, $result );
+        SBP_Logger::log( $post_id, 'auto_publish', 'success', wp_json_encode( $result ) );
+    }
+
     // ── Helpers ─────────────────────────────────────
 
     /**
-     * Apply optimized meta to the post (Rank Math compatible).
+     * Apply optimized meta to the post (Rank Math + Yoast compatible).
      */
     private function apply_meta( int $post_id, array $data ) {
+        $seo_plugin = SBP_Helpers::get_option( 'seo_plugin', 'rank_math' );
+        $enable_og  = SBP_Helpers::get_option( 'enable_og', '1' );
+
+        // Meta title
         if ( ! empty( $data['meta_title'] ) ) {
             $title = sanitize_text_field( $data['meta_title'] );
-            update_post_meta( $post_id, 'rank_math_title', $title );
-            // Fallback generic meta
             update_post_meta( $post_id, '_sbp_meta_title', $title );
+
+            if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
+                update_post_meta( $post_id, 'rank_math_title', $title );
+            }
+            if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
+                update_post_meta( $post_id, '_yoast_wpseo_title', $title );
+            }
         }
 
+        // Meta description
         if ( ! empty( $data['meta_description'] ) ) {
             $desc = sanitize_text_field( $data['meta_description'] );
-            update_post_meta( $post_id, 'rank_math_description', $desc );
             update_post_meta( $post_id, '_sbp_meta_description', $desc );
+
+            if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
+                update_post_meta( $post_id, 'rank_math_description', $desc );
+            }
+            if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
+                update_post_meta( $post_id, '_yoast_wpseo_metadesc', $desc );
+            }
+        }
+
+        // Meta keywords
+        if ( ! empty( $data['meta_keywords'] ) ) {
+            $keywords = sanitize_text_field( $data['meta_keywords'] );
+            update_post_meta( $post_id, '_sbp_meta_keywords', $keywords );
+        }
+
+        // Open Graph
+        if ( $enable_og === '1' ) {
+            if ( ! empty( $data['og_title'] ) ) {
+                $og_title = sanitize_text_field( $data['og_title'] );
+                update_post_meta( $post_id, '_sbp_og_title', $og_title );
+
+                if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
+                    update_post_meta( $post_id, 'rank_math_facebook_title', $og_title );
+                }
+                if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
+                    update_post_meta( $post_id, '_yoast_wpseo_opengraph-title', $og_title );
+                }
+            }
+            if ( ! empty( $data['og_description'] ) ) {
+                $og_desc = sanitize_text_field( $data['og_description'] );
+                update_post_meta( $post_id, '_sbp_og_description', $og_desc );
+
+                if ( in_array( $seo_plugin, [ 'rank_math', 'both' ], true ) ) {
+                    update_post_meta( $post_id, 'rank_math_facebook_description', $og_desc );
+                }
+                if ( in_array( $seo_plugin, [ 'yoast', 'both' ], true ) ) {
+                    update_post_meta( $post_id, '_yoast_wpseo_opengraph-description', $og_desc );
+                }
+            }
         }
     }
 }

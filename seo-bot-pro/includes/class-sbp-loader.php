@@ -54,5 +54,16 @@ class SBP_Loader {
         add_action( 'wp_ajax_sbp_suggest_links', [ $api, 'ajax_suggest_links' ] );
         add_action( 'wp_ajax_sbp_fix_image_alts', [ $api, 'ajax_fix_image_alts' ] );
         add_action( 'wp_ajax_sbp_analyze_content', [ $api, 'ajax_analyze_content' ] );
+        add_action( 'wp_ajax_sbp_generate_keywords', [ $api, 'ajax_generate_keywords' ] );
+        add_action( 'wp_ajax_sbp_optimize_slug', [ $api, 'ajax_optimize_slug' ] );
+
+        // Auto-optimize on publish
+        if ( SBP_Helpers::get_option( 'auto_optimize_publish' ) === '1' ) {
+            add_action( 'publish_post', [ $api, 'auto_optimize_on_publish' ], 10, 2 );
+            add_action( 'publish_page', [ $api, 'auto_optimize_on_publish' ], 10, 2 );
+            if ( class_exists( 'WooCommerce' ) ) {
+                add_action( 'publish_product', [ $api, 'auto_optimize_on_publish' ], 10, 2 );
+            }
+        }
     }
 }

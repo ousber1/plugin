@@ -3,11 +3,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$settings = get_option( 'sbp_settings', [] );
-$api_key  = $settings['api_key'] ?? '';
-$model    = $settings['model'] ?? 'gpt-4o-mini';
-$language = $settings['language'] ?? 'en';
-$tone     = $settings['tone'] ?? 'professional';
+$settings     = get_option( 'sbp_settings', [] );
+$provider     = $settings['provider'] ?? 'openai';
+$openai_key   = $settings['openai_api_key'] ?? '';
+$claude_key   = $settings['claude_api_key'] ?? '';
+$model        = $settings['model'] ?? ( $provider === 'claude' ? 'claude-sonnet-4-6' : 'gpt-4o-mini' );
+$language     = $settings['language'] ?? 'en';
+$tone         = $settings['tone'] ?? 'professional';
+$temperature  = $settings['temperature'] ?? 0.4;
+$max_tokens   = $settings['max_tokens'] ?? 1024;
+$seo_plugin   = $settings['seo_plugin'] ?? 'rank_math';
+$enable_og    = $settings['enable_og'] ?? '1';
+$auto_publish = $settings['auto_optimize_publish'] ?? '0';
 
 settings_errors( 'sbp_settings' );
 ?>
@@ -18,16 +25,43 @@ settings_errors( 'sbp_settings' );
     <form method="post" action="">
         <?php wp_nonce_field( 'sbp_settings_save', 'sbp_settings_nonce' ); ?>
 
+        <!-- ── AI Provider ──────────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'AI Provider', 'seo-bot-pro' ); ?></h2>
         <table class="form-table">
             <tr>
                 <th scope="row">
-                    <label for="sbp-api-key"><?php esc_html_e( 'OpenAI API Key', 'seo-bot-pro' ); ?></label>
+                    <label for="sbp-provider"><?php esc_html_e( 'Provider', 'seo-bot-pro' ); ?></label>
                 </th>
                 <td>
-                    <input type="password" id="sbp-api-key" name="sbp[api_key]"
-                           value="<?php echo esc_attr( $api_key ); ?>"
+                    <select id="sbp-provider" name="sbp[provider]">
+                        <option value="openai" <?php selected( $provider, 'openai' ); ?>>OpenAI</option>
+                        <option value="claude" <?php selected( $provider, 'claude' ); ?>>Claude (Anthropic)</option>
+                    </select>
+                    <p class="description"><?php esc_html_e( 'Choose your AI provider. Model options update automatically.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr class="sbp-openai-row" <?php echo $provider === 'claude' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row">
+                    <label for="sbp-openai-key"><?php esc_html_e( 'OpenAI API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="password" id="sbp-openai-key" name="sbp[openai_api_key]"
+                           value="<?php echo esc_attr( $openai_key ); ?>"
                            class="regular-text" autocomplete="off">
-                    <p class="description"><?php esc_html_e( 'Your OpenAI API key. Stored securely in the database.', 'seo-bot-pro' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'Get your key from platform.openai.com', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr class="sbp-claude-row" <?php echo $provider === 'openai' ? 'style="display:none;"' : ''; ?>>
+                <th scope="row">
+                    <label for="sbp-claude-key"><?php esc_html_e( 'Claude API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="password" id="sbp-claude-key" name="sbp[claude_api_key]"
+                           value="<?php echo esc_attr( $claude_key ); ?>"
+                           class="regular-text" autocomplete="off">
+                    <p class="description"><?php esc_html_e( 'Get your key from console.anthropic.com', 'seo-bot-pro' ); ?></p>
                 </td>
             </tr>
 
@@ -37,24 +71,75 @@ settings_errors( 'sbp_settings' );
                 </th>
                 <td>
                     <select id="sbp-model" name="sbp[model]">
-                        <?php
-                        $models = [
-                            'gpt-4o-mini' => 'GPT-4o Mini (recommended)',
-                            'gpt-4o'      => 'GPT-4o',
-                            'gpt-4-turbo' => 'GPT-4 Turbo',
-                            'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
-                        ];
-                        foreach ( $models as $value => $label ) :
-                        ?>
+                        <!-- OpenAI models -->
+                        <?php foreach ( SBP_Helpers::openai_models() as $value => $label ) : ?>
                             <option value="<?php echo esc_attr( $value ); ?>"
-                                <?php selected( $model, $value ); ?>>
+                                    class="sbp-model-openai"
+                                    <?php echo $provider === 'claude' ? 'style="display:none;"' : ''; ?>
+                                    <?php selected( $model, $value ); ?>>
+                                <?php echo esc_html( $label ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                        <!-- Claude models -->
+                        <?php foreach ( SBP_Helpers::claude_models() as $value => $label ) : ?>
+                            <option value="<?php echo esc_attr( $value ); ?>"
+                                    class="sbp-model-claude"
+                                    <?php echo $provider === 'openai' ? 'style="display:none;"' : ''; ?>
+                                    <?php selected( $model, $value ); ?>>
                                 <?php echo esc_html( $label ); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </td>
             </tr>
+        </table>
 
+        <!-- ── SEO Settings ─────────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'SEO Settings', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="sbp-seo-plugin"><?php esc_html_e( 'SEO Plugin Integration', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <select id="sbp-seo-plugin" name="sbp[seo_plugin]">
+                        <?php foreach ( SBP_Helpers::seo_plugin_labels() as $value => $label ) : ?>
+                            <option value="<?php echo esc_attr( $value ); ?>"
+                                <?php selected( $seo_plugin, $value ); ?>>
+                                <?php echo esc_html( $label ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="description"><?php esc_html_e( 'Choose which SEO plugin fields to update when optimizing.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Open Graph Tags', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_og]" value="1"
+                            <?php checked( $enable_og, '1' ); ?>>
+                        <?php esc_html_e( 'Generate Open Graph (og:title, og:description) during optimization', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Auto-Optimize on Publish', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[auto_optimize_publish]" value="1"
+                            <?php checked( $auto_publish, '1' ); ?>>
+                        <?php esc_html_e( 'Automatically optimize SEO when a post is published', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Content Settings ─────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Content Settings', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
             <tr>
                 <th scope="row">
                     <label for="sbp-language"><?php esc_html_e( 'Language', 'seo-bot-pro' ); ?></label>
@@ -84,6 +169,34 @@ settings_errors( 'sbp_settings' );
                             </option>
                         <?php endforeach; ?>
                     </select>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Advanced Settings ────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Advanced Settings', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="sbp-temperature"><?php esc_html_e( 'Temperature', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="number" id="sbp-temperature" name="sbp[temperature]"
+                           value="<?php echo esc_attr( $temperature ); ?>"
+                           min="0" max="1" step="0.1" style="width:80px;">
+                    <p class="description"><?php esc_html_e( 'AI creativity level. Lower = more focused, Higher = more creative. (0.0 - 1.0)', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="sbp-max-tokens"><?php esc_html_e( 'Max Tokens', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="number" id="sbp-max-tokens" name="sbp[max_tokens]"
+                           value="<?php echo esc_attr( $max_tokens ); ?>"
+                           min="256" max="4096" step="128" style="width:100px;">
+                    <p class="description"><?php esc_html_e( 'Maximum response length from the AI. (256 - 4096)', 'seo-bot-pro' ); ?></p>
                 </td>
             </tr>
         </table>

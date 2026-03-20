@@ -49,18 +49,50 @@ class SBP_Helpers {
     public static function sanitize_settings( array $input ): array {
         $clean = [];
 
-        $clean['api_key']  = sanitize_text_field( $input['api_key'] ?? '' );
-        $clean['model']    = sanitize_text_field( $input['model'] ?? 'gpt-4o-mini' );
+        // Provider
+        $allowed_providers = [ 'openai', 'claude' ];
+        $clean['provider'] = in_array( $input['provider'] ?? 'openai', $allowed_providers, true )
+            ? $input['provider']
+            : 'openai';
 
-        $allowed_langs = [ 'en', 'fr', 'ar' ];
+        // API keys
+        $clean['openai_api_key'] = sanitize_text_field( $input['openai_api_key'] ?? '' );
+        $clean['claude_api_key'] = sanitize_text_field( $input['claude_api_key'] ?? '' );
+
+        // Model
+        $clean['model'] = sanitize_text_field( $input['model'] ?? 'gpt-4o-mini' );
+
+        // Language
+        $allowed_langs = array_keys( self::language_labels() );
         $clean['language'] = in_array( $input['language'] ?? 'en', $allowed_langs, true )
             ? $input['language']
             : 'en';
 
-        $allowed_tones = [ 'professional', 'sales', 'neutral' ];
+        // Tone
+        $allowed_tones = array_keys( self::tone_labels() );
         $clean['tone'] = in_array( $input['tone'] ?? 'professional', $allowed_tones, true )
             ? $input['tone']
             : 'professional';
+
+        // Temperature
+        $temp = floatval( $input['temperature'] ?? 0.4 );
+        $clean['temperature'] = max( 0.0, min( 1.0, $temp ) );
+
+        // Max tokens
+        $tokens = intval( $input['max_tokens'] ?? 1024 );
+        $clean['max_tokens'] = max( 256, min( 4096, $tokens ) );
+
+        // SEO plugin target
+        $allowed_seo = [ 'rank_math', 'yoast', 'both', 'none' ];
+        $clean['seo_plugin'] = in_array( $input['seo_plugin'] ?? 'rank_math', $allowed_seo, true )
+            ? $input['seo_plugin']
+            : 'rank_math';
+
+        // Open Graph
+        $clean['enable_og'] = ! empty( $input['enable_og'] ) ? '1' : '0';
+
+        // Auto-optimize on publish
+        $clean['auto_optimize_publish'] = ! empty( $input['auto_optimize_publish'] ) ? '1' : '0';
 
         return $clean;
     }
@@ -73,6 +105,13 @@ class SBP_Helpers {
             'en' => __( 'English', 'seo-bot-pro' ),
             'fr' => __( 'French', 'seo-bot-pro' ),
             'ar' => __( 'Arabic', 'seo-bot-pro' ),
+            'es' => __( 'Spanish', 'seo-bot-pro' ),
+            'de' => __( 'German', 'seo-bot-pro' ),
+            'pt' => __( 'Portuguese', 'seo-bot-pro' ),
+            'it' => __( 'Italian', 'seo-bot-pro' ),
+            'nl' => __( 'Dutch', 'seo-bot-pro' ),
+            'tr' => __( 'Turkish', 'seo-bot-pro' ),
+            'zh' => __( 'Chinese', 'seo-bot-pro' ),
         ];
     }
 
@@ -84,6 +123,47 @@ class SBP_Helpers {
             'professional' => __( 'Professional', 'seo-bot-pro' ),
             'sales'        => __( 'Sales', 'seo-bot-pro' ),
             'neutral'      => __( 'Neutral', 'seo-bot-pro' ),
+            'casual'       => __( 'Casual', 'seo-bot-pro' ),
+            'formal'       => __( 'Formal', 'seo-bot-pro' ),
+            'creative'     => __( 'Creative', 'seo-bot-pro' ),
+        ];
+    }
+
+    /**
+     * OpenAI model options.
+     */
+    public static function openai_models(): array {
+        return [
+            'gpt-4o-mini'    => 'GPT-4o Mini (recommended)',
+            'gpt-4o'         => 'GPT-4o',
+            'gpt-4-turbo'    => 'GPT-4 Turbo',
+            'gpt-4.1-mini'   => 'GPT-4.1 Mini',
+            'gpt-4.1'        => 'GPT-4.1',
+            'gpt-3.5-turbo'  => 'GPT-3.5 Turbo',
+        ];
+    }
+
+    /**
+     * Claude model options.
+     */
+    public static function claude_models(): array {
+        return [
+            'claude-sonnet-4-6'           => 'Claude Sonnet 4.6 (recommended)',
+            'claude-opus-4-6'             => 'Claude Opus 4.6',
+            'claude-haiku-4-5-20251001'   => 'Claude Haiku 4.5',
+            'claude-sonnet-4-5-20250514'  => 'Claude Sonnet 4.5',
+        ];
+    }
+
+    /**
+     * SEO plugin options.
+     */
+    public static function seo_plugin_labels(): array {
+        return [
+            'rank_math' => __( 'Rank Math SEO', 'seo-bot-pro' ),
+            'yoast'     => __( 'Yoast SEO', 'seo-bot-pro' ),
+            'both'      => __( 'Both (Rank Math + Yoast)', 'seo-bot-pro' ),
+            'none'      => __( 'None (use built-in meta only)', 'seo-bot-pro' ),
         ];
     }
 }

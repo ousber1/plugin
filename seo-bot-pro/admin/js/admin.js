@@ -6,6 +6,30 @@
 
     var data = window.sbpData || {};
 
+    // ── Settings page: Provider toggle ──────────────
+    $('#sbp-provider').on('change', function () {
+        var provider = $(this).val();
+
+        if (provider === 'claude') {
+            $('.sbp-openai-row').hide();
+            $('.sbp-claude-row').show();
+            $('.sbp-model-openai').hide().prop('selected', false);
+            $('.sbp-model-claude').show();
+            // Select first Claude model if none selected
+            if (!$('.sbp-model-claude:selected').length) {
+                $('.sbp-model-claude').first().prop('selected', true);
+            }
+        } else {
+            $('.sbp-claude-row').hide();
+            $('.sbp-openai-row').show();
+            $('.sbp-model-claude').hide().prop('selected', false);
+            $('.sbp-model-openai').show();
+            if (!$('.sbp-model-openai:selected').length) {
+                $('.sbp-model-openai').first().prop('selected', true);
+            }
+        }
+    });
+
     // ── Single post optimize button ─────────────────
     $(document).on('click', '.sbp-optimize-btn', function () {
         var btn    = $(this);
@@ -22,8 +46,21 @@
         })
         .done(function (res) {
             if (res.success) {
-                $('#sbp-meta-title').text(res.data.meta_title || '—');
-                $('#sbp-meta-desc').text(res.data.meta_description || '—');
+                var d = res.data;
+                $('#sbp-meta-title').text(d.meta_title || '—');
+                $('#sbp-meta-desc').text(d.meta_description || '—');
+                if (d.meta_keywords) {
+                    var kwEl = $('#sbp-keywords');
+                    if (kwEl.length) {
+                        kwEl.text(d.meta_keywords);
+                    }
+                }
+                if (d.og_title) {
+                    var ogEl = $('#sbp-og-title');
+                    if (ogEl.length) {
+                        ogEl.text(d.og_title);
+                    }
+                }
                 result.html('<div class="sbp-result-success">' + data.i18n.success + '</div>');
             } else {
                 result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
@@ -34,6 +71,46 @@
         })
         .always(function () {
             btn.prop('disabled', false).text('Optimize with AI');
+        });
+    });
+
+    // ── Generate keywords button ────────────────────
+    $(document).on('click', '.sbp-keywords-btn', function () {
+        var btn    = $(this);
+        var postId = btn.data('post-id');
+        var result = $('#sbp-action-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.generating);
+
+        $.post(data.ajaxUrl, {
+            action:  'sbp_generate_keywords',
+            nonce:   data.nonce,
+            post_id: postId
+        })
+        .done(function (res) {
+            if (res.success) {
+                var d    = res.data;
+                var html = '<div class="sbp-result-success">';
+                if (d.primary) {
+                    html += '<strong>Focus Keyword:</strong> ' + escHtml(d.primary) + '<br>';
+                    $('#sbp-focus-kw').text(d.primary);
+                    $('#sbp-keyword').val(d.primary);
+                }
+                if (d.keywords && d.keywords.length) {
+                    html += '<strong>Keywords:</strong> ' + escHtml(d.keywords.join(', '));
+                }
+                html += '</div>';
+                result.html(html);
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
         });
     });
 
@@ -138,6 +215,40 @@
         });
     });
 
+    // ── Optimize slug ───────────────────────────────
+    $(document).on('click', '.sbp-slug-btn', function () {
+        var btn    = $(this);
+        var postId = btn.data('post-id');
+        var result = $('#sbp-action-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.optimizing);
+
+        $.post(data.ajaxUrl, {
+            action:  'sbp_optimize_slug',
+            nonce:   data.nonce,
+            post_id: postId
+        })
+        .done(function (res) {
+            if (res.success) {
+                var html = '<div class="sbp-result-success">Slug updated to: <code>' + escHtml(res.data.slug) + '</code>';
+                if (res.data.permalink) {
+                    html += '<br><a href="' + escAttr(res.data.permalink) + '" target="_blank">View post</a>';
+                }
+                html += '</div>';
+                result.html(html);
+            } else {
+                result.html('<div class="sbp-result-error">' + data.i18n.error + ' ' + (res.data.message || '') + '</div>');
+            }
+        })
+        .fail(function () {
+            result.html('<div class="sbp-result-error">' + data.i18n.error + ' Network error.</div>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
     // ── Content analysis ────────────────────────────
     $(document).on('click', '.sbp-analyze-btn', function () {
         var btn     = $(this);
@@ -171,8 +282,14 @@
 
     function renderAnalysis(d, container) {
         var cls = d.score >= 70 ? 'score-good' : d.score >= 40 ? 'score-ok' : 'score-bad';
-        var html = '<div class="sbp-score ' + cls + '">Score: ' + d.score + '/100</div>';
+        var html = '<div class="sbp-score ' + cls + '">SEO Score: ' + d.score + '/100</div>';
 
+        // Word count
+        if (d.word_count !== undefined) {
+            html += '<div class="sbp-word-count">' + d.word_count + ' words</div>';
+        }
+
+        // SEO checks
         if (d.checks && d.checks.length) {
             $.each(d.checks, function (i, c) {
                 var icon = c.pass ? 'dashicons-yes' : 'dashicons-no';
@@ -181,12 +298,34 @@
             });
         }
 
+        // SEO suggestions
         if (d.suggestions && d.suggestions.length) {
-            html += '<div class="sbp-suggestions"><ul>';
+            html += '<div class="sbp-suggestions"><strong>SEO Suggestions:</strong><ul>';
             $.each(d.suggestions, function (i, s) {
                 html += '<li>' + escHtml(s) + '</li>';
             });
             html += '</ul></div>';
+        }
+
+        // Readability section
+        if (d.readability) {
+            var r    = d.readability;
+            var rCls = r.level === 'good' ? 'score-good' : r.level === 'ok' ? 'score-ok' : 'score-bad';
+
+            html += '<div class="sbp-readability">';
+            html += '<h4>Readability</h4>';
+            html += '<div class="sbp-score ' + rCls + '" style="font-size:18px;">Flesch: '
+                  + (r.flesch_score || 0) + ' – ' + escHtml(r.grade) + '</div>';
+            html += '<div class="sbp-check">Avg sentence length: ' + (r.avg_sentence_length || 0) + ' words</div>';
+
+            if (r.suggestions && r.suggestions.length) {
+                html += '<div class="sbp-suggestions"><ul>';
+                $.each(r.suggestions, function (i, s) {
+                    html += '<li>' + escHtml(s) + '</li>';
+                });
+                html += '</ul></div>';
+            }
+            html += '</div>';
         }
 
         container.html(html);
