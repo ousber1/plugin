@@ -50,7 +50,7 @@ class SBP_Helpers {
         $clean = [];
 
         // Provider
-        $allowed_providers = [ 'openai', 'claude' ];
+        $allowed_providers = [ 'openai', 'claude', 'gemini' ];
         $clean['provider'] = in_array( $input['provider'] ?? 'openai', $allowed_providers, true )
             ? $input['provider']
             : 'openai';
@@ -58,6 +58,7 @@ class SBP_Helpers {
         // API keys
         $clean['openai_api_key'] = sanitize_text_field( $input['openai_api_key'] ?? '' );
         $clean['claude_api_key'] = sanitize_text_field( $input['claude_api_key'] ?? '' );
+        $clean['gemini_api_key'] = sanitize_text_field( $input['gemini_api_key'] ?? '' );
 
         // Model
         $clean['model'] = sanitize_text_field( $input['model'] ?? 'gpt-4o-mini' );
@@ -80,10 +81,10 @@ class SBP_Helpers {
 
         // Max tokens
         $tokens = intval( $input['max_tokens'] ?? 1024 );
-        $clean['max_tokens'] = max( 256, min( 4096, $tokens ) );
+        $clean['max_tokens'] = max( 256, min( 16384, $tokens ) );
 
         // SEO plugin target
-        $allowed_seo = [ 'rank_math', 'yoast', 'both', 'none' ];
+        $allowed_seo = [ 'rank_math', 'yoast', 'aioseo', 'both', 'none' ];
         $clean['seo_plugin'] = in_array( $input['seo_plugin'] ?? 'rank_math', $allowed_seo, true )
             ? $input['seo_plugin']
             : 'rank_math';
@@ -128,6 +129,7 @@ class SBP_Helpers {
         $clean['unsplash_api_key'] = sanitize_text_field( $input['unsplash_api_key'] ?? '' );
         $clean['pixabay_api_key']  = sanitize_text_field( $input['pixabay_api_key'] ?? '' );
         $clean['pexels_api_key']   = sanitize_text_field( $input['pexels_api_key'] ?? '' );
+        $clean['image_fallback'] = ! empty( $input['image_fallback'] ) ? '1' : '0';
 
         return $clean;
     }
@@ -147,6 +149,22 @@ class SBP_Helpers {
             'nl' => __( 'Dutch', 'seo-bot-pro' ),
             'tr' => __( 'Turkish', 'seo-bot-pro' ),
             'zh' => __( 'Chinese', 'seo-bot-pro' ),
+            'ja' => __( 'Japanese', 'seo-bot-pro' ),
+            'ko' => __( 'Korean', 'seo-bot-pro' ),
+            'ru' => __( 'Russian', 'seo-bot-pro' ),
+            'pl' => __( 'Polish', 'seo-bot-pro' ),
+            'sv' => __( 'Swedish', 'seo-bot-pro' ),
+            'no' => __( 'Norwegian', 'seo-bot-pro' ),
+            'da' => __( 'Danish', 'seo-bot-pro' ),
+            'fi' => __( 'Finnish', 'seo-bot-pro' ),
+            'cs' => __( 'Czech', 'seo-bot-pro' ),
+            'ro' => __( 'Romanian', 'seo-bot-pro' ),
+            'hu' => __( 'Hungarian', 'seo-bot-pro' ),
+            'th' => __( 'Thai', 'seo-bot-pro' ),
+            'vi' => __( 'Vietnamese', 'seo-bot-pro' ),
+            'id' => __( 'Indonesian', 'seo-bot-pro' ),
+            'hi' => __( 'Hindi', 'seo-bot-pro' ),
+            'uk' => __( 'Ukrainian', 'seo-bot-pro' ),
         ];
     }
 
@@ -155,12 +173,18 @@ class SBP_Helpers {
      */
     public static function tone_labels(): array {
         return [
-            'professional' => __( 'Professional', 'seo-bot-pro' ),
-            'sales'        => __( 'Sales', 'seo-bot-pro' ),
-            'neutral'      => __( 'Neutral', 'seo-bot-pro' ),
-            'casual'       => __( 'Casual', 'seo-bot-pro' ),
-            'formal'       => __( 'Formal', 'seo-bot-pro' ),
-            'creative'     => __( 'Creative', 'seo-bot-pro' ),
+            'professional'  => __( 'Professional', 'seo-bot-pro' ),
+            'sales'         => __( 'Sales', 'seo-bot-pro' ),
+            'neutral'       => __( 'Neutral', 'seo-bot-pro' ),
+            'casual'        => __( 'Casual', 'seo-bot-pro' ),
+            'formal'        => __( 'Formal', 'seo-bot-pro' ),
+            'creative'      => __( 'Creative', 'seo-bot-pro' ),
+            'humorous'      => __( 'Humorous', 'seo-bot-pro' ),
+            'academic'      => __( 'Academic', 'seo-bot-pro' ),
+            'persuasive'    => __( 'Persuasive', 'seo-bot-pro' ),
+            'conversational' => __( 'Conversational', 'seo-bot-pro' ),
+            'authoritative' => __( 'Authoritative', 'seo-bot-pro' ),
+            'empathetic'    => __( 'Empathetic', 'seo-bot-pro' ),
         ];
     }
 
@@ -191,14 +215,63 @@ class SBP_Helpers {
     }
 
     /**
+     * Gemini model options.
+     */
+    public static function gemini_models(): array {
+        return [
+            'gemini-2.0-flash'         => 'Gemini 2.0 Flash (recommended)',
+            'gemini-2.5-pro-preview'   => 'Gemini 2.5 Pro Preview',
+            'gemini-2.5-flash-preview' => 'Gemini 2.5 Flash Preview',
+            'gemini-1.5-pro'           => 'Gemini 1.5 Pro',
+            'gemini-1.5-flash'         => 'Gemini 1.5 Flash',
+        ];
+    }
+
+    /**
      * SEO plugin options.
      */
     public static function seo_plugin_labels(): array {
         return [
             'rank_math' => __( 'Rank Math SEO', 'seo-bot-pro' ),
             'yoast'     => __( 'Yoast SEO', 'seo-bot-pro' ),
+            'aioseo'    => __( 'All in One SEO', 'seo-bot-pro' ),
             'both'      => __( 'Both (Rank Math + Yoast)', 'seo-bot-pro' ),
             'none'      => __( 'None (use built-in meta only)', 'seo-bot-pro' ),
         ];
+    }
+
+    /**
+     * Export settings as JSON (without API keys).
+     */
+    public static function export_settings(): string {
+        $settings = get_option( 'sbp_settings', [] );
+        // Remove API keys for security
+        $safe = $settings;
+        unset( $safe['openai_api_key'], $safe['claude_api_key'], $safe['gemini_api_key'],
+               $safe['unsplash_api_key'], $safe['pixabay_api_key'], $safe['pexels_api_key'],
+               $safe['indexnow_api_key'] );
+        return wp_json_encode( $safe, JSON_PRETTY_PRINT );
+    }
+
+    /**
+     * Import settings from JSON (preserving existing API keys).
+     */
+    public static function import_settings( string $json ): bool {
+        $data = json_decode( $json, true );
+        if ( ! is_array( $data ) ) {
+            return false;
+        }
+        // Merge with existing (preserve API keys)
+        $current = get_option( 'sbp_settings', [] );
+        $merged = array_merge( $current, $data );
+        $clean = self::sanitize_settings( $merged );
+        // Restore API keys from current
+        foreach ( ['openai_api_key','claude_api_key','gemini_api_key','unsplash_api_key','pixabay_api_key','pexels_api_key','indexnow_api_key'] as $key ) {
+            if ( isset( $current[$key] ) ) {
+                $clean[$key] = $current[$key];
+            }
+        }
+        update_option( 'sbp_settings', $clean );
+        return true;
     }
 }

@@ -115,6 +115,9 @@ class SBP_Loader {
         add_action( 'wp_ajax_sbp_submit_sitemap', [ $api, 'ajax_submit_sitemap' ] );
         add_action( 'wp_ajax_sbp_bulk_indexnow', [ $api, 'ajax_bulk_indexnow' ] );
         add_action( 'wp_ajax_sbp_refresh_stale', [ $api, 'ajax_refresh_stale' ] );
+        add_action( 'wp_ajax_sbp_test_api', [ $api, 'ajax_test_api' ] );
+        add_action( 'wp_ajax_sbp_export_settings', [ $api, 'ajax_export_settings' ] );
+        add_action( 'wp_ajax_sbp_import_settings', [ $api, 'ajax_import_settings' ] );
 
         // Auto-optimize on publish
         if ( SBP_Helpers::get_option( 'auto_optimize_publish' ) === '1' ) {

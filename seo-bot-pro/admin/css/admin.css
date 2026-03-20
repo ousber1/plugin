@@ -497,3 +497,61 @@
     padding: 6px 20px;
     height: auto;
 }
+
+/* Settings Tabs */
+.sbp-settings-tabs {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.sbp-settings-tabs .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+.sbp-settings-tabs .nav-tab .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.sbp-tab-content {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+/* API Test button */
+.sbp-test-api-btn {
+    margin-left: 8px !important;
+}
+
+.sbp-test-result {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 13px;
+}
+
+/* Export/Import */
+.sbp-export-import textarea {
+    width: 100%;
+    min-height: 120px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.sbp-export-import .button {
+    margin-right: 8px;
+    margin-top: 8px;
+}
+
+/* Provider badge for gemini */
+.sbp-badge-gemini {
+    background: #4285f4;
+    color: #fff;
+}

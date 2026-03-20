@@ -67,6 +67,9 @@ class SBP_Admin {
                 'pinging'     => __( 'Pinging search engines...', 'seo-bot-pro' ),
                 'submitting'  => __( 'Submitting...', 'seo-bot-pro' ),
                 'refreshing'  => __( 'Refreshing...', 'seo-bot-pro' ),
+                'testing'     => __( 'Testing connection...', 'seo-bot-pro' ),
+                'exporting'   => __( 'Exporting...', 'seo-bot-pro' ),
+                'importing'   => __( 'Importing...', 'seo-bot-pro' ),
             ],
         ] );
     }
