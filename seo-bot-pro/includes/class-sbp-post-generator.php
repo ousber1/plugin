@@ -107,6 +107,7 @@ class SBP_Post_Generator {
             'title'     => $title,
             'permalink' => get_permalink( $post_id ),
             'edit_url'  => get_edit_post_link( $post_id, 'raw' ),
+            'view_url'  => get_permalink( $post_id ),
             'status'    => $status,
             'excerpt'   => $excerpt,
         ];

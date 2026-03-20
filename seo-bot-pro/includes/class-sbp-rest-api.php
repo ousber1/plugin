@@ -278,14 +278,14 @@ class SBP_REST_API {
 
         $gen    = new SBP_Post_Generator();
         $result = $gen->generate( [
-            'topic'               => $_POST['topic'] ?? '',
-            'post_type'           => $_POST['post_type'] ?? 'post',
-            'status'              => $_POST['post_status'] ?? 'draft',
-            'category_id'         => $_POST['category_id'] ?? 0,
-            'word_count'          => $_POST['word_count'] ?? 'medium',
-            'auto_seo'            => ! empty( $_POST['auto_seo'] ),
-            'auto_faq'            => ! empty( $_POST['auto_faq'] ),
-            'custom_instructions' => $_POST['custom_instructions'] ?? '',
+            'topic'               => sanitize_text_field( $_POST['topic'] ?? '' ),
+            'post_type'           => sanitize_key( $_POST['post_type'] ?? 'post' ),
+            'status'              => sanitize_key( $_POST['status'] ?? 'draft' ),
+            'category_id'         => absint( $_POST['category_id'] ?? 0 ),
+            'word_count'          => sanitize_key( $_POST['length'] ?? 'medium' ),
+            'auto_seo'            => ! empty( $_POST['auto_seo'] ) && $_POST['auto_seo'] !== '0',
+            'auto_faq'            => ! empty( $_POST['auto_faq'] ) && $_POST['auto_faq'] !== '0',
+            'custom_instructions' => sanitize_textarea_field( $_POST['instructions'] ?? '' ),
         ] );
 
         if ( is_wp_error( $result ) ) {
