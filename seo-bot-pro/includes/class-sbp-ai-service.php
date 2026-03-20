@@ -364,6 +364,199 @@ class SBP_AI_Service {
         return $this->parse_json_response( $result );
     }
 
+    // ── Image generation ───────────────────────────
+
+    /**
+     * Generate an image using OpenAI DALL-E API.
+     *
+     * @param string $prompt  Description of the image to generate.
+     * @param string $size    Image size: 1024x1024, 1792x1024, 1024x1792.
+     * @return string|WP_Error  URL of the generated image.
+     */
+    public function generate_image( string $prompt, string $size = '1792x1024' ) {
+        // Image generation requires OpenAI API key (DALL-E)
+        if ( empty( $this->openai_key ) ) {
+            return new WP_Error( 'no_api_key', __( 'OpenAI API key is required for image generation (DALL-E).', 'seo-bot-pro' ) );
+        }
+
+        $body = [
+            'model'  => 'dall-e-3',
+            'prompt' => $prompt,
+            'n'      => 1,
+            'size'   => $size,
+        ];
+
+        $response = wp_remote_post( 'https://api.openai.com/v1/images/generations', [
+            'timeout' => 120,
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $this->openai_key,
+            ],
+            'body' => wp_json_encode( $body ),
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 ) {
+            $msg = $data['error']['message'] ?? __( 'Image generation failed.', 'seo-bot-pro' );
+            return new WP_Error( 'api_error', $msg );
+        }
+
+        if ( empty( $data['data'][0]['url'] ) ) {
+            return new WP_Error( 'api_error', __( 'No image URL returned.', 'seo-bot-pro' ) );
+        }
+
+        return $data['data'][0]['url'];
+    }
+
+    /**
+     * Generate an SEO-structured article with internal/external links.
+     *
+     * @return array|WP_Error  { title, content, excerpt, tags, image_prompt }
+     */
+    public function generate_seo_article( string $topic, string $length, string $template, string $instructions, array $internal_links = [] ) {
+        $lang = $this->lang_label();
+
+        $word_targets = [
+            'short'  => '300-500',
+            'medium' => '800-1200',
+            'long'   => '1500-2500',
+        ];
+        $target = $word_targets[ $length ] ?? '800-1200';
+
+        $extra = $instructions ? "\nAdditional instructions: {$instructions}\n" : '';
+
+        // Build template instructions
+        $template_guide = $this->get_template_guide( $template );
+
+        // Build internal links context
+        $links_context = '';
+        if ( ! empty( $internal_links ) ) {
+            $links_json    = wp_json_encode( array_slice( $internal_links, 0, 20 ) );
+            $links_context = "\n\nInternal links available on this website (use 3-5 of them naturally in the content as <a href=\"URL\">anchor text</a>):\n{$links_json}\n";
+        }
+
+        $prompt = "You are an expert content writer, SEO specialist, and web developer. Write a complete, perfectly structured blog article.\n\n"
+                . "Topic: {$topic}\n"
+                . "Language: {$lang}\n"
+                . "Tone: {$this->tone}\n"
+                . "Target length: {$target} words\n"
+                . "Article template: {$template}\n"
+                . "{$extra}\n"
+                . "SEO STRUCTURE REQUIREMENTS:\n"
+                . "{$template_guide}\n"
+                . "\nGENERAL REQUIREMENTS:\n"
+                . "- Use proper semantic HTML: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>\n"
+                . "- Include a compelling introduction paragraph with a hook\n"
+                . "- Include a conclusion with a call to action\n"
+                . "- Add 1-2 external authority links (reputable sources like Wikipedia, industry leaders) as <a href=\"URL\" target=\"_blank\" rel=\"noopener\">anchor</a>\n"
+                . "- Write naturally for humans while being SEO-optimized\n"
+                . "- Use the focus keyword naturally throughout (2-3% density)\n"
+                . "- Write a compelling meta-friendly excerpt (1-2 sentences)\n"
+                . "- Suggest 3-5 relevant tags\n"
+                . "- Suggest a detailed image prompt for DALL-E to generate a featured image for this article\n"
+                . "{$links_context}\n"
+                . "\nReturn a JSON object with:\n"
+                . "- title (string): SEO-optimized article title (50-60 chars)\n"
+                . "- content (string): full HTML content with all links included\n"
+                . "- excerpt (string): 1-2 sentence meta description\n"
+                . "- tags (array of strings): 3-5 tags\n"
+                . "- focus_keyword (string): primary focus keyword for this article\n"
+                . "- image_prompt (string): detailed DALL-E prompt for a professional featured image (describe style, composition, colors)\n\n"
+                . "Return ONLY valid JSON, no markdown code blocks.";
+
+        $old_max = $this->max_tokens;
+        $this->max_tokens = max( $this->max_tokens, 4096 );
+
+        $result = $this->call_api( $prompt );
+
+        $this->max_tokens = $old_max;
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return $this->parse_json_response( $result );
+    }
+
+    /**
+     * Get template-specific structure guide.
+     */
+    private function get_template_guide( string $template ): string {
+        $guides = [
+            'blog' =>
+                "- H1: Article title (handled by WordPress)\n"
+                . "- Introduction paragraph (2-3 sentences with the keyword)\n"
+                . "- H2: Main Section 1\n"
+                . "  - 2-3 paragraphs with H3 subsections if needed\n"
+                . "- H2: Main Section 2\n"
+                . "  - 2-3 paragraphs\n"
+                . "- H2: Main Section 3\n"
+                . "  - 2-3 paragraphs\n"
+                . "- H2: Conclusion\n"
+                . "  - Summary paragraph + call to action",
+
+            'listicle' =>
+                "- Introduction: hook + overview of the list\n"
+                . "- H2: #1 Item Name\n"
+                . "  - Description, pros/cons, details paragraph\n"
+                . "- H2: #2 Item Name\n"
+                . "  - Description paragraph\n"
+                . "- (continue for 5-10 items depending on length)\n"
+                . "- H2: Conclusion / Final Thoughts\n"
+                . "  - Summary + recommendation",
+
+            'howto' =>
+                "- Introduction: what the reader will learn\n"
+                . "- H2: What You Need / Prerequisites\n"
+                . "  - Bulleted list of requirements\n"
+                . "- H2: Step 1 – [Action]\n"
+                . "  - Detailed instruction paragraph\n"
+                . "- H2: Step 2 – [Action]\n"
+                . "  - Detailed instruction paragraph\n"
+                . "- (continue steps)\n"
+                . "- H2: Tips & Best Practices\n"
+                . "  - Bulleted tips\n"
+                . "- H2: Conclusion\n"
+                . "  - Summary of steps + encouragement",
+
+            'review' =>
+                "- Introduction: what is being reviewed and why\n"
+                . "- H2: Overview / What is [Product]?\n"
+                . "  - Description paragraph\n"
+                . "- H2: Key Features\n"
+                . "  - Feature list with descriptions\n"
+                . "- H2: Pros and Cons\n"
+                . "  - Two-column or bulleted pros/cons\n"
+                . "- H2: Pricing\n"
+                . "  - Price details\n"
+                . "- H2: Who Is It For?\n"
+                . "  - Target audience description\n"
+                . "- H2: Verdict\n"
+                . "  - Final rating/recommendation",
+
+            'comparison' =>
+                "- Introduction: what is being compared and why\n"
+                . "- H2: Quick Comparison Table\n"
+                . "  - HTML table with key differences\n"
+                . "- H2: [Option A] – Overview\n"
+                . "  - Description, features, pros/cons\n"
+                . "- H2: [Option B] – Overview\n"
+                . "  - Description, features, pros/cons\n"
+                . "- H2: Head-to-Head: Key Differences\n"
+                . "  - Detailed comparison by category\n"
+                . "- H2: Which Should You Choose?\n"
+                . "  - Recommendation based on use case",
+        ];
+
+        return $guides[ $template ] ?? $guides['blog'];
+    }
+
     // ── Private helpers ─────────────────────────────
 
     private function lang_label(): string {

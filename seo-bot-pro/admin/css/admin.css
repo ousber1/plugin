@@ -376,3 +376,124 @@
 .sbp-text-success { color: #28a745; font-weight: 600; }
 .sbp-text-warning { color: #dba617; font-weight: 600; }
 .sbp-text-danger  { color: #dc3545; font-weight: 600; }
+
+/* Template preview */
+.sbp-template-preview {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-left: 4px solid #2271b1;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 16px 0 20px;
+}
+
+.sbp-template-preview h4 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.sbp-tpl-structure {
+    font-size: 13px;
+    line-height: 2;
+    color: #50575e;
+}
+
+.sbp-tpl-tag {
+    display: inline-block;
+    background: #2271b1;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
+.sbp-tpl-feature {
+    display: block;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #dcdcde;
+    color: #28a745;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Generator progress */
+.sbp-gen-progress {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.sbp-gen-progress strong {
+    font-size: 14px;
+}
+
+.sbp-gen-steps {
+    margin-top: 12px;
+    padding-left: 4px;
+}
+
+.sbp-gen-step {
+    font-size: 13px;
+    color: #646970;
+    padding: 3px 0;
+}
+
+/* Generator success */
+.sbp-gen-success {
+    border: 1px solid #28a745 !important;
+    background: #f0fff4 !important;
+}
+
+.sbp-gen-success-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 16px;
+}
+
+.sbp-gen-check {
+    color: #28a745;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.sbp-gen-details {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+}
+
+.sbp-gen-detail {
+    padding: 4px 0;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.sbp-gen-label {
+    font-weight: 600;
+    display: inline-block;
+    min-width: 120px;
+    color: #646970;
+}
+
+.sbp-gen-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sbp-gen-actions .button {
+    font-size: 14px;
+    padding: 6px 20px;
+    height: auto;
+}

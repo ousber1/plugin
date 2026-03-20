@@ -427,6 +427,26 @@
     });
 
     // ── AI Post Generator page ──────────────────────
+
+    // Template descriptions for preview
+    var templateInfo = {
+        blog:       '<div class="sbp-tpl-structure"><span class="sbp-tpl-tag">H2</span> Introduction<br><span class="sbp-tpl-tag">H2</span> Main Section 1 → <span class="sbp-tpl-tag">H3</span> Subsections<br><span class="sbp-tpl-tag">H2</span> Main Section 2<br><span class="sbp-tpl-tag">H2</span> Main Section 3<br><span class="sbp-tpl-tag">H2</span> Conclusion + CTA<br><span class="sbp-tpl-feature">+ Internal links + External authority links + Focus keyword</span></div>',
+        listicle:   '<div class="sbp-tpl-structure"><span class="sbp-tpl-tag">Intro</span> Hook + overview<br><span class="sbp-tpl-tag">H2</span> #1 Item Name → description<br><span class="sbp-tpl-tag">H2</span> #2 Item Name → description<br><span class="sbp-tpl-tag">H2</span> #3-#10 Items...<br><span class="sbp-tpl-tag">H2</span> Final Thoughts + Recommendation<br><span class="sbp-tpl-feature">+ Internal links + External authority links + Focus keyword</span></div>',
+        howto:      '<div class="sbp-tpl-structure"><span class="sbp-tpl-tag">Intro</span> What you will learn<br><span class="sbp-tpl-tag">H2</span> Prerequisites / What You Need<br><span class="sbp-tpl-tag">H2</span> Step 1 – [Action]<br><span class="sbp-tpl-tag">H2</span> Step 2 – [Action]<br><span class="sbp-tpl-tag">H2</span> Tips & Best Practices<br><span class="sbp-tpl-tag">H2</span> Conclusion<br><span class="sbp-tpl-feature">+ Internal links + External authority links + HowTo schema ready</span></div>',
+        review:     '<div class="sbp-tpl-structure"><span class="sbp-tpl-tag">Intro</span> What & why review<br><span class="sbp-tpl-tag">H2</span> Overview / What is [Product]?<br><span class="sbp-tpl-tag">H2</span> Key Features<br><span class="sbp-tpl-tag">H2</span> Pros and Cons<br><span class="sbp-tpl-tag">H2</span> Pricing<br><span class="sbp-tpl-tag">H2</span> Who Is It For?<br><span class="sbp-tpl-tag">H2</span> Verdict<br><span class="sbp-tpl-feature">+ Internal links + External links + Review schema ready</span></div>',
+        comparison: '<div class="sbp-tpl-structure"><span class="sbp-tpl-tag">Intro</span> What is compared & why<br><span class="sbp-tpl-tag">H2</span> Quick Comparison Table<br><span class="sbp-tpl-tag">H2</span> [Option A] – Overview<br><span class="sbp-tpl-tag">H2</span> [Option B] – Overview<br><span class="sbp-tpl-tag">H2</span> Head-to-Head Comparison<br><span class="sbp-tpl-tag">H2</span> Which Should You Choose?<br><span class="sbp-tpl-feature">+ Internal links + External links + Comparison table</span></div>'
+    };
+
+    // Show template preview on change
+    function updateTemplatePreview() {
+        var tpl  = $('#sbp-gen-template').val();
+        var desc = templateInfo[tpl] || templateInfo.blog;
+        $('#sbp-template-desc').html(desc);
+    }
+    $('#sbp-gen-template').on('change', updateTemplatePreview);
+    // Initialize on load
+    updateTemplatePreview();
+
     $('#sbp-generate-post-btn').on('click', function () {
         var btn    = $(this);
         var result = $('#sbp-gen-result');
@@ -437,8 +457,20 @@
             return;
         }
 
+        var autoImage = $('#sbp-gen-autoimage').is(':checked');
+
         btn.prop('disabled', true);
-        result.html('<span class="sbp-spinner"></span> ' + data.i18n.publishing);
+
+        // Show progress steps
+        var steps = ['Generating article content...'];
+        if (autoImage) steps.push('Creating AI featured image...');
+        if ($('#sbp-gen-autoseo').is(':checked')) steps.push('Optimizing SEO...');
+        if ($('#sbp-gen-autofaq').is(':checked')) steps.push('Generating FAQ...');
+
+        result.html('<div class="sbp-gen-progress"><span class="sbp-spinner"></span> <strong>' + steps[0] + '</strong>'
+                   + '<div class="sbp-gen-steps">' + steps.map(function(s, i) {
+                       return '<div class="sbp-gen-step" data-step="' + i + '">' + escHtml(s) + '</div>';
+                   }).join('') + '</div></div>');
 
         $.post(data.ajaxUrl, {
             action:       'sbp_generate_post',
@@ -448,22 +480,42 @@
             status:       $('#sbp-gen-status').val(),
             category_id:  $('#sbp-gen-category').val(),
             length:       $('#sbp-gen-length').val(),
+            template:     $('#sbp-gen-template').val(),
             auto_seo:     $('#sbp-gen-autoseo').is(':checked') ? '1' : '0',
             auto_faq:     $('#sbp-gen-autofaq').is(':checked') ? '1' : '0',
+            auto_image:   autoImage ? '1' : '0',
+            auto_links:   $('#sbp-gen-autolinks').is(':checked') ? '1' : '0',
             instructions: $('#sbp-gen-instructions').val()
         })
         .done(function (res) {
             if (res.success) {
                 var d    = res.data;
-                var html = '<div class="sbp-result-success">';
-                html += '<strong>Post created!</strong><br>';
-                html += 'Title: ' + escHtml(d.title) + '<br>';
+                var html = '<div class="sbp-result-success sbp-gen-success">';
+                html += '<div class="sbp-gen-success-header">';
+                html += '<span class="dashicons dashicons-yes-alt sbp-gen-check"></span>';
+                html += '<strong>Article Created Successfully!</strong>';
+                html += '</div>';
+                html += '<div class="sbp-gen-details">';
+                html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Title:</span> ' + escHtml(d.title) + '</div>';
+                html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Template:</span> ' + escHtml(d.template || 'blog') + '</div>';
+                html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Status:</span> ' + escHtml(d.status) + '</div>';
+
+                if (d.image_generated) {
+                    html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Featured Image:</span> <span class="sbp-text-success">Generated</span></div>';
+                }
+                if (d.has_links) {
+                    html += '<div class="sbp-gen-detail"><span class="sbp-gen-label">Links:</span> <span class="sbp-text-success">Internal + External included</span></div>';
+                }
+
+                html += '</div>';
+                html += '<div class="sbp-gen-actions">';
                 if (d.edit_url) {
-                    html += '<a href="' + escAttr(d.edit_url) + '" class="button" target="_blank">Edit Post</a> ';
+                    html += '<a href="' + escAttr(d.edit_url) + '" class="button button-primary" target="_blank">Edit Post</a> ';
                 }
                 if (d.view_url) {
                     html += '<a href="' + escAttr(d.view_url) + '" class="button" target="_blank">View Post</a>';
                 }
+                html += '</div>';
                 html += '</div>';
                 result.html(html);
             } else {

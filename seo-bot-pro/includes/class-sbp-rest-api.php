@@ -283,8 +283,11 @@ class SBP_REST_API {
             'status'              => sanitize_key( $_POST['status'] ?? 'draft' ),
             'category_id'         => absint( $_POST['category_id'] ?? 0 ),
             'word_count'          => sanitize_key( $_POST['length'] ?? 'medium' ),
+            'template'            => sanitize_key( $_POST['template'] ?? 'blog' ),
             'auto_seo'            => ! empty( $_POST['auto_seo'] ) && $_POST['auto_seo'] !== '0',
             'auto_faq'            => ! empty( $_POST['auto_faq'] ) && $_POST['auto_faq'] !== '0',
+            'auto_image'          => ! empty( $_POST['auto_image'] ) && $_POST['auto_image'] !== '0',
+            'auto_links'          => ! isset( $_POST['auto_links'] ) || ( ! empty( $_POST['auto_links'] ) && $_POST['auto_links'] !== '0' ),
             'custom_instructions' => sanitize_textarea_field( $_POST['instructions'] ?? '' ),
         ] );
 
