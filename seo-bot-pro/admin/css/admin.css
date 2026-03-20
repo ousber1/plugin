@@ -325,3 +325,54 @@
     margin-top: 6px;
     margin-right: 6px;
 }
+
+/* Rank Booster page */
+.sbp-booster-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.sbp-action-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.sbp-action-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.sbp-action-card p {
+    font-size: 13px;
+    color: #646970;
+    margin: 0 0 12px;
+}
+
+.sbp-action-card code {
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* Warning number */
+.sbp-num-warning {
+    color: #d63638;
+}
+
+.sbp-card small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #646970;
+}
+
+/* Text colors */
+.sbp-text-success { color: #28a745; font-weight: 600; }
+.sbp-text-warning { color: #dba617; font-weight: 600; }
+.sbp-text-danger  { color: #dc3545; font-weight: 600; }

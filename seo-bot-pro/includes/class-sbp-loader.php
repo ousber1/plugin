@@ -29,6 +29,9 @@ class SBP_Loader {
         require_once $dir . 'class-sbp-logger.php';
         require_once $dir . 'class-sbp-post-generator.php';
         require_once $dir . 'class-sbp-schema.php';
+        require_once $dir . 'class-sbp-indexing.php';
+        require_once $dir . 'class-sbp-sitemap.php';
+        require_once $dir . 'class-sbp-rank-booster.php';
     }
 
     private function register_hooks() {
@@ -53,9 +56,30 @@ class SBP_Loader {
         add_action( 'wp_head', [ $this, 'output_robots_meta' ], 1 );
         add_action( 'wp_head', [ $this, 'output_canonical' ], 1 );
 
+        // Sitemap
+        $sitemap = new SBP_Sitemap();
+        $sitemap->init();
+
+        // IndexNow key verification file
+        $indexing = new SBP_Indexing();
+        add_action( 'template_redirect', [ $indexing, 'serve_indexnow_key' ] );
+
+        // Auto-ping on publish
+        if ( SBP_Helpers::get_option( 'auto_ping_publish', '0' ) === '1' ) {
+            add_action( 'publish_post', [ $indexing, 'on_publish' ], 20, 2 );
+            add_action( 'publish_page', [ $indexing, 'on_publish' ], 20, 2 );
+            if ( class_exists( 'WooCommerce' ) ) {
+                add_action( 'publish_product', [ $indexing, 'on_publish' ], 20, 2 );
+            }
+        }
+
         // CRON
         $cron = new SBP_Cron();
         add_action( 'sbp_daily_optimization', [ $cron, 'run' ] );
+
+        // Rank Booster weekly cron
+        $booster = new SBP_Rank_Booster();
+        add_action( 'sbp_weekly_rank_boost', [ $booster, 'cron_refresh_stale' ] );
 
         // AJAX endpoints
         add_action( 'wp_ajax_sbp_optimize_post', [ $api, 'ajax_optimize_post' ] );
@@ -70,6 +94,10 @@ class SBP_Loader {
         add_action( 'wp_ajax_sbp_generate_excerpt', [ $api, 'ajax_generate_excerpt' ] );
         add_action( 'wp_ajax_sbp_rewrite_content', [ $api, 'ajax_rewrite_content' ] );
         add_action( 'wp_ajax_sbp_save_robots_meta', [ $api, 'ajax_save_robots_meta' ] );
+        add_action( 'wp_ajax_sbp_ping_engines', [ $api, 'ajax_ping_engines' ] );
+        add_action( 'wp_ajax_sbp_submit_sitemap', [ $api, 'ajax_submit_sitemap' ] );
+        add_action( 'wp_ajax_sbp_bulk_indexnow', [ $api, 'ajax_bulk_indexnow' ] );
+        add_action( 'wp_ajax_sbp_refresh_stale', [ $api, 'ajax_refresh_stale' ] );
 
         // Auto-optimize on publish
         if ( SBP_Helpers::get_option( 'auto_optimize_publish' ) === '1' ) {

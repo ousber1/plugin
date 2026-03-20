@@ -97,6 +97,19 @@ class SBP_Helpers {
         // Twitter Cards
         $clean['enable_twitter'] = ! empty( $input['enable_twitter'] ) ? '1' : '0';
 
+        // Indexing & Crawl
+        $clean['enable_sitemap']     = ! empty( $input['enable_sitemap'] ) ? '1' : '0';
+        $clean['auto_ping_publish']  = ! empty( $input['auto_ping_publish'] ) ? '1' : '0';
+        $clean['ping_google']        = ! empty( $input['ping_google'] ) ? '1' : '0';
+        $clean['ping_bing']          = ! empty( $input['ping_bing'] ) ? '1' : '0';
+        $clean['enable_indexnow']    = ! empty( $input['enable_indexnow'] ) ? '1' : '0';
+        $clean['indexnow_api_key']   = sanitize_text_field( $input['indexnow_api_key'] ?? '' );
+
+        // Rank Booster
+        $clean['enable_freshness'] = ! empty( $input['enable_freshness'] ) ? '1' : '0';
+        $freshness_days = intval( $input['freshness_days'] ?? 90 );
+        $clean['freshness_days']   = max( 7, min( 365, $freshness_days ) );
+
         return $clean;
     }
 

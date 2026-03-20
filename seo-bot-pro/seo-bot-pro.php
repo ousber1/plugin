@@ -3,7 +3,7 @@
  * Plugin Name: SEO Bot Pro – AI SEO Optimizer
  * Plugin URI:  https://example.com/seo-bot-pro
  * Description: Automatically optimize SEO for WordPress posts, pages, and WooCommerce products using AI.
- * Version:     2.0.0
+ * Version:     4.0.0
  * Author:      SEO Bot Pro
  * Author URI:  https://example.com
  * License:     GPL-2.0-or-later
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SBP_VERSION', '2.0.0' );
+define( 'SBP_VERSION', '4.0.0' );
 define( 'SBP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SBP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SBP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -80,6 +80,14 @@ function sbp_activate() {
     if ( ! wp_next_scheduled( 'sbp_daily_optimization' ) ) {
         wp_schedule_event( time(), 'daily', 'sbp_daily_optimization' );
     }
+
+    // Schedule rank booster cron (weekly stale content refresh)
+    if ( ! wp_next_scheduled( 'sbp_weekly_rank_boost' ) ) {
+        wp_schedule_event( time(), 'weekly', 'sbp_weekly_rank_boost' );
+    }
+
+    // Flush rewrite rules for sitemap
+    flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'sbp_activate' );
 
@@ -88,5 +96,21 @@ register_activation_hook( __FILE__, 'sbp_activate' );
  */
 function sbp_deactivate() {
     wp_clear_scheduled_hook( 'sbp_daily_optimization' );
+    wp_clear_scheduled_hook( 'sbp_weekly_rank_boost' );
+    flush_rewrite_rules();
 }
+
+/**
+ * Add weekly schedule if not present.
+ */
+function sbp_cron_schedules( $schedules ) {
+    if ( ! isset( $schedules['weekly'] ) ) {
+        $schedules['weekly'] = [
+            'interval' => 604800,
+            'display'  => __( 'Once Weekly', 'seo-bot-pro' ),
+        ];
+    }
+    return $schedules;
+}
+add_filter( 'cron_schedules', 'sbp_cron_schedules' );
 register_deactivation_hook( __FILE__, 'sbp_deactivate' );

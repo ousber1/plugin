@@ -417,6 +417,83 @@ class SBP_REST_API {
         wp_send_json_success( [ 'saved' => true ] );
     }
 
+    // ── NEW: Ping search engines via AJAX ─────────────
+
+    public function ajax_ping_engines() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $indexing = new SBP_Indexing();
+        $url      = home_url( '/' );
+        $results  = $indexing->ping_all( $url );
+
+        // Also ping sitemap if enabled
+        if ( SBP_Helpers::get_option( 'enable_sitemap', '0' ) === '1' ) {
+            $results['sitemap'] = $indexing->ping_sitemap();
+        }
+
+        SBP_Logger::log( 0, 'ping_engines', 'success', wp_json_encode( $results ) );
+        wp_send_json_success( $results );
+    }
+
+    // ── NEW: Submit sitemap via AJAX ────────────────
+
+    public function ajax_submit_sitemap() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        if ( SBP_Helpers::get_option( 'enable_sitemap', '0' ) !== '1' ) {
+            wp_send_json_error( [ 'message' => __( 'Sitemap is not enabled.', 'seo-bot-pro' ) ] );
+        }
+
+        $indexing = new SBP_Indexing();
+        $results  = $indexing->ping_sitemap();
+
+        SBP_Logger::log( 0, 'submit_sitemap', 'success', wp_json_encode( $results ) );
+        wp_send_json_success( $results );
+    }
+
+    // ── NEW: Bulk IndexNow submit via AJAX ──────────
+
+    public function ajax_bulk_indexnow() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        if ( SBP_Helpers::get_option( 'enable_indexnow', '0' ) !== '1' ) {
+            wp_send_json_error( [ 'message' => __( 'IndexNow is not enabled.', 'seo-bot-pro' ) ] );
+        }
+
+        $sitemap  = new SBP_Sitemap();
+        $urls     = $sitemap->get_all_urls();
+        $indexing = new SBP_Indexing();
+        $results  = $indexing->bulk_submit_indexnow( $urls );
+
+        SBP_Logger::log( 0, 'bulk_indexnow', 'success', wp_json_encode( [ 'urls' => count( $urls ) ] ) );
+        wp_send_json_success( [ 'url_count' => count( $urls ), 'results' => $results ] );
+    }
+
+    // ── NEW: Refresh stale content via AJAX ─────────
+
+    public function ajax_refresh_stale() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! SBP_Helpers::current_user_can() ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $days    = (int) SBP_Helpers::get_option( 'freshness_days', 90 );
+        $booster = new SBP_Rank_Booster();
+        $result  = $booster->bulk_refresh( $days, 20 );
+
+        SBP_Logger::log( 0, 'refresh_stale', 'success', wp_json_encode( $result ) );
+        wp_send_json_success( $result );
+    }
+
     // ── Auto-optimize on publish ────────────────────
 
     public function auto_optimize_on_publish( int $post_id, WP_Post $post ) {

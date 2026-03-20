@@ -14,8 +14,16 @@ $temperature  = $settings['temperature'] ?? 0.4;
 $max_tokens   = $settings['max_tokens'] ?? 1024;
 $seo_plugin   = $settings['seo_plugin'] ?? 'rank_math';
 $enable_og    = $settings['enable_og'] ?? '1';
-$auto_publish   = $settings['auto_optimize_publish'] ?? '0';
-$enable_twitter = $settings['enable_twitter'] ?? '0';
+$auto_publish     = $settings['auto_optimize_publish'] ?? '0';
+$enable_twitter   = $settings['enable_twitter'] ?? '0';
+$enable_sitemap   = $settings['enable_sitemap'] ?? '0';
+$auto_ping        = $settings['auto_ping_publish'] ?? '0';
+$ping_google      = $settings['ping_google'] ?? '1';
+$ping_bing        = $settings['ping_bing'] ?? '1';
+$enable_indexnow  = $settings['enable_indexnow'] ?? '0';
+$indexnow_key     = $settings['indexnow_api_key'] ?? '';
+$enable_freshness = $settings['enable_freshness'] ?? '0';
+$freshness_days   = $settings['freshness_days'] ?? 90;
 
 settings_errors( 'sbp_settings' );
 ?>
@@ -145,6 +153,115 @@ settings_errors( 'sbp_settings' );
                             <?php checked( $auto_publish, '1' ); ?>>
                         <?php esc_html_e( 'Automatically optimize SEO when a post is published', 'seo-bot-pro' ); ?>
                     </label>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Indexing & Crawling ────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Indexing & Crawling', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( 'XML Sitemap', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_sitemap]" value="1"
+                            <?php checked( $enable_sitemap, '1' ); ?>>
+                        <?php esc_html_e( 'Generate XML sitemap at /sbp-sitemap.xml', 'seo-bot-pro' ); ?>
+                    </label>
+                    <?php if ( $enable_sitemap === '1' ) : ?>
+                        <p class="description">
+                            <?php esc_html_e( 'Sitemap URL:', 'seo-bot-pro' ); ?>
+                            <code><?php echo esc_html( home_url( '/sbp-sitemap.xml' ) ); ?></code>
+                        </p>
+                    <?php endif; ?>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Auto-Ping on Publish', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[auto_ping_publish]" value="1"
+                            <?php checked( $auto_ping, '1' ); ?>>
+                        <?php esc_html_e( 'Automatically notify search engines when content is published or updated', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Ping Google', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[ping_google]" value="1"
+                            <?php checked( $ping_google, '1' ); ?>>
+                        <?php esc_html_e( 'Ping Google when content changes', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Ping Bing', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[ping_bing]" value="1"
+                            <?php checked( $ping_bing, '1' ); ?>>
+                        <?php esc_html_e( 'Ping Bing when content changes', 'seo-bot-pro' ); ?>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row"><?php esc_html_e( 'IndexNow', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_indexnow]" value="1"
+                            <?php checked( $enable_indexnow, '1' ); ?>>
+                        <?php esc_html_e( 'Enable IndexNow instant indexing (Bing, Yandex, DuckDuckGo, Naver)', 'seo-bot-pro' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'IndexNow sends URLs directly to participating search engines for near-instant crawling.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="sbp-indexnow-key"><?php esc_html_e( 'IndexNow API Key', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="sbp-indexnow-key" name="sbp[indexnow_api_key]"
+                           value="<?php echo esc_attr( $indexnow_key ); ?>"
+                           class="regular-text" placeholder="<?php esc_attr_e( 'e.g. a1b2c3d4e5f6...', 'seo-bot-pro' ); ?>">
+                    <p class="description">
+                        <?php esc_html_e( 'Generate a key at indexnow.org. The plugin auto-serves the verification file.', 'seo-bot-pro' ); ?>
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ── Rank Booster ──────────────────────────── -->
+        <h2 class="sbp-section-title"><?php esc_html_e( 'Rank Booster', 'seo-bot-pro' ); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Content Freshness', 'seo-bot-pro' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sbp[enable_freshness]" value="1"
+                            <?php checked( $enable_freshness, '1' ); ?>>
+                        <?php esc_html_e( 'Automatically refresh modified dates on stale content (weekly CRON)', 'seo-bot-pro' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'Refreshing modified dates signals freshness to search engines and can boost rankings.', 'seo-bot-pro' ); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="sbp-freshness-days"><?php esc_html_e( 'Freshness Threshold', 'seo-bot-pro' ); ?></label>
+                </th>
+                <td>
+                    <input type="number" id="sbp-freshness-days" name="sbp[freshness_days]"
+                           value="<?php echo esc_attr( $freshness_days ); ?>"
+                           min="7" max="365" step="1" style="width:80px;">
+                    <span><?php esc_html_e( 'days', 'seo-bot-pro' ); ?></span>
+                    <p class="description"><?php esc_html_e( 'Content older than this many days is considered stale. (7-365)', 'seo-bot-pro' ); ?></p>
                 </td>
             </tr>
         </table>

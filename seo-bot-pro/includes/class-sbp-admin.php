@@ -22,6 +22,7 @@ class SBP_Admin {
         add_submenu_page( 'sbp-dashboard', __( 'Dashboard', 'seo-bot-pro' ), __( 'Dashboard', 'seo-bot-pro' ), 'edit_posts', 'sbp-dashboard', [ $this, 'render_dashboard' ] );
         add_submenu_page( 'sbp-dashboard', __( 'AI Post Generator', 'seo-bot-pro' ), __( 'AI Post Generator', 'seo-bot-pro' ), 'publish_posts', 'sbp-generator', [ $this, 'render_generator' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Bulk Optimize', 'seo-bot-pro' ), __( 'Bulk Optimize', 'seo-bot-pro' ), 'edit_posts', 'sbp-bulk', [ $this, 'render_bulk' ] );
+        add_submenu_page( 'sbp-dashboard', __( 'Rank Booster', 'seo-bot-pro' ), __( 'Rank Booster', 'seo-bot-pro' ), 'edit_posts', 'sbp-rank-booster', [ $this, 'render_rank_booster' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Settings', 'seo-bot-pro' ), __( 'Settings', 'seo-bot-pro' ), 'manage_options', 'sbp-settings', [ $this, 'render_settings' ] );
         add_submenu_page( 'sbp-dashboard', __( 'Logs', 'seo-bot-pro' ), __( 'Logs', 'seo-bot-pro' ), 'edit_posts', 'sbp-logs', [ $this, 'render_logs' ] );
     }
@@ -33,6 +34,7 @@ class SBP_Admin {
             'seo-bot_page_sbp-settings',
             'seo-bot_page_sbp-logs',
             'seo-bot_page_sbp-generator',
+            'seo-bot_page_sbp-rank-booster',
         ];
 
         $is_plugin_page = in_array( $hook, $plugin_pages, true );
@@ -60,6 +62,9 @@ class SBP_Admin {
                 'publishing'  => __( 'Creating post with AI...', 'seo-bot-pro' ),
                 'rewriting'   => __( 'Rewriting content...', 'seo-bot-pro' ),
                 'saved'       => __( 'Saved!', 'seo-bot-pro' ),
+                'pinging'     => __( 'Pinging search engines...', 'seo-bot-pro' ),
+                'submitting'  => __( 'Submitting...', 'seo-bot-pro' ),
+                'refreshing'  => __( 'Refreshing...', 'seo-bot-pro' ),
             ],
         ] );
     }
@@ -70,6 +75,10 @@ class SBP_Admin {
 
     public function render_generator() {
         include SBP_PLUGIN_DIR . 'admin/views/generator.php';
+    }
+
+    public function render_rank_booster() {
+        include SBP_PLUGIN_DIR . 'admin/views/rank-booster.php';
     }
 
     public function render_bulk() {

@@ -556,6 +556,125 @@
         processNext();
     });
 
+    // ── Rank Booster: Ping engines ─────────────────
+    $('#sbp-ping-engines-btn').on('click', function () {
+        var btn    = $(this);
+        var result = $('#sbp-ping-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.pinging);
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_ping_engines',
+            nonce:  data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                var d    = res.data;
+                var html = '<span class="sbp-text-success">';
+                if (d.google) html += 'Google: ' + (d.google.success ? 'OK' : 'Failed') + ' | ';
+                if (d.bing) html += 'Bing: ' + (d.bing.success ? 'OK' : 'Failed') + ' | ';
+                if (d.indexnow) html += 'IndexNow: ' + (d.indexnow.success ? 'OK' : 'Failed');
+                html += '</span>';
+                result.html(html);
+            } else {
+                result.html('<span class="sbp-text-danger">' + (res.data.message || 'Error') + '</span>');
+            }
+        })
+        .fail(function () {
+            result.html('<span class="sbp-text-danger">Network error</span>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Rank Booster: Submit sitemap ────────────────
+    $('#sbp-submit-sitemap-btn').on('click', function () {
+        var btn    = $(this);
+        var result = $('#sbp-sitemap-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.submitting);
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_submit_sitemap',
+            nonce:  data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                var d    = res.data;
+                var html = '<span class="sbp-text-success">';
+                if (d.google) html += 'Google: ' + (d.google.success ? 'OK' : 'Failed') + ' | ';
+                if (d.bing) html += 'Bing: ' + (d.bing.success ? 'OK' : 'Failed');
+                html += '</span>';
+                result.html(html);
+            } else {
+                result.html('<span class="sbp-text-danger">' + (res.data.message || 'Error') + '</span>');
+            }
+        })
+        .fail(function () {
+            result.html('<span class="sbp-text-danger">Network error</span>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Rank Booster: Bulk IndexNow ─────────────────
+    $('#sbp-bulk-indexnow-btn').on('click', function () {
+        var btn    = $(this);
+        var result = $('#sbp-indexnow-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.submitting);
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_bulk_indexnow',
+            nonce:  data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                result.html('<span class="sbp-text-success">' + res.data.url_count + ' URLs submitted to IndexNow!</span>');
+            } else {
+                result.html('<span class="sbp-text-danger">' + (res.data.message || 'Error') + '</span>');
+            }
+        })
+        .fail(function () {
+            result.html('<span class="sbp-text-danger">Network error</span>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Rank Booster: Refresh stale content ─────────
+    $('#sbp-refresh-stale-btn').on('click', function () {
+        var btn    = $(this);
+        var result = $('#sbp-refresh-result');
+
+        btn.prop('disabled', true);
+        result.html('<span class="sbp-spinner"></span> ' + data.i18n.refreshing);
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_refresh_stale',
+            nonce:  data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                result.html('<span class="sbp-text-success">Refreshed ' + res.data.refreshed + ' of ' + res.data.total + ' stale posts.</span>');
+            } else {
+                result.html('<span class="sbp-text-danger">' + (res.data.message || 'Error') + '</span>');
+            }
+        })
+        .fail(function () {
+            result.html('<span class="sbp-text-danger">Network error</span>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
     // ── Helpers ─────────────────────────────────────
     function escHtml(str) {
         var div = document.createElement('div');
