@@ -10,23 +10,51 @@
     $('#sbp-provider').on('change', function () {
         var provider = $(this).val();
 
+        // Hide all provider-specific rows
+        $('.sbp-openai-row, .sbp-claude-row, .sbp-gemini-row').hide();
+        $('.sbp-model-openai, .sbp-model-claude, .sbp-model-gemini').hide().prop('selected', false);
+
         if (provider === 'claude') {
-            $('.sbp-openai-row').show(); // Keep visible – needed for DALL-E image generation
+            $('.sbp-openai-row').show(); // Keep for DALL-E
             $('.sbp-claude-row').show();
-            $('.sbp-model-openai').hide().prop('selected', false);
             $('.sbp-model-claude').show();
-            // Select first Claude model if none selected
             if (!$('.sbp-model-claude:selected').length) {
                 $('.sbp-model-claude').first().prop('selected', true);
             }
+        } else if (provider === 'gemini') {
+            $('.sbp-openai-row').show(); // Keep for DALL-E
+            $('.sbp-gemini-row').show();
+            $('.sbp-model-gemini').show();
+            if (!$('.sbp-model-gemini:selected').length) {
+                $('.sbp-model-gemini').first().prop('selected', true);
+            }
         } else {
-            $('.sbp-claude-row').hide();
             $('.sbp-openai-row').show();
-            $('.sbp-model-claude').hide().prop('selected', false);
             $('.sbp-model-openai').show();
             if (!$('.sbp-model-openai:selected').length) {
                 $('.sbp-model-openai').first().prop('selected', true);
             }
+        }
+    });
+
+    // ── Settings page: Tab navigation ─────────────
+    $('.sbp-settings-tabs .nav-tab').on('click', function (e) {
+        e.preventDefault();
+        var tab = $(this).data('tab');
+
+        // Update active tab
+        $('.sbp-settings-tabs .nav-tab').removeClass('nav-tab-active');
+        $(this).addClass('nav-tab-active');
+
+        // Show/hide tab content
+        $('.sbp-tab-content').hide();
+        $('#sbp-tab-' + tab).show();
+
+        // Update URL without reload
+        if (history.replaceState) {
+            var url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            history.replaceState(null, '', url);
         }
     });
 
@@ -35,6 +63,72 @@
         var prov = $(this).val();
         $('.sbp-img-dalle-row, .sbp-img-unsplash-row, .sbp-img-pixabay-row, .sbp-img-pexels-row').hide();
         $('.sbp-img-' + prov + '-row').show();
+    });
+
+    // ── Settings page: Test API connection ──────────
+    $(document).on('click', '.sbp-test-api-btn', function () {
+        var btn = $(this);
+        var resultSpan = btn.next('.sbp-test-result');
+
+        btn.prop('disabled', true);
+        resultSpan.html('<span class="sbp-spinner"></span> Testing...');
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_test_api',
+            nonce: data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                resultSpan.html('<span class="sbp-text-success">Connected! Provider: ' + escHtml(res.data.provider) + ', Model: ' + escHtml(res.data.model) + '</span>');
+            } else {
+                resultSpan.html('<span class="sbp-text-danger">Failed: ' + escHtml(res.data.message || 'Unknown error') + '</span>');
+            }
+        })
+        .fail(function () {
+            resultSpan.html('<span class="sbp-text-danger">Network error</span>');
+        })
+        .always(function () {
+            btn.prop('disabled', false);
+        });
+    });
+
+    // ── Settings Export ──────────────────────────────
+    $('#sbp-export-settings-btn').on('click', function () {
+        $.post(data.ajaxUrl, {
+            action: 'sbp_export_settings',
+            nonce: data.nonce
+        })
+        .done(function (res) {
+            if (res.success) {
+                $('#sbp-settings-json').val(res.data.json);
+            }
+        });
+    });
+
+    // ── Settings Import ──────────────────────────────
+    $('#sbp-import-settings-btn').on('click', function () {
+        var json = $('#sbp-settings-json').val();
+        if (!json) {
+            alert('Please paste settings JSON first.');
+            return;
+        }
+        if (!confirm('Import these settings? Your current settings (except API keys) will be overwritten.')) {
+            return;
+        }
+
+        $.post(data.ajaxUrl, {
+            action: 'sbp_import_settings',
+            nonce: data.nonce,
+            settings_json: json
+        })
+        .done(function (res) {
+            if (res.success) {
+                alert('Settings imported! Reloading...');
+                location.reload();
+            } else {
+                alert('Import failed: ' + (res.data.message || 'Invalid JSON'));
+            }
+        });
     });
 
     // ── Single post optimize button ─────────────────

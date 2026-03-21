@@ -499,6 +499,55 @@ class SBP_REST_API {
         wp_send_json_success( $result );
     }
 
+    // ── NEW: Test API connection via AJAX ─────────────
+
+    public function ajax_test_api() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $ai = new SBP_AI_Service();
+        if ( ! $ai->is_configured() ) {
+            wp_send_json_error( [ 'message' => __( 'API key not configured for the selected provider.', 'seo-bot-pro' ) ] );
+        }
+
+        $provider = sanitize_text_field( wp_unslash( $_POST['provider'] ?? '' ) );
+        $result   = $ai->test_connection( $provider );
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+        } else {
+            wp_send_json_success( $result );
+        }
+    }
+
+    public function ajax_export_settings() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        wp_send_json_success( [ 'json' => SBP_Helpers::export_settings() ] );
+    }
+
+    public function ajax_import_settings() {
+        check_ajax_referer( 'sbp_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Unauthorized.', 'seo-bot-pro' ) ], 403 );
+        }
+
+        $json = sanitize_textarea_field( wp_unslash( $_POST['settings_json'] ?? '' ) );
+        if ( empty( $json ) ) {
+            wp_send_json_error( [ 'message' => __( 'No settings data provided.', 'seo-bot-pro' ) ] );
+        }
+
+        if ( SBP_Helpers::import_settings( $json ) ) {
+            wp_send_json_success( [ 'message' => __( 'Settings imported successfully.', 'seo-bot-pro' ) ] );
+        } else {
+            wp_send_json_error( [ 'message' => __( 'Invalid settings JSON.', 'seo-bot-pro' ) ] );
+        }
+    }
+
     // ── Auto-optimize on publish ────────────────────
 
     public function auto_optimize_on_publish( int $post_id, WP_Post $post ) {

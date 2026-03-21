@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 $ai           = new SBP_AI_Service();
 $configured   = $ai->is_configured();
 $provider     = SBP_Helpers::get_option( 'provider', 'openai' );
-$provider_lbl = $provider === 'claude' ? 'Claude (Anthropic)' : 'OpenAI';
+$provider_labels = [ 'openai' => 'OpenAI', 'claude' => 'Claude (Anthropic)', 'gemini' => 'Google Gemini' ];
+$provider_lbl = $provider_labels[ $provider ] ?? 'OpenAI';
 $model        = SBP_Helpers::get_option( 'model', 'gpt-4o-mini' );
 $seo_plugin   = SBP_Helpers::get_option( 'seo_plugin', 'rank_math' );
 
@@ -154,6 +155,16 @@ $twitter_enabled   = SBP_Helpers::get_option( 'enable_twitter', '0' ) === '1';
             <h3><?php esc_html_e( 'Freshness', 'seo-bot-pro' ); ?></h3>
             <span class="<?php echo $freshness_on ? 'sbp-text-success' : 'sbp-text-danger'; ?>">
                 <?php echo $freshness_on ? esc_html__( 'Active', 'seo-bot-pro' ) : esc_html__( 'Disabled', 'seo-bot-pro' ); ?>
+            </span>
+        </div>
+        <div class="sbp-card">
+            <h3><?php esc_html_e( 'Image Provider', 'seo-bot-pro' ); ?></h3>
+            <?php
+            $img_prov = SBP_Helpers::get_option( 'image_provider', 'dalle' );
+            $img_labels = [ 'dalle' => 'DALL-E', 'unsplash' => 'Unsplash', 'pixabay' => 'Pixabay', 'pexels' => 'Pexels' ];
+            ?>
+            <span class="sbp-card-number" style="font-size:14px;">
+                <?php echo esc_html( $img_labels[ $img_prov ] ?? $img_prov ); ?>
             </span>
         </div>
     </div>

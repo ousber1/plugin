@@ -4,13 +4,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles all communication with AI providers (OpenAI + Claude/Anthropic).
+ * Handles all communication with AI providers (OpenAI, Claude/Anthropic, Google Gemini).
  */
 class SBP_AI_Service {
 
     private string $provider;
     private string $openai_key;
     private string $claude_key;
+    private string $gemini_key;
     private string $model;
     private string $language;
     private string $tone;
@@ -21,6 +22,7 @@ class SBP_AI_Service {
         $this->provider    = SBP_Helpers::get_option( 'provider', 'openai' );
         $this->openai_key  = SBP_Helpers::get_option( 'openai_api_key' );
         $this->claude_key  = SBP_Helpers::get_option( 'claude_api_key' );
+        $this->gemini_key  = SBP_Helpers::get_option( 'gemini_api_key' );
         $this->model       = SBP_Helpers::get_option( 'model', $this->default_model() );
         $this->language    = SBP_Helpers::get_option( 'language', 'en' );
         $this->tone        = SBP_Helpers::get_option( 'tone', 'professional' );
@@ -29,7 +31,13 @@ class SBP_AI_Service {
     }
 
     private function default_model(): string {
-        return $this->provider === 'claude' ? 'claude-sonnet-4-6' : 'gpt-4o-mini';
+        if ( $this->provider === 'claude' ) {
+            return 'claude-sonnet-4-6';
+        }
+        if ( $this->provider === 'gemini' ) {
+            return 'gemini-2.0-flash';
+        }
+        return 'gpt-4o-mini';
     }
 
     /**
@@ -39,7 +47,60 @@ class SBP_AI_Service {
         if ( $this->provider === 'claude' ) {
             return ! empty( $this->claude_key );
         }
+        if ( $this->provider === 'gemini' ) {
+            return ! empty( $this->gemini_key );
+        }
         return ! empty( $this->openai_key );
+    }
+
+    /**
+     * Test the API connection for a given provider.
+     *
+     * @return array|WP_Error  { provider, model, message }
+     */
+    public function test_connection( string $provider = '' ) {
+        $provider = $provider ?: $this->provider;
+
+        $prompt = 'Respond with exactly: {"status":"ok"}';
+        $old_max = $this->max_tokens;
+        $this->max_tokens = 64;
+
+        $result = null;
+        switch ( $provider ) {
+            case 'openai':
+                if ( empty( $this->openai_key ) ) {
+                    return new WP_Error( 'no_api_key', __( 'OpenAI API key is not set.', 'seo-bot-pro' ) );
+                }
+                $result = $this->call_openai( $prompt );
+                break;
+            case 'claude':
+                if ( empty( $this->claude_key ) ) {
+                    return new WP_Error( 'no_api_key', __( 'Claude API key is not set.', 'seo-bot-pro' ) );
+                }
+                $result = $this->call_claude( $prompt );
+                break;
+            case 'gemini':
+                if ( empty( $this->gemini_key ) ) {
+                    return new WP_Error( 'no_api_key', __( 'Gemini API key is not set.', 'seo-bot-pro' ) );
+                }
+                $result = $this->call_gemini( $prompt );
+                break;
+            default:
+                $this->max_tokens = $old_max;
+                return new WP_Error( 'invalid_provider', __( 'Unknown provider.', 'seo-bot-pro' ) );
+        }
+
+        $this->max_tokens = $old_max;
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return [
+            'provider' => $provider,
+            'model'    => $this->model,
+            'message'  => __( 'Connection successful.', 'seo-bot-pro' ),
+        ];
     }
 
     /**
@@ -381,17 +442,37 @@ class SBP_AI_Service {
      */
     public function generate_image( string $prompt, string $topic = '' ) {
         $image_provider = SBP_Helpers::get_option( 'image_provider', 'dalle' );
+        $use_fallback   = (bool) SBP_Helpers::get_option( 'image_fallback', true );
 
-        switch ( $image_provider ) {
+        $result = $this->fetch_image_from_provider( $image_provider, $prompt, $topic );
+
+        // If primary provider failed and fallback is enabled, try free stock providers.
+        if ( is_wp_error( $result ) && $use_fallback && $image_provider === 'dalle' ) {
+            $fallback_order = [ 'unsplash', 'pixabay', 'pexels' ];
+            foreach ( $fallback_order as $fallback ) {
+                $fb_result = $this->fetch_image_from_provider( $fallback, $prompt, $topic );
+                if ( ! is_wp_error( $fb_result ) ) {
+                    return $fb_result;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fetch image from a specific provider.
+     *
+     * @return string|WP_Error
+     */
+    private function fetch_image_from_provider( string $provider, string $prompt, string $topic ) {
+        switch ( $provider ) {
             case 'unsplash':
                 return $this->fetch_unsplash_image( $topic ?: $prompt );
-
             case 'pixabay':
                 return $this->fetch_pixabay_image( $topic ?: $prompt );
-
             case 'pexels':
                 return $this->fetch_pexels_image( $topic ?: $prompt );
-
             case 'dalle':
             default:
                 return $this->generate_dalle_image( $prompt );
@@ -737,8 +818,8 @@ class SBP_AI_Service {
     // ── Private helpers ─────────────────────────────
 
     private function lang_label(): string {
-        $map = [ 'en' => 'English', 'fr' => 'French', 'ar' => 'Arabic', 'es' => 'Spanish', 'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian', 'nl' => 'Dutch', 'tr' => 'Turkish', 'zh' => 'Chinese' ];
-        return $map[ $this->language ] ?? 'English';
+        $labels = SBP_Helpers::language_labels();
+        return $labels[ $this->language ] ?? 'English';
     }
 
     private function build_optimize_prompt( string $title, string $content ): string {
@@ -788,6 +869,10 @@ class SBP_AI_Service {
 
         if ( $this->provider === 'claude' ) {
             return $this->call_claude( $prompt );
+        }
+
+        if ( $this->provider === 'gemini' ) {
+            return $this->call_gemini( $prompt );
         }
 
         return $this->call_openai( $prompt );
@@ -883,6 +968,56 @@ class SBP_AI_Service {
         }
 
         return new WP_Error( 'api_error', __( 'Empty response from Claude API.', 'seo-bot-pro' ) );
+    }
+
+    /**
+     * Call the Google Gemini API.
+     *
+     * @return string|WP_Error
+     */
+    private function call_gemini( string $prompt ) {
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . ':generateContent?key=' . $this->gemini_key;
+
+        $body = [
+            'contents' => [
+                [
+                    'parts' => [
+                        [ 'text' => $prompt ],
+                    ],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature'     => $this->temperature,
+                'maxOutputTokens' => $this->max_tokens,
+            ],
+        ];
+
+        $response = wp_remote_post( $url, [
+            'timeout' => 90,
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => wp_json_encode( $body ),
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 ) {
+            $msg = $data['error']['message'] ?? __( 'Unknown Gemini API error.', 'seo-bot-pro' );
+            return new WP_Error( 'api_error', 'Gemini: ' . $msg );
+        }
+
+        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        if ( empty( $text ) ) {
+            return new WP_Error( 'api_error', __( 'Empty response from Gemini API.', 'seo-bot-pro' ) );
+        }
+
+        return $text;
     }
 
     /**
