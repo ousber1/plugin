@@ -40,6 +40,12 @@
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Image</label>
+                @if($product->image)
+                    <div class="mb-2 flex items-center gap-3">
+                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-16 h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-600">
+                        <span class="text-xs text-slate-400">Current image</span>
+                    </div>
+                @endif
                 <input type="file" name="image" accept="image/*" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
             </div>
             <div>

@@ -21,8 +21,13 @@
             <template x-for="product in products" :key="product.id">
                 <button @click="addToCart(product)"
                         class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600 transition-all group">
-                    <div class="w-full h-20 bg-slate-100 dark:bg-slate-700 rounded-lg mb-3 flex items-center justify-center">
-                        <i class="fas fa-box text-2xl text-slate-300 dark:text-slate-500 group-hover:text-primary-400 transition"></i>
+                    <div class="w-full h-20 bg-slate-100 dark:bg-slate-700 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                        <template x-if="product.image">
+                            <img :src="'/storage/' + product.image" :alt="product.name" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!product.image">
+                            <i class="fas fa-box text-2xl text-slate-300 dark:text-slate-500 group-hover:text-primary-400 transition"></i>
+                        </template>
                     </div>
                     <p class="text-sm font-medium truncate" x-text="product.name"></p>
                     <div class="flex items-center justify-between mt-1.5">

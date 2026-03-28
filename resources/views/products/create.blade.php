@@ -38,9 +38,12 @@
                 <label class="block text-sm font-medium mb-1">Category</label>
                 <input type="text" name="category" value="{{ old('category') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="e.g. Electronics">
             </div>
-            <div>
+            <div x-data="{ preview: null }">
                 <label class="block text-sm font-medium mb-1">Image</label>
-                <input type="file" name="image" accept="image/*" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                <div x-show="preview" class="mb-2">
+                    <img :src="preview" class="w-16 h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-600">
+                </div>
+                <input type="file" name="image" accept="image/*" @change="preview = URL.createObjectURL($event.target.files[0])" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Cost Price ($) *</label>

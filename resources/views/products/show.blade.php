@@ -17,6 +17,11 @@
         <div class="lg:col-span-2 space-y-6">
             {{-- Product Details --}}
             <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+                @if($product->image)
+                <div class="mb-4">
+                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-32 h-32 object-cover rounded-xl border border-slate-200 dark:border-slate-600">
+                </div>
+                @endif
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                     <div><p class="text-xs text-slate-500">SKU</p><p class="font-mono font-medium">{{ $product->sku }}</p></div>
                     <div><p class="text-xs text-slate-500">Barcode</p><p class="font-medium">{{ $product->barcode ?? '-' }}</p></div>

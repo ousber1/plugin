@@ -56,8 +56,12 @@
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/20 {{ $product->isLowStock() ? 'bg-amber-50/50 dark:bg-amber-900/10' : '' }}">
                     <td class="px-6 py-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
-                                <i class="fas fa-box text-slate-300"></i>
+                            <div class="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                                @else
+                                    <i class="fas fa-box text-slate-300"></i>
+                                @endif
                             </div>
                             <div>
                                 <p class="font-medium">{{ $product->name }}</p>
