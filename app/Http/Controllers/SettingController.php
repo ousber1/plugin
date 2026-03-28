@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
+class SettingController extends Controller
+{
+    public function index()
+    {
+        $settings = Setting::all()->groupBy('group');
+        return view('settings.index', compact('settings'));
+    }
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'settings' => 'required|array',
+            'settings.*' => 'nullable|string',
+        ]);
+
+        foreach ($validated['settings'] as $key => $value) {
+            Setting::set($key, $value);
+        }
+
+        return redirect()->route('settings.index')->with('success', 'Settings updated successfully.');
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('settings.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'current_password' => 'nullable|required_with:new_password',
+            'new_password' => 'nullable|min:8|confirmed',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->phone = $validated['phone'] ?? null;
+
+        if (!empty($validated['current_password'])) {
+            if (!Hash::check($validated['current_password'], $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            }
+            $user->password = Hash::make($validated['new_password']);
+        }
+
+        $user->save();
+        return redirect()->route('profile')->with('success', 'Profile updated.');
+    }
+
+    public function users()
+    {
+        $users = User::latest()->paginate(20);
+        return view('settings.users', compact('users'));
+    }
+
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
+            'role' => 'required|in:admin,staff',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $validated['password'] = Hash::make($validated['password']);
+        $validated['is_active'] = true;
+
+        User::create($validated);
+        return redirect()->route('admin.users')->with('success', 'User created.');
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'role' => 'required|in:admin,staff',
+            'is_active' => 'boolean',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        if ($request->filled('password')) {
+            $validated['password'] = Hash::make($request->input('password'));
+        }
+
+        $user->update($validated);
+        return redirect()->route('admin.users')->with('success', 'User updated.');
+    }
+}

@@ -1,0 +1,62 @@
+@extends('layouts.app')
+@section('title', 'Customers')
+
+@section('content')
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold">Customers</h2>
+        <a href="{{ route('customers.create') }}" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
+            <i class="fas fa-plus mr-1"></i> Add Customer
+        </a>
+    </div>
+
+    <form method="GET" class="flex flex-wrap gap-3 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, email, phone..." class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+        <input type="text" name="tag" value="{{ request('tag') }}" placeholder="Filter by tag..." class="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+        <button type="submit" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300"><i class="fas fa-filter mr-1"></i> Filter</button>
+    </form>
+
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-700/30 text-xs text-slate-500">
+                <tr>
+                    <th class="px-6 py-3 text-left">Name</th>
+                    <th class="px-6 py-3 text-left">Email</th>
+                    <th class="px-6 py-3 text-left">Phone</th>
+                    <th class="px-6 py-3 text-left">City</th>
+                    <th class="px-6 py-3 text-left">Tags</th>
+                    <th class="px-6 py-3 text-right">Purchases</th>
+                    <th class="px-6 py-3 text-right">Total Spent</th>
+                    <th class="px-6 py-3 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                @forelse($customers as $customer)
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                    <td class="px-6 py-3 font-medium">{{ $customer->name }}</td>
+                    <td class="px-6 py-3 text-slate-400">{{ $customer->email ?? '-' }}</td>
+                    <td class="px-6 py-3">{{ $customer->phone ?? '-' }}</td>
+                    <td class="px-6 py-3">{{ $customer->city ?? '-' }}</td>
+                    <td class="px-6 py-3">
+                        @foreach(($customer->tags ?? []) as $tag)
+                        <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 mr-1">{{ $tag }}</span>
+                        @endforeach
+                    </td>
+                    <td class="px-6 py-3 text-right">{{ $customer->total_purchases }}</td>
+                    <td class="px-6 py-3 text-right font-semibold">${{ number_format($customer->total_spent, 2) }}</td>
+                    <td class="px-6 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{{ route('customers.show', $customer) }}" class="text-primary-600 hover:text-primary-800"><i class="fas fa-eye"></i></a>
+                            <a href="{{ route('customers.edit', $customer) }}" class="text-slate-400 hover:text-slate-600"><i class="fas fa-edit"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">No customers found</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    {{ $customers->withQueryString()->links() }}
+</div>
+@endsection
