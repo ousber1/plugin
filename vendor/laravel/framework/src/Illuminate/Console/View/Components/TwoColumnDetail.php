@@ -24,6 +24,7 @@ class TwoColumnDetail extends Component
 
         $second = $this->mutate($second, [
             Mutators\EnsureDynamicContentIsHighlighted::class,
+            Mutators\EnsureNoPunctuation::class,
             Mutators\EnsureRelativePaths::class,
         ]);
 

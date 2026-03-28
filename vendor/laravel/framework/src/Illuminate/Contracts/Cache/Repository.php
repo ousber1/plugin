@@ -12,7 +12,7 @@ interface Repository extends CacheInterface
      *
      * @template TCacheValue
      *
-     * @param  \UnitEnum|array|string  $key
+     * @param  array|string  $key
      * @param  TCacheValue|(\Closure(): TCacheValue)  $default
      * @return (TCacheValue is null ? mixed : TCacheValue)
      */
@@ -21,7 +21,7 @@ interface Repository extends CacheInterface
     /**
      * Store an item in the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @param  \DateTimeInterface|\DateInterval|int|null  $ttl
      * @return bool
@@ -31,7 +31,7 @@ interface Repository extends CacheInterface
     /**
      * Store an item in the cache if the key does not exist.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @param  \DateTimeInterface|\DateInterval|int|null  $ttl
      * @return bool
@@ -41,7 +41,7 @@ interface Repository extends CacheInterface
     /**
      * Increment the value of an item in the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @return int|bool
      */
@@ -50,7 +50,7 @@ interface Repository extends CacheInterface
     /**
      * Decrement the value of an item in the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @return int|bool
      */
@@ -59,7 +59,7 @@ interface Repository extends CacheInterface
     /**
      * Store an item in the cache indefinitely.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @return bool
      */
@@ -70,7 +70,7 @@ interface Repository extends CacheInterface
      *
      * @template TCacheValue
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  \DateTimeInterface|\DateInterval|\Closure|int|null  $ttl
      * @param  \Closure(): TCacheValue  $callback
      * @return TCacheValue
@@ -82,7 +82,7 @@ interface Repository extends CacheInterface
      *
      * @template TCacheValue
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  \Closure(): TCacheValue  $callback
      * @return TCacheValue
      */
@@ -93,25 +93,16 @@ interface Repository extends CacheInterface
      *
      * @template TCacheValue
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  \Closure(): TCacheValue  $callback
      * @return TCacheValue
      */
     public function rememberForever($key, Closure $callback);
 
     /**
-     * Set the expiration of a cached item.
-     *
-     * @param  \UnitEnum|string  $key
-     * @param  \DateTimeInterface|\DateInterval|int  $ttl
-     * @return bool
-     */
-    public function touch($key, $ttl);
-
-    /**
      * Remove an item from the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @return bool
      */
     public function forget($key);

@@ -3,14 +3,10 @@
 namespace Illuminate\Cache;
 
 use Illuminate\Database\Connection;
-use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Database\QueryException;
-use Throwable;
 
 class DatabaseLock extends Lock
 {
-    use DetectsConcurrencyErrors;
-
     /**
      * The database connection instance.
      *
@@ -28,7 +24,7 @@ class DatabaseLock extends Lock
     /**
      * The prune probability odds.
      *
-     * @var array{int, int}|null
+     * @var array
      */
     protected $lottery;
 
@@ -47,8 +43,8 @@ class DatabaseLock extends Lock
      * @param  string  $name
      * @param  int  $seconds
      * @param  string|null  $owner
-     * @param  array{int, int}|null  $lottery
-     * @param  int  $defaultTimeoutInSeconds
+     * @param  array  $lottery
+     * @return void
      */
     public function __construct(Connection $connection, $table, $name, $seconds, $owner = null, $lottery = [2, 100], $defaultTimeoutInSeconds = 86400)
     {
@@ -64,8 +60,6 @@ class DatabaseLock extends Lock
      * Attempt to acquire the lock.
      *
      * @return bool
-     *
-     * @throws \Throwable
      */
     public function acquire()
     {
@@ -90,8 +84,8 @@ class DatabaseLock extends Lock
             $acquired = $updated >= 1;
         }
 
-        if (count($this->lottery ?? []) === 2 && random_int(1, $this->lottery[1]) <= $this->lottery[0]) {
-            $this->pruneExpiredLocks();
+        if (random_int(1, $this->lottery[1]) <= $this->lottery[0]) {
+            $this->connection->table($this->table)->where('expiration', '<=', $this->currentTime())->delete();
         }
 
         return $acquired;
@@ -113,26 +107,16 @@ class DatabaseLock extends Lock
      * Release the lock.
      *
      * @return bool
-     *
-     * @throws \Throwable
      */
     public function release()
     {
         if ($this->isOwnedByCurrentProcess()) {
-            try {
-                $this->connection->table($this->table)
-                    ->where('key', $this->name)
-                    ->where('owner', $this->owner)
-                    ->delete();
+            $this->connection->table($this->table)
+                ->where('key', $this->name)
+                ->where('owner', $this->owner)
+                ->delete();
 
-                return true;
-            } catch (Throwable $e) {
-                if ($this->causedByConcurrencyError($e)) {
-                    return true;
-                }
-
-                throw $e;
-            }
+            return true;
         }
 
         return false;
@@ -151,33 +135,13 @@ class DatabaseLock extends Lock
     }
 
     /**
-     * Deletes locks that are past expiration.
-     *
-     * @return void
-     *
-     * @throws \Throwable
-     */
-    public function pruneExpiredLocks()
-    {
-        try {
-            $this->connection->table($this->table)
-                ->where('expiration', '<=', $this->currentTime())
-                ->delete();
-        } catch (Throwable $e) {
-            if (! $this->causedByConcurrencyError($e)) {
-                throw $e;
-            }
-        }
-    }
-
-    /**
      * Returns the owner value written into the driver for this lock.
      *
-     * @return string|null
+     * @return string
      */
     protected function getCurrentOwner()
     {
-        return $this->connection->table($this->table)->where('key', $this->name)->first()?->owner;
+        return optional($this->connection->table($this->table)->where('key', $this->name)->first())->owner;
     }
 
     /**

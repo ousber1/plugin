@@ -5,7 +5,6 @@ namespace Illuminate\Container\Attributes;
 use Attribute;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Container\ContextualAttribute;
-use UnitEnum;
 
 #[Attribute(Attribute::TARGET_PARAMETER)]
 class Storage implements ContextualAttribute
@@ -13,7 +12,7 @@ class Storage implements ContextualAttribute
     /**
      * Create a new class instance.
      */
-    public function __construct(public UnitEnum|string|null $disk = null)
+    public function __construct(public ?string $disk = null)
     {
     }
 

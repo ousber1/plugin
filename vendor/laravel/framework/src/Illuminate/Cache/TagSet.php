@@ -25,6 +25,7 @@ class TagSet
      *
      * @param  \Illuminate\Contracts\Cache\Store  $store
      * @param  array  $names
+     * @return void
      */
     public function __construct(Store $store, array $names = [])
     {
@@ -39,7 +40,7 @@ class TagSet
      */
     public function reset()
     {
-        array_walk($this->names, $this->resetTag(...));
+        array_walk($this->names, [$this, 'resetTag']);
     }
 
     /**
@@ -62,7 +63,7 @@ class TagSet
      */
     public function flush()
     {
-        array_walk($this->names, $this->flushTag(...));
+        array_walk($this->names, [$this, 'flushTag']);
     }
 
     /**
@@ -92,7 +93,7 @@ class TagSet
      */
     protected function tagIds()
     {
-        return array_map($this->tagId(...), $this->names);
+        return array_map([$this, 'tagId'], $this->names);
     }
 
     /**

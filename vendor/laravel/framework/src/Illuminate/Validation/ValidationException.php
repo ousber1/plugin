@@ -39,7 +39,7 @@ class ValidationException extends Exception
     /**
      * The path the client should be redirected to.
      *
-     * @var string|null
+     * @var string
      */
     public $redirectTo;
 
@@ -49,6 +49,7 @@ class ValidationException extends Exception
      * @param  \Illuminate\Contracts\Validation\Validator  $validator
      * @param  \Symfony\Component\HttpFoundation\Response|null  $response
      * @param  string  $errorBag
+     * @return void
      */
     public function __construct($validator, $response = null, $errorBag = 'default')
     {

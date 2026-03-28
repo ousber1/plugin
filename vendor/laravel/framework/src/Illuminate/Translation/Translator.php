@@ -12,8 +12,6 @@ use Illuminate\Support\Traits\Macroable;
 use Illuminate\Support\Traits\ReflectsClosures;
 use InvalidArgumentException;
 
-use function Illuminate\Support\enum_value;
-
 class Translator extends NamespacedItemResolver implements TranslatorContract
 {
     use Macroable, ReflectsClosures;
@@ -86,6 +84,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
      *
      * @param  \Illuminate\Contracts\Translation\Loader  $loader
      * @param  string  $locale
+     * @return void
      */
     public function __construct(Loader $loader, $locale)
     {
@@ -287,10 +286,8 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
                 continue;
             }
 
-            if (is_object($value)) {
-                $value = isset($this->stringableHandlers[get_class($value)])
-                    ? call_user_func($this->stringableHandlers[get_class($value)], $value)
-                    : enum_value($value);
+            if (is_object($value) && isset($this->stringableHandlers[get_class($value)])) {
+                $value = call_user_func($this->stringableHandlers[get_class($value)], $value);
             }
 
             $shouldReplace[':'.Str::ucfirst($key)] = Str::ucfirst($value ?? '');
@@ -456,9 +453,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
     {
         $locales = array_filter([$locale ?: $this->locale, $this->fallback]);
 
-        $determined = call_user_func($this->determineLocalesUsing ?: fn () => $locales, $locales);
-
-        return array_values(array_unique($determined));
+        return call_user_func($this->determineLocalesUsing ?: fn () => $locales, $locales);
     }
 
     /**

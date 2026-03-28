@@ -13,23 +13,16 @@ class Date implements Stringable
     use Conditionable, Macroable;
 
     /**
-     * The format of the date.
-     */
-    protected ?string $format = null;
-
-    /**
      * The constraints for the date rule.
      */
-    protected array $constraints = [];
+    protected array $constraints = ['date'];
 
     /**
      * Ensure the date has the given format.
      */
     public function format(string $format): static
     {
-        $this->format = $format;
-
-        return $this;
+        return $this->addRule('date_format:'.$format);
     }
 
     /**
@@ -62,38 +55,6 @@ class Date implements Stringable
     public function todayOrAfter(): static
     {
         return $this->afterOrEqual('today');
-    }
-
-    /**
-     * Ensure the date is in the past.
-     */
-    public function past(): static
-    {
-        return $this->before('now');
-    }
-
-    /**
-     * Ensure the date is in the future.
-     */
-    public function future(): static
-    {
-        return $this->after('now');
-    }
-
-    /**
-     * Ensure the date is now or in the past.
-     */
-    public function nowOrPast(): static
-    {
-        return $this->beforeOrEqual('now');
-    }
-
-    /**
-     * Ensure the date is now or in the future.
-     */
-    public function nowOrFuture(): static
-    {
-        return $this->afterOrEqual('now');
     }
 
     /**
@@ -160,7 +121,7 @@ class Date implements Stringable
     protected function formatDate(DateTimeInterface|string $date): string
     {
         return $date instanceof DateTimeInterface
-            ? $date->format($this->format ?? 'Y-m-d')
+            ? $date->format('Y-m-d')
             : $date;
     }
 
@@ -169,9 +130,6 @@ class Date implements Stringable
      */
     public function __toString(): string
     {
-        return implode('|', [
-            $this->format === null ? 'date' : 'date_format:'.$this->format,
-            ...$this->constraints,
-        ]);
+        return implode('|', $this->constraints);
     }
 }

@@ -34,9 +34,6 @@ trait PacksPhpRedisValues
      *
      * @param  array<int|string,string>  $values
      * @return array<int|string,string>
-     *
-     * @throws \RuntimeException
-     * @throws \UnexpectedValueException
      */
     public function pack(array $values): array
     {
@@ -45,7 +42,7 @@ trait PacksPhpRedisValues
         }
 
         if ($this->supportsPacking()) {
-            return array_map($this->client->_pack(...), $values);
+            return array_map([$this->client, '_pack'], $values);
         }
 
         if ($this->compressed()) {

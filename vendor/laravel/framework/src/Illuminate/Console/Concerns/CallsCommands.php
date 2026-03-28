@@ -92,7 +92,7 @@ trait CallsCommands
     /**
      * Get all of the context passed to the command.
      *
-     * @return array{'--ansi'?: bool, '--no-ansi'?: bool, '--no-interaction'?: bool, '--quiet'?: bool, '--verbose'?: bool}
+     * @return array
      */
     protected function context()
     {

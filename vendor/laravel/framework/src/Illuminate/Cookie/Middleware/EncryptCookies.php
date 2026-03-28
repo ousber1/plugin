@@ -45,6 +45,7 @@ class EncryptCookies
      * Create a new CookieGuard instance.
      *
      * @param  \Illuminate\Contracts\Encryption\Encrypter  $encrypter
+     * @return void
      */
     public function __construct(EncrypterContract $encrypter)
     {
@@ -103,16 +104,14 @@ class EncryptCookies
      * Validate and remove the cookie value prefix from the value.
      *
      * @param  string  $key
-     * @param  array<string, string>|string  $value
-     * @return array|string|null
-     *
-     * @phpstan-return ($value is array ? array<string|null> : string|null)
+     * @param  string  $value
+     * @return string|array|null
      */
     protected function validateValue(string $key, $value)
     {
         return is_array($value)
-            ? $this->validateArray($key, $value)
-            : CookieValuePrefix::validate($key, $value, $this->encrypter->getAllKeys());
+                    ? $this->validateArray($key, $value)
+                    : CookieValuePrefix::validate($key, $value, $this->encrypter->getAllKeys());
     }
 
     /**
@@ -143,8 +142,8 @@ class EncryptCookies
     protected function decryptCookie($name, $cookie)
     {
         return is_array($cookie)
-            ? $this->decryptArray($cookie)
-            : $this->encrypter->decrypt($cookie, static::serialized($name));
+                        ? $this->decryptArray($cookie)
+                        : $this->encrypter->decrypt($cookie, static::serialized($name));
     }
 
     /**

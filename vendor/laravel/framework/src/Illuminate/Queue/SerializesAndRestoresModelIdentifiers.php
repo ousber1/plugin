@@ -59,8 +59,8 @@ trait SerializesAndRestoresModelIdentifiers
         }
 
         return is_array($value->id)
-            ? $this->restoreCollection($value)
-            : $this->restoreModel($value);
+                ? $this->restoreCollection($value)
+                : $this->restoreModel($value);
     }
 
     /**
@@ -71,20 +71,18 @@ trait SerializesAndRestoresModelIdentifiers
      */
     protected function restoreCollection($value)
     {
-        $class = $value->getClass();
-
-        if (! $class || count($value->id) === 0) {
+        if (! $value->class || count($value->id) === 0) {
             return ! is_null($value->collectionClass ?? null)
                 ? new $value->collectionClass
                 : new EloquentCollection;
         }
 
         $collection = $this->getQueryForModelRestoration(
-            (new $class)->setConnection($value->connection), $value->id
+            (new $value->class)->setConnection($value->connection), $value->id
         )->useWritePdo()->get();
 
-        if (is_a($class, Pivot::class, true) ||
-            in_array(AsPivot::class, class_uses($class))) {
+        if (is_a($value->class, Pivot::class, true) ||
+            in_array(AsPivot::class, class_uses($value->class))) {
             return $collection;
         }
 
@@ -92,11 +90,11 @@ trait SerializesAndRestoresModelIdentifiers
 
         $collectionClass = get_class($collection);
 
-        return (new $collectionClass(
+        return new $collectionClass(
             (new Collection($value->id))
                 ->map(fn ($id) => $collection[$id] ?? null)
                 ->filter()
-        ))->loadMissing($value->relations ?? []);
+        );
     }
 
     /**
@@ -108,8 +106,8 @@ trait SerializesAndRestoresModelIdentifiers
     public function restoreModel($value)
     {
         return $this->getQueryForModelRestoration(
-            (new ($value->getClass()))->setConnection($value->connection), $value->id
-        )->useWritePdo()->firstOrFail()->loadMissing($value->relations ?? []);
+            (new $value->class)->setConnection($value->connection), $value->id
+        )->useWritePdo()->firstOrFail()->load($value->relations ?? []);
     }
 
     /**

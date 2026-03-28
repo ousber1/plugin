@@ -106,9 +106,9 @@ class Numeric implements Stringable
      *
      * @return $this
      */
-    public function integer(bool $strict = false): Numeric
+    public function integer(): Numeric
     {
-        return $this->addRule($strict ? 'integer:strict' : 'integer');
+        return $this->addRule('integer');
     }
 
     /**

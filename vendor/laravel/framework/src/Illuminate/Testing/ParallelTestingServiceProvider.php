@@ -4,13 +4,11 @@ namespace Illuminate\Testing;
 
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Testing\Concerns\TestCaches;
 use Illuminate\Testing\Concerns\TestDatabases;
-use Illuminate\Testing\Concerns\TestViews;
 
 class ParallelTestingServiceProvider extends ServiceProvider implements DeferrableProvider
 {
-    use TestCaches, TestDatabases, TestViews;
+    use TestDatabases;
 
     /**
      * Boot the application's service providers.
@@ -20,9 +18,7 @@ class ParallelTestingServiceProvider extends ServiceProvider implements Deferrab
     public function boot()
     {
         if ($this->app->runningInConsole()) {
-            $this->bootTestCache();
             $this->bootTestDatabase();
-            $this->bootTestViews();
         }
     }
 

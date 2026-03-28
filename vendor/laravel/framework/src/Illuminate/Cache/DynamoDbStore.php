@@ -6,7 +6,6 @@ use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Store;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\InteractsWithTime;
@@ -18,6 +17,41 @@ class DynamoDbStore implements LockProvider, Store
     use InteractsWithTime;
 
     /**
+     * The DynamoDB client instance.
+     *
+     * @var \Aws\DynamoDb\DynamoDbClient
+     */
+    protected $dynamo;
+
+    /**
+     * The table name.
+     *
+     * @var string
+     */
+    protected $table;
+
+    /**
+     * The name of the attribute that should hold the key.
+     *
+     * @var string
+     */
+    protected $keyAttribute;
+
+    /**
+     * The name of the attribute that should hold the value.
+     *
+     * @var string
+     */
+    protected $valueAttribute;
+
+    /**
+     * The name of the attribute that should hold the expiration timestamp.
+     *
+     * @var string
+     */
+    protected $expirationAttribute;
+
+    /**
      * A string that should be prepended to keys.
      *
      * @var string
@@ -25,34 +59,31 @@ class DynamoDbStore implements LockProvider, Store
     protected $prefix;
 
     /**
-     * The classes that should be allowed during unserialization.
-     *
-     * @var array|bool|null
-     */
-    protected $serializableClasses;
-
-    /**
      * Create a new store instance.
      *
-     * @param  \Aws\DynamoDb\DynamoDbClient  $dynamo  The DynamoDB client instance.
-     * @param  string  $table  The table name.
-     * @param  string  $keyAttribute  The name of the attribute that should hold the key.
-     * @param  string  $valueAttribute  The name of the attribute that should hold the value.
-     * @param  string  $expirationAttribute  The name of the attribute that should hold the expiration timestamp.
+     * @param  \Aws\DynamoDb\DynamoDbClient  $dynamo
+     * @param  string  $table
+     * @param  string  $keyAttribute
+     * @param  string  $valueAttribute
+     * @param  string  $expirationAttribute
      * @param  string  $prefix
-     * @param  array|bool|null  $serializableClasses
+     * @return void
      */
     public function __construct(
-        protected DynamoDbClient $dynamo,
-        protected $table,
-        protected $keyAttribute = 'key',
-        protected $valueAttribute = 'value',
-        protected $expirationAttribute = 'expires_at',
+        DynamoDbClient $dynamo,
+        $table,
+        $keyAttribute = 'key',
+        $valueAttribute = 'value',
+        $expirationAttribute = 'expires_at',
         $prefix = '',
-        $serializableClasses = null,
     ) {
+        $this->table = $table;
+        $this->dynamo = $dynamo;
+        $this->keyAttribute = $keyAttribute;
+        $this->valueAttribute = $valueAttribute;
+        $this->expirationAttribute = $expirationAttribute;
+
         $this->setPrefix($prefix);
-        $this->serializableClasses = $serializableClasses;
     }
 
     /**
@@ -112,32 +143,34 @@ class DynamoDbStore implements LockProvider, Store
             'RequestItems' => [
                 $this->table => [
                     'ConsistentRead' => false,
-                    'Keys' => (new Collection($prefixedKeys))->map(fn ($key) => [
-                        $this->keyAttribute => [
-                            'S' => $key,
-                        ],
-                    ])->all(),
+                    'Keys' => (new Collection($prefixedKeys))->map(function ($key) {
+                        return [
+                            $this->keyAttribute => [
+                                'S' => $key,
+                            ],
+                        ];
+                    })->all(),
                 ],
             ],
         ]);
 
         $now = Carbon::now();
 
-        return array_merge(
-            Arr::mapWithKeys($keys, fn ($key) => [$key => null]),
-            (new Collection($response['Responses'][$this->table]))->mapWithKeys(function ($response) use ($now) {
-                if ($this->isExpired($response, $now)) {
-                    $value = null;
-                } else {
-                    $value = $this->unserialize(
-                        $response[$this->valueAttribute]['S'] ??
-                        $response[$this->valueAttribute]['N'] ??
-                        null
-                    );
-                }
+        return array_merge((new Collection(array_flip($keys)))->map(function () {
+            //
+        })->all(), (new Collection($response['Responses'][$this->table]))->mapWithKeys(function ($response) use ($now) {
+            if ($this->isExpired($response, $now)) {
+                $value = null;
+            } else {
+                $value = $this->unserialize(
+                    $response[$this->valueAttribute]['S'] ??
+                    $response[$this->valueAttribute]['N'] ??
+                    null
+                );
+            }
 
-                return [Str::replaceFirst($this->prefix, '', $response[$this->keyAttribute]['S']) => $value];
-            })->all());
+            return [Str::replaceFirst($this->prefix, '', $response[$this->keyAttribute]['S']) => $value];
+        })->all());
     }
 
     /**
@@ -230,8 +263,6 @@ class DynamoDbStore implements LockProvider, Store
      * @param  mixed  $value
      * @param  int  $seconds
      * @return bool
-     *
-     * @throws \Aws\DynamoDb\Exception\DynamoDbException
      */
     public function add($key, $value, $seconds)
     {
@@ -277,8 +308,6 @@ class DynamoDbStore implements LockProvider, Store
      * @param  string  $key
      * @param  mixed  $value
      * @return int|false
-     *
-     * @throws \Aws\DynamoDb\Exception\DynamoDbException
      */
     public function increment($key, $value = 1)
     {
@@ -324,8 +353,6 @@ class DynamoDbStore implements LockProvider, Store
      * @param  string  $key
      * @param  mixed  $value
      * @return int|false
-     *
-     * @throws \Aws\DynamoDb\Exception\DynamoDbException
      */
     public function decrement($key, $value = 1)
     {
@@ -387,7 +414,7 @@ class DynamoDbStore implements LockProvider, Store
      */
     public function lock($name, $seconds = 0, $owner = null)
     {
-        return new DynamoDbLock($this, $name, $seconds, $owner);
+        return new DynamoDbLock($this, $this->prefix.$name, $seconds, $owner);
     }
 
     /**
@@ -400,43 +427,6 @@ class DynamoDbStore implements LockProvider, Store
     public function restoreLock($name, $owner)
     {
         return $this->lock($name, 0, $owner);
-    }
-
-    /**
-     * Adjust the expiration time of a cached item.
-     *
-     * @param  string  $key
-     * @param  int  $seconds
-     * @return bool
-     *
-     * @throws DynamoDbException
-     */
-    public function touch($key, $seconds)
-    {
-        try {
-            $this->dynamo->updateItem([
-                'TableName' => $this->table,
-                'Key' => [$this->keyAttribute => ['S' => $this->getPrefix().$key]],
-                'UpdateExpression' => 'SET #expiry = :expiry',
-                'ConditionExpression' => 'attribute_exists(#key) AND #expiry > :now',
-                'ExpressionAttributeNames' => [
-                    '#key' => $this->keyAttribute,
-                    '#expiry' => $this->expirationAttribute,
-                ],
-                'ExpressionAttributeValues' => [
-                    ':expiry' => ['N' => (string) $this->toTimestamp($seconds)],
-                    ':now' => ['N' => (string) $this->currentTime()],
-                ],
-            ]);
-        } catch (DynamoDbException $e) {
-            if (str_contains($e->getMessage(), 'ConditionalCheckFailed')) {
-                return false;
-            }
-
-            throw $e;
-        }
-
-        return true;
     }
 
     /**
@@ -462,7 +452,7 @@ class DynamoDbStore implements LockProvider, Store
     /**
      * Remove all items from the cache.
      *
-     * @return never
+     * @return bool
      *
      * @throws \RuntimeException
      */
@@ -480,8 +470,8 @@ class DynamoDbStore implements LockProvider, Store
     protected function toTimestamp($seconds)
     {
         return $seconds > 0
-            ? $this->availableAt($seconds)
-            : $this->currentTime();
+                    ? $this->availableAt($seconds)
+                    : $this->currentTime();
     }
 
     /**
@@ -509,10 +499,6 @@ class DynamoDbStore implements LockProvider, Store
 
         if (is_numeric($value)) {
             return (float) $value;
-        }
-
-        if ($this->serializableClasses !== null) {
-            return unserialize($value, ['allowed_classes' => $this->serializableClasses]);
         }
 
         return unserialize($value);

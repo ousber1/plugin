@@ -28,7 +28,7 @@ class Listener
      */
     public function registerListeners(Dispatcher $events)
     {
-        $events->listen(QueryExecuted::class, $this->onQueryExecuted(...));
+        $events->listen(QueryExecuted::class, [$this, 'onQueryExecuted']);
 
         $events->listen([JobProcessing::class, JobProcessed::class], function () {
             $this->queries = [];
@@ -44,7 +44,7 @@ class Listener
     /**
      * Returns the queries that have been executed.
      *
-     * @return array<int, array{connectionName: string, time: float, sql: string, bindings: array}>
+     * @return array<int, array{sql: string, time: float}>
      */
     public function queries()
     {
@@ -59,25 +59,15 @@ class Listener
      */
     public function onQueryExecuted(QueryExecuted $event)
     {
-        if (count($this->queries) >= 100) {
+        if (count($this->queries) === 100) {
             return;
         }
-
-        $sql = strlen($event->sql) <= 2000
-            ? $event->sql
-            : mb_strcut($event->sql, 0, 2000);
-
-        $bindings = $event->connection->prepareBindings($event->bindings);
-
-        $bindingCount = substr_count($sql, '?');
 
         $this->queries[] = [
             'connectionName' => $event->connectionName,
             'time' => $event->time,
-            'sql' => $sql,
-            'bindings' => count($bindings) <= $bindingCount
-                ? $bindings
-                : array_slice($bindings, 0, $bindingCount),
+            'sql' => $event->sql,
+            'bindings' => $event->connection->prepareBindings($event->bindings),
         ];
     }
 }

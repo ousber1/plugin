@@ -8,9 +8,9 @@ use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
-use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Middleware\TrustHosts;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Routing\Middleware\ValidateSignature;
@@ -451,7 +451,6 @@ class Middleware
     public function getGlobalMiddleware()
     {
         $middleware = $this->global ?: array_values(array_filter([
-            \Illuminate\Http\Middleware\ValidatePathEncoding::class,
             \Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks::class,
             $this->trustHosts ? \Illuminate\Http\Middleware\TrustHosts::class : null,
             \Illuminate\Http\Middleware\TrustProxies::class,
@@ -487,7 +486,7 @@ class Middleware
                 \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
                 \Illuminate\Session\Middleware\StartSession::class,
                 \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-                \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+                \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
                 \Illuminate\Routing\Middleware\SubstituteBindings::class,
                 $this->authenticatedSessions ? 'auth.session' : null,
             ])),
@@ -555,8 +554,8 @@ class Middleware
     /**
      * Configure where users are redirected by the authentication and guest middleware.
      *
-     * @param  callable|string|null  $guests
-     * @param  callable|string|null  $users
+     * @param  callable|string  $guests
+     * @param  callable|string  $users
      * @return $this
      */
     public function redirectTo(callable|string|null $guests = null, callable|string|null $users = null)
@@ -591,36 +590,16 @@ class Middleware
     }
 
     /**
-     * Configure the request forgery prevention middleware.
-     *
-     * @param  array  $except
-     * @param  bool  $originOnly
-     * @param  bool  $allowSameSite
-     * @return $this
-     */
-    public function preventRequestForgery(array $except = [], bool $originOnly = false, bool $allowSameSite = false)
-    {
-        if (! empty($except)) {
-            PreventRequestForgery::except($except);
-        }
-
-        PreventRequestForgery::useOriginOnly($originOnly);
-        PreventRequestForgery::allowSameSite($allowSameSite);
-
-        return $this;
-    }
-
-    /**
      * Configure the CSRF token validation middleware.
-     *
-     * @deprecated Use preventRequestForgery() instead.
      *
      * @param  array  $except
      * @return $this
      */
     public function validateCsrfTokens(array $except = [])
     {
-        return $this->preventRequestForgery($except);
+        ValidateCsrfToken::except($except);
+
+        return $this;
     }
 
     /**

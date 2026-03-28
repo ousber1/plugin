@@ -48,9 +48,6 @@ class ResendTransport extends AbstractTransport
 
     /**
      * {@inheritDoc}
-     *
-     * @throws \Symfony\Component\Mailer\Exception\TransportException
-     * @throws \Throwable
      */
     protected function doSend(SentMessage $message): void
     {
@@ -76,7 +73,7 @@ class ResendTransport extends AbstractTransport
             foreach ($email->getAttachments() as $attachment) {
                 $attachmentHeaders = $attachment->getPreparedHeaders();
                 $contentType = $attachmentHeaders->get('Content-Type')->getBody();
-                $disposition = $attachmentHeaders->getHeaderBody('Content-Disposition');
+
                 $filename = $attachmentHeaders->getHeaderParameter('Content-Disposition', 'filename');
 
                 if ($contentType == 'text/calendar') {
@@ -90,10 +87,6 @@ class ResendTransport extends AbstractTransport
                     'content' => $content,
                     'filename' => $filename,
                 ];
-
-                if ($disposition === 'inline') {
-                    $item['content_id'] = $attachment->hasContentId() ? $attachment->getContentId() : $filename;
-                }
 
                 $attachments[] = $item;
             }

@@ -32,27 +32,19 @@ class ProcessDriver implements Driver
         $command = Application::formatCommandString('invoke-serialized-closure');
 
         $results = $this->processFactory->pool(function (Pool $pool) use ($tasks, $command) {
-            foreach (Arr::wrap($tasks) as $key => $task) {
-                $pool->as($key)->path(base_path())->env([
-                    'LARAVEL_INVOKABLE_CLOSURE' => base64_encode(
-                        serialize(new SerializableClosure($task))
-                    ),
+            foreach (Arr::wrap($tasks) as $task) {
+                $pool->path(base_path())->env([
+                    'LARAVEL_INVOKABLE_CLOSURE' => serialize(new SerializableClosure($task)),
                 ])->command($command);
             }
         })->start()->wait();
 
-        return $results->collect()->mapWithKeys(function ($result, $key) {
+        return $results->collect()->map(function ($result) {
             if ($result->failed()) {
                 throw new Exception('Concurrent process failed with exit code ['.$result->exitCode().']. Message: '.$result->errorOutput());
             }
 
-            $output = $result->output();
-
-            if (($pos = strpos($output, "\x1f\x8b")) !== false) {
-                $output = substr($output, 0, $pos);
-            }
-
-            $result = json_decode($output, true);
+            $result = json_decode($result->output(), true);
 
             if (! $result['successful']) {
                 throw new $result['exception'](
@@ -62,7 +54,7 @@ class ProcessDriver implements Driver
                 );
             }
 
-            return [$key => unserialize($result['result'])];
+            return unserialize($result['result']);
         })->all();
     }
 
@@ -76,9 +68,7 @@ class ProcessDriver implements Driver
         return defer(function () use ($tasks, $command) {
             foreach (Arr::wrap($tasks) as $task) {
                 $this->processFactory->path(base_path())->env([
-                    'LARAVEL_INVOKABLE_CLOSURE' => base64_encode(
-                        serialize(new SerializableClosure($task))
-                    ),
+                    'LARAVEL_INVOKABLE_CLOSURE' => serialize(new SerializableClosure($task)),
                 ])->run($command.' 2>&1 &');
             }
         });

@@ -25,6 +25,7 @@ class SeeInOrder extends Constraint
      * Create a new constraint instance.
      *
      * @param  string  $content
+     * @return void
      */
     public function __construct($content)
     {
@@ -73,7 +74,7 @@ class SeeInOrder extends Constraint
     public function failureDescription($values): string
     {
         return sprintf(
-            '\'%s\' contains "%s" in specified order.',
+            'Failed asserting that \'%s\' contains "%s" in specified order.',
             $this->content,
             $this->failedValue
         );

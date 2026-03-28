@@ -2,10 +2,8 @@
 
 namespace Illuminate\Validation\Rules;
 
-use ArrayIterator;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\ImplicitRule;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
@@ -13,10 +11,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Traits\Conditionable;
 use InvalidArgumentException;
-use IteratorAggregate;
-use Traversable;
 
-class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, ValidatorAwareRule
+class Password implements Rule, DataAwareRule, ValidatorAwareRule
 {
     use Conditionable;
 
@@ -47,20 +43,6 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
      * @var int
      */
     protected $max;
-
-    /**
-     * If the password is required.
-     *
-     * @var bool
-     */
-    protected $required = false;
-
-    /**
-     * If the password should only be validated when present.
-     *
-     * @var bool
-     */
-    protected $sometimes = false;
 
     /**
      * If the password requires at least one uppercase and one lowercase letter.
@@ -129,6 +111,7 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
      * Create a new rule instance.
      *
      * @param  int  $min
+     * @return void
      */
     public function __construct($min)
     {
@@ -142,8 +125,6 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
      *
      * @param  static|callable|null  $callback
      * @return static|void
-     *
-     * @throws \InvalidArgumentException
      */
     public static function defaults($callback = null)
     {
@@ -166,8 +147,8 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
     public static function default()
     {
         $password = is_callable(static::$defaultCallback)
-            ? call_user_func(static::$defaultCallback)
-            : static::$defaultCallback;
+                            ? call_user_func(static::$defaultCallback)
+                            : static::$defaultCallback;
 
         return $password instanceof Rule ? $password : static::min(8);
     }
@@ -175,29 +156,21 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
     /**
      * Get the default configuration of the password rule and mark the field as required.
      *
-     * @return static
+     * @return array
      */
     public static function required()
     {
-        $password = static::default();
-
-        $password->required = true;
-
-        return $password;
+        return ['required', static::default()];
     }
 
     /**
      * Get the default configuration of the password rule and mark the field as sometimes being required.
      *
-     * @return static
+     * @return array
      */
     public static function sometimes()
     {
-        $password = static::default();
-
-        $password->sometimes = true;
-
-        return $password;
+        return ['sometimes', static::default()];
     }
 
     /**
@@ -337,17 +310,14 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
     {
         $this->messages = [];
 
-        if (! $this->required && ! $this->sometimes && ! Arr::has($this->data ?? [], $attribute)) {
-            return true;
-        }
-
-        if (blank($value) && ! $this->required && $this->validator?->hasRule($attribute, ['Nullable'])) {
-            return true;
-        }
-
         $validator = Validator::make(
             $this->data,
-            [$attribute => [...$this]],
+            [$attribute => [
+                'string',
+                'min:'.$this->min,
+                ...($this->max ? ['max:'.$this->max] : []),
+                ...$this->customRules,
+            ]],
             $this->validator->customMessages,
             $this->validator->customAttributes
         )->after(function ($validator) use ($attribute, $value) {
@@ -409,42 +379,5 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
         $this->messages = array_merge($this->messages, Arr::wrap($messages));
 
         return false;
-    }
-
-    /**
-     * Get information about the current state of the password validation rules.
-     *
-     * @return array
-     */
-    public function appliedRules()
-    {
-        return [
-            'min' => $this->min,
-            'max' => $this->max,
-            'mixedCase' => $this->mixedCase,
-            'letters' => $this->letters,
-            'numbers' => $this->numbers,
-            'symbols' => $this->symbols,
-            'uncompromised' => $this->uncompromised,
-            'compromisedThreshold' => $this->compromisedThreshold,
-            'customRules' => $this->customRules,
-        ];
-    }
-
-    /**
-     * Get an iterator for the password validation rules.
-     *
-     * @return \ArrayIterator<TKey, TValue>
-     */
-    public function getIterator(): Traversable
-    {
-        return new ArrayIterator([
-            ...($this->required ? ['required'] : []),
-            ...($this->sometimes ? ['sometimes'] : []),
-            'string',
-            'min:'.$this->min,
-            ...($this->max ? ['max:'.$this->max] : []),
-            ...$this->customRules,
-        ]);
     }
 }

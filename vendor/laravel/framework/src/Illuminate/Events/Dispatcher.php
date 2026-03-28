@@ -4,43 +4,26 @@ namespace Illuminate\Events;
 
 use Closure;
 use Exception;
-use Illuminate\Bus\UniqueLock;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
-use Illuminate\Queue\Attributes\Backoff;
-use Illuminate\Queue\Attributes\Connection;
-use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
-use Illuminate\Queue\Attributes\FailOnTimeout;
-use Illuminate\Queue\Attributes\MaxExceptions;
-use Illuminate\Queue\Attributes\Queue as QueueAttribute;
-use Illuminate\Queue\Attributes\Timeout;
-use Illuminate\Queue\Attributes\Tries;
-use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Queue\Concerns\ResolvesQueueRoutes;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
-use Illuminate\Support\Traits\ReadsClassAttributes;
 use Illuminate\Support\Traits\ReflectsClosures;
 use ReflectionClass;
 
-use function Illuminate\Support\enum_value;
-
 class Dispatcher implements DispatcherContract
 {
-    use Macroable, ReadsClassAttributes, ReflectsClosures, ResolvesQueueRoutes;
+    use Macroable, ReflectsClosures;
 
     /**
      * The IoC container instance.
@@ -52,28 +35,28 @@ class Dispatcher implements DispatcherContract
     /**
      * The registered event listeners.
      *
-     * @var array<string, callable|array|class-string|null>
+     * @var array
      */
     protected $listeners = [];
 
     /**
      * The wildcard listeners.
      *
-     * @var array<string, \Closure|string>
+     * @var array
      */
     protected $wildcards = [];
 
     /**
      * The cached wildcard listeners.
      *
-     * @var array<string, \Closure|string>
+     * @var array
      */
     protected $wildcardsCache = [];
 
     /**
      * The queue resolver instance.
      *
-     * @var callable(): \Illuminate\Contracts\Queue\Queue
+     * @var callable
      */
     protected $queueResolver;
 
@@ -85,28 +68,10 @@ class Dispatcher implements DispatcherContract
     protected $transactionManagerResolver;
 
     /**
-     * The currently deferred events.
-     *
-     * @var array
-     */
-    protected $deferredEvents = [];
-
-    /**
-     * Indicates if events should be deferred.
-     *
-     * @var bool
-     */
-    protected $deferringEvents = false;
-
-    /**
-     * The specific events to defer (null means defer all events).
-     *
-     * @var string[]|null
-     */
-    protected $eventsToDefer = null;
-
-    /**
      * Create a new event dispatcher instance.
+     *
+     * @param  \Illuminate\Contracts\Container\Container|null  $container
+     * @return void
      */
     public function __construct(?ContainerContract $container = null)
     {
@@ -244,8 +209,8 @@ class Dispatcher implements DispatcherContract
     /**
      * Resolve the subscriber instance.
      *
-     * @param  object|class-string  $subscriber
-     * @return ($subscriber is object ? object : mixed)
+     * @param  object|string  $subscriber
+     * @return mixed
      */
     protected function resolveSubscriber($subscriber)
     {
@@ -261,7 +226,7 @@ class Dispatcher implements DispatcherContract
      *
      * @param  string|object  $event
      * @param  mixed  $payload
-     * @return array|null
+     * @return mixed
      */
     public function until($event, $payload = [])
     {
@@ -278,34 +243,28 @@ class Dispatcher implements DispatcherContract
      */
     public function dispatch($event, $payload = [], $halt = false)
     {
-        // When the given "event" is actually an object, we will assume it is an event
-        // object, and use the class as the event name and this event itself as the
-        // payload to the handler, which makes object-based events quite simple.
-        [$isEventObject, $parsedEvent, $parsedPayload] = [
+        // When the given "event" is actually an object we will assume it is an event
+        // object and use the class as the event name and this event itself as the
+        // payload to the handler, which makes object based events quite simple.
+        [$isEventObject, $event, $payload] = [
             is_object($event),
             ...$this->parseEventAndPayload($event, $payload),
         ];
-
-        if ($this->shouldDeferEvent($parsedEvent)) {
-            $this->deferredEvents[] = func_get_args();
-
-            return null;
-        }
 
         // If the event is not intended to be dispatched unless the current database
         // transaction is successful, we'll register a callback which will handle
         // dispatching this event on the next successful DB transaction commit.
         if ($isEventObject &&
-            $parsedPayload[0] instanceof ShouldDispatchAfterCommit &&
+            $payload[0] instanceof ShouldDispatchAfterCommit &&
             ! is_null($transactions = $this->resolveTransactionManager())) {
             $transactions->addCallback(
-                fn () => $this->invokeListeners($parsedEvent, $parsedPayload, $halt)
+                fn () => $this->invokeListeners($event, $payload, $halt)
             );
 
             return null;
         }
 
-        return $this->invokeListeners($parsedEvent, $parsedPayload, $halt);
+        return $this->invokeListeners($event, $payload, $halt);
     }
 
     /**
@@ -352,7 +311,7 @@ class Dispatcher implements DispatcherContract
      *
      * @param  mixed  $event
      * @param  mixed  $payload
-     * @return array{string, array}
+     * @return array
      */
     protected function parseEventAndPayload($event, $payload)
     {
@@ -366,6 +325,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Determine if the payload has a broadcastable event.
      *
+     * @param  array  $payload
      * @return bool
      */
     protected function shouldBroadcast(array $payload)
@@ -384,8 +344,7 @@ class Dispatcher implements DispatcherContract
     protected function broadcastWhen($event)
     {
         return method_exists($event, 'broadcastWhen')
-            ? $event->broadcastWhen()
-            : true;
+                ? $event->broadcastWhen() : true;
     }
 
     /**
@@ -413,8 +372,8 @@ class Dispatcher implements DispatcherContract
         );
 
         return class_exists($eventName, false)
-            ? $this->addInterfaceListeners($eventName, $listeners)
-            : $listeners;
+                    ? $this->addInterfaceListeners($eventName, $listeners)
+                    : $listeners;
     }
 
     /**
@@ -442,6 +401,7 @@ class Dispatcher implements DispatcherContract
      * Add the listeners for the event's interfaces to the given array.
      *
      * @param  string  $eventName
+     * @param  array  $listeners
      * @return array
      */
     protected function addInterfaceListeners($eventName, array $listeners = [])
@@ -460,6 +420,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Prepare the listeners for a given event.
      *
+     * @param  string  $eventName
      * @return \Closure[]
      */
     protected function prepareListeners(string $eventName)
@@ -476,7 +437,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Register an event listener with the dispatcher.
      *
-     * @param  \Closure|string|array{class-string, string}  $listener
+     * @param  \Closure|string|array  $listener
      * @param  bool  $wildcard
      * @return \Closure
      */
@@ -522,14 +483,14 @@ class Dispatcher implements DispatcherContract
     /**
      * Create the class based event callable.
      *
-     * @param  array{class-string, string}|string  $listener
+     * @param  array|string  $listener
      * @return callable
      */
     protected function createClassCallable($listener)
     {
         [$class, $method] = is_array($listener)
-            ? $listener
-            : $this->parseClassCallable($listener);
+                            ? $listener
+                            : $this->parseClassCallable($listener);
 
         if (! method_exists($class, $method)) {
             $method = '__invoke';
@@ -542,16 +503,15 @@ class Dispatcher implements DispatcherContract
         $listener = $this->container->make($class);
 
         return $this->handlerShouldBeDispatchedAfterDatabaseTransactions($listener)
-                && ! in_array($method, ['creating', 'updating', 'saving', 'deleting', 'restoring', 'forceDeleting'])
-            ? $this->createCallbackForListenerRunningAfterCommits($listener, $method)
-            : [$listener, $method];
+                    ? $this->createCallbackForListenerRunningAfterCommits($listener, $method)
+                    : [$listener, $method];
     }
 
     /**
      * Parse the class listener into class and method.
      *
      * @param  string  $listener
-     * @return array{class-string, string}
+     * @return array
      */
     protected function parseClassCallable($listener)
     {
@@ -561,10 +521,8 @@ class Dispatcher implements DispatcherContract
     /**
      * Determine if the event handler class should be queued.
      *
-     * @param  class-string  $class
+     * @param  string  $class
      * @return bool
-     *
-     * @phpstan-assert-if-true class-string<\Illuminate\Contracts\Queue\ShouldQueue> $class
      */
     protected function handlerShouldBeQueued($class)
     {
@@ -580,9 +538,9 @@ class Dispatcher implements DispatcherContract
     /**
      * Create a callable for putting an event handler on the queue.
      *
-     * @param  class-string  $class
+     * @param  string  $class
      * @param  string  $method
-     * @return \Closure(): void
+     * @return \Closure
      */
     protected function createQueuedHandlerCallable($class, $method)
     {
@@ -600,7 +558,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Determine if the given event handler should be dispatched after all database transactions have committed.
      *
-     * @param  mixed  $listener
+     * @param  object|mixed  $listener
      * @return bool
      */
     protected function handlerShouldBeDispatchedAfterDatabaseTransactions($listener)
@@ -633,7 +591,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Determine if the event handler wants to be queued.
      *
-     * @param  class-string  $class
+     * @param  string  $class
      * @param  array  $arguments
      * @return bool
      */
@@ -660,45 +618,30 @@ class Dispatcher implements DispatcherContract
     {
         [$listener, $job] = $this->createListenerAndJob($class, $method, $arguments);
 
-        if ($job->shouldBeUnique &&
-            ! (new UniqueLock($this->container->make(Cache::class)))->acquire($job)) {
-            return;
-        }
-
-        $connectionName = method_exists($listener, 'viaConnection')
+        $connection = $this->resolveQueue()->connection(method_exists($listener, 'viaConnection')
             ? (isset($arguments[0]) ? $listener->viaConnection($arguments[0]) : $listener->viaConnection())
-            : $this->getAttributeValue($listener, Connection::class, 'connection');
-
-        $connection = $this->resolveQueue()->connection(
-            $connectionName ?? $this->resolveConnectionFromQueueRoute($listener) ?? null
-        );
+            : $listener->connection ?? null);
 
         $queue = method_exists($listener, 'viaQueue')
             ? (isset($arguments[0]) ? $listener->viaQueue($arguments[0]) : $listener->viaQueue())
-            : $this->getAttributeValue($listener, QueueAttribute::class, 'queue');
+            : $listener->queue ?? null;
 
         $delay = method_exists($listener, 'withDelay')
             ? (isset($arguments[0]) ? $listener->withDelay($arguments[0]) : $listener->withDelay())
             : $listener->delay ?? null;
 
-        if (is_null($queue)) {
-            $queue = $this->resolveQueueFromQueueRoute($listener) ?? null;
-        }
-
         is_null($delay)
-            ? $connection->pushOn(enum_value($queue), $job)
-            : $connection->laterOn(enum_value($queue), $delay, $job);
+            ? $connection->pushOn($queue, $job)
+            : $connection->laterOn($queue, $delay, $job);
     }
 
     /**
      * Create the listener and job for a queued listener.
      *
-     * @template TListener
-     *
-     * @param  class-string<TListener>  $class
+     * @param  string  $class
      * @param  string  $method
      * @param  array  $arguments
-     * @return array{TListener, mixed}
+     * @return array
      */
     protected function createListenerAndJob($class, $method, $arguments)
     {
@@ -714,7 +657,7 @@ class Dispatcher implements DispatcherContract
      *
      * @param  mixed  $listener
      * @param  \Illuminate\Events\CallQueuedListener  $job
-     * @return \Illuminate\Events\CallQueuedListener
+     * @return mixed
      */
     protected function propagateListenerOptions($listener, $job)
     {
@@ -727,37 +670,18 @@ class Dispatcher implements DispatcherContract
                 $job->afterCommit = property_exists($listener, 'afterCommit') ? $listener->afterCommit : null;
             }
 
-            $job->backoff = method_exists($listener, 'backoff') ? $listener->backoff(...$data) : $this->getAttributeValue($listener, Backoff::class, 'backoff');
-            $job->maxExceptions = $this->getAttributeValue($listener, MaxExceptions::class, 'maxExceptions');
+            $job->backoff = method_exists($listener, 'backoff') ? $listener->backoff(...$data) : ($listener->backoff ?? null);
+            $job->maxExceptions = $listener->maxExceptions ?? null;
             $job->retryUntil = method_exists($listener, 'retryUntil') ? $listener->retryUntil(...$data) : null;
             $job->shouldBeEncrypted = $listener instanceof ShouldBeEncrypted;
-            $job->timeout = $this->getAttributeValue($listener, Timeout::class, 'timeout');
-            $job->failOnTimeout = $this->getAttributeValue($listener, FailOnTimeout::class, 'failOnTimeout') ?? false;
-            $job->deleteWhenMissingModels = $this->getAttributeValue($listener, DeleteWhenMissingModels::class, 'deleteWhenMissingModels') ?? false;
-            $job->tries = method_exists($listener, 'tries') ? $listener->tries(...$data) : $this->getAttributeValue($listener, Tries::class, 'tries');
-            $job->messageGroup = method_exists($listener, 'messageGroup') ? $listener->messageGroup(...$data) : ($listener->messageGroup ?? null);
-            $job->withDeduplicator(method_exists($listener, 'deduplicator')
-                ? $listener->deduplicator(...$data)
-                : (method_exists($listener, 'deduplicationId') ? $listener->deduplicationId(...) : null)
-            );
+            $job->timeout = $listener->timeout ?? null;
+            $job->failOnTimeout = $listener->failOnTimeout ?? false;
+            $job->tries = $listener->tries ?? null;
 
             $job->through(array_merge(
                 method_exists($listener, 'middleware') ? $listener->middleware(...$data) : [],
                 $listener->middleware ?? []
             ));
-
-            $job->shouldBeUnique = $listener instanceof ShouldBeUnique;
-            $job->shouldBeUniqueUntilProcessing = $listener instanceof ShouldBeUniqueUntilProcessing;
-
-            if ($job->shouldBeUnique) {
-                $job->uniqueId = method_exists($listener, 'uniqueId')
-                    ? $listener->uniqueId(...$data)
-                    : ($listener->uniqueId ?? null);
-
-                $job->uniqueFor = method_exists($listener, 'uniqueFor')
-                    ? $listener->uniqueFor(...$data)
-                    : ($this->getAttributeValue($listener, UniqueFor::class, 'uniqueFor') ?? 0);
-            }
         });
     }
 
@@ -809,7 +733,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Set the queue resolver implementation.
      *
-     * @param  callable(): \Illuminate\Contracts\Queue\Queue  $resolver
+     * @param  callable  $resolver
      * @return $this
      */
     public function setQueueResolver(callable $resolver)
@@ -832,7 +756,7 @@ class Dispatcher implements DispatcherContract
     /**
      * Set the database transaction manager resolver implementation.
      *
-     * @param  (callable(): (\Illuminate\Database\DatabaseTransactionsManager|null))  $resolver
+     * @param  callable  $resolver
      * @return $this
      */
     public function setTransactionManagerResolver(callable $resolver)
@@ -840,52 +764,6 @@ class Dispatcher implements DispatcherContract
         $this->transactionManagerResolver = $resolver;
 
         return $this;
-    }
-
-    /**
-     * Execute the given callback while deferring events, then dispatch all deferred events.
-     *
-     * @template TResult
-     *
-     * @param  callable(): TResult  $callback
-     * @param  string[]|null  $events
-     * @return TResult
-     */
-    public function defer(callable $callback, ?array $events = null)
-    {
-        $wasDeferring = $this->deferringEvents;
-        $previousDeferredEvents = $this->deferredEvents;
-        $previousEventsToDefer = $this->eventsToDefer;
-
-        $this->deferringEvents = true;
-        $this->deferredEvents = [];
-        $this->eventsToDefer = $events;
-
-        try {
-            $result = $callback();
-
-            $this->deferringEvents = false;
-
-            foreach ($this->deferredEvents as $args) {
-                $this->dispatch(...$args);
-            }
-
-            return $result;
-        } finally {
-            $this->deferringEvents = $wasDeferring;
-            $this->deferredEvents = $previousDeferredEvents;
-            $this->eventsToDefer = $previousEventsToDefer;
-        }
-    }
-
-    /**
-     * Determine if the given event should be deferred.
-     *
-     * @return bool
-     */
-    protected function shouldDeferEvent(string $event)
-    {
-        return $this->deferringEvents && ($this->eventsToDefer === null || in_array($event, $this->eventsToDefer));
     }
 
     /**

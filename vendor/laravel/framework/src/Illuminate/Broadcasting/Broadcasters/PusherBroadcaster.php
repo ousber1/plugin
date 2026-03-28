@@ -21,21 +21,14 @@ class PusherBroadcaster extends Broadcaster
     protected $pusher;
 
     /**
-     * Indicates if JSONP callbacks are allowed on authorization.
-     *
-     * @var bool
-     */
-    protected $allowJsonp = false;
-
-    /**
      * Create a new broadcaster instance.
      *
      * @param  \Pusher\Pusher  $pusher
+     * @return void
      */
-    public function __construct(Pusher $pusher, bool $allowJsonp = false)
+    public function __construct(Pusher $pusher)
     {
         $this->pusher = $pusher;
-        $this->allowJsonp = $allowJsonp;
     }
 
     /**
@@ -117,8 +110,8 @@ class PusherBroadcaster extends Broadcaster
         $user = $this->retrieveUser($request, $channelName);
 
         $broadcastIdentifier = method_exists($user, 'getAuthIdentifierForBroadcasting')
-            ? $user->getAuthIdentifierForBroadcasting()
-            : $user->getAuthIdentifier();
+                        ? $user->getAuthIdentifierForBroadcasting()
+                        : $user->getAuthIdentifier();
 
         return $this->decodePusherResponse(
             $request,
@@ -137,7 +130,7 @@ class PusherBroadcaster extends Broadcaster
      */
     protected function decodePusherResponse($request, $response)
     {
-        if (! $request->input('callback', false) || ! $this->allowJsonp) {
+        if (! $request->input('callback', false)) {
             return json_decode($response, true);
         }
 

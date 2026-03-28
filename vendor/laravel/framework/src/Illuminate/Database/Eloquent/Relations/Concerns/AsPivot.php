@@ -3,7 +3,6 @@
 namespace Illuminate\Database\Eloquent\Relations\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphPivot;
 use Illuminate\Support\Str;
 
 trait AsPivot
@@ -167,13 +166,13 @@ trait AsPivot
      */
     public function getTable()
     {
-        if (! isset($this->table) && (! $this instanceof MorphPivot)) {
+        if (! isset($this->table)) {
             $this->setTable(str_replace(
                 '\\', '', Str::snake(Str::singular(class_basename($this)))
             ));
         }
 
-        return parent::getTable();
+        return $this->table;
     }
 
     /**
@@ -243,8 +242,7 @@ trait AsPivot
      */
     public function hasTimestampAttributes($attributes = null)
     {
-        return ($createdAt = $this->getCreatedAtColumn()) !== null
-            && array_key_exists($createdAt, $attributes ?? $this->attributes);
+        return array_key_exists($this->getCreatedAtColumn(), $attributes ?? $this->attributes);
     }
 
     /**

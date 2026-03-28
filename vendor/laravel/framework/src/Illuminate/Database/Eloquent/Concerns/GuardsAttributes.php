@@ -2,11 +2,6 @@
 
 namespace Illuminate\Database\Eloquent\Concerns;
 
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Guarded;
-use Illuminate\Database\Eloquent\Attributes\Initialize;
-use Illuminate\Database\Eloquent\Attributes\Unguarded;
-
 trait GuardsAttributes
 {
     /**
@@ -19,7 +14,7 @@ trait GuardsAttributes
     /**
      * The attributes that aren't mass assignable.
      *
-     * @var array<string>
+     * @var array<string>|bool
      */
     protected $guarded = ['*'];
 
@@ -33,30 +28,9 @@ trait GuardsAttributes
     /**
      * The actual columns that exist on the database and can be guarded.
      *
-     * @var array<class-string,list<string>>
+     * @var array<string>
      */
     protected static $guardableColumns = [];
-
-    /**
-     * Initialize the GuardsAttributes trait.
-     *
-     * @return void
-     */
-    #[Initialize]
-    public function initializeGuardsAttributes()
-    {
-        if (empty($this->fillable)) {
-            $this->fillable = static::resolveClassAttribute(Fillable::class, 'columns') ?? [];
-        }
-
-        if ($this->guarded === ['*']) {
-            if (static::resolveClassAttribute(Unguarded::class) !== null) {
-                $this->guarded = [];
-            } else {
-                $this->guarded = static::resolveClassAttribute(Guarded::class, 'columns') ?? ['*'];
-            }
-        }
-    }
 
     /**
      * Get the fillable attributes for the model.
@@ -101,9 +75,9 @@ trait GuardsAttributes
      */
     public function getGuarded()
     {
-        return self::$unguarded === true
-            ? []
-            : $this->guarded;
+        return $this->guarded === false
+                    ? []
+                    : $this->guarded;
     }
 
     /**
@@ -166,10 +140,8 @@ trait GuardsAttributes
     /**
      * Run the given callable while being unguarded.
      *
-     * @template TReturn
-     *
-     * @param  callable(): TReturn  $callback
-     * @return TReturn
+     * @param  callable  $callback
+     * @return mixed
      */
     public static function unguarded(callable $callback)
     {
@@ -242,7 +214,7 @@ trait GuardsAttributes
      */
     protected function isGuardableColumn($key)
     {
-        if ($this->hasSetMutator($key) || $this->hasAttributeSetMutator($key) || $this->isClassCastable($key)) {
+        if ($this->hasSetMutator($key) || $this->hasAttributeSetMutator($key)) {
             return true;
         }
 
@@ -274,8 +246,8 @@ trait GuardsAttributes
     /**
      * Get the fillable attributes of a given array.
      *
-     * @param  array<string, mixed>  $attributes
-     * @return array<string, mixed>
+     * @param  array  $attributes
+     * @return array
      */
     protected function fillableFromArray(array $attributes)
     {

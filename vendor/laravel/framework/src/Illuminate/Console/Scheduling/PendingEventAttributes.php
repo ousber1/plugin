@@ -10,13 +10,6 @@ class PendingEventAttributes
     use ManagesAttributes, ManagesFrequencies;
 
     /**
-     * The recorded macro calls to replay on each event.
-     *
-     * @var array<int, array{string, array}>
-     */
-    protected array $macros = [];
-
-    /**
      * Create a new pending event attributes instance.
      */
     public function __construct(
@@ -69,10 +62,6 @@ class PendingEventAttributes
             $event->evenInMaintenanceMode();
         }
 
-        if ($this->evenWhenPaused) {
-            $event->evenWhenPaused();
-        }
-
         if ($this->withoutOverlapping) {
             $event->withoutOverlapping($this->expiresAt);
         }
@@ -92,10 +81,6 @@ class PendingEventAttributes
         foreach ($this->rejects as $reject) {
             $event->skip($reject);
         }
-
-        foreach ($this->macros as [$method, $parameters]) {
-            $event->{$method}(...$parameters);
-        }
     }
 
     /**
@@ -103,12 +88,6 @@ class PendingEventAttributes
      */
     public function __call(string $method, array $parameters): mixed
     {
-        if (Event::hasMacro($method)) {
-            $this->macros[] = [$method, $parameters];
-
-            return $this;
-        }
-
         return $this->schedule->{$method}(...$parameters);
     }
 }

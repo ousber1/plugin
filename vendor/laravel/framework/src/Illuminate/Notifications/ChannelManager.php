@@ -7,21 +7,10 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Notifications\Dispatcher as DispatcherContract;
 use Illuminate\Contracts\Notifications\Factory as FactoryContract;
 use Illuminate\Support\Manager;
-use Illuminate\Support\Queue\Concerns\ResolvesQueueRoutes;
-use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 
 class ChannelManager extends Manager implements DispatcherContract, FactoryContract
 {
-    use Macroable, ResolvesQueueRoutes;
-
-    /**
-     * The resolved notification sender instance.
-     *
-     * @var \Illuminate\Notifications\NotificationSender|null
-     */
-    protected $notificationSender;
-
     /**
      * The default channel used to deliver messages.
      *
@@ -39,26 +28,30 @@ class ChannelManager extends Manager implements DispatcherContract, FactoryContr
     /**
      * Send the given notification to the given notifiable entities.
      *
-     * @param  \Illuminate\Support\Collection|mixed  $notifiables
+     * @param  \Illuminate\Support\Collection|array|mixed  $notifiables
      * @param  mixed  $notification
      * @return void
      */
     public function send($notifiables, $notification)
     {
-        $this->resolveNotificationSender()->send($notifiables, $notification);
+        (new NotificationSender(
+            $this, $this->container->make(Bus::class), $this->container->make(Dispatcher::class), $this->locale)
+        )->send($notifiables, $notification);
     }
 
     /**
      * Send the given notification immediately.
      *
-     * @param  \Illuminate\Support\Collection|mixed  $notifiables
+     * @param  \Illuminate\Support\Collection|array|mixed  $notifiables
      * @param  mixed  $notification
      * @param  array|null  $channels
      * @return void
      */
     public function sendNow($notifiables, $notification, ?array $channels = null)
     {
-        $this->resolveNotificationSender()->sendNow($notifiables, $notification, $channels);
+        (new NotificationSender(
+            $this, $this->container->make(Bus::class), $this->container->make(Dispatcher::class), $this->locale)
+        )->sendNow($notifiables, $notification, $channels);
     }
 
     /**
@@ -121,18 +114,6 @@ class ChannelManager extends Manager implements DispatcherContract, FactoryContr
 
             throw $e;
         }
-    }
-
-    /**
-     * Resolve the NotificationSender instance.
-     *
-     * @return \Illuminate\Notifications\NotificationSender
-     */
-    protected function resolveNotificationSender()
-    {
-        return $this->notificationSender ??= new NotificationSender(
-            $this, $this->container->make(Bus::class), $this->container->make(Dispatcher::class), $this->locale
-        );
     }
 
     /**

@@ -7,12 +7,11 @@ trait Dispatchable
     /**
      * Dispatch the event with the given arguments.
      *
-     * @param  mixed  ...$arguments
      * @return mixed
      */
-    public static function dispatch(...$arguments)
+    public static function dispatch()
     {
-        return event(new static(...$arguments));
+        return event(new static(...func_get_args()));
     }
 
     /**
@@ -46,11 +45,10 @@ trait Dispatchable
     /**
      * Broadcast the event with the given arguments.
      *
-     * @param  mixed  ...$arguments
      * @return \Illuminate\Broadcasting\PendingBroadcast
      */
-    public static function broadcast(...$arguments)
+    public static function broadcast()
     {
-        return broadcast(new static(...$arguments));
+        return broadcast(new static(...func_get_args()));
     }
 }

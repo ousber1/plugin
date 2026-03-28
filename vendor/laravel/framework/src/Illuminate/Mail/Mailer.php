@@ -95,6 +95,7 @@ class Mailer implements MailerContract, MailQueueContract
      * @param  \Illuminate\Contracts\View\Factory  $views
      * @param  \Symfony\Component\Mailer\Transport\TransportInterface  $transport
      * @param  \Illuminate\Contracts\Events\Dispatcher|null  $events
+     * @return void
      */
     public function __construct(string $name, Factory $views, TransportInterface $transport, ?Dispatcher $events = null)
     {
@@ -248,7 +249,7 @@ class Mailer implements MailerContract, MailQueueContract
         // First we need to parse the view, which could either be a string or an array
         // containing both an HTML and plain text versions of the view which should
         // be used when sending an e-mail. We will extract both of them out here.
-        [$view, $plain] = $this->parseView($view);
+        [$view, $plain, $raw] = $this->parseView($view);
 
         $data['message'] = $this->createMessage();
 
@@ -267,10 +268,10 @@ class Mailer implements MailerContract, MailQueueContract
      */
     protected function replaceEmbeddedAttachments(string $renderedView, array $attachments)
     {
-        if (preg_match_all('/<img.+?src=[\'"]cid:([^\'"]+)[\'"].*?>/is', $renderedView, $matches)) {
+        if (preg_match_all('/<img.+?src=[\'"]cid:([^\'"]+)[\'"].*?>/i', $renderedView, $matches)) {
             foreach (array_unique($matches[1]) as $image) {
                 foreach ($attachments as $attachment) {
-                    if ($attachment->getContentId() === $image || $attachment->getFilename() === $image) {
+                    if ($attachment->getFilename() === $image) {
                         $renderedView = str_replace(
                             'cid:'.$image,
                             'data:'.$attachment->getContentType().';base64,'.$attachment->bodyToString(),
@@ -349,8 +350,8 @@ class Mailer implements MailerContract, MailQueueContract
     protected function sendMailable(MailableContract $mailable)
     {
         return $mailable instanceof ShouldQueue
-            ? $mailable->mailer($this->name)->queue($this->queue)
-            : $mailable->mailer($this->name)->send($this);
+                        ? $mailable->mailer($this->name)->queue($this->queue)
+                        : $mailable->mailer($this->name)->send($this);
     }
 
     /**
@@ -440,8 +441,8 @@ class Mailer implements MailerContract, MailQueueContract
         $view = value($view, $data);
 
         return $view instanceof Htmlable
-            ? $view->toHtml()
-            : $this->views->make($view, $data)->render();
+                        ? $view->toHtml()
+                        : $this->views->make($view, $data)->render();
     }
 
     /**
@@ -463,7 +464,7 @@ class Mailer implements MailerContract, MailQueueContract
     /**
      * Queue a new mail message for sending.
      *
-     * @param  \Illuminate\Contracts\Mail\Mailable  $view
+     * @param  \Illuminate\Contracts\Mail\Mailable|string|array  $view
      * @param  \BackedEnum|string|null  $queue
      * @return mixed
      *

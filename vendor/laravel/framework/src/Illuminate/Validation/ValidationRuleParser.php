@@ -3,7 +3,6 @@
 namespace Illuminate\Validation;
 
 use Closure;
-use Illuminate\Contracts\Validation\CompilableRules;
 use Illuminate\Contracts\Validation\InvokableRule;
 use Illuminate\Contracts\Validation\Rule as RuleContract;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -13,7 +12,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Date;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Rules\Numeric;
-use Illuminate\Validation\Rules\StringRule;
 use Illuminate\Validation\Rules\Unique;
 
 class ValidationRuleParser
@@ -36,6 +34,7 @@ class ValidationRuleParser
      * Create a new validation rule parser.
      *
      * @param  array  $data
+     * @return void
      */
     public function __construct(array $data)
     {
@@ -95,7 +94,7 @@ class ValidationRuleParser
         }
 
         if (is_object($rule)) {
-            if ($rule instanceof Date || $rule instanceof Numeric || $rule instanceof StringRule) {
+            if ($rule instanceof Date || $rule instanceof Numeric) {
                 return explode('|', (string) $rule);
             }
 
@@ -105,7 +104,7 @@ class ValidationRuleParser
         $rules = [];
 
         foreach ($rule as $value) {
-            if ($value instanceof Date || $value instanceof Numeric || $value instanceof StringRule) {
+            if ($value instanceof Date || $value instanceof Numeric) {
                 $rules = array_merge($rules, explode('|', (string) $value));
             } else {
                 $rules[] = $this->prepareRule($value, $attribute);
@@ -139,7 +138,7 @@ class ValidationRuleParser
             return $rule;
         }
 
-        if ($rule instanceof CompilableRules) {
+        if ($rule instanceof NestedRules) {
             return $rule->compile(
                 $attribute, $this->data[$attribute] ?? null, Arr::dot($this->data), $this->data
             )->rules[$attribute];
@@ -165,7 +164,7 @@ class ValidationRuleParser
         foreach ($data as $key => $value) {
             if (Str::startsWith($key, $attribute) || (bool) preg_match('/^'.$pattern.'\z/', $key)) {
                 foreach ((array) $rules as $rule) {
-                    if ($rule instanceof CompilableRules) {
+                    if ($rule instanceof NestedRules) {
                         $context = Arr::get($this->data, Str::beforeLast($key, '.'));
 
                         $compiled = $rule->compile($key, $value, $data, $context);
@@ -239,7 +238,7 @@ class ValidationRuleParser
      */
     public static function parse($rule)
     {
-        if ($rule instanceof RuleContract || $rule instanceof CompilableRules) {
+        if ($rule instanceof RuleContract || $rule instanceof NestedRules) {
             return [$rule, []];
         }
 
@@ -342,8 +341,8 @@ class ValidationRuleParser
 
             if ($attributeRules instanceof ConditionalRules) {
                 return [$attribute => $attributeRules->passes($data)
-                    ? array_filter($attributeRules->rules($data))
-                    : array_filter($attributeRules->defaultRules($data)), ];
+                                ? array_filter($attributeRules->rules($data))
+                                : array_filter($attributeRules->defaultRules($data)), ];
             }
 
             return [$attribute => (new Collection($attributeRules))->map(function ($rule) use ($data) {

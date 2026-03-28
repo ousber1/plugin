@@ -35,6 +35,7 @@ class ViewClearCommand extends Command
      * Create a new config clear command instance.
      *
      * @param  \Illuminate\Filesystem\Filesystem  $files
+     * @return void
      */
     public function __construct(Filesystem $files)
     {
@@ -63,11 +64,7 @@ class ViewClearCommand extends Command
             ->forgetCompiledOrNotExpired();
 
         foreach ($this->files->glob("{$path}/*") as $view) {
-            if ($this->files->isDirectory($view)) {
-                $this->files->deleteDirectory($view);
-            } else {
-                $this->files->delete($view);
-            }
+            $this->files->delete($view);
         }
 
         $this->components->info('Compiled views cleared successfully.');

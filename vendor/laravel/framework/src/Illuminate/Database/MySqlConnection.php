@@ -79,24 +79,7 @@ class MySqlConnection extends Connection
      */
     protected function isUniqueConstraintError(Exception $exception)
     {
-        return (bool) preg_match('#Integrity constraint violation: 1062#i', $exception->getMessage());
-    }
-
-    /**
-     * Extract the index that caused a unique constraint violation.
-     *
-     * @param  Exception  $exception
-     * @return array{index: string|null, columns: list<string>}
-     */
-    protected function parseUniqueConstraintViolation(Exception $exception): array
-    {
-        preg_match(
-            '#Duplicate entry \'.*?\' for key \'(?:.*?\.)?(.+?)\'#i',
-            $exception->getMessage(),
-            $matches
-        );
-
-        return ['columns' => [], 'index' => $matches[1] ?? null];
+        return boolval(preg_match('#Integrity constraint violation: 1062#i', $exception->getMessage()));
     }
 
     /**
@@ -138,7 +121,9 @@ class MySqlConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        return new QueryGrammar($this);
+        ($grammar = new QueryGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**
@@ -162,7 +147,9 @@ class MySqlConnection extends Connection
      */
     protected function getDefaultSchemaGrammar()
     {
-        return new SchemaGrammar($this);
+        ($grammar = new SchemaGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**

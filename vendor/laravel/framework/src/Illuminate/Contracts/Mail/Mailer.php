@@ -18,14 +18,6 @@ interface Mailer
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail
      */
-    public function cc($users);
-
-    /**
-     * Begin the process of mailing a mailable class instance.
-     *
-     * @param  mixed  $users
-     * @return \Illuminate\Mail\PendingMail
-     */
     public function bcc($users);
 
     /**

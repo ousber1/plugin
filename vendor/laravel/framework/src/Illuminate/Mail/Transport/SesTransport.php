@@ -33,6 +33,7 @@ class SesTransport extends AbstractTransport implements Stringable
      *
      * @param  \Aws\Ses\SesClient  $ses
      * @param  array  $options
+     * @return void
      */
     public function __construct(SesClient $ses, $options = [])
     {
@@ -44,8 +45,6 @@ class SesTransport extends AbstractTransport implements Stringable
 
     /**
      * {@inheritDoc}
-     *
-     * @throws \Symfony\Component\Mailer\Exception\TransportException
      */
     protected function doSend(SentMessage $message): void
     {

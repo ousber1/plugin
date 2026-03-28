@@ -64,6 +64,7 @@ class MigrateCommand extends BaseCommand implements Isolatable
      *
      * @param  \Illuminate\Database\Migrations\Migrator  $migrator
      * @param  \Illuminate\Contracts\Events\Dispatcher  $dispatcher
+     * @return void
      */
     public function __construct(Migrator $migrator, Dispatcher $dispatcher)
     {
@@ -77,8 +78,6 @@ class MigrateCommand extends BaseCommand implements Isolatable
      * Execute the console command.
      *
      * @return int
-     *
-     * @throws \Throwable
      */
     public function handle()
     {

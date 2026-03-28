@@ -12,7 +12,7 @@ use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Routing\Pipeline;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\InteractsWithTime;
 use InvalidArgumentException;
 use Throwable;
@@ -119,6 +119,7 @@ class Kernel implements KernelContract
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
      * @param  \Illuminate\Routing\Router  $router
+     * @return void
      */
     public function __construct(Application $app, Router $router)
     {
@@ -165,7 +166,7 @@ class Kernel implements KernelContract
     {
         $this->app->instance('request', $request);
 
-        Request::clearResolvedInstance();
+        Facade::clearResolvedInstance('request');
 
         $this->bootstrap();
 

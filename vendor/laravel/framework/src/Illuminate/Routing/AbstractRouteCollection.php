@@ -6,6 +6,7 @@ use ArrayIterator;
 use Countable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use LogicException;
@@ -78,21 +79,13 @@ abstract class AbstractRouteCollection implements Countable, IteratorAggregate, 
      */
     protected function matchAgainstRoutes(array $routes, $request, $includingMethod = true)
     {
-        $fallbackRoute = null;
+        [$fallbacks, $routes] = (new Collection($routes))->partition(function ($route) {
+            return $route->isFallback;
+        });
 
-        foreach ($routes as $route) {
-            if ($route->matches($request, $includingMethod)) {
-                if ($route->isFallback) {
-                    $fallbackRoute ??= $route;
-
-                    continue;
-                }
-
-                return $route;
-            }
-        }
-
-        return $fallbackRoute;
+        return $routes->merge($fallbacks)->first(
+            fn (Route $route) => $route->matches($request, $includingMethod)
+        );
     }
 
     /**
@@ -209,20 +202,18 @@ abstract class AbstractRouteCollection implements Countable, IteratorAggregate, 
     {
         $symfonyRoutes = new SymfonyRouteCollection;
 
-        $fallbackRoutes = [];
+        $routes = $this->getRoutes();
 
-        foreach ($this->getRoutes() as $route) {
-            if ($route->isFallback) {
-                $fallbackRoutes[] = $route;
-
-                continue;
+        foreach ($routes as $route) {
+            if (! $route->isFallback) {
+                $symfonyRoutes = $this->addToSymfonyRoutesCollection($symfonyRoutes, $route);
             }
-
-            $symfonyRoutes = $this->addToSymfonyRoutesCollection($symfonyRoutes, $route);
         }
 
-        foreach ($fallbackRoutes as $route) {
-            $symfonyRoutes = $this->addToSymfonyRoutesCollection($symfonyRoutes, $route);
+        foreach ($routes as $route) {
+            if ($route->isFallback) {
+                $symfonyRoutes = $this->addToSymfonyRoutesCollection($symfonyRoutes, $route);
+            }
         }
 
         return $symfonyRoutes;

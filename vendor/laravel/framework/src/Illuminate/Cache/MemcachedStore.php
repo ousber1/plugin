@@ -37,6 +37,7 @@ class MemcachedStore extends TaggableStore implements LockProvider
      *
      * @param  \Memcached  $memcached
      * @param  string  $prefix
+     * @return void
      */
     public function __construct($memcached, $prefix = '')
     {
@@ -200,18 +201,6 @@ class MemcachedStore extends TaggableStore implements LockProvider
     public function restoreLock($name, $owner)
     {
         return $this->lock($name, 0, $owner);
-    }
-
-    /**
-     * Adjust the expiration time of a cached item.
-     *
-     * @param  string  $key
-     * @param  int  $seconds
-     * @return bool
-     */
-    public function touch($key, $seconds)
-    {
-        return $this->memcached->touch($this->getPrefix().$key, $this->calculateExpiration($seconds));
     }
 
     /**

@@ -124,6 +124,7 @@ class UrlGenerator implements UrlGeneratorContract
      * @param  \Illuminate\Routing\RouteCollectionInterface  $routes
      * @param  \Illuminate\Http\Request  $request
      * @param  string|null  $assetRoot
+     * @return void
      */
     public function __construct(RouteCollectionInterface $routes, Request $request, $assetRoot = null)
     {
@@ -182,17 +183,9 @@ class UrlGenerator implements UrlGeneratorContract
      */
     public function previousPath($fallback = false)
     {
-        $previousPath = parse_url($this->previous($fallback), PHP_URL_PATH);
+        $previousPath = str_replace($this->to('/'), '', rtrim(preg_replace('/\?.*/', '', $this->previous($fallback)), '/'));
 
-        if (! is_string($previousPath) || $previousPath === '') {
-            return '/';
-        }
-
-        $basePath = parse_url($this->to('/'), PHP_URL_PATH) ?: '';
-
-        $previousPath = $basePath !== '/' ? preg_replace('#^'.preg_quote($basePath, '#').'#', '', $previousPath) : $previousPath;
-
-        return rtrim($previousPath, '/') ?: '/';
+        return $previousPath === '' ? '/' : $previousPath;
     }
 
     /**
@@ -391,8 +384,6 @@ class UrlGenerator implements UrlGeneratorContract
      *
      * @param  mixed  $parameters
      * @return void
-     *
-     * @throws \InvalidArgumentException
      */
     protected function ensureSignedRouteParametersAreNotReserved($parameters)
     {
@@ -428,10 +419,10 @@ class UrlGenerator implements UrlGeneratorContract
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  bool  $absolute
-     * @param  \Closure|array  $ignoreQuery
+     * @param  array  $ignoreQuery
      * @return bool
      */
-    public function hasValidSignature(Request $request, $absolute = true, Closure|array $ignoreQuery = [])
+    public function hasValidSignature(Request $request, $absolute = true, array $ignoreQuery = [])
     {
         return $this->hasCorrectSignature($request, $absolute, $ignoreQuery)
             && $this->signatureHasNotExpired($request);
@@ -441,10 +432,10 @@ class UrlGenerator implements UrlGeneratorContract
      * Determine if the given request has a valid signature for a relative URL.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure|array  $ignoreQuery
+     * @param  array  $ignoreQuery
      * @return bool
      */
-    public function hasValidRelativeSignature(Request $request, Closure|array $ignoreQuery = [])
+    public function hasValidRelativeSignature(Request $request, array $ignoreQuery = [])
     {
         return $this->hasValidSignature($request, false, $ignoreQuery);
     }
@@ -454,27 +445,17 @@ class UrlGenerator implements UrlGeneratorContract
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  bool  $absolute
-     * @param  \Closure|array  $ignoreQuery
+     * @param  array  $ignoreQuery
      * @return bool
      */
-    public function hasCorrectSignature(Request $request, $absolute = true, Closure|array $ignoreQuery = [])
+    public function hasCorrectSignature(Request $request, $absolute = true, array $ignoreQuery = [])
     {
+        $ignoreQuery[] = 'signature';
+
         $url = $absolute ? $request->url() : '/'.$request->path();
 
         $queryString = (new Collection(explode('&', (string) $request->server->get('QUERY_STRING'))))
-            ->reject(function ($parameter) use ($ignoreQuery) {
-                $parameter = Str::before($parameter, '=');
-
-                if ($parameter === 'signature') {
-                    return true;
-                }
-
-                if ($ignoreQuery instanceof Closure) {
-                    return $ignoreQuery($parameter);
-                }
-
-                return in_array($parameter, $ignoreQuery);
-            })
+            ->reject(fn ($parameter) => in_array(Str::before($parameter, '='), $ignoreQuery))
             ->join('&');
 
         $original = rtrim($url.'?'.$queryString, '?');
@@ -548,8 +529,20 @@ class UrlGenerator implements UrlGeneratorContract
      */
     public function toRoute($route, $parameters, $absolute)
     {
+        $parameters = Collection::wrap($parameters)->map(function ($value, $key) use ($route) {
+            return $value instanceof UrlRoutable && $route->bindingFieldFor($key)
+                    ? $value->{$route->bindingFieldFor($key)}
+                    : $value;
+        })->all();
+
+        array_walk_recursive($parameters, function (&$item) {
+            if ($item instanceof BackedEnum) {
+                $item = $item->value;
+            }
+        });
+
         return $this->routeUrl()->to(
-            $route, $parameters, $absolute
+            $route, $this->formatParameters($parameters), $absolute
         );
     }
 
@@ -847,7 +840,7 @@ class UrlGenerator implements UrlGeneratorContract
         $this->cachedRoot = null;
         $this->cachedScheme = null;
 
-        tap($this->routeGenerator?->defaultParameters ?: [], function ($defaults) {
+        tap(optional($this->routeGenerator)->defaultParameters ?: [], function ($defaults) {
             $this->routeGenerator = null;
 
             if (! empty($defaults)) {

@@ -83,26 +83,7 @@ class SqlServerConnection extends Connection
      */
     protected function isUniqueConstraintError(Exception $exception)
     {
-        return (bool) preg_match('#Cannot insert duplicate key row in object#i', $exception->getMessage());
-    }
-
-    /**
-     * Extract the index that caused a unique constraint violation.
-     *
-     * @param  Exception  $exception
-     * @return array{index: string|null, columns: list<string>}
-     */
-    protected function parseUniqueConstraintViolation(Exception $exception): array
-    {
-        $index = null;
-
-        if (preg_match('#with unique index \'([^\']+)\'#i', $message = $exception->getMessage(), $matches)) {
-            $index = $matches[1];
-        } elseif (preg_match('#Violation of [A-Z ]+ constraint \'([^\']+)\'#i', $message, $matches)) {
-            $index = $matches[1];
-        }
-
-        return ['columns' => [], 'index' => $index];
+        return boolval(preg_match('#Cannot insert duplicate key row in object#i', $exception->getMessage()));
     }
 
     /**
@@ -112,7 +93,9 @@ class SqlServerConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        return new QueryGrammar($this);
+        ($grammar = new QueryGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**
@@ -136,7 +119,9 @@ class SqlServerConnection extends Connection
      */
     protected function getDefaultSchemaGrammar()
     {
-        return new SchemaGrammar($this);
+        ($grammar = new SchemaGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**

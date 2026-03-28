@@ -51,11 +51,9 @@ class ResourceMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return match (true) {
-            $this->collection() => $this->resolveStubPath('/stubs/resource-collection.stub'),
-            $this->option('json-api') => $this->resolveStubPath('/stubs/resource-json-api.stub'),
-            default => $this->resolveStubPath('/stubs/resource.stub'),
-        };
+        return $this->collection()
+                    ? $this->resolveStubPath('/stubs/resource-collection.stub')
+                    : $this->resolveStubPath('/stubs/resource.stub');
     }
 
     /**
@@ -78,8 +76,8 @@ class ResourceMakeCommand extends GeneratorCommand
     protected function resolveStubPath($stub)
     {
         return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
-            ? $customPath
-            : __DIR__.$stub;
+                        ? $customPath
+                        : __DIR__.$stub;
     }
 
     /**
@@ -102,7 +100,6 @@ class ResourceMakeCommand extends GeneratorCommand
     {
         return [
             ['force', 'f', InputOption::VALUE_NONE, 'Create the class even if the resource already exists'],
-            ['json-api', 'j', InputOption::VALUE_NONE, 'Create a JSON:API resource'],
             ['collection', 'c', InputOption::VALUE_NONE, 'Create a resource collection'],
         ];
     }

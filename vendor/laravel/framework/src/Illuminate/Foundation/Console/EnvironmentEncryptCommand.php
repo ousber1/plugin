@@ -2,7 +2,6 @@
 
 namespace Illuminate\Foundation\Console;
 
-use Dotenv\Parser\Lines;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Encryption\Encrypter;
@@ -25,7 +24,6 @@ class EnvironmentEncryptCommand extends Command
                     {--key= : The encryption key}
                     {--cipher= : The encryption cipher}
                     {--env= : The environment to be encrypted}
-                    {--readable : Encrypt each variable individually with readable, plain-text variable names}
                     {--prune : Delete the original environment file}
                     {--force : Overwrite the existing encrypted environment file}';
 
@@ -47,6 +45,7 @@ class EnvironmentEncryptCommand extends Command
      * Create a new command instance.
      *
      * @param  \Illuminate\Filesystem\Filesystem  $files
+     * @return void
      */
     public function __construct(Filesystem $files)
     {
@@ -84,8 +83,8 @@ class EnvironmentEncryptCommand extends Command
         $keyPassed = $key !== null;
 
         $environmentFile = $this->option('env')
-            ? Str::finish($this->laravel->environmentPath(), DIRECTORY_SEPARATOR).'.env.'.$this->option('env')
-            : $this->laravel->environmentFilePath();
+                            ? Str::finish(dirname($this->laravel->environmentFilePath()), DIRECTORY_SEPARATOR).'.env.'.$this->option('env')
+                            : $this->laravel->environmentFilePath();
 
         $encryptedFile = $environmentFile.'.encrypted';
 
@@ -104,13 +103,10 @@ class EnvironmentEncryptCommand extends Command
         try {
             $encrypter = new Encrypter($this->parseKey($key), $cipher);
 
-            $contents = $this->files->get($environmentFile);
-
-            $encrypted = $this->option('readable')
-                ? $this->encryptReadableFormat($contents, $encrypter)
-                : $encrypter->encrypt($contents);
-
-            $this->files->put($encryptedFile, $encrypted);
+            $this->files->put(
+                $encryptedFile,
+                $encrypter->encrypt($this->files->get($environmentFile))
+            );
         } catch (Exception $e) {
             $this->fail($e->getMessage());
         }
@@ -126,33 +122,6 @@ class EnvironmentEncryptCommand extends Command
         $this->components->twoColumnDetail('Encrypted file', $encryptedFile);
 
         $this->newLine();
-    }
-
-    /**
-     * Encrypt the environment file in readable format.
-     *
-     * @param  string  $contents
-     * @param  \Illuminate\Encryption\Encrypter  $encrypter
-     * @return string
-     */
-    protected function encryptReadableFormat(string $contents, Encrypter $encrypter): string
-    {
-        $result = '';
-
-        foreach (Lines::process(preg_split('/\r\n|\r|\n/', $contents)) as $entry) {
-            $pos = strpos($entry, '=');
-
-            if ($pos === false) {
-                continue;
-            }
-
-            $name = substr($entry, 0, $pos);
-            $value = substr($entry, $pos + 1);
-
-            $result .= $name.'='.$encrypter->encryptString($value)."\n";
-        }
-
-        return $result;
     }
 
     /**

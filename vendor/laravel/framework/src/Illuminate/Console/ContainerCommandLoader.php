@@ -19,7 +19,7 @@ class ContainerCommandLoader implements CommandLoaderInterface
     /**
      * A map of command names to classes.
      *
-     * @var array<string, \Illuminate\Console\Command|string>
+     * @var array
      */
     protected $commandMap;
 
@@ -27,7 +27,8 @@ class ContainerCommandLoader implements CommandLoaderInterface
      * Create a new command loader instance.
      *
      * @param  \Psr\Container\ContainerInterface  $container
-     * @param  array<string, \Illuminate\Console\Command|string>  $commandMap
+     * @param  array  $commandMap
+     * @return void
      */
     public function __construct(ContainerInterface $container, array $commandMap)
     {

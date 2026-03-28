@@ -18,9 +18,7 @@ class ScheduleWorkCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'schedule:work
-        {--run-output-file= : The file to direct <info>schedule:run</info> output to}
-        {--whisper : Do not output message indicating that no jobs were ready to run}';
+    protected $signature = 'schedule:work {--run-output-file= : The file to direct <info>schedule:run</info> output to}';
 
     /**
      * The console command description.
@@ -32,7 +30,7 @@ class ScheduleWorkCommand extends Command
     /**
      * Execute the console command.
      *
-     * @return never
+     * @return void
      */
     public function handle()
     {
@@ -45,10 +43,6 @@ class ScheduleWorkCommand extends Command
 
         $command = Application::formatCommandString('schedule:run');
 
-        if ($this->option('whisper')) {
-            $command .= ' --whisper';
-        }
-
         if ($this->option('run-output-file')) {
             $command .= ' >> '.ProcessUtils::escapeArgument($this->option('run-output-file')).' 2>&1';
         }
@@ -58,7 +52,7 @@ class ScheduleWorkCommand extends Command
 
             if (Carbon::now()->second === 0 &&
                 ! Carbon::now()->startOfMinute()->equalTo($lastExecutionStartedAt)) {
-                $executions[] = $execution = Process::fromShellCommandline($command, base_path());
+                $executions[] = $execution = Process::fromShellCommandline($command);
 
                 $execution->start();
 

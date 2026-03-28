@@ -2,11 +2,7 @@
 
 namespace Illuminate\Cache;
 
-use Illuminate\Cache\Events\CacheFlushed;
-use Illuminate\Cache\Events\CacheFlushing;
 use Illuminate\Contracts\Cache\Store;
-
-use function Illuminate\Support\enum_value;
 
 class TaggedCache extends Repository
 {
@@ -26,6 +22,7 @@ class TaggedCache extends Repository
      *
      * @param  \Illuminate\Contracts\Cache\Store  $store
      * @param  \Illuminate\Cache\TagSet  $tags
+     * @return void
      */
     public function __construct(Store $store, TagSet $tags)
     {
@@ -53,25 +50,25 @@ class TaggedCache extends Repository
     /**
      * Increment the value of an item in the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @return int|bool
      */
     public function increment($key, $value = 1)
     {
-        return $this->store->increment($this->itemKey(enum_value($key)), $value);
+        return $this->store->increment($this->itemKey($key), $value);
     }
 
     /**
      * Decrement the value of an item in the cache.
      *
-     * @param  \UnitEnum|string  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @return int|bool
      */
     public function decrement($key, $value = 1)
     {
-        return $this->store->decrement($this->itemKey(enum_value($key)), $value);
+        return $this->store->decrement($this->itemKey($key), $value);
     }
 
     /**
@@ -81,11 +78,7 @@ class TaggedCache extends Repository
      */
     public function flush()
     {
-        $this->event(new CacheFlushing($this->getName()));
-
         $this->tags->reset();
-
-        $this->event(new CacheFlushed($this->getName()));
 
         return true;
     }
@@ -99,7 +92,7 @@ class TaggedCache extends Repository
     }
 
     /**
-     * Get a fully-qualified key for a tagged item.
+     * Get a fully qualified key for a tagged item.
      *
      * @param  string  $key
      * @return string
@@ -112,16 +105,12 @@ class TaggedCache extends Repository
     /**
      * Fire an event for this cache instance.
      *
-     * @param  object  $event
+     * @param  \Illuminate\Cache\Events\CacheEvent  $event
      * @return void
      */
     protected function event($event)
     {
-        if (method_exists($event, 'setTags')) {
-            $event->setTags($this->tags->getNames());
-        }
-
-        parent::event($event);
+        parent::event($event->setTags($this->tags->getNames()));
     }
 
     /**

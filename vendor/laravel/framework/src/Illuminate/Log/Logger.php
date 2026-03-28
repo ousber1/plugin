@@ -41,6 +41,7 @@ class Logger implements LoggerInterface
      *
      * @param  \Psr\Log\LoggerInterface  $logger
      * @param  \Illuminate\Contracts\Events\Dispatcher|null  $dispatcher
+     * @return void
      */
     public function __construct(LoggerInterface $logger, ?Dispatcher $dispatcher = null)
     {
@@ -180,10 +181,6 @@ class Logger implements LoggerInterface
      */
     protected function writeLog($level, $message, $context): void
     {
-        if (method_exists($this->logger, 'isHandling') && ! $this->logger->isHandling($level)) {
-            return;
-        }
-
         $this->logger->{$level}(
             $message = $this->formatMessage($message),
             $context = array_merge($this->context, $context)
@@ -206,18 +203,13 @@ class Logger implements LoggerInterface
     }
 
     /**
-     * Flush the log context on all currently resolved channels.
+     * Flush the existing context array.
      *
-     * @param  string[]|null  $keys
      * @return $this
      */
-    public function withoutContext(?array $keys = null)
+    public function withoutContext()
     {
-        if (is_array($keys)) {
-            $this->context = array_diff_key($this->context, array_flip($keys));
-        } else {
-            $this->context = [];
-        }
+        $this->context = [];
 
         return $this;
     }
@@ -249,12 +241,6 @@ class Logger implements LoggerInterface
      */
     protected function fireLogEvent($level, $message, array $context = [])
     {
-        // Avoid dispatching the event multiple times if our logger instance is the LogManager...
-        if ($this->logger instanceof LogManager &&
-            $this->logger->getEventDispatcher() !== null) {
-            return;
-        }
-
         // If the event dispatcher is set, we will pass along the parameters to the
         // log listeners. These are useful for building profilers or other tools
         // that aggregate all of the log messages for a given "request" cycle.
@@ -269,12 +255,15 @@ class Logger implements LoggerInterface
      */
     protected function formatMessage($message)
     {
-        return match (true) {
-            is_array($message) => var_export($message, true),
-            $message instanceof Jsonable => $message->toJson(),
-            $message instanceof Arrayable => var_export($message->toArray(), true),
-            default => (string) $message,
-        };
+        if (is_array($message)) {
+            return var_export($message, true);
+        } elseif ($message instanceof Jsonable) {
+            return $message->toJson();
+        } elseif ($message instanceof Arrayable) {
+            return var_export($message->toArray(), true);
+        }
+
+        return (string) $message;
     }
 
     /**
@@ -290,7 +279,7 @@ class Logger implements LoggerInterface
     /**
      * Get the event dispatcher instance.
      *
-     * @return \Illuminate\Contracts\Events\Dispatcher|null
+     * @return \Illuminate\Contracts\Events\Dispatcher
      */
     public function getEventDispatcher()
     {
