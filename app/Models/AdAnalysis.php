@@ -10,6 +10,8 @@ class AdAnalysis extends Model
 {
     use HasFactory;
 
+    protected $table = 'ad_analysis';
+
     protected $fillable = [
         'ad_id',
         'rating',

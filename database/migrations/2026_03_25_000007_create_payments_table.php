@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sale_id')->constrained('sales')->onDelete('cascade');
             $table->decimal('amount', 12, 2);
-            $table->enum('method', ['cash', 'card', 'bank_transfer', 'other']);
+            $table->string('method');
             $table->string('reference')->nullable();
             $table->string('notes')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');

@@ -16,10 +16,6 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
 
     /**
      * List all online orders with filters.

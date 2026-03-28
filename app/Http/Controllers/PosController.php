@@ -16,10 +16,6 @@ use Illuminate\Support\Str;
 
 class PosController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
 
     /**
      * POS terminal interface page.

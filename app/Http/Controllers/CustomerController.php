@@ -8,10 +8,6 @@ use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
 
     /**
      * List customers with search and tag filter.

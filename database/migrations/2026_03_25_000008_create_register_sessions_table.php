@@ -15,7 +15,7 @@ return new class extends Migration
             $table->decimal('closing_amount', 12, 2)->nullable();
             $table->decimal('expected_amount', 12, 2)->nullable();
             $table->decimal('difference', 12, 2)->nullable();
-            $table->enum('status', ['open', 'closed'])->default('open');
+            $table->string('status')->default('open');
             $table->timestamp('opened_at');
             $table->timestamp('closed_at')->nullable();
             $table->text('notes')->nullable();

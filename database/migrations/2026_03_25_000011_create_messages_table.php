@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained('conversations')->onDelete('cascade');
-            $table->enum('direction', ['inbound', 'outbound']);
-            $table->enum('type', ['text', 'image', 'document', 'template'])->default('text');
+            $table->string('direction');
+            $table->string('type')->default('text');
             $table->text('content');
             $table->string('media_url')->nullable();
             $table->string('whatsapp_message_id')->nullable();
-            $table->enum('status', ['sent', 'delivered', 'read', 'failed'])->default('sent');
+            $table->string('status')->default('sent');
             $table->timestamps();
         });
     }

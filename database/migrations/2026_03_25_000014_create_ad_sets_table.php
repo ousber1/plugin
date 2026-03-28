@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
             $table->string('name');
             $table->string('external_id')->nullable();
-            $table->enum('status', ['active', 'paused', 'completed'])->default('active');
+            $table->string('status')->default('active');
             $table->decimal('budget', 12, 2)->nullable();
             $table->json('targeting')->nullable();
             $table->timestamps();

@@ -43,16 +43,27 @@ class Ad extends Model
         return $this->metrics()->latest('date')->first();
     }
 
-    public function getTotalMetrics(): array
+    public function getTotalMetrics(): ?array
     {
-        $metrics = $this->metrics();
+        $metrics = $this->metrics;
+        if ($metrics->isEmpty()) return null;
+
+        $impressions = $metrics->sum('impressions');
+        $clicks = $metrics->sum('clicks');
+        $cost = $metrics->sum('cost');
+        $conversions = $metrics->sum('conversions');
+        $revenue = $metrics->sum('revenue');
 
         return [
-            'impressions' => $metrics->sum('impressions'),
-            'clicks' => $metrics->sum('clicks'),
-            'cost' => $metrics->sum('cost'),
-            'conversions' => $metrics->sum('conversions'),
-            'revenue' => $metrics->sum('revenue'),
+            'impressions' => $impressions,
+            'clicks' => $clicks,
+            'cost' => $cost,
+            'conversions' => $conversions,
+            'revenue' => $revenue,
+            'cpc' => $clicks > 0 ? $cost / $clicks : 0,
+            'cpa' => $conversions > 0 ? $cost / $conversions : 0,
+            'ctr' => $impressions > 0 ? ($clicks / $impressions) * 100 : 0,
+            'roi' => $cost > 0 ? (($revenue - $cost) / $cost) * 100 : 0,
         ];
     }
 }

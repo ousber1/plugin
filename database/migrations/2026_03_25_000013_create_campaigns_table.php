@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('campaigns', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('platform', ['meta', 'google', 'tiktok', 'other']);
+            $table->string('platform');
             $table->string('external_id')->nullable();
-            $table->enum('status', ['active', 'paused', 'completed', 'draft'])->default('draft');
+            $table->string('status')->default('draft');
             $table->decimal('budget', 12, 2)->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();

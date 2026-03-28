@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('body')->nullable();
             $table->string('cta')->nullable();
             $table->string('image_url')->nullable();
-            $table->enum('status', ['active', 'paused', 'completed'])->default('active');
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }

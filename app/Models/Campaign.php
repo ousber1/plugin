@@ -40,8 +40,4 @@ class Campaign extends Model
         return $this->hasManyThrough(Ad::class, AdSet::class);
     }
 
-    public function metrics(): HasManyThrough
-    {
-        return $this->hasManyThrough(AdMetric::class, Ad::class);
-    }
 }

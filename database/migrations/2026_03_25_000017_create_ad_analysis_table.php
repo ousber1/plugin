@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('ad_analysis', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ad_id')->constrained('ads')->onDelete('cascade');
-            $table->enum('rating', ['good', 'average', 'bad', 'winner']);
+            $table->string('rating');
             $table->text('recommendations')->nullable();
             $table->text('ai_suggestions')->nullable();
             $table->timestamp('analyzed_at');

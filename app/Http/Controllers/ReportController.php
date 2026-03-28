@@ -32,13 +32,18 @@ class ReportController extends Controller
         }
 
         $dateFormat = match ($groupBy) {
-            'week' => '%Y-%u',
+            'week' => '%Y-%W',
             'month' => '%Y-%m',
             default => '%Y-%m-%d',
         };
 
+        $driver = DB::getDriverName();
+        $dateExpr = $driver === 'sqlite'
+            ? "strftime('{$dateFormat}', created_at)"
+            : "DATE_FORMAT(created_at, '" . str_replace('%W', '%u', $dateFormat) . "')";
+
         $salesByPeriod = (clone $query)->select(
-            DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+            DB::raw("{$dateExpr} as period"),
             DB::raw('COUNT(*) as count'),
             DB::raw('SUM(total) as revenue'),
             DB::raw('SUM(discount) as discounts')
