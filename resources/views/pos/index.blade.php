@@ -158,7 +158,8 @@ function posTerminal() {
 
         async fetchProducts() {
             const res = await fetch(`{{ route('pos.products') }}?search=${this.search}`);
-            this.products = await res.json();
+            const json = await res.json();
+            this.products = json.data || [];
         },
 
         addToCart(product) {
@@ -189,14 +190,14 @@ function posTerminal() {
                         items: this.cart.map(i => ({ product_id: i.id, quantity: i.qty, unit_price: i.selling_price })),
                         discount: this.discount,
                         payment_method: this.paymentMethod,
-                        cash_received: this.cashReceived,
+                        payment_amount: this.paymentMethod === 'cash' ? this.cashReceived : this.total,
                     })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    this.lastInvoice = data.invoice_number;
-                    this.lastTotal = data.total;
-                    this.receiptUrl = data.receipt_url;
+                    this.lastInvoice = data.data.invoice_number;
+                    this.lastTotal = parseFloat(data.data.total);
+                    this.receiptUrl = '{{ url("pos/receipt") }}/' + data.data.id;
                     this.showSuccess = true;
                     this.clearCart();
                     this.fetchProducts();

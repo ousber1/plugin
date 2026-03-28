@@ -57,7 +57,7 @@
                             {{ strtoupper($order->channel) }}
                         </span>
                     </td>
-                    <td class="px-6 py-3 text-center">{{ $order->items_count ?? $order->items->count() }}</td>
+                    <td class="px-6 py-3 text-center">{{ $order->items_count ?? 0 }}</td>
                     <td class="px-6 py-3 text-right font-semibold">${{ number_format($order->total, 2) }}</td>
                     <td class="px-6 py-3 text-center">
                         @php $pc = ['unpaid' => 'red', 'partial' => 'amber', 'paid' => 'emerald'][$order->payment_status] ?? 'gray'; @endphp

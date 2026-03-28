@@ -149,7 +149,8 @@ function orderForm() {
         async searchProducts() {
             if (this.productSearch.length < 2) { this.searchResults = []; return; }
             const res = await fetch(`{{ route('pos.products') }}?search=${this.productSearch}`);
-            this.searchResults = await res.json();
+            const json = await res.json();
+            this.searchResults = json.data || [];
         },
 
         submitForm(e) { e.target.submit(); }

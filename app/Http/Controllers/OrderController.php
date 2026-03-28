@@ -23,6 +23,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Sale::with(['customer:id,name,phone', 'user:id,name'])
+            ->withCount('items')
             ->where('channel', 'online');
 
         // Filter by status
@@ -31,11 +32,11 @@ class OrderController extends Controller
         }
 
         // Filter by date range
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->input('start_date'));
         }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->input('end_date'));
         }
 
         // Search by invoice number or customer name
@@ -209,11 +210,17 @@ class OrderController extends Controller
             ->findOrFail($id);
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'phone', 'email']);
-        $products = Product::where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'selling_price', 'stock_quantity']);
 
-        return view('orders.edit', compact('order', 'customers', 'products'));
+        $orderItems = $order->items->map(function ($item) {
+            return [
+                'id' => $item->product_id,
+                'name' => $item->product->name ?? 'Unknown',
+                'price' => (float) $item->unit_price,
+                'qty' => $item->quantity,
+            ];
+        })->values();
+
+        return view('orders.edit', compact('order', 'customers', 'orderItems'));
     }
 
     /**

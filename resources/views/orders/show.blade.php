@@ -64,17 +64,25 @@
         {{-- Sidebar --}}
         <div class="space-y-6">
             {{-- Status Update --}}
-            <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+            <div x-data="{ updating: false }" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-3">
                 <h3 class="text-sm font-semibold">Update Status</h3>
-                <form method="POST" action="{{ route('orders.status', $order->id) }}">
-                    @csrf @method('PATCH')
-                    <select name="status" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent mb-3">
-                        @foreach(['pending','confirmed','shipped','delivered','cancelled'] as $s)
-                        <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">Update</button>
-                </form>
+                <select id="statusSelect" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent mb-3">
+                    @foreach(['pending','confirmed','shipped','delivered','cancelled'] as $s)
+                    <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
+                    @endforeach
+                </select>
+                <button @click="
+                    updating = true;
+                    fetch('{{ route('orders.status', $order->id) }}', {
+                        method: 'PATCH',
+                        headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                        body: JSON.stringify({status: document.getElementById('statusSelect').value})
+                    }).then(r => r.json()).then(d => {
+                        if (d.success) location.reload();
+                        else alert(d.message || 'Failed');
+                        updating = false;
+                    }).catch(() => { alert('Error'); updating = false; });
+                " :disabled="updating" class="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50">Update</button>
             </div>
 
             {{-- Notes --}}
