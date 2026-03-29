@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\RegisterSession;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Setting;
 use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -195,7 +196,20 @@ class PosController extends Controller
         $sale = Sale::with(['items.product', 'customer', 'payments', 'user'])
             ->findOrFail($id);
 
-        return view('pos.receipt', compact('sale'));
+        $settings = [
+            'store_name' => Setting::get('store_name', 'OmniChannel Store'),
+            'store_phone' => Setting::get('store_phone', ''),
+            'store_email' => Setting::get('store_email', ''),
+            'store_address' => Setting::get('store_address', ''),
+            'currency' => Setting::get('currency', '$'),
+            'receipt_logo' => Setting::get('receipt_logo', ''),
+            'receipt_header' => Setting::get('receipt_header', ''),
+            'receipt_footer' => Setting::get('receipt_footer', 'Thank you for your purchase!'),
+            'receipt_width' => Setting::get('receipt_width', '80mm'),
+            'receipt_show_logo' => Setting::get('receipt_show_logo', '1'),
+        ];
+
+        return view('pos.receipt', compact('sale', 'settings'));
     }
 
     /**

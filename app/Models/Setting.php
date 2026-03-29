@@ -24,9 +24,20 @@ class Setting extends Model
 
     public static function set(string $key, mixed $value, ?string $group = null): static
     {
-        return static::updateOrCreate(
-            ['key' => $key],
-            ['value' => $value, 'group' => $group],
-        );
+        $existing = static::where('key', $key)->first();
+
+        if ($existing) {
+            $existing->update([
+                'value' => $value,
+                'group' => $group ?? $existing->group,
+            ]);
+            return $existing;
+        }
+
+        return static::create([
+            'key' => $key,
+            'value' => $value,
+            'group' => $group ?? 'general',
+        ]);
     }
 }

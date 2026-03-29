@@ -18,13 +18,37 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'settings' => 'required|array',
             'settings.*' => 'nullable|string',
+            'receipt_logo' => 'nullable|image|max:2048',
         ]);
 
-        foreach ($validated['settings'] as $key => $value) {
-            Setting::set($key, $value);
+        // Map keys to their groups
+        $groupMap = [
+            'store_name' => 'general', 'currency' => 'general', 'store_phone' => 'general',
+            'store_email' => 'general', 'store_address' => 'general', 'tax_rate' => 'general',
+            'low_stock_threshold' => 'general',
+            'receipt_header' => 'receipt', 'receipt_footer' => 'receipt', 'receipt_width' => 'receipt',
+            'receipt_show_logo' => 'receipt', 'receipt_logo' => 'receipt',
+            'whatsapp_token' => 'whatsapp', 'whatsapp_phone_id' => 'whatsapp', 'whatsapp_verify_token' => 'whatsapp',
+            'openai_api_key' => 'api', 'meta_ads_token' => 'api', 'meta_ads_account_id' => 'api',
+        ];
+
+        foreach ($request->input('settings', []) as $key => $value) {
+            $group = $groupMap[$key] ?? 'general';
+            Setting::set($key, $value ?? '', $group);
+        }
+
+        // Handle receipt_show_logo checkbox (unchecked = not sent)
+        if (!$request->has('settings.receipt_show_logo')) {
+            Setting::set('receipt_show_logo', '0', 'receipt');
+        }
+
+        // Handle logo upload
+        if ($request->hasFile('receipt_logo')) {
+            $path = $request->file('receipt_logo')->store('receipts', 'public');
+            Setting::set('receipt_logo', $path, 'receipt');
         }
 
         return redirect()->route('settings.index')->with('success', 'Settings updated successfully.');
