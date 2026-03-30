@@ -92,105 +92,114 @@
                       :class="sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0'">OmniChannel</span>
             </div>
 
+            @php $L = \App\Helpers\Lang::class; @endphp
+
             {{-- Navigation --}}
             <nav class="flex-1 overflow-y-auto py-3 px-3" style="display:flex;flex-direction:column;gap:2px;">
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>Main</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.main') }}</span>
 
                 <a href="{{ route('dashboard') }}"
-                   class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
+                   class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fas fa-chart-pie w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Dashboard</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.dashboard') }}</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>Sales</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.sales') }}</span>
 
                 <a href="{{ route('pos.index') }}"
-                   class="sidebar-link {{ request()->routeIs('pos.*') ? 'active' : '' }}" title="POS Terminal">
+                   class="sidebar-link {{ request()->routeIs('pos.*') ? 'active' : '' }}">
                     <i class="fas fa-cash-register w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">POS Terminal</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.pos') }}</span>
                 </a>
 
                 <a href="{{ route('orders.index') }}"
-                   class="sidebar-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" title="Orders">
+                   class="sidebar-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
                     <i class="fas fa-shopping-bag w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Orders</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.orders') }}</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>Inventory</span>
+                <a href="{{ route('invoices.index') }}"
+                   class="sidebar-link {{ request()->routeIs('invoices.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-invoice w-5 text-center text-base shrink-0"></i>
+                    <span class="overflow-hidden transition-all duration-300"
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('invoice.facture') }}</span>
+                </a>
+
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.inventory') }}</span>
 
                 <a href="{{ route('products.index') }}"
-                   class="sidebar-link {{ request()->routeIs('products.*') ? 'active' : '' }}" title="Products">
+                   class="sidebar-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
                     <i class="fas fa-box-open w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Products</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.products') }}</span>
                 </a>
 
                 <a href="{{ route('products.index', ['stock' => 'low']) }}"
-                   class="sidebar-link {{ request()->is('products*') && request('stock') === 'low' ? 'active' : '' }}" title="Low Stock">
+                   class="sidebar-link {{ request()->is('products*') && request('stock') === 'low' ? 'active' : '' }}">
                     <i class="fas fa-exclamation-triangle w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Low Stock Alerts</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.low_stock') }}</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>CRM</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.crm') }}</span>
 
                 <a href="{{ route('customers.index') }}"
-                   class="sidebar-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" title="Customers">
+                   class="sidebar-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                     <i class="fas fa-users w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Customers</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.customers') }}</span>
                 </a>
 
                 <a href="{{ route('whatsapp.index') }}"
-                   class="sidebar-link {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}" title="WhatsApp">
+                   class="sidebar-link {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
                     <i class="fab fa-whatsapp w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
                           :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">WhatsApp CRM</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>Marketing</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.marketing') }}</span>
 
                 <a href="{{ route('ads.index') }}"
-                   class="sidebar-link {{ request()->routeIs('ads.*') ? 'active' : '' }}" title="Ads">
+                   class="sidebar-link {{ request()->routeIs('ads.*') ? 'active' : '' }}">
                     <i class="fas fa-bullhorn w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Ads Intelligence</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.ads') }}</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>Analytics</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.analytics') }}</span>
 
                 <a href="{{ route('reports.index') }}"
                    class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" title="Reports">
                     <i class="fas fa-chart-bar w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Reports</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.reports') }}</span>
                 </a>
 
                 <a href="{{ route('reports.sales') }}"
-                   class="sidebar-link {{ request()->routeIs('reports.sales') ? 'active' : '' }}" title="Sales Report">
+                   class="sidebar-link {{ request()->routeIs('reports.sales') ? 'active' : '' }}">
                     <i class="fas fa-file-invoice-dollar w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Sales Report</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.sales_report') }}</span>
                 </a>
 
                 <a href="{{ route('reports.profit') }}"
-                   class="sidebar-link {{ request()->routeIs('reports.profit') ? 'active' : '' }}" title="Profit Report">
+                   class="sidebar-link {{ request()->routeIs('reports.profit') ? 'active' : '' }}">
                     <i class="fas fa-coins w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Profit & Loss</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.profit_loss') }}</span>
                 </a>
 
-                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>System</span>
+                <span class="sidebar-section-title" x-show="sidebarOpen" x-transition>{{ $L::t('section.system') }}</span>
 
                 <a href="{{ route('notifications.index') }}"
-                   class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" title="Notifications">
+                   class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
                     <i class="fas fa-bell w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Notifications</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.notifications') }}</span>
                     <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak
                           class="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                           :class="sidebarOpen ? '' : 'hidden'"></span>
@@ -200,14 +209,14 @@
                    class="sidebar-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" title="Settings">
                     <i class="fas fa-cog w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Settings</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.settings') }}</span>
                 </a>
 
                 <a href="{{ route('profile') }}"
-                   class="sidebar-link {{ request()->routeIs('profile') ? 'active' : '' }}" title="Profile">
+                   class="sidebar-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                     <i class="fas fa-user-circle w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">My Profile</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.profile') }}</span>
                 </a>
 
                 @if(auth()->user()->role === 'admin')
@@ -215,7 +224,7 @@
                    class="sidebar-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" title="User Management">
                     <i class="fas fa-user-shield w-5 text-center text-base shrink-0"></i>
                     <span class="overflow-hidden transition-all duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">User Management</span>
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.users') }}</span>
                 </a>
                 @endif
             </nav>
@@ -313,6 +322,12 @@
                                 <p class="text-sm text-slate-400 text-center py-4">No new notifications</p>
                             </div>
                         </div>
+                    </div>
+
+                    {{-- Language Switcher --}}
+                    <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700/60 rounded-lg p-0.5">
+                        <a href="{{ route('lang.switch', 'fr') }}" class="px-2 py-1.5 rounded-md text-xs font-bold transition {{ session('locale', 'fr') === 'fr' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white' }}">FR</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="px-2 py-1.5 rounded-md text-xs font-bold transition {{ session('locale', 'fr') === 'en' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white' }}">EN</a>
                     </div>
 
                     {{-- Dark Mode Toggle --}}

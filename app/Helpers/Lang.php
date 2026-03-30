@@ -1,0 +1,453 @@
+<?php
+
+namespace App\Helpers;
+
+class Lang
+{
+    /**
+     * French translations (default).
+     */
+    protected static array $fr = [
+        // Navigation
+        'nav.dashboard'     => 'Tableau de bord',
+        'nav.pos'           => 'Point de vente',
+        'nav.orders'        => 'Commandes',
+        'nav.products'      => 'Produits',
+        'nav.customers'     => 'Clients',
+        'nav.whatsapp'      => 'WhatsApp',
+        'nav.ads'           => 'Publicités',
+        'nav.reports'       => 'Rapports',
+        'nav.settings'      => 'Paramètres',
+        'nav.notifications' => 'Notifications',
+        'nav.profile'       => 'Profil',
+        'nav.users'         => 'Utilisateurs',
+        'nav.logout'        => 'Déconnexion',
+        'nav.low_stock'     => 'Stock faible',
+        'nav.sales_report'  => 'Rapport des ventes',
+        'nav.profit_loss'   => 'Profits et pertes',
+
+        // Sections
+        'section.main'      => 'Principal',
+        'section.sales'     => 'Ventes',
+        'section.inventory' => 'Inventaire',
+        'section.crm'       => 'Relation client',
+        'section.marketing' => 'Marketing',
+        'section.analytics' => 'Analytique',
+        'section.system'    => 'Système',
+
+        // Dashboard
+        'dashboard.title'           => 'Tableau de bord',
+        'dashboard.total_revenue'   => 'Chiffre d\'affaires total',
+        'dashboard.today_revenue'   => 'Chiffre d\'affaires du jour',
+        'dashboard.monthly_revenue' => 'Chiffre d\'affaires mensuel',
+        'dashboard.total_orders'    => 'Total des commandes',
+        'dashboard.total_customers' => 'Total des clients',
+        'dashboard.recent_sales'    => 'Ventes récentes',
+        'dashboard.low_stock'       => 'Stock faible',
+        'dashboard.top_products'    => 'Produits les plus vendus',
+
+        // POS
+        'pos.title'         => 'Point de vente',
+        'pos.search'        => 'Rechercher un produit...',
+        'pos.sessions'      => 'Sessions de caisse',
+        'pos.cart'          => 'Panier',
+        'pos.subtotal'      => 'Sous-total',
+        'pos.discount'      => 'Remise',
+        'pos.total'         => 'Total',
+        'pos.cash'          => 'Espèces',
+        'pos.card'          => 'Carte bancaire',
+        'pos.bank'          => 'Virement bancaire',
+        'pos.complete_sale' => 'Finaliser la vente',
+        'pos.clear'         => 'Vider',
+        'pos.hold'          => 'Mettre en attente',
+        'pos.customer'      => 'Client',
+        'pos.walk_in'       => 'Client de passage',
+        'pos.sale_complete' => 'Vente finalisée',
+        'pos.new_sale'      => 'Nouvelle vente',
+        'pos.receipt'       => 'Reçu',
+        'pos.change'        => 'Monnaie à rendre',
+        'pos.held_orders'   => 'Commandes en attente',
+        'pos.restore'       => 'Restaurer',
+        'pos.items'         => 'Articles',
+
+        // Orders
+        'orders.title'         => 'Commandes',
+        'orders.new_order'     => 'Nouvelle commande',
+        'orders.create'        => 'Créer une commande',
+        'orders.edit'          => 'Modifier la commande',
+        'orders.show'          => 'Détails de la commande',
+        'orders.status'        => 'Statut',
+        'orders.filter'        => 'Filtrer',
+        'orders.all_statuses'  => 'Tous les statuts',
+        'orders.pending'       => 'En attente',
+        'orders.confirmed'     => 'Confirmée',
+        'orders.shipped'       => 'Expédiée',
+        'orders.delivered'     => 'Livrée',
+        'orders.cancelled'     => 'Annulée',
+        'orders.invoice'       => 'Facture',
+        'orders.customer'      => 'Client',
+        'orders.channel'       => 'Canal',
+        'orders.items'         => 'Articles',
+        'orders.total'         => 'Total',
+        'orders.payment'       => 'Paiement',
+        'orders.date'          => 'Date',
+        'orders.actions'       => 'Actions',
+        'orders.notes'         => 'Notes',
+        'orders.source'        => 'Source',
+        'orders.update_status' => 'Mettre à jour le statut',
+        'orders.save'          => 'Enregistrer',
+
+        // Products
+        'products.title'               => 'Produits',
+        'products.add'                 => 'Ajouter un produit',
+        'products.edit'                => 'Modifier le produit',
+        'products.name'                => 'Nom du produit',
+        'products.sku'                 => 'Référence (SKU)',
+        'products.barcode'             => 'Code-barres',
+        'products.category'            => 'Catégorie',
+        'products.cost_price'          => 'Prix d\'achat',
+        'products.selling_price'       => 'Prix de vente',
+        'products.stock'               => 'Stock',
+        'products.low_stock_threshold' => 'Seuil de stock faible',
+        'products.image'               => 'Image',
+        'products.description'         => 'Description',
+        'products.active'              => 'Actif',
+        'products.save'                => 'Enregistrer',
+        'products.in_stock'            => 'En stock',
+        'products.out_of_stock'        => 'Rupture de stock',
+
+        // Customers
+        'customers.title'           => 'Clients',
+        'customers.add'             => 'Ajouter un client',
+        'customers.name'            => 'Nom complet',
+        'customers.email'           => 'Adresse e-mail',
+        'customers.phone'           => 'Téléphone',
+        'customers.city'            => 'Ville',
+        'customers.total_purchases' => 'Total des achats',
+        'customers.total_spent'     => 'Montant total dépensé',
+
+        // Invoice / Facture
+        'invoice.facture'        => 'Facture',
+        'invoice.invoice'        => 'Facture',
+        'invoice.proforma'       => 'Facture proforma',
+        'invoice.bon_livraison'  => 'Bon de livraison',
+        'invoice.devis'          => 'Devis',
+        'invoice.number'         => 'N° de facture',
+        'invoice.date'           => 'Date de facturation',
+        'invoice.due_date'       => 'Date d\'échéance',
+        'invoice.client'         => 'Client',
+        'invoice.description'    => 'Désignation',
+        'invoice.quantity'       => 'Quantité',
+        'invoice.unit_price'     => 'Prix unitaire',
+        'invoice.total_ht'       => 'Total HT',
+        'invoice.tva'            => 'TVA',
+        'invoice.total_ttc'      => 'Total TTC',
+        'invoice.subtotal'       => 'Sous-total',
+        'invoice.discount'       => 'Remise',
+        'invoice.payment_method' => 'Mode de paiement',
+        'invoice.payment_status' => 'Statut du paiement',
+        'invoice.paid'           => 'Payée',
+        'invoice.unpaid'         => 'Impayée',
+        'invoice.partial'        => 'Partiellement payée',
+        'invoice.ice'            => 'ICE',
+        'invoice.if_number'      => 'IF',
+        'invoice.rc'             => 'RC',
+        'invoice.cnss'           => 'CNSS',
+        'invoice.patente'        => 'Patente',
+        'invoice.bank_name'      => 'Banque',
+        'invoice.bank_rib'       => 'RIB',
+        'invoice.conditions'     => 'Conditions de paiement',
+        'invoice.signature'      => 'Signature et cachet',
+        'invoice.thank_you'      => 'Merci pour votre confiance',
+        'invoice.print'          => 'Imprimer',
+        'invoice.download'       => 'Télécharger',
+
+        // Settings
+        'settings.title'              => 'Paramètres',
+        'settings.store_info'         => 'Informations du magasin',
+        'settings.store_name'         => 'Nom du magasin',
+        'settings.currency'           => 'Devise',
+        'settings.phone'              => 'Téléphone',
+        'settings.email'              => 'Adresse e-mail',
+        'settings.address'            => 'Adresse',
+        'settings.tax_rate'           => 'Taux de TVA',
+        'settings.low_stock'          => 'Seuil de stock faible',
+        'settings.save'               => 'Enregistrer',
+        'settings.receipt'            => 'Reçu de caisse',
+        'settings.receipt_logo'       => 'Logo du reçu',
+        'settings.receipt_header'     => 'En-tête du reçu',
+        'settings.receipt_footer'     => 'Pied de page du reçu',
+        'settings.receipt_width'      => 'Largeur du reçu',
+        'settings.show_logo'          => 'Afficher le logo',
+        'settings.language'           => 'Langue',
+        'settings.invoice_settings'   => 'Paramètres de facturation',
+        'settings.ice'                => 'ICE',
+        'settings.if_number'          => 'Identifiant fiscal (IF)',
+        'settings.rc'                 => 'Registre de commerce (RC)',
+        'settings.cnss'               => 'CNSS',
+        'settings.patente'            => 'Patente',
+        'settings.bank_name'          => 'Nom de la banque',
+        'settings.bank_rib'           => 'RIB bancaire',
+        'settings.invoice_conditions' => 'Conditions de facturation',
+        'settings.invoice_footer'     => 'Pied de page de la facture',
+
+        // Common
+        'common.search'   => 'Rechercher',
+        'common.filter'   => 'Filtrer',
+        'common.save'     => 'Enregistrer',
+        'common.cancel'   => 'Annuler',
+        'common.delete'   => 'Supprimer',
+        'common.edit'     => 'Modifier',
+        'common.view'     => 'Voir',
+        'common.back'     => 'Retour',
+        'common.yes'      => 'Oui',
+        'common.no'       => 'Non',
+        'common.actions'  => 'Actions',
+        'common.close'    => 'Fermer',
+        'common.print'    => 'Imprimer',
+        'common.download' => 'Télécharger',
+        'common.export'   => 'Exporter',
+        'common.all'      => 'Tout',
+    ];
+
+    /**
+     * English translations.
+     */
+    protected static array $en = [
+        // Navigation
+        'nav.dashboard'     => 'Dashboard',
+        'nav.pos'           => 'Point of Sale',
+        'nav.orders'        => 'Orders',
+        'nav.products'      => 'Products',
+        'nav.customers'     => 'Customers',
+        'nav.whatsapp'      => 'WhatsApp',
+        'nav.ads'           => 'Ads',
+        'nav.reports'       => 'Reports',
+        'nav.settings'      => 'Settings',
+        'nav.notifications' => 'Notifications',
+        'nav.profile'       => 'Profile',
+        'nav.users'         => 'Users',
+        'nav.logout'        => 'Logout',
+        'nav.low_stock'     => 'Low Stock',
+        'nav.sales_report'  => 'Sales Report',
+        'nav.profit_loss'   => 'Profit & Loss',
+
+        // Sections
+        'section.main'      => 'Main',
+        'section.sales'     => 'Sales',
+        'section.inventory' => 'Inventory',
+        'section.crm'       => 'Customer Relations',
+        'section.marketing' => 'Marketing',
+        'section.analytics' => 'Analytics',
+        'section.system'    => 'System',
+
+        // Dashboard
+        'dashboard.title'           => 'Dashboard',
+        'dashboard.total_revenue'   => 'Total Revenue',
+        'dashboard.today_revenue'   => 'Today\'s Revenue',
+        'dashboard.monthly_revenue' => 'Monthly Revenue',
+        'dashboard.total_orders'    => 'Total Orders',
+        'dashboard.total_customers' => 'Total Customers',
+        'dashboard.recent_sales'    => 'Recent Sales',
+        'dashboard.low_stock'       => 'Low Stock',
+        'dashboard.top_products'    => 'Top Products',
+
+        // POS
+        'pos.title'         => 'Point of Sale',
+        'pos.search'        => 'Search for a product...',
+        'pos.sessions'      => 'Register Sessions',
+        'pos.cart'          => 'Cart',
+        'pos.subtotal'      => 'Subtotal',
+        'pos.discount'      => 'Discount',
+        'pos.total'         => 'Total',
+        'pos.cash'          => 'Cash',
+        'pos.card'          => 'Credit Card',
+        'pos.bank'          => 'Bank Transfer',
+        'pos.complete_sale' => 'Complete Sale',
+        'pos.clear'         => 'Clear',
+        'pos.hold'          => 'Hold',
+        'pos.customer'      => 'Customer',
+        'pos.walk_in'       => 'Walk-in Customer',
+        'pos.sale_complete' => 'Sale Complete',
+        'pos.new_sale'      => 'New Sale',
+        'pos.receipt'       => 'Receipt',
+        'pos.change'        => 'Change Due',
+        'pos.held_orders'   => 'Held Orders',
+        'pos.restore'       => 'Restore',
+        'pos.items'         => 'Items',
+
+        // Orders
+        'orders.title'         => 'Orders',
+        'orders.new_order'     => 'New Order',
+        'orders.create'        => 'Create Order',
+        'orders.edit'          => 'Edit Order',
+        'orders.show'          => 'Order Details',
+        'orders.status'        => 'Status',
+        'orders.filter'        => 'Filter',
+        'orders.all_statuses'  => 'All Statuses',
+        'orders.pending'       => 'Pending',
+        'orders.confirmed'     => 'Confirmed',
+        'orders.shipped'       => 'Shipped',
+        'orders.delivered'     => 'Delivered',
+        'orders.cancelled'     => 'Cancelled',
+        'orders.invoice'       => 'Invoice',
+        'orders.customer'      => 'Customer',
+        'orders.channel'       => 'Channel',
+        'orders.items'         => 'Items',
+        'orders.total'         => 'Total',
+        'orders.payment'       => 'Payment',
+        'orders.date'          => 'Date',
+        'orders.actions'       => 'Actions',
+        'orders.notes'         => 'Notes',
+        'orders.source'        => 'Source',
+        'orders.update_status' => 'Update Status',
+        'orders.save'          => 'Save',
+
+        // Products
+        'products.title'               => 'Products',
+        'products.add'                 => 'Add Product',
+        'products.edit'                => 'Edit Product',
+        'products.name'                => 'Product Name',
+        'products.sku'                 => 'SKU',
+        'products.barcode'             => 'Barcode',
+        'products.category'            => 'Category',
+        'products.cost_price'          => 'Cost Price',
+        'products.selling_price'       => 'Selling Price',
+        'products.stock'               => 'Stock',
+        'products.low_stock_threshold' => 'Low Stock Threshold',
+        'products.image'               => 'Image',
+        'products.description'         => 'Description',
+        'products.active'              => 'Active',
+        'products.save'                => 'Save',
+        'products.in_stock'            => 'In Stock',
+        'products.out_of_stock'        => 'Out of Stock',
+
+        // Customers
+        'customers.title'           => 'Customers',
+        'customers.add'             => 'Add Customer',
+        'customers.name'            => 'Full Name',
+        'customers.email'           => 'Email Address',
+        'customers.phone'           => 'Phone',
+        'customers.city'            => 'City',
+        'customers.total_purchases' => 'Total Purchases',
+        'customers.total_spent'     => 'Total Spent',
+
+        // Invoice / Facture
+        'invoice.facture'        => 'Invoice',
+        'invoice.invoice'        => 'Invoice',
+        'invoice.proforma'       => 'Proforma Invoice',
+        'invoice.bon_livraison'  => 'Delivery Note',
+        'invoice.devis'          => 'Quote',
+        'invoice.number'         => 'Invoice No.',
+        'invoice.date'           => 'Invoice Date',
+        'invoice.due_date'       => 'Due Date',
+        'invoice.client'         => 'Client',
+        'invoice.description'    => 'Description',
+        'invoice.quantity'       => 'Quantity',
+        'invoice.unit_price'     => 'Unit Price',
+        'invoice.total_ht'       => 'Total (excl. tax)',
+        'invoice.tva'            => 'VAT',
+        'invoice.total_ttc'      => 'Total (incl. tax)',
+        'invoice.subtotal'       => 'Subtotal',
+        'invoice.discount'       => 'Discount',
+        'invoice.payment_method' => 'Payment Method',
+        'invoice.payment_status' => 'Payment Status',
+        'invoice.paid'           => 'Paid',
+        'invoice.unpaid'         => 'Unpaid',
+        'invoice.partial'        => 'Partially Paid',
+        'invoice.ice'            => 'ICE',
+        'invoice.if_number'      => 'Tax ID (IF)',
+        'invoice.rc'             => 'Trade Register (RC)',
+        'invoice.cnss'           => 'CNSS',
+        'invoice.patente'        => 'Business Tax (Patente)',
+        'invoice.bank_name'      => 'Bank Name',
+        'invoice.bank_rib'       => 'Bank Account (RIB)',
+        'invoice.conditions'     => 'Payment Terms',
+        'invoice.signature'      => 'Signature & Stamp',
+        'invoice.thank_you'      => 'Thank you for your business',
+        'invoice.print'          => 'Print',
+        'invoice.download'       => 'Download',
+
+        // Settings
+        'settings.title'              => 'Settings',
+        'settings.store_info'         => 'Store Information',
+        'settings.store_name'         => 'Store Name',
+        'settings.currency'           => 'Currency',
+        'settings.phone'              => 'Phone',
+        'settings.email'              => 'Email Address',
+        'settings.address'            => 'Address',
+        'settings.tax_rate'           => 'Tax Rate (VAT)',
+        'settings.low_stock'          => 'Low Stock Threshold',
+        'settings.save'               => 'Save',
+        'settings.receipt'            => 'Receipt',
+        'settings.receipt_logo'       => 'Receipt Logo',
+        'settings.receipt_header'     => 'Receipt Header',
+        'settings.receipt_footer'     => 'Receipt Footer',
+        'settings.receipt_width'      => 'Receipt Width',
+        'settings.show_logo'          => 'Show Logo',
+        'settings.language'           => 'Language',
+        'settings.invoice_settings'   => 'Invoice Settings',
+        'settings.ice'                => 'ICE',
+        'settings.if_number'          => 'Tax ID (IF)',
+        'settings.rc'                 => 'Trade Register (RC)',
+        'settings.cnss'               => 'CNSS',
+        'settings.patente'            => 'Business Tax (Patente)',
+        'settings.bank_name'          => 'Bank Name',
+        'settings.bank_rib'           => 'Bank Account (RIB)',
+        'settings.invoice_conditions' => 'Invoice Terms',
+        'settings.invoice_footer'     => 'Invoice Footer',
+
+        // Common
+        'common.search'   => 'Search',
+        'common.filter'   => 'Filter',
+        'common.save'     => 'Save',
+        'common.cancel'   => 'Cancel',
+        'common.delete'   => 'Delete',
+        'common.edit'     => 'Edit',
+        'common.view'     => 'View',
+        'common.back'     => 'Back',
+        'common.yes'      => 'Yes',
+        'common.no'       => 'No',
+        'common.actions'  => 'Actions',
+        'common.close'    => 'Close',
+        'common.print'    => 'Print',
+        'common.download' => 'Download',
+        'common.export'   => 'Export',
+        'common.all'      => 'All',
+    ];
+
+    /**
+     * Get the current locale from session, defaulting to French.
+     */
+    public static function locale(): string
+    {
+        return session('locale', 'fr');
+    }
+
+    /**
+     * Both supported languages (EN and FR) are left-to-right.
+     */
+    public static function isRtl(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Translate the given key for the current locale.
+     *
+     * @param  string       $key     Dot-notation translation key (e.g. 'nav.dashboard')
+     * @param  string|null  $default Fallback value if key is not found
+     * @return string
+     */
+    public static function t(string $key, ?string $default = null): string
+    {
+        $locale = static::locale();
+
+        $translations = match ($locale) {
+            'en'    => static::$en,
+            default => static::$fr,
+        };
+
+        return $translations[$key] ?? $default ?? $key;
+    }
+}

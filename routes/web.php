@@ -11,12 +11,21 @@ use App\Http\Controllers\AdsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AuthController;
 
 // Auth routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Language switcher
+Route::get('/lang/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'fr'])) {
+        session(['locale' => $locale]);
+    }
+    return back();
+})->name('lang.switch');
 
 // All authenticated routes
 Route::middleware(['auth'])->group(function () {
@@ -77,6 +86,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/report', [AdsController::class, 'report'])->name('report');
         Route::post('/sync-meta', [AdsController::class, 'syncMeta'])->name('sync-meta');
         Route::post('/sync-google', [AdsController::class, 'syncGoogle'])->name('sync-google');
+    });
+
+    // Invoices / Factures
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/', [InvoiceController::class, 'index'])->name('index');
+        Route::get('/create', [InvoiceController::class, 'create'])->name('create');
+        Route::get('/{saleId}/generate', [InvoiceController::class, 'generate'])->name('generate');
+        Route::get('/{saleId}/pdf', [InvoiceController::class, 'downloadPdf'])->name('pdf');
     });
 
     // Reports

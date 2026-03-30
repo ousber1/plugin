@@ -100,6 +100,49 @@
             </div>
         </div>
 
+        {{-- Moroccan Fiscal / Invoice Settings --}}
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <h3 class="font-semibold text-sm border-b border-slate-200 dark:border-slate-700 pb-3"><i class="fas fa-file-invoice mr-2 text-primary-500"></i>Invoice / Facture Settings (Morocco)</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ICE</label>
+                    <input type="text" name="settings[ice]" value="{{ $getSetting('invoice', 'ice', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="Identifiant Commun de l'Entreprise">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">IF (Identifiant Fiscal)</label>
+                    <input type="text" name="settings[if_number]" value="{{ $getSetting('invoice', 'if_number', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">RC (Registre de Commerce)</label>
+                    <input type="text" name="settings[rc]" value="{{ $getSetting('invoice', 'rc', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">CNSS</label>
+                    <input type="text" name="settings[cnss]" value="{{ $getSetting('invoice', 'cnss', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Patente</label>
+                    <input type="text" name="settings[patente]" value="{{ $getSetting('invoice', 'patente', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Bank Name / Banque</label>
+                    <input type="text" name="settings[bank_name]" value="{{ $getSetting('invoice', 'bank_name', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="ex: Attijariwafa Bank">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">RIB (Bank Account)</label>
+                    <input type="text" name="settings[bank_rib]" value="{{ $getSetting('invoice', 'bank_rib', '') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="ex: 007 780 0001234567890123 45">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">Invoice Conditions / Conditions de facturation</label>
+                    <textarea name="settings[invoice_conditions]" rows="2" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="ex: Paiement à 30 jours">{{ $getSetting('invoice', 'invoice_conditions', '') }}</textarea>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">Invoice Footer / Pied de page facture</label>
+                    <textarea name="settings[invoice_footer]" rows="2" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="ex: Merci pour votre confiance">{{ $getSetting('invoice', 'invoice_footer', '') }}</textarea>
+                </div>
+            </div>
+        </div>
+
         {{-- WhatsApp --}}
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
             <h3 class="font-semibold text-sm border-b border-slate-200 dark:border-slate-700 pb-3"><i class="fab fa-whatsapp mr-2 text-emerald-500"></i>WhatsApp Cloud API</h3>

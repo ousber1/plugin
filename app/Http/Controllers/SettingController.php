@@ -31,6 +31,9 @@ class SettingController extends Controller
             'low_stock_threshold' => 'general',
             'receipt_header' => 'receipt', 'receipt_footer' => 'receipt', 'receipt_width' => 'receipt',
             'receipt_show_logo' => 'receipt', 'receipt_logo' => 'receipt',
+            'ice' => 'invoice', 'if_number' => 'invoice', 'rc' => 'invoice', 'cnss' => 'invoice',
+            'patente' => 'invoice', 'bank_name' => 'invoice', 'bank_rib' => 'invoice',
+            'invoice_conditions' => 'invoice', 'invoice_footer' => 'invoice',
             'whatsapp_token' => 'whatsapp', 'whatsapp_phone_id' => 'whatsapp', 'whatsapp_verify_token' => 'whatsapp',
             'openai_api_key' => 'api', 'meta_ads_token' => 'api', 'meta_ads_account_id' => 'api',
         ];
