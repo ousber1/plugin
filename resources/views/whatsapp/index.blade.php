@@ -87,26 +87,54 @@
     </div>
 
     {{-- Broadcast Panel --}}
-    <div class="w-72 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shrink-0 hidden xl:block">
+    <div class="w-72 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shrink-0 hidden xl:block" x-data="broadcastPanel()">
         <h3 class="text-sm font-semibold mb-3"><i class="fas fa-broadcast-tower text-primary-500 mr-1"></i> Quick Broadcast</h3>
-        <form method="POST" action="{{ route('whatsapp.broadcast') }}" class="space-y-3">
-            @csrf
-            <textarea name="message" rows="4" placeholder="Broadcast message..." class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent"></textarea>
-            <select name="contacts[]" multiple class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent h-24">
+        <div class="space-y-3">
+            <textarea x-model="broadcastMsg" rows="4" placeholder="Broadcast message..." class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent"></textarea>
+            <select x-model="selectedContacts" multiple class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent h-24">
                 @foreach($contacts ?? [] as $contact)
                 <option value="{{ $contact->id }}">{{ $contact->name ?? $contact->phone }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
-                <i class="fas fa-paper-plane mr-1"></i> Send Broadcast
+            <div x-show="broadcastResult" x-text="broadcastResult" class="text-xs p-2 rounded-lg bg-emerald-50 text-emerald-700" x-cloak></div>
+            <button @click="sendBroadcast()" :disabled="broadcasting" class="w-full py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50">
+                <i class="fas fa-paper-plane mr-1"></i> <span x-text="broadcasting ? 'Sending...' : 'Send Broadcast'"></span>
             </button>
-        </form>
+        </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
+function broadcastPanel() {
+    return {
+        broadcastMsg: '',
+        selectedContacts: [],
+        broadcasting: false,
+        broadcastResult: '',
+        async sendBroadcast() {
+            if (!this.broadcastMsg.trim() || this.selectedContacts.length === 0) {
+                this.broadcastResult = 'Please select contacts and write a message.';
+                return;
+            }
+            this.broadcasting = true;
+            this.broadcastResult = '';
+            try {
+                const res = await fetch('{{ route("whatsapp.broadcast") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                    body: JSON.stringify({ contact_ids: this.selectedContacts, content: this.broadcastMsg, type: 'text' })
+                });
+                const data = await res.json();
+                this.broadcastResult = `Sent: ${data.sent || 0}, Failed: ${data.failed || 0}`;
+                if (data.sent > 0) this.broadcastMsg = '';
+            } catch (e) { this.broadcastResult = 'Error sending broadcast'; }
+            this.broadcasting = false;
+        }
+    };
+}
+
 function whatsappChat() {
     return {
         conversations: [],
@@ -114,21 +142,50 @@ function whatsappChat() {
         activeConvo: null,
         newMessage: '',
         searchConvo: '',
+        sending: false,
+        loadingConvo: false,
 
         get filteredConversations() {
             if (!this.searchConvo) return this.conversations;
-            return this.conversations.filter(c => (c.contact_name || c.phone || '').toLowerCase().includes(this.searchConvo.toLowerCase()));
+            return this.conversations.filter(c => {
+                const name = c.whatsapp_contact?.name || c.contact_name || c.phone || '';
+                return name.toLowerCase().includes(this.searchConvo.toLowerCase());
+            });
         },
 
         async init() {
-            const res = await fetch('{{ route("whatsapp.conversations") }}');
-            this.conversations = await res.json();
+            try {
+                const res = await fetch('{{ route("whatsapp.conversations") }}');
+                const json = await res.json();
+                // Handle paginated response
+                const items = json.data || json;
+                this.conversations = items.map(c => ({
+                    id: c.id,
+                    contact_name: c.whatsapp_contact?.name || 'Unknown',
+                    phone: c.whatsapp_contact?.phone || '',
+                    last_message: c.messages?.[0]?.content || 'No messages',
+                    last_time: c.last_message_at ? new Date(c.last_message_at).toLocaleDateString() : '',
+                    whatsapp_contact: c.whatsapp_contact
+                }));
+            } catch (e) { console.error('Failed to load conversations:', e); }
         },
 
         async selectConversation(convo) {
             this.activeConvo = convo;
-            const res = await fetch(`/whatsapp/messages/${convo.id}`);
-            this.messages = await res.json();
+            this.loadingConvo = true;
+            try {
+                const res = await fetch(`/whatsapp/messages/${convo.id}`);
+                const json = await res.json();
+                // Handle nested response {conversation, messages: {data}}
+                const msgItems = json.messages?.data || json.messages || [];
+                this.messages = msgItems.map(m => ({
+                    id: m.id,
+                    direction: m.direction,
+                    content: m.content,
+                    time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : ''
+                }));
+            } catch (e) { console.error('Failed to load messages:', e); }
+            this.loadingConvo = false;
             this.$nextTick(() => {
                 const container = document.getElementById('messagesContainer');
                 if (container) container.scrollTop = container.scrollHeight;
@@ -136,20 +193,29 @@ function whatsappChat() {
         },
 
         async sendMessage() {
-            if (!this.newMessage.trim() || !this.activeConvo) return;
+            if (!this.newMessage.trim() || !this.activeConvo || this.sending) return;
             const msg = this.newMessage;
             this.newMessage = '';
+            this.sending = true;
             try {
                 const res = await fetch('{{ route("whatsapp.send") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({ conversation_id: this.activeConvo.id, message: msg })
+                    body: JSON.stringify({ conversation_id: this.activeConvo.id, content: msg, type: 'text' })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    this.messages.push({ id: Date.now(), direction: 'outbound', content: msg, time: 'Just now' });
+                    this.messages.push({ id: Date.now(), direction: 'outbound', content: msg, time: 'Now' });
+                    this.$nextTick(() => {
+                        const container = document.getElementById('messagesContainer');
+                        if (container) container.scrollTop = container.scrollHeight;
+                    });
+                } else {
+                    alert(data.error || 'Failed to send message');
+                    this.newMessage = msg;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error(e); this.newMessage = msg; }
+            this.sending = false;
         }
     };
 }

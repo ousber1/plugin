@@ -1,33 +1,35 @@
 @extends('layouts.app')
-@section('title', 'Customers')
+@section('title', \App\Helpers\Lang::t('customers.title'))
+
+@php $L = \App\Helpers\Lang::class; $cur = \App\Models\Setting::get('currency') ?? 'MAD'; @endphp
 
 @section('content')
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold">Customers</h2>
+        <h2 class="text-xl font-bold">{{ $L::t('customers.title') }}</h2>
         <a href="{{ route('customers.create') }}" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
-            <i class="fas fa-plus mr-1"></i> Add Customer
+            <i class="fas fa-plus mr-1"></i> {{ $L::t('customers.add') }}
         </a>
     </div>
 
     <form method="GET" class="flex flex-wrap gap-3 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, email, phone..." class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
-        <input type="text" name="tag" value="{{ request('tag') }}" placeholder="Filter by tag..." class="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
-        <button type="submit" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300"><i class="fas fa-filter mr-1"></i> Filter</button>
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ $L::t('common.search') }}..." class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+        <input type="text" name="tag" value="{{ request('tag') }}" placeholder="{{ $L::locale() === 'fr' ? 'Filtrer par tag...' : 'Filter by tag...' }}" class="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+        <button type="submit" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300"><i class="fas fa-filter mr-1"></i> {{ $L::t('common.filter') }}</button>
     </form>
 
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 dark:bg-slate-700/30 text-xs text-slate-500">
                 <tr>
-                    <th class="px-6 py-3 text-left">Name</th>
-                    <th class="px-6 py-3 text-left">Email</th>
-                    <th class="px-6 py-3 text-left">Phone</th>
-                    <th class="px-6 py-3 text-left">City</th>
+                    <th class="px-6 py-3 text-left">{{ $L::t('customers.name') }}</th>
+                    <th class="px-6 py-3 text-left">{{ $L::t('customers.email') }}</th>
+                    <th class="px-6 py-3 text-left">{{ $L::t('customers.phone') }}</th>
+                    <th class="px-6 py-3 text-left">{{ $L::t('customers.city') }}</th>
                     <th class="px-6 py-3 text-left">Tags</th>
-                    <th class="px-6 py-3 text-right">Purchases</th>
-                    <th class="px-6 py-3 text-right">Total Spent</th>
-                    <th class="px-6 py-3 text-center">Actions</th>
+                    <th class="px-6 py-3 text-right">{{ $L::t('customers.total_purchases') }}</th>
+                    <th class="px-6 py-3 text-right">{{ $L::t('customers.total_spent') }}</th>
+                    <th class="px-6 py-3 text-center">{{ $L::t('common.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -43,7 +45,7 @@
                         @endforeach
                     </td>
                     <td class="px-6 py-3 text-right">{{ $customer->total_purchases }}</td>
-                    <td class="px-6 py-3 text-right font-semibold">${{ number_format($customer->total_spent, 2) }}</td>
+                    <td class="px-6 py-3 text-right font-semibold">{{ number_format($customer->total_spent, 2) }} {{ $cur }}</td>
                     <td class="px-6 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
                             <a href="{{ route('customers.show', $customer) }}" class="text-primary-600 hover:text-primary-800"><i class="fas fa-eye"></i></a>
@@ -52,7 +54,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">No customers found</td></tr>
+                <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">{{ $L::locale() === 'fr' ? 'Aucun client trouvé' : 'No customers found' }}</td></tr>
                 @endforelse
             </tbody>
         </table>

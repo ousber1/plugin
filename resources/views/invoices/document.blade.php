@@ -505,6 +505,39 @@
     <div class="thank-you">
         {{ $isFr ? 'Merci pour votre confiance' : 'Thank you for your business' }}
     </div>
+
+    {{-- Full Société Information Footer --}}
+    <div style="margin-top:20px; padding-top:16px; border-top:2px solid #4f46e5; text-align:center;">
+        <div style="font-size:11px; font-weight:700; color:#4f46e5; margin-bottom:6px; text-transform:uppercase;">
+            {{ $settings['store_name'] ?? 'My Store' }}
+        </div>
+        <div style="font-size:10px; color:#475569; line-height:1.8;">
+            @if(!empty($settings['store_address']))
+            <i class="fas fa-map-marker-alt" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_address'] }}
+            @endif
+            @if(!empty($settings['store_phone']))
+            &nbsp;&bull;&nbsp; <i class="fas fa-phone" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_phone'] }}
+            @endif
+            @if(!empty($settings['store_email']))
+            &nbsp;&bull;&nbsp; <i class="fas fa-envelope" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_email'] }}
+            @endif
+            <br>
+            @php $fiscals = []; @endphp
+            @if(!empty($settings['ice'])) @php $fiscals[] = 'ICE: ' . $settings['ice']; @endphp @endif
+            @if(!empty($settings['if_number'])) @php $fiscals[] = 'IF: ' . $settings['if_number']; @endphp @endif
+            @if(!empty($settings['rc'])) @php $fiscals[] = 'RC: ' . $settings['rc']; @endphp @endif
+            @if(!empty($settings['cnss'])) @php $fiscals[] = 'CNSS: ' . $settings['cnss']; @endphp @endif
+            @if(!empty($settings['patente'])) @php $fiscals[] = 'Patente: ' . $settings['patente']; @endphp @endif
+            @if(count($fiscals) > 0)
+            <span style="font-weight:600;">{{ implode(' &bull; ', $fiscals) }}</span><br>
+            @endif
+            @if(!empty($settings['bank_name']) || !empty($settings['bank_rib']))
+            <i class="fas fa-university" style="font-size:9px; color:#4f46e5;"></i>
+            @if(!empty($settings['bank_name'])){{ $settings['bank_name'] }}@endif
+            @if(!empty($settings['bank_rib'])) - RIB: {{ $settings['bank_rib'] }}@endif
+            @endif
+        </div>
+    </div>
 </div>
 
 </body>

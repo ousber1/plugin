@@ -61,6 +61,16 @@
             padding: 0.75rem 1rem 0.375rem;
             margin-top: 0.25rem;
         }
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+        }
+        .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .dark .stat-card { background: #1e293b; border-color: #334155; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
@@ -246,7 +256,7 @@
                     <button type="submit" class="sidebar-link" style="color:rgba(255,255,255,0.6);width:100%">
                         <i class="fas fa-sign-out-alt w-5 text-center shrink-0"></i>
                         <span class="overflow-hidden transition-all duration-300"
-                              :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Logout</span>
+                              :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.logout') }}</span>
                     </button>
                 </form>
             </div>

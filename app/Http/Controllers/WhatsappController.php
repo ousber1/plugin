@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AutomationRule;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Setting;
 use App\Models\WhatsappContact;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -87,8 +88,12 @@ class WhatsappController extends Controller
         $contact = $conversation->whatsappContact;
         $type = $validated['type'] ?? 'text';
 
-        $token = config('services.whatsapp.token');
-        $phoneNumberId = config('services.whatsapp.phone_number_id');
+        $token = Setting::get('whatsapp_token') ?: config('services.whatsapp.token');
+        $phoneNumberId = Setting::get('whatsapp_phone_id') ?: config('services.whatsapp.phone_number_id');
+
+        if (!$token || !$phoneNumberId) {
+            return response()->json(['success' => false, 'error' => 'WhatsApp API not configured. Go to Settings.'], 422);
+        }
 
         $payload = [
             'messaging_product' => 'whatsapp',
@@ -129,6 +134,7 @@ class WhatsappController extends Controller
         return response()->json([
             'success' => $response->successful(),
             'message' => $message,
+            'error' => $response->successful() ? null : ($response->json('error.message') ?? 'API error'),
         ], $response->successful() ? 200 : 502);
     }
 
@@ -217,7 +223,7 @@ class WhatsappController extends Controller
      */
     public function webhookVerify(Request $request): mixed
     {
-        $verifyToken = config('services.whatsapp.verify_token');
+        $verifyToken = Setting::get('whatsapp_verify_token') ?: config('services.whatsapp.verify_token');
 
         $mode = $request->query('hub_mode');
         $token = $request->query('hub_verify_token');
@@ -264,9 +270,13 @@ class WhatsappController extends Controller
             'type' => 'in:text,template',
         ]);
 
-        $token = config('services.whatsapp.token');
-        $phoneNumberId = config('services.whatsapp.phone_number_id');
+        $token = Setting::get('whatsapp_token') ?: config('services.whatsapp.token');
+        $phoneNumberId = Setting::get('whatsapp_phone_id') ?: config('services.whatsapp.phone_number_id');
         $type = $validated['type'] ?? 'text';
+
+        if (!$token || !$phoneNumberId) {
+            return response()->json(['success' => false, 'error' => 'WhatsApp API not configured.'], 422);
+        }
 
         $contacts = WhatsappContact::whereIn('id', $validated['contact_ids'])
             ->where('is_subscribed', true)
@@ -391,8 +401,8 @@ class WhatsappController extends Controller
 
         foreach ($rules as $rule) {
             if (str_contains($lowerText, strtolower($rule->trigger_keyword))) {
-                $token = config('services.whatsapp.token');
-                $phoneNumberId = config('services.whatsapp.phone_number_id');
+                $token = Setting::get('whatsapp_token') ?: config('services.whatsapp.token');
+                $phoneNumberId = Setting::get('whatsapp_phone_id') ?: config('services.whatsapp.phone_number_id');
                 $contact = $conversation->whatsappContact;
 
                 $payload = [

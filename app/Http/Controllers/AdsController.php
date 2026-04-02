@@ -7,6 +7,7 @@ use App\Models\AdAnalysis;
 use App\Models\AdMetric;
 use App\Models\AdSet;
 use App\Models\Campaign;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -255,9 +256,9 @@ class AdsController extends Controller
     {
         $ad = Ad::with(['metrics', 'analysis'])->findOrFail($adId);
 
-        $apiKey = config('services.openai.api_key');
+        $apiKey = Setting::get('openai_api_key') ?: config('services.openai.api_key');
         if (!$apiKey) {
-            return redirect()->back()->with('error', 'OpenAI API key not configured.');
+            return redirect()->back()->with('error', 'OpenAI API key not configured. Go to Settings > API Keys.');
         }
 
         $prompt = "Analyze this ad and suggest improvements:\n";
@@ -324,11 +325,11 @@ class AdsController extends Controller
 
     public function syncMeta(Request $request)
     {
-        $token = config('services.meta_ads.access_token');
-        $accountId = config('services.meta_ads.account_id');
+        $token = Setting::get('meta_ads_token') ?: config('services.meta_ads.access_token');
+        $accountId = Setting::get('meta_ads_account_id') ?: config('services.meta_ads.account_id');
 
         if (!$token || !$accountId) {
-            return redirect()->back()->with('error', 'Meta Ads API not configured. Add credentials in Settings.');
+            return redirect()->back()->with('error', 'Meta Ads API not configured. Add credentials in Settings > API Keys.');
         }
 
         try {
