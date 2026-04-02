@@ -148,6 +148,13 @@
                           :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::t('nav.products') }}</span>
                 </a>
 
+                <a href="{{ route('products.stock-management') }}"
+                   class="sidebar-link {{ request()->routeIs('products.stock-management') ? 'active' : '' }}">
+                    <i class="fas fa-warehouse w-5 text-center text-base shrink-0"></i>
+                    <span class="overflow-hidden transition-all duration-300"
+                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">{{ $L::locale() === 'fr' ? 'Gestion de stock' : 'Stock Management' }}</span>
+                </a>
+
                 <a href="{{ route('products.index', ['stock' => 'low']) }}"
                    class="sidebar-link {{ request()->is('products*') && request('stock') === 'low' ? 'active' : '' }}">
                     <i class="fas fa-exclamation-triangle w-5 text-center text-base shrink-0"></i>

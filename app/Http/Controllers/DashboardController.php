@@ -17,7 +17,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $currency = Setting::get('currency') ?? 'MAD';
+        $currency = Setting::get('currency') ?? 'DH';
 
         $totalRevenue = Sale::whereNull('deleted_at')->where('status', '!=', 'cancelled')->sum('total');
         $todayRevenue = Sale::whereNull('deleted_at')->where('status', '!=', 'cancelled')

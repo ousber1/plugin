@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@section('title', 'POS Terminal')
+@section('title', \App\Helpers\Lang::t('pos.title'))
+
+@php $L = \App\Helpers\Lang::class; $isFr = $L::locale() === 'fr'; @endphp
 
 @section('content')
 <div x-data="posTerminal()" class="flex gap-6 -mt-2" style="height: calc(100vh - 120px);">
@@ -9,11 +11,11 @@
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                 <input type="text" x-model="search" @input.debounce.300ms="fetchProducts()"
-                       placeholder="Search products or scan barcode..."
+                       placeholder="{{ $L::t('pos.search') }}"
                        class="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary-500 outline-none">
             </div>
             <a href="{{ route('pos.sessions') }}" class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center gap-2 shrink-0">
-                <i class="fas fa-clock"></i> <span class="hidden sm:inline">Sessions</span>
+                <i class="fas fa-clock"></i> <span class="hidden sm:inline">{{ $L::t('pos.sessions') }}</span>
             </a>
         </div>
 
@@ -21,7 +23,7 @@
         <div class="flex gap-2 mb-3 overflow-x-auto pb-1 shrink-0">
             <button @click="selectedCategory = ''; fetchProducts()"
                     :class="selectedCategory === '' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition">All</button>
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition">{{ $L::t('common.all') }}</button>
             @foreach($categories as $cat)
             <button @click="selectedCategory = '{{ $cat }}'; fetchProducts()"
                     :class="selectedCategory === '{{ $cat }}' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
@@ -43,13 +45,13 @@
                     </div>
                     <p class="text-sm font-medium truncate" x-text="product.name"></p>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-sm font-bold text-primary-600 dark:text-primary-400" x-text="'$' + parseFloat(product.selling_price).toFixed(2)"></span>
-                        <span class="text-xs text-slate-400" x-text="product.stock_quantity + ' in stock'"></span>
+                        <span class="text-sm font-bold text-primary-600 dark:text-primary-400" x-text="parseFloat(product.selling_price).toFixed(2) + ' {{ $isFr ? 'DH' : 'DH' }}'"></span>
+                        <span class="text-xs text-slate-400" x-text="product.stock_quantity + ' {{ $isFr ? 'en stock' : 'in stock' }}'"></span>
                     </div>
                 </button>
             </template>
             <div x-show="products.length === 0" class="col-span-full flex items-center justify-center py-12">
-                <p class="text-slate-400 text-sm">No products found</p>
+                <p class="text-slate-400 text-sm">{{ $isFr ? 'Aucun produit trouvé' : 'No products found' }}</p>
             </div>
         </div>
     </div>
@@ -58,8 +60,8 @@
     <div class="w-96 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex flex-col shadow-sm shrink-0">
         <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
             <h3 class="font-semibold flex items-center gap-2">
-                <i class="fas fa-shopping-cart text-primary-500"></i> Cart
-                <span class="ml-auto text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 px-2 py-0.5 rounded-full" x-text="cart.length + ' items'" x-show="cart.length > 0"></span>
+                <i class="fas fa-shopping-cart text-primary-500"></i> {{ $L::t('pos.cart') }}
+                <span class="ml-auto text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 px-2 py-0.5 rounded-full" x-text="cart.length + ' {{ $L::t('pos.items') }}'" x-show="cart.length > 0"></span>
             </h3>
         </div>
 
@@ -68,20 +70,20 @@
                 <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3">
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium truncate" x-text="item.name"></p>
-                        <p class="text-xs text-slate-400" x-text="'$' + parseFloat(item.selling_price).toFixed(2) + ' each'"></p>
+                        <p class="text-xs text-slate-400" x-text="parseFloat(item.selling_price).toFixed(2) + ' DH'"></p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button @click="updateQty(index, -1)" class="w-7 h-7 rounded bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 flex items-center justify-center text-xs">-</button>
                         <span class="w-8 text-center text-sm font-semibold" x-text="item.qty"></span>
                         <button @click="updateQty(index, 1)" class="w-7 h-7 rounded bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 flex items-center justify-center text-xs">+</button>
                     </div>
-                    <span class="text-sm font-bold w-16 text-right" x-text="'$' + (item.qty * item.selling_price).toFixed(2)"></span>
+                    <span class="text-sm font-bold w-20 text-right" x-text="(item.qty * item.selling_price).toFixed(2) + ' DH'"></span>
                     <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 text-sm"><i class="fas fa-trash"></i></button>
                 </div>
             </template>
             <div x-show="cart.length === 0" class="flex flex-col items-center justify-center py-12 text-slate-400">
                 <i class="fas fa-shopping-basket text-3xl mb-2"></i>
-                <p class="text-sm">Cart is empty</p>
+                <p class="text-sm">{{ $isFr ? 'Panier vide' : 'Cart is empty' }}</p>
             </div>
         </div>
 
@@ -90,7 +92,7 @@
             {{-- Customer --}}
             <div>
                 <select x-model="customerId" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
-                    <option value="">Walk-in Customer</option>
+                    <option value="">{{ $L::t('pos.walk_in') }}</option>
                     @foreach(\App\Models\Customer::orderBy('name')->get(['id','name','phone']) as $c)
                     <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
                     @endforeach
@@ -98,53 +100,53 @@
             </div>
 
             <div class="flex justify-between text-sm">
-                <span class="text-slate-500">Subtotal</span>
-                <span class="font-medium" x-text="'$' + subtotal.toFixed(2)"></span>
+                <span class="text-slate-500">{{ $L::t('pos.subtotal') }}</span>
+                <span class="font-medium" x-text="subtotal.toFixed(2) + ' DH'"></span>
             </div>
             <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-500">Discount</span>
+                <span class="text-slate-500">{{ $L::t('pos.discount') }}</span>
                 <input type="number" x-model.number="discount" min="0" step="0.01" class="w-24 text-right border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm bg-transparent">
             </div>
             <div class="flex justify-between text-lg font-bold border-t border-slate-200 dark:border-slate-700 pt-2">
-                <span>Total</span>
-                <span class="text-primary-600 dark:text-primary-400" x-text="'$' + total.toFixed(2)"></span>
+                <span>{{ $L::t('pos.total') }}</span>
+                <span class="text-primary-600 dark:text-primary-400" x-text="total.toFixed(2) + ' DH'"></span>
             </div>
 
             <div class="space-y-2">
                 <div class="flex gap-1.5">
                     <button @click="paymentMethod = 'cash'" :class="paymentMethod === 'cash' ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'" class="flex-1 py-2 rounded-lg text-xs font-medium transition">
-                        <i class="fas fa-money-bill mr-0.5"></i> Cash
+                        <i class="fas fa-money-bill mr-0.5"></i> {{ $L::t('pos.cash') }}
                     </button>
                     <button @click="paymentMethod = 'card'" :class="paymentMethod === 'card' ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'" class="flex-1 py-2 rounded-lg text-xs font-medium transition">
-                        <i class="fas fa-credit-card mr-0.5"></i> Card
+                        <i class="fas fa-credit-card mr-0.5"></i> {{ $L::t('pos.card') }}
                     </button>
                     <button @click="paymentMethod = 'bank_transfer'" :class="paymentMethod === 'bank_transfer' ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'" class="flex-1 py-2 rounded-lg text-xs font-medium transition">
-                        <i class="fas fa-university mr-0.5"></i> Bank
+                        <i class="fas fa-university mr-0.5"></i> {{ $L::t('pos.bank') }}
                     </button>
                 </div>
 
                 <div x-show="paymentMethod === 'cash'" class="flex items-center gap-2">
-                    <input type="number" x-model.number="cashReceived" placeholder="Cash received" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
-                    <span class="text-sm font-semibold whitespace-nowrap" :class="change >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="'Change: $' + change.toFixed(2)"></span>
+                    <input type="number" x-model.number="cashReceived" placeholder="{{ $isFr ? 'Montant reçu' : 'Cash received' }}" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent">
+                    <span class="text-sm font-semibold whitespace-nowrap" :class="change >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="'{{ $L::t('pos.change') }}: ' + change.toFixed(2) + ' DH'"></span>
                 </div>
             </div>
 
             <div class="flex gap-2 pt-1">
-                <button @click="clearCart()" class="px-3 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-300 flex-shrink-0">
+                <button @click="clearCart()" class="px-3 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-300 flex-shrink-0" title="{{ $L::t('pos.clear') }}">
                     <i class="fas fa-times"></i>
                 </button>
-                <button @click="holdOrder()" :disabled="cart.length === 0" class="px-3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex-shrink-0" title="Hold Order">
+                <button @click="holdOrder()" :disabled="cart.length === 0" class="px-3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex-shrink-0" title="{{ $L::t('pos.hold') }}">
                     <i class="fas fa-pause"></i>
                 </button>
                 <button @click="completeSale()" :disabled="cart.length === 0 || processing"
                         class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-check mr-1"></i> Complete Sale
+                    <i class="fas fa-check mr-1"></i> {{ $L::t('pos.complete_sale') }}
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- Held Orders Button (floating) --}}
+    {{-- Held Orders Button --}}
     <button x-show="heldOrders.length > 0" @click="showHeld = true" x-cloak
             class="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-40 transition">
         <i class="fas fa-pause"></i>
@@ -155,24 +157,24 @@
     <div x-show="showHeld" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showHeld = false">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 max-w-md w-full" x-transition>
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <i class="fas fa-pause-circle text-amber-500"></i> Held Orders
+                <i class="fas fa-pause-circle text-amber-500"></i> {{ $L::t('pos.held_orders') }}
             </h3>
             <div class="space-y-3 max-h-80 overflow-y-auto">
                 <template x-for="(held, i) in heldOrders" :key="held.id">
                     <div class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium" x-text="held.cart.length + ' items - $' + held.cart.reduce((s, item) => s + item.qty * item.selling_price, 0).toFixed(2)"></p>
-                            <p class="text-xs text-slate-400" x-text="'Held at ' + held.time"></p>
+                            <p class="text-sm font-medium" x-text="held.cart.length + ' {{ $L::t('pos.items') }} - ' + held.cart.reduce((s, item) => s + item.qty * item.selling_price, 0).toFixed(2) + ' DH'"></p>
+                            <p class="text-xs text-slate-400" x-text="'{{ $isFr ? 'Mis en attente à' : 'Held at' }} ' + held.time"></p>
                         </div>
                         <div class="flex gap-2">
-                            <button @click="restoreOrder(i)" class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-medium hover:bg-primary-700">Restore</button>
+                            <button @click="restoreOrder(i)" class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-medium hover:bg-primary-700">{{ $L::t('pos.restore') }}</button>
                             <button @click="removeHeld(i)" class="px-2 py-1.5 text-red-400 hover:text-red-600"><i class="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 </template>
-                <div x-show="heldOrders.length === 0" class="text-center py-4 text-slate-400 text-sm">No held orders</div>
+                <div x-show="heldOrders.length === 0" class="text-center py-4 text-slate-400 text-sm">{{ $isFr ? 'Aucune commande en attente' : 'No held orders' }}</div>
             </div>
-            <button @click="showHeld = false" class="w-full mt-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">Close</button>
+            <button @click="showHeld = false" class="w-full mt-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">{{ $L::t('common.close') }}</button>
         </div>
     </div>
 
@@ -182,15 +184,15 @@
             <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-check text-2xl text-emerald-600"></i>
             </div>
-            <h3 class="text-lg font-bold mb-2">Sale Complete!</h3>
-            <p class="text-sm text-slate-500 mb-1">Invoice: <span x-text="lastInvoice" class="font-mono"></span></p>
-            <p class="text-2xl font-bold text-primary-600 mb-4" x-text="'$' + lastTotal.toFixed(2)"></p>
+            <h3 class="text-lg font-bold mb-2">{{ $L::t('pos.sale_complete') }}</h3>
+            <p class="text-sm text-slate-500 mb-1">{{ $isFr ? 'Facture' : 'Invoice' }}: <span x-text="lastInvoice" class="font-mono"></span></p>
+            <p class="text-2xl font-bold text-primary-600 mb-4" x-text="lastTotal.toFixed(2) + ' DH'"></p>
             <div class="flex gap-3">
                 <a :href="receiptUrl" target="_blank" class="flex-1 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300">
-                    <i class="fas fa-print mr-1"></i> Receipt
+                    <i class="fas fa-print mr-1"></i> {{ $L::t('pos.receipt') }}
                 </a>
                 <button @click="showSuccess = false" class="flex-1 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
-                    New Sale
+                    {{ $L::t('pos.new_sale') }}
                 </button>
             </div>
         </div>
@@ -302,9 +304,9 @@ function posTerminal() {
                     this.clearCart();
                     this.fetchProducts();
                 } else {
-                    alert(data.message || 'Sale failed');
+                    alert(data.message || '{{ $isFr ? "Erreur de vente" : "Sale failed" }}');
                 }
-            } catch (e) { alert('Error processing sale'); }
+            } catch (e) { alert('{{ $isFr ? "Erreur lors du traitement" : "Error processing sale" }}'); }
             this.processing = false;
         }
     };

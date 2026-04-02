@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', \App\Helpers\Lang::t('dashboard.title'))
 
-@php $L = \App\Helpers\Lang::class; $cur = $currency ?? 'MAD'; @endphp
+@php $L = \App\Helpers\Lang::class; $cur = $currency ?? 'DH'; @endphp
 
 @section('content')
 <div class="space-y-6">

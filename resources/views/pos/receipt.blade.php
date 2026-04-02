@@ -1,8 +1,14 @@
+@php
+    $L = \App\Helpers\Lang::class;
+    $isFr = $L::locale() === 'fr';
+    $currency = $settings['currency'] ?? 'DH';
+    $widthClass = 'receipt-' . str_replace('mm', 'mm', $settings['receipt_width'] ?? '80mm');
+@endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $L::locale() }}">
 <head>
     <meta charset="UTF-8">
-    <title>Receipt - {{ $sale->invoice_number }}</title>
+    <title>{{ $isFr ? 'Reçu' : 'Receipt' }} - {{ $sale->invoice_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -56,7 +62,7 @@
         .footer-text { font-size: 10px; color: #666; line-height: 1.5; margin-top: 4px; }
         .receipt-a4 .footer-text { font-size: 12px; }
 
-        .barcode-area { margin-top: 8px; font-family: 'Libre Barcode 39', monospace; font-size: 28px; letter-spacing: 2px; }
+        .fiscal-info { font-size: 9px; color: #888; line-height: 1.6; margin-top: 6px; }
 
         .actions { text-align: center; margin-top: 25px; }
         .actions button {
@@ -71,10 +77,10 @@
         }
         .btn-print { background: #4f46e5; color: #fff; }
         .btn-print:hover { background: #4338ca; }
-        .btn-download { background: #059669; color: #fff; }
-        .btn-download:hover { background: #047857; }
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-back:hover { background: #cbd5e1; }
+        .btn-invoice { background: #059669; color: #fff; }
+        .btn-invoice:hover { background: #047857; }
 
         @media print {
             body { background: #fff; padding: 0; }
@@ -84,10 +90,6 @@
     </style>
 </head>
 <body>
-    @php
-        $currency = $settings['currency'] ?? '$';
-        $widthClass = 'receipt-' . str_replace('mm', 'mm', $settings['receipt_width'] ?? '80mm');
-    @endphp
 
     <div class="receipt {{ $widthClass }}">
         {{-- Header --}}
@@ -102,7 +104,7 @@
                 <div class="info-text">{{ $settings['store_address'] }}</div>
             @endif
             @if(!empty($settings['store_phone']))
-                <div class="info-text">Tel: {{ $settings['store_phone'] }}</div>
+                <div class="info-text">{{ $isFr ? 'Tél' : 'Tel' }}: {{ $settings['store_phone'] }}</div>
             @endif
             @if(!empty($settings['store_email']))
                 <div class="info-text">{{ $settings['store_email'] }}</div>
@@ -111,22 +113,31 @@
             @if(!empty($settings['receipt_header']))
                 <div class="info-text" style="margin-top: 4px;">{{ $settings['receipt_header'] }}</div>
             @endif
+
+            {{-- Moroccan fiscal IDs --}}
+            @if(!empty($settings['ice']) || !empty($settings['if_number']))
+            <div class="fiscal-info">
+                @if(!empty($settings['ice']))ICE: {{ $settings['ice'] }}@endif
+                @if(!empty($settings['if_number'])) | IF: {{ $settings['if_number'] }}@endif
+                @if(!empty($settings['rc'])) | RC: {{ $settings['rc'] }}@endif
+            </div>
+            @endif
         </div>
 
         <div class="double-divider"></div>
 
         {{-- Receipt Info --}}
         <div style="margin-bottom: 4px;">
-            <div class="row"><span>Invoice:</span><span class="bold">{{ $sale->invoice_number }}</span></div>
-            <div class="row"><span>Date:</span><span>{{ $sale->created_at->format('d/m/Y H:i') }}</span></div>
-            <div class="row"><span>Cashier:</span><span>{{ $sale->user->name ?? 'N/A' }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'N° Facture' : 'Invoice' }}:</span><span class="bold">{{ $sale->invoice_number }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'Date' : 'Date' }}:</span><span>{{ $sale->created_at->format('d/m/Y H:i') }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'Caissier' : 'Cashier' }}:</span><span>{{ $sale->user->name ?? 'N/A' }}</span></div>
             @if($sale->customer)
-            <div class="row"><span>Customer:</span><span>{{ $sale->customer->name }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'Client' : 'Customer' }}:</span><span>{{ $sale->customer->name }}</span></div>
             @if($sale->customer->phone)
-            <div class="row"><span>Phone:</span><span>{{ $sale->customer->phone }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'Tél' : 'Phone' }}:</span><span>{{ $sale->customer->phone }}</span></div>
             @endif
             @endif
-            <div class="row"><span>Channel:</span><span>{{ strtoupper($sale->channel) }}</span></div>
+            <div class="row"><span>{{ $isFr ? 'Canal' : 'Channel' }}:</span><span>{{ strtoupper($sale->channel) }}</span></div>
         </div>
 
         <div class="divider"></div>
@@ -135,10 +146,10 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th>Item</th>
-                    <th class="right" style="width:35px">Qty</th>
-                    <th class="right" style="width:55px">Price</th>
-                    <th class="right" style="width:60px">Total</th>
+                    <th>{{ $isFr ? 'Article' : 'Item' }}</th>
+                    <th class="right" style="width:35px">{{ $isFr ? 'Qté' : 'Qty' }}</th>
+                    <th class="right" style="width:55px">{{ $isFr ? 'P.U.' : 'Price' }}</th>
+                    <th class="right" style="width:60px">{{ $isFr ? 'Total' : 'Total' }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -158,43 +169,50 @@
         {{-- Totals --}}
         <div class="total-section">
             <div class="row">
-                <span>Subtotal:</span>
-                <span>{{ $currency }}{{ number_format($sale->subtotal, 2) }}</span>
+                <span>{{ $isFr ? 'Sous-total HT' : 'Subtotal' }}:</span>
+                <span>{{ number_format($sale->subtotal, 2) }} {{ $currency }}</span>
             </div>
             @if($sale->discount > 0)
             <div class="row" style="color:#c53030;">
-                <span>Discount:</span>
-                <span>-{{ $currency }}{{ number_format($sale->discount, 2) }}</span>
+                <span>{{ $isFr ? 'Remise' : 'Discount' }}:</span>
+                <span>-{{ number_format($sale->discount, 2) }} {{ $currency }}</span>
             </div>
             @endif
             @if($sale->tax > 0)
             <div class="row">
-                <span>Tax:</span>
-                <span>{{ $currency }}{{ number_format($sale->tax, 2) }}</span>
+                <span>TVA:</span>
+                <span>{{ number_format($sale->tax, 2) }} {{ $currency }}</span>
             </div>
             @endif
 
             <div class="double-divider"></div>
 
             <div class="row grand-total">
-                <span>TOTAL:</span>
-                <span>{{ $currency }}{{ number_format($sale->total, 2) }}</span>
+                <span>{{ $isFr ? 'TOTAL TTC' : 'TOTAL' }}:</span>
+                <span>{{ number_format($sale->total, 2) }} {{ $currency }}</span>
             </div>
         </div>
 
         <div class="divider"></div>
 
         {{-- Payments --}}
-        <div class="bold" style="margin-bottom: 4px; font-size: 11px;">PAYMENTS:</div>
+        @php
+            $methodNames = [
+                'cash' => $isFr ? 'ESPECES' : 'CASH',
+                'card' => $isFr ? 'CARTE' : 'CARD',
+                'bank_transfer' => $isFr ? 'VIREMENT' : 'TRANSFER',
+            ];
+        @endphp
+        <div class="bold" style="margin-bottom: 4px; font-size: 11px;">{{ $isFr ? 'PAIEMENTS' : 'PAYMENTS' }}:</div>
         @foreach($sale->payments as $payment)
         <div class="row">
             <span>
-                <span class="payment-badge">{{ strtoupper($payment->method) }}</span>
+                <span class="payment-badge">{{ $methodNames[$payment->method] ?? strtoupper($payment->method) }}</span>
                 @if($payment->reference)
-                    <span style="font-size:9px; color:#888;"> Ref: {{ $payment->reference }}</span>
+                    <span style="font-size:9px; color:#888;"> {{ $isFr ? 'Réf' : 'Ref' }}: {{ $payment->reference }}</span>
                 @endif
             </span>
-            <span class="bold">{{ $currency }}{{ number_format($payment->amount, 2) }}</span>
+            <span class="bold">{{ number_format($payment->amount, 2) }} {{ $currency }}</span>
         </div>
         @endforeach
 
@@ -205,13 +223,13 @@
 
         @if($change > 0)
         <div class="row" style="color:#059669;">
-            <span>Change:</span>
-            <span>{{ $currency }}{{ number_format($change, 2) }}</span>
+            <span>{{ $isFr ? 'Monnaie rendue' : 'Change' }}:</span>
+            <span>{{ number_format($change, 2) }} {{ $currency }}</span>
         </div>
         @elseif($totalPaid < $sale->total)
         <div class="row" style="color:#c53030;">
-            <span>Balance Due:</span>
-            <span>{{ $currency }}{{ number_format($sale->total - $totalPaid, 2) }}</span>
+            <span>{{ $isFr ? 'Reste à payer' : 'Balance Due' }}:</span>
+            <span>{{ number_format($sale->total - $totalPaid, 2) }} {{ $currency }}</span>
         </div>
         @endif
 
@@ -221,15 +239,26 @@
         <div class="center">
             @if(!empty($settings['receipt_footer']))
                 <div class="bold" style="margin-bottom: 4px;">{{ $settings['receipt_footer'] }}</div>
+            @else
+                <div class="bold" style="margin-bottom: 4px;">{{ $isFr ? 'Merci pour votre achat !' : 'Thank you for your purchase!' }}</div>
             @endif
 
-            {{-- Invoice barcode-style --}}
+            {{-- Invoice barcode --}}
             <div style="margin-top: 6px; font-family: monospace; font-size: 10px; color: #888;">
                 ||| {{ $sale->invoice_number }} |||
             </div>
 
+            {{-- Fiscal footer --}}
+            @if(!empty($settings['ice']))
+            <div class="fiscal-info">
+                ICE: {{ $settings['ice'] }}
+                @if(!empty($settings['if_number'])) | IF: {{ $settings['if_number'] }} @endif
+                @if(!empty($settings['patente'])) | Patente: {{ $settings['patente'] }} @endif
+            </div>
+            @endif
+
             <div class="footer-text" style="margin-top: 8px;">
-                Printed: {{ now()->format('d/m/Y H:i:s') }}
+                {{ $isFr ? 'Imprimé le' : 'Printed' }}: {{ now()->format('d/m/Y H:i:s') }}
             </div>
         </div>
     </div>
@@ -237,10 +266,13 @@
     {{-- Action Buttons --}}
     <div class="actions no-print">
         <button class="btn-print" onclick="window.print()">
-            <i style="margin-right:4px;">🖨️</i> Print Receipt
+            {{ $isFr ? 'Imprimer' : 'Print' }}
         </button>
+        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => 'facture']) }}" class="btn-invoice" style="padding:10px 28px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none; display:inline-block;">
+            {{ $isFr ? 'Facture' : 'Invoice' }}
+        </a>
         <button class="btn-back" onclick="window.close(); window.history.back();">
-            ← Back
+            {{ $isFr ? 'Retour' : 'Back' }}
         </button>
     </div>
 </body>

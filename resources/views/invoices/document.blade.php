@@ -1,6 +1,6 @@
 @php
     $L = \App\Helpers\Lang::class;
-    $currency = $settings['currency'] ?? 'MAD';
+    $currency = $settings['currency'] ?? 'DH';
 
     // Document title by type
     $titles = [

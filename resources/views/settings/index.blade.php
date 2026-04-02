@@ -33,7 +33,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">{{ $L::t('settings.currency') }}</label>
-                    <input type="text" name="settings[currency]" value="{{ $getSetting('general', 'currency', 'MAD') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="MAD, $, €, £">
+                    <input type="text" name="settings[currency]" value="{{ $getSetting('general', 'currency', 'DH') }}" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-transparent" placeholder="MAD, $, €, £">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">{{ $L::t('settings.phone') }}</label>

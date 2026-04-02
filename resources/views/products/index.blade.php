@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', \App\Helpers\Lang::t('products.title'))
 
-@php $L = \App\Helpers\Lang::class; $cur = \App\Models\Setting::get('currency') ?? 'MAD'; @endphp
+@php $L = \App\Helpers\Lang::class; $cur = \App\Models\Setting::get('currency') ?? 'DH'; @endphp
 
 @section('content')
 <div class="space-y-6" x-data="{ showDelete: false, deleteId: null }">

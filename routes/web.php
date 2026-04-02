@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
 
     // Products
+    Route::get('/stock-management', [ProductController::class, 'stockManagement'])->name('products.stock-management');
     Route::resource('products', ProductController::class);
     Route::post('/products/{id}/adjust-stock', [ProductController::class, 'adjustStock'])->name('products.adjust-stock');
     Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');

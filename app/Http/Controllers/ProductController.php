@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,87 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
+
+    /**
+     * Advanced stock management dashboard.
+     */
+    public function stockManagement(Request $request)
+    {
+        $currency = Setting::get('currency') ?? 'DH';
+
+        // Stock overview stats
+        $totalProducts = Product::whereNull('deleted_at')->where('is_active', true)->count();
+        $lowStockCount = Product::whereNull('deleted_at')->where('is_active', true)
+            ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count();
+        $outOfStockCount = Product::whereNull('deleted_at')->where('is_active', true)
+            ->where('stock_quantity', 0)->count();
+        $totalStockValue = Product::whereNull('deleted_at')->where('is_active', true)
+            ->select(DB::raw('SUM(cost_price * stock_quantity) as cost_val'), DB::raw('SUM(selling_price * stock_quantity) as sell_val'))
+            ->first();
+        $costValue = $totalStockValue->cost_val ?? 0;
+        $sellValue = $totalStockValue->sell_val ?? 0;
+
+        // Total units in stock
+        $totalUnits = Product::whereNull('deleted_at')->where('is_active', true)->sum('stock_quantity');
+
+        // Stock by category
+        $stockByCategory = Product::whereNull('deleted_at')->where('is_active', true)
+            ->whereNotNull('category')
+            ->select('category', DB::raw('COUNT(*) as count'), DB::raw('SUM(stock_quantity) as total_qty'), DB::raw('SUM(cost_price * stock_quantity) as total_value'))
+            ->groupBy('category')
+            ->orderByDesc('total_value')
+            ->get();
+
+        // Low stock products
+        $lowStockProducts = Product::whereNull('deleted_at')->where('is_active', true)
+            ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+            ->orderBy('stock_quantity')
+            ->limit(20)
+            ->get();
+
+        // Recent stock movements
+        $recentMovements = StockMovement::with(['product:id,name,sku', 'user:id,name'])
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        // Top moving products (most stock OUT in last 30 days)
+        $topMoving = StockMovement::where('type', 'out')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->select('product_id', DB::raw('SUM(quantity) as total_out'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_out')
+            ->limit(10)
+            ->with('product:id,name,stock_quantity')
+            ->get();
+
+        // Slow moving (products with no sales movement in 30 days)
+        $activeProductIds = StockMovement::where('type', 'out')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->distinct()
+            ->pluck('product_id');
+        $slowMoving = Product::whereNull('deleted_at')->where('is_active', true)
+            ->where('stock_quantity', '>', 0)
+            ->whereNotIn('id', $activeProductIds)
+            ->orderByDesc('stock_quantity')
+            ->limit(10)
+            ->get();
+
+        // Stock movement chart (last 30 days)
+        $movementChart = StockMovement::where('created_at', '>=', now()->subDays(30))
+            ->select(DB::raw('DATE(created_at) as date'), 'type', DB::raw('SUM(quantity) as total'))
+            ->groupBy('date', 'type')
+            ->orderBy('date')
+            ->get()
+            ->groupBy('date');
+
+        return view('products.stock-management', compact(
+            'currency', 'totalProducts', 'lowStockCount', 'outOfStockCount',
+            'costValue', 'sellValue', 'totalUnits',
+            'stockByCategory', 'lowStockProducts', 'recentMovements',
+            'topMoving', 'slowMoving', 'movementChart'
+        ));
+    }
 
     /**
      * List products with search, category filter, stock filter.
