@@ -1,8 +1,11 @@
 @php
     $L = \App\Helpers\Lang::class;
     $currency = $settings['currency'] ?? 'DH';
+    $template = $settings['invoice_template'] ?? 'modern';
+    $color = $settings['invoice_color'] ?? '#4f46e5';
+    $dueDays = intval($settings['invoice_due_days'] ?? 30);
+    $showLogo = ($settings['invoice_show_logo'] ?? '1') === '1';
 
-    // Document title by type
     $titles = [
         'facture'         => ['fr' => 'FACTURE', 'en' => 'INVOICE'],
         'proforma'        => ['fr' => 'FACTURE PROFORMA', 'en' => 'PROFORMA INVOICE'],
@@ -11,8 +14,15 @@
     ];
     $docTitle = $titles[$type][$lang] ?? $titles['facture'][$lang];
     $invoiceNum = $sale->invoice_number ?? 'INV-' . str_pad($sale->id, 5, '0', STR_PAD_LEFT);
-
     $isFr = $lang === 'fr';
+
+    // Template-specific config
+    $isClassic = $template === 'classic';
+    $isMinimal = $template === 'minimal';
+    $borderRadius = $isClassic ? '0' : ($isMinimal ? '4px' : '8px');
+    $mainColor = $isMinimal ? '#1e293b' : $color;
+    $headerBg = $isMinimal ? '#ffffff' : $mainColor;
+    $headerText = $isMinimal ? $mainColor : '#ffffff';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $lang }}">
@@ -21,6 +31,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $docTitle }} {{ $invoiceNum }}</title>
     <style>
+        :root {
+            --main: {{ $mainColor }};
+            --main-light: {{ $mainColor }}15;
+            --radius: {{ $borderRadius }};
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -34,7 +49,7 @@
             margin: 0 auto;
             background: #fff;
             padding: 40px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
         }
         @media print {
@@ -43,131 +58,80 @@
             .no-print { display: none !important; }
         }
 
-        /* Header */
+        /* ===== HEADER ===== */
         .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #4f46e5;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            @if($isClassic)
+            border-bottom: 3px double var(--main);
+            @elseif($isMinimal)
+            border-bottom: 1px solid #e2e8f0;
+            @else
+            border-bottom: 3px solid var(--main);
+            @endif
         }
         .company-info { flex: 1; }
         .company-name {
-            font-size: 22px;
-            font-weight: 800;
-            color: #4f46e5;
+            font-size: {{ $isMinimal ? '18px' : '22px' }};
+            font-weight: {{ $isClassic ? '700' : '800' }};
+            color: var(--main);
             margin-bottom: 6px;
+            @if($isClassic) text-transform: uppercase; letter-spacing: 1px; @endif
         }
-        .company-details {
-            font-size: 11px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-        .company-logo {
-            max-height: 70px;
-            max-width: 160px;
-            object-fit: contain;
-            margin-bottom: 8px;
-        }
-        .doc-type-box {
-            text-align: right;
-        }
+        .company-details { font-size: 11px; color: #64748b; line-height: 1.6; }
+        .company-logo { max-height: 70px; max-width: 160px; object-fit: contain; margin-bottom: 8px; }
+        .doc-type-box { text-align: right; }
         .doc-type-title {
-            font-size: 28px;
+            font-size: {{ $isMinimal ? '22px' : '28px' }};
             font-weight: 900;
-            color: #4f46e5;
-            letter-spacing: 2px;
+            color: var(--main);
+            letter-spacing: {{ $isClassic ? '3px' : '2px' }};
+            @if($isClassic) text-transform: uppercase; border-bottom: 2px solid var(--main); padding-bottom: 4px; @endif
         }
-        .doc-number {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-        .doc-date {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 2px;
-        }
+        .doc-number { font-size: 13px; color: #64748b; margin-top: 4px; }
+        .doc-date { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-        /* Fiscal IDs */
+        /* ===== FISCAL ROW ===== */
         .fiscal-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            background: #f8fafc;
+            display: flex; flex-wrap: wrap; gap: 12px;
+            background: var(--main-light);
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: var(--radius);
             padding: 10px 14px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             font-size: 11px;
         }
-        .fiscal-item {
-            display: flex;
-            gap: 4px;
-        }
-        .fiscal-label {
-            font-weight: 700;
-            color: #475569;
-        }
-        .fiscal-value {
-            color: #1e293b;
-        }
+        .fiscal-item { display: flex; gap: 4px; }
+        .fiscal-label { font-weight: 700; color: #475569; }
+        .fiscal-value { color: #1e293b; }
 
-        /* Client box */
-        .parties-row {
-            display: flex;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-        .party-box {
-            flex: 1;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 14px;
-        }
+        /* ===== PARTIES ===== */
+        .parties-row { display: flex; gap: 24px; margin-bottom: 24px; }
+        .party-box { flex: 1; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 14px; }
         .party-title {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #4f46e5;
-            margin-bottom: 8px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--main); margin-bottom: 8px;
         }
-        .party-name {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .party-detail {
-            font-size: 11px;
-            color: #64748b;
-            line-height: 1.5;
-        }
+        .party-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .party-detail { font-size: 11px; color: #64748b; line-height: 1.5; }
 
-        /* Items table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 24px;
-        }
+        /* ===== ITEMS TABLE ===== */
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         .items-table thead th {
-            background: #4f46e5;
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 10px 12px;
-            text-align: left;
+            background: {{ $headerBg }};
+            color: {{ $headerText }};
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.04em;
+            padding: 10px 12px; text-align: left;
+            @if($isMinimal) background: #f8fafc; color: #334155; border-bottom: 2px solid #e2e8f0; @endif
         }
-        .items-table thead th:first-child {
-            border-radius: 6px 0 0 0;
-        }
-        .items-table thead th:last-child {
-            border-radius: 0 6px 0 0;
-            text-align: right;
-        }
+        @if(!$isMinimal)
+        .items-table thead th:first-child { border-radius: var(--radius) 0 0 0; }
+        .items-table thead th:last-child { border-radius: 0 var(--radius) 0 0; }
+        @endif
         .items-table thead th.text-center { text-align: center; }
         .items-table thead th.text-right { text-align: right; }
         .items-table tbody td {
@@ -176,177 +140,98 @@
             font-size: 12px;
         }
         .items-table tbody tr:last-child td {
-            border-bottom: 2px solid #4f46e5;
+            @if($isClassic) border-bottom: 2px double var(--main);
+            @elseif($isMinimal) border-bottom: 1px solid #cbd5e1;
+            @else border-bottom: 2px solid var(--main); @endif
         }
         .items-table tbody td.text-center { text-align: center; }
         .items-table tbody td.text-right { text-align: right; }
-        .items-table tbody tr:nth-child(even) {
-            background: #f8fafc;
-        }
+        @if(!$isMinimal) .items-table tbody tr:nth-child(even) { background: var(--main-light); } @endif
 
-        /* Totals */
-        .totals-section {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 30px;
-        }
-        .totals-box {
-            width: 300px;
-        }
-        .totals-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 12px;
-        }
-        .totals-row.border-top {
-            border-top: 1px solid #e2e8f0;
-            margin-top: 4px;
-            padding-top: 10px;
-        }
+        /* ===== TOTALS ===== */
+        .totals-section { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+        .totals-box { width: 300px; }
+        .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; }
+        .totals-row.border-top { border-top: 1px solid #e2e8f0; margin-top: 4px; padding-top: 10px; }
         .totals-row.grand-total {
-            background: #4f46e5;
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: 800;
-            margin-top: 8px;
+            @if($isMinimal)
+            background: #1e293b; color: #fff;
+            @else
+            background: var(--main); color: #fff;
+            @endif
+            padding: 10px 14px; border-radius: var(--radius);
+            font-size: 15px; font-weight: 800; margin-top: 8px;
         }
 
-        /* Bank info */
+        /* ===== BANK ===== */
         .bank-section {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 14px;
-            margin-bottom: 24px;
+            background: var(--main-light); border: 1px solid #e2e8f0;
+            border-radius: var(--radius); padding: 14px; margin-bottom: 24px;
         }
-        .bank-title {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #4f46e5;
-            margin-bottom: 8px;
-        }
-        .bank-detail {
-            font-size: 12px;
-            color: #334155;
-            line-height: 1.6;
-        }
+        .bank-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--main); margin-bottom: 8px; }
+        .bank-detail { font-size: 12px; color: #334155; line-height: 1.6; }
 
-        /* Footer */
+        /* ===== FOOTER ===== */
         .invoice-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e2e8f0;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-top: 30px; padding-top: 20px;
+            @if($isClassic) border-top: 2px double #94a3b8;
+            @else border-top: 2px solid #e2e8f0; @endif
         }
-        .conditions-box {
-            flex: 1;
-            font-size: 11px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-        .signature-box {
-            width: 200px;
-            text-align: center;
-            padding-top: 10px;
-        }
-        .signature-line {
-            border-top: 1px dashed #94a3b8;
-            margin-top: 60px;
-            padding-top: 6px;
-            font-size: 10px;
-            color: #64748b;
-        }
-        .thank-you {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 12px;
-            color: #64748b;
-            font-style: italic;
-        }
+        .conditions-box { flex: 1; font-size: 11px; color: #64748b; line-height: 1.6; }
+        .signature-box { width: 200px; text-align: center; padding-top: 10px; }
+        .signature-line { border-top: 1px dashed #94a3b8; margin-top: 60px; padding-top: 6px; font-size: 10px; color: #64748b; }
+        .thank-you { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; font-style: italic; }
 
-        /* Action buttons */
-        .action-bar {
-            max-width: 800px;
-            margin: 0 auto 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+        /* ===== ACTION BAR ===== */
+        .action-bar { max-width: 800px; margin: 0 auto 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .action-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            text-decoration: none; cursor: pointer; border: none; transition: all 0.2s;
         }
-        .btn-print { background: #4f46e5; color: #fff; }
-        .btn-print:hover { background: #4338ca; }
+        .btn-print { background: var(--main); color: #fff; }
+        .btn-print:hover { opacity: 0.9; }
         .btn-back { background: #e2e8f0; color: #334155; }
         .btn-back:hover { background: #cbd5e1; }
         .btn-type { background: #fff; color: #334155; border: 1px solid #e2e8f0; }
         .btn-type:hover { background: #f8fafc; }
-        .btn-type.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
-        .lang-switch {
-            margin-left: auto;
-            display: flex;
-            gap: 4px;
-        }
+        .btn-type.active { background: var(--main); color: #fff; border-color: var(--main); }
+        .lang-switch { margin-left: auto; display: flex; gap: 4px; }
         .lang-btn {
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            text-decoration: none;
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            color: #64748b;
-            cursor: pointer;
+            padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
+            text-decoration: none; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer;
         }
-        .lang-btn.active {
-            background: #4f46e5;
-            color: #fff;
-            border-color: #4f46e5;
+        .lang-btn.active { background: var(--main); color: #fff; border-color: var(--main); }
+        .tpl-switch { display: flex; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 8px; margin-left: 8px; }
+        .tpl-btn {
+            padding: 8px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+            text-decoration: none; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer;
         }
+        .tpl-btn.active { background: var(--main); color: #fff; border-color: var(--main); }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
-{{-- Action Bar (not printed) --}}
+{{-- Action Bar --}}
 <div class="action-bar no-print">
-    <a href="{{ route('invoices.index') }}" class="action-btn btn-back">
-        <i class="fas fa-arrow-left"></i> {{ $isFr ? 'Retour' : 'Back' }}
-    </a>
-    <button onclick="window.print()" class="action-btn btn-print">
-        <i class="fas fa-print"></i> {{ $isFr ? 'Imprimer' : 'Print' }}
-    </button>
+    <a href="{{ route('invoices.index') }}" class="action-btn btn-back"><i class="fas fa-arrow-left"></i> {{ $isFr ? 'Retour' : 'Back' }}</a>
+    <button onclick="window.print()" class="action-btn btn-print"><i class="fas fa-print"></i> {{ $isFr ? 'Imprimer' : 'Print' }}</button>
 
-    {{-- Type switcher --}}
     @foreach(['facture', 'proforma', 'bon_livraison', 'devis'] as $t)
-    <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $t, 'lang' => $lang]) }}"
-       class="action-btn btn-type {{ $type === $t ? 'active' : '' }}">
-        {{ $titles[$t][$lang] }}
-    </a>
+    <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $t, 'lang' => $lang, 'tpl' => $template]) }}" class="action-btn btn-type {{ $type === $t ? 'active' : '' }}">{{ $titles[$t][$lang] }}</a>
     @endforeach
 
-    {{-- Language switcher --}}
+    <div class="tpl-switch">
+        @foreach(['modern' => 'Modern', 'classic' => 'Classic', 'minimal' => 'Minimal'] as $tKey => $tLabel)
+        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $type, 'lang' => $lang, 'tpl' => $tKey]) }}" class="tpl-btn {{ $template === $tKey ? 'active' : '' }}">{{ $tLabel }}</a>
+        @endforeach
+    </div>
+
     <div class="lang-switch">
-        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $type, 'lang' => 'fr']) }}"
-           class="lang-btn {{ $lang === 'fr' ? 'active' : '' }}">FR</a>
-        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $type, 'lang' => 'en']) }}"
-           class="lang-btn {{ $lang === 'en' ? 'active' : '' }}">EN</a>
+        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $type, 'lang' => 'fr', 'tpl' => $template]) }}" class="lang-btn {{ $lang === 'fr' ? 'active' : '' }}">FR</a>
+        <a href="{{ route('invoices.generate', ['saleId' => $sale->id, 'type' => $type, 'lang' => 'en', 'tpl' => $template]) }}" class="lang-btn {{ $lang === 'en' ? 'active' : '' }}">EN</a>
     </div>
 </div>
 
@@ -356,15 +241,17 @@
     {{-- Header --}}
     <div class="invoice-header">
         <div class="company-info">
-            @if(($settings['receipt_show_logo'] ?? '1') === '1' && !empty($settings['receipt_logo']))
+            @if($showLogo && !empty($settings['receipt_logo']))
             <img src="{{ asset('storage/' . $settings['receipt_logo']) }}" alt="Logo" class="company-logo">
             @endif
             <div class="company-name">{{ $settings['store_name'] ?? 'My Store' }}</div>
             <div class="company-details">
                 @if(!empty($settings['store_address'])){{ $settings['store_address'] }}<br>@endif
+                @if(!empty($settings['store_city'])){{ $settings['store_city'] }}<br>@endif
                 @if(!empty($settings['store_phone']))<i class="fas fa-phone" style="font-size:10px"></i> {{ $settings['store_phone'] }}@endif
                 @if(!empty($settings['store_phone']) && !empty($settings['store_email'])) &nbsp;|&nbsp; @endif
                 @if(!empty($settings['store_email']))<i class="fas fa-envelope" style="font-size:10px"></i> {{ $settings['store_email'] }}@endif
+                @if(!empty($settings['store_website']))<br><i class="fas fa-globe" style="font-size:10px"></i> {{ $settings['store_website'] }}@endif
             </div>
         </div>
         <div class="doc-type-box">
@@ -372,40 +259,31 @@
             <div class="doc-number">N&deg; {{ $invoiceNum }}</div>
             <div class="doc-date">{{ $isFr ? 'Date' : 'Date' }}: {{ $sale->created_at->format('d/m/Y') }}</div>
             @if($type === 'facture' || $type === 'proforma')
-            <div class="doc-date">{{ $isFr ? 'Echéance' : 'Due' }}: {{ $sale->created_at->addDays(30)->format('d/m/Y') }}</div>
+            <div class="doc-date">{{ $isFr ? 'Echeance' : 'Due' }}: {{ $sale->created_at->addDays($dueDays)->format('d/m/Y') }}</div>
             @endif
         </div>
     </div>
 
-    {{-- Moroccan Fiscal Identifiers --}}
+    {{-- Fiscal IDs --}}
     @if(!empty($settings['ice']) || !empty($settings['if_number']) || !empty($settings['rc']) || !empty($settings['cnss']) || !empty($settings['patente']))
     <div class="fiscal-row">
-        @if(!empty($settings['ice']))
-        <div class="fiscal-item"><span class="fiscal-label">ICE:</span> <span class="fiscal-value">{{ $settings['ice'] }}</span></div>
+        @foreach(['ice' => 'ICE', 'if_number' => 'IF', 'rc' => 'RC', 'cnss' => 'CNSS', 'patente' => 'Patente'] as $fKey => $fLabel)
+        @if(!empty($settings[$fKey]))
+        <div class="fiscal-item"><span class="fiscal-label">{{ $fLabel }}:</span> <span class="fiscal-value">{{ $settings[$fKey] }}</span></div>
         @endif
-        @if(!empty($settings['if_number']))
-        <div class="fiscal-item"><span class="fiscal-label">IF:</span> <span class="fiscal-value">{{ $settings['if_number'] }}</span></div>
-        @endif
-        @if(!empty($settings['rc']))
-        <div class="fiscal-item"><span class="fiscal-label">RC:</span> <span class="fiscal-value">{{ $settings['rc'] }}</span></div>
-        @endif
-        @if(!empty($settings['cnss']))
-        <div class="fiscal-item"><span class="fiscal-label">CNSS:</span> <span class="fiscal-value">{{ $settings['cnss'] }}</span></div>
-        @endif
-        @if(!empty($settings['patente']))
-        <div class="fiscal-item"><span class="fiscal-label">{{ $isFr ? 'Patente' : 'Patente' }}:</span> <span class="fiscal-value">{{ $settings['patente'] }}</span></div>
-        @endif
+        @endforeach
     </div>
     @endif
 
-    {{-- Parties: Seller / Client --}}
+    {{-- Seller / Client --}}
     <div class="parties-row">
         <div class="party-box">
             <div class="party-title">{{ $isFr ? 'VENDEUR' : 'SELLER' }}</div>
             <div class="party-name">{{ $settings['store_name'] ?? 'My Store' }}</div>
             <div class="party-detail">
                 @if(!empty($settings['store_address'])){{ $settings['store_address'] }}<br>@endif
-                @if(!empty($settings['store_phone'])){{ $isFr ? 'Tél' : 'Phone' }}: {{ $settings['store_phone'] }}<br>@endif
+                @if(!empty($settings['store_city'])){{ $settings['store_city'] }}<br>@endif
+                @if(!empty($settings['store_phone'])){{ $isFr ? 'Tel' : 'Phone' }}: {{ $settings['store_phone'] }}<br>@endif
                 @if(!empty($settings['store_email']))Email: {{ $settings['store_email'] }}@endif
             </div>
         </div>
@@ -414,8 +292,9 @@
             @if($sale->customer)
             <div class="party-name">{{ $sale->customer->name }}</div>
             <div class="party-detail">
-                @if(!empty($sale->customer->phone)){{ $isFr ? 'Tél' : 'Phone' }}: {{ $sale->customer->phone }}<br>@endif
+                @if(!empty($sale->customer->phone)){{ $isFr ? 'Tel' : 'Phone' }}: {{ $sale->customer->phone }}<br>@endif
                 @if(!empty($sale->customer->email))Email: {{ $sale->customer->email }}<br>@endif
+                @if(!empty($sale->customer->address)){{ $sale->customer->address }}<br>@endif
                 @if(!empty($sale->customer->city)){{ $isFr ? 'Ville' : 'City' }}: {{ $sale->customer->city }}@endif
             </div>
             @else
@@ -429,8 +308,8 @@
         <thead>
             <tr>
                 <th style="width:40px">#</th>
-                <th>{{ $isFr ? 'Désignation' : 'Description' }}</th>
-                <th class="text-center" style="width:80px">{{ $isFr ? 'Qté' : 'Qty' }}</th>
+                <th>{{ $isFr ? 'Designation' : 'Description' }}</th>
+                <th class="text-center" style="width:80px">{{ $isFr ? 'Qte' : 'Qty' }}</th>
                 <th class="text-right" style="width:110px">{{ $isFr ? 'Prix unitaire' : 'Unit Price' }}</th>
                 <th class="text-right" style="width:120px">{{ $isFr ? 'Montant HT' : 'Amount' }}</th>
             </tr>
@@ -441,7 +320,7 @@
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $item->product->name ?? 'Product' }}</td>
                 <td class="text-center">{{ $item->quantity }}</td>
-                <td class="text-right">{{ number_format($item->price, 2) }} {{ $currency }}</td>
+                <td class="text-right">{{ number_format($item->unit_price ?? $item->price ?? 0, 2) }} {{ $currency }}</td>
                 <td class="text-right">{{ number_format($item->total, 2) }} {{ $currency }}</td>
             </tr>
             @endforeach
@@ -455,7 +334,7 @@
                 <span>{{ $isFr ? 'Total HT' : 'Subtotal (excl. tax)' }}</span>
                 <span>{{ number_format($subtotal, 2) }} {{ $currency }}</span>
             </div>
-            @if($sale->discount ?? 0 > 0)
+            @if(($sale->discount ?? 0) > 0)
             <div class="totals-row">
                 <span>{{ $isFr ? 'Remise' : 'Discount' }}</span>
                 <span>-{{ number_format($sale->discount, 2) }} {{ $currency }}</span>
@@ -476,7 +355,7 @@
     @if($type === 'facture' || $type === 'proforma')
     @if(!empty($settings['bank_name']) || !empty($settings['bank_rib']))
     <div class="bank-section">
-        <div class="bank-title"><i class="fas fa-university" style="font-size:11px"></i> {{ $isFr ? 'COORDONNÉES BANCAIRES' : 'BANK DETAILS' }}</div>
+        <div class="bank-title"><i class="fas fa-university" style="font-size:11px"></i> {{ $isFr ? 'COORDONNEES BANCAIRES' : 'BANK DETAILS' }}</div>
         <div class="bank-detail">
             @if(!empty($settings['bank_name'])){{ $isFr ? 'Banque' : 'Bank' }}: <strong>{{ $settings['bank_name'] }}</strong><br>@endif
             @if(!empty($settings['bank_rib']))RIB: <strong>{{ $settings['bank_rib'] }}</strong>@endif
@@ -485,15 +364,22 @@
     @endif
     @endif
 
-    {{-- Footer: Conditions & Signature --}}
+    {{-- Footer: Conditions, Legal, Signature --}}
     <div class="invoice-footer">
         <div class="conditions-box">
             @if(!empty($settings['invoice_conditions']))
             <strong>{{ $isFr ? 'Conditions de paiement:' : 'Payment Terms:' }}</strong><br>
-            {{ $settings['invoice_conditions'] }}
+            {{ $settings['invoice_conditions'] }}<br>
+            @endif
+            @if(!empty($settings['invoice_mention_legale']))
+            <br><strong>{{ $isFr ? 'Mentions legales:' : 'Legal Notice:' }}</strong><br>
+            {{ $settings['invoice_mention_legale'] }}<br>
+            @endif
+            @if(!empty($settings['invoice_notes']))
+            <br><em>{{ $settings['invoice_notes'] }}</em><br>
             @endif
             @if(!empty($settings['invoice_footer']))
-            <br><br>{{ $settings['invoice_footer'] }}
+            <br>{{ $settings['invoice_footer'] }}
             @endif
         </div>
         <div class="signature-box">
@@ -506,39 +392,30 @@
         {{ $isFr ? 'Merci pour votre confiance' : 'Thank you for your business' }}
     </div>
 
-    {{-- Full Société Information Footer --}}
-    <div style="margin-top:20px; padding-top:16px; border-top:2px solid #4f46e5; text-align:center;">
-        <div style="font-size:11px; font-weight:700; color:#4f46e5; margin-bottom:6px; text-transform:uppercase;">
+    {{-- Full Societe Footer --}}
+    <div style="margin-top:20px; padding-top:16px; border-top:2px solid var(--main); text-align:center;">
+        <div style="font-size:11px; font-weight:700; color:var(--main); margin-bottom:6px; text-transform:uppercase;">
             {{ $settings['store_name'] ?? 'My Store' }}
         </div>
         <div style="font-size:10px; color:#475569; line-height:1.8;">
-            @if(!empty($settings['store_address']))
-            <i class="fas fa-map-marker-alt" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_address'] }}
-            @endif
-            @if(!empty($settings['store_phone']))
-            &nbsp;&bull;&nbsp; <i class="fas fa-phone" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_phone'] }}
-            @endif
-            @if(!empty($settings['store_email']))
-            &nbsp;&bull;&nbsp; <i class="fas fa-envelope" style="font-size:9px; color:#4f46e5;"></i> {{ $settings['store_email'] }}
-            @endif
+            @if(!empty($settings['store_address']))<i class="fas fa-map-marker-alt" style="font-size:9px; color:var(--main);"></i> {{ $settings['store_address'] }}@endif
+            @if(!empty($settings['store_city'])), {{ $settings['store_city'] }}@endif
+            @if(!empty($settings['store_phone'])) &bull; <i class="fas fa-phone" style="font-size:9px; color:var(--main);"></i> {{ $settings['store_phone'] }}@endif
+            @if(!empty($settings['store_email'])) &bull; <i class="fas fa-envelope" style="font-size:9px; color:var(--main);"></i> {{ $settings['store_email'] }}@endif
+            @if(!empty($settings['store_website'])) &bull; <i class="fas fa-globe" style="font-size:9px; color:var(--main);"></i> {{ $settings['store_website'] }}@endif
             <br>
             @php $fiscals = []; @endphp
-            @if(!empty($settings['ice'])) @php $fiscals[] = 'ICE: ' . $settings['ice']; @endphp @endif
-            @if(!empty($settings['if_number'])) @php $fiscals[] = 'IF: ' . $settings['if_number']; @endphp @endif
-            @if(!empty($settings['rc'])) @php $fiscals[] = 'RC: ' . $settings['rc']; @endphp @endif
-            @if(!empty($settings['cnss'])) @php $fiscals[] = 'CNSS: ' . $settings['cnss']; @endphp @endif
-            @if(!empty($settings['patente'])) @php $fiscals[] = 'Patente: ' . $settings['patente']; @endphp @endif
-            @if(count($fiscals) > 0)
-            <span style="font-weight:600;">{{ implode(' &bull; ', $fiscals) }}</span><br>
-            @endif
+            @foreach(['ice' => 'ICE', 'if_number' => 'IF', 'rc' => 'RC', 'cnss' => 'CNSS', 'patente' => 'Patente'] as $fk => $fl)
+            @if(!empty($settings[$fk])) @php $fiscals[] = $fl . ': ' . $settings[$fk]; @endphp @endif
+            @endforeach
+            @if(count($fiscals) > 0)<span style="font-weight:600;">{{ implode(' &bull; ', $fiscals) }}</span><br>@endif
             @if(!empty($settings['bank_name']) || !empty($settings['bank_rib']))
-            <i class="fas fa-university" style="font-size:9px; color:#4f46e5;"></i>
+            <i class="fas fa-university" style="font-size:9px; color:var(--main);"></i>
             @if(!empty($settings['bank_name'])){{ $settings['bank_name'] }}@endif
             @if(!empty($settings['bank_rib'])) - RIB: {{ $settings['bank_rib'] }}@endif
             @endif
         </div>
     </div>
 </div>
-
 </body>
 </html>

@@ -48,8 +48,9 @@
                     <td class="px-6 py-3 text-right font-semibold">{{ number_format($customer->total_spent, 2) }} {{ $cur }}</td>
                     <td class="px-6 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
-                            <a href="{{ route('customers.show', $customer) }}" class="text-primary-600 hover:text-primary-800"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('customers.edit', $customer) }}" class="text-slate-400 hover:text-slate-600"><i class="fas fa-edit"></i></a>
+                            <a href="{{ route('customers.show', $customer) }}" class="text-primary-600 hover:text-primary-800" title="{{ $L::t('common.view') }}"><i class="fas fa-eye"></i></a>
+                            <a href="{{ route('customers.edit', $customer) }}" class="text-slate-400 hover:text-slate-600" title="{{ $L::t('common.edit') }}"><i class="fas fa-edit"></i></a>
+                            <button onclick="confirmDeleteCustomer({{ $customer->id }}, '{{ addslashes($customer->name) }}')" class="text-red-400 hover:text-red-600" title="{{ $L::locale() === 'fr' ? 'Supprimer' : 'Delete' }}"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -61,4 +62,33 @@
     </div>
     {{ $customers->withQueryString()->links() }}
 </div>
+
+{{-- Delete Confirmation Modal --}}
+<div id="deleteModal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+        <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-bold mb-2">{{ $L::locale() === 'fr' ? 'Supprimer le client' : 'Delete Customer' }}</h3>
+            <p class="text-sm text-slate-500 mb-4">{{ $L::locale() === 'fr' ? 'Voulez-vous vraiment supprimer' : 'Are you sure you want to delete' }} <strong id="deleteCustomerName"></strong>?</p>
+        </div>
+        <form id="deleteForm" method="POST">
+            @csrf
+            @method('DELETE')
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('deleteModal').style.display='none'" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">{{ $L::locale() === 'fr' ? 'Annuler' : 'Cancel' }}</button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">{{ $L::locale() === 'fr' ? 'Supprimer' : 'Delete' }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmDeleteCustomer(id, name) {
+    document.getElementById('deleteCustomerName').textContent = name;
+    document.getElementById('deleteForm').action = '/customers/' + id;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+</script>
 @endsection

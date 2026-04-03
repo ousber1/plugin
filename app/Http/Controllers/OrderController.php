@@ -23,8 +23,12 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Sale::with(['customer:id,name,phone', 'user:id,name'])
-            ->withCount('items')
-            ->where('channel', 'online');
+            ->withCount('items');
+
+        // Filter by channel (default: show all)
+        if ($request->filled('channel')) {
+            $query->where('channel', $request->input('channel'));
+        }
 
         // Filter by status
         if ($request->filled('status')) {
@@ -374,7 +378,26 @@ class OrderController extends Controller
     public function destroy(int $id)
     {
         try {
-            $order = Sale::where('channel', 'online')->findOrFail($id);
+            $order = Sale::findOrFail($id);
+
+            // Restore stock if not already cancelled
+            if ($order->status !== 'cancelled') {
+                $order->load('items');
+                foreach ($order->items as $item) {
+                    Product::where('id', $item->product_id)
+                        ->increment('stock_quantity', $item->quantity);
+
+                    StockMovement::create([
+                        'product_id' => $item->product_id,
+                        'type' => 'in',
+                        'quantity' => $item->quantity,
+                        'reference' => $order->invoice_number,
+                        'notes' => 'Order deleted - stock restored',
+                        'user_id' => Auth::id(),
+                    ]);
+                }
+            }
+
             $order->delete();
 
             return redirect()->route('orders.index')

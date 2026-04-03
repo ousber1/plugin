@@ -101,6 +101,8 @@ class InvoiceController extends Controller
             'store_phone',
             'store_email',
             'store_address',
+            'store_website',
+            'store_city',
             'currency',
             'tax_rate',
             // Moroccan fiscal identifiers
@@ -113,8 +115,14 @@ class InvoiceController extends Controller
             'bank_name',
             'bank_rib',
             // Invoice presentation
+            'invoice_template',
+            'invoice_color',
+            'invoice_show_logo',
+            'invoice_due_days',
             'invoice_conditions',
             'invoice_footer',
+            'invoice_notes',
+            'invoice_mention_legale',
             'receipt_logo',
             'receipt_show_logo',
         ];
@@ -122,6 +130,11 @@ class InvoiceController extends Controller
         $settings = [];
         foreach ($settingKeys as $key) {
             $settings[$key] = Setting::get($key);
+        }
+
+        // Allow template override from URL
+        if ($request->filled('tpl') && in_array($request->input('tpl'), ['modern', 'classic', 'minimal'])) {
+            $settings['invoice_template'] = $request->input('tpl');
         }
 
         // Calculate invoice totals

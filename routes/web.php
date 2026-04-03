@@ -127,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users', [SettingController::class, 'users'])->name('users');
         Route::post('/users', [SettingController::class, 'storeUser'])->name('users.store');
         Route::put('/users/{id}', [SettingController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{id}', [SettingController::class, 'deleteUser'])->name('users.delete');
     });
 });
 

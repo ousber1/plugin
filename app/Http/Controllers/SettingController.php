@@ -28,14 +28,21 @@ class SettingController extends Controller
         $groupMap = [
             'store_name' => 'general', 'currency' => 'general', 'store_phone' => 'general',
             'store_email' => 'general', 'store_address' => 'general', 'tax_rate' => 'general',
-            'low_stock_threshold' => 'general',
+            'low_stock_threshold' => 'general', 'store_website' => 'general', 'store_city' => 'general',
+            'default_language' => 'general', 'timezone' => 'general',
             'receipt_header' => 'receipt', 'receipt_footer' => 'receipt', 'receipt_width' => 'receipt',
             'receipt_show_logo' => 'receipt', 'receipt_logo' => 'receipt',
             'ice' => 'invoice', 'if_number' => 'invoice', 'rc' => 'invoice', 'cnss' => 'invoice',
             'patente' => 'invoice', 'bank_name' => 'invoice', 'bank_rib' => 'invoice',
             'invoice_conditions' => 'invoice', 'invoice_footer' => 'invoice',
+            'invoice_template' => 'invoice', 'invoice_color' => 'invoice',
+            'invoice_show_logo' => 'invoice', 'invoice_due_days' => 'invoice',
+            'invoice_notes' => 'invoice', 'invoice_mention_legale' => 'invoice',
             'whatsapp_token' => 'whatsapp', 'whatsapp_phone_id' => 'whatsapp', 'whatsapp_verify_token' => 'whatsapp',
             'openai_api_key' => 'api', 'meta_ads_token' => 'api', 'meta_ads_account_id' => 'api',
+            'pos_default_customer' => 'pos', 'pos_sound_enabled' => 'pos', 'pos_auto_print' => 'pos',
+            'notification_low_stock' => 'notifications', 'notification_new_order' => 'notifications',
+            'notification_email' => 'notifications',
         ];
 
         foreach ($request->input('settings', []) as $key => $value) {
@@ -43,9 +50,19 @@ class SettingController extends Controller
             Setting::set($key, $value ?? '', $group);
         }
 
-        // Handle receipt_show_logo checkbox (unchecked = not sent)
-        if (!$request->has('settings.receipt_show_logo')) {
-            Setting::set('receipt_show_logo', '0', 'receipt');
+        // Handle checkboxes (unchecked = not sent)
+        $checkboxes = [
+            'receipt_show_logo' => 'receipt',
+            'invoice_show_logo' => 'invoice',
+            'pos_sound_enabled' => 'pos',
+            'pos_auto_print' => 'pos',
+            'notification_low_stock' => 'notifications',
+            'notification_new_order' => 'notifications',
+        ];
+        foreach ($checkboxes as $key => $group) {
+            if (!$request->has("settings.{$key}")) {
+                Setting::set($key, '0', $group);
+            }
         }
 
         // Handle logo upload
@@ -129,5 +146,27 @@ class SettingController extends Controller
 
         $user->update($validated);
         return redirect()->route('admin.users')->with('success', 'User updated.');
+    }
+
+    public function deleteUser(int $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deleting yourself
+        if ($user->id === Auth::id()) {
+            return redirect()->route('admin.users')->with('error', 'You cannot delete your own account.');
+        }
+
+        // Deactivate and reassign sales to admin before deleting
+        $user->update(['is_active' => false]);
+
+        // Check if user has sales - if so, just deactivate
+        if ($user->sales()->count() > 0) {
+            return redirect()->route('admin.users')->with('success', 'User deactivated (has sales history).');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users')->with('success', 'User deleted successfully.');
     }
 }
