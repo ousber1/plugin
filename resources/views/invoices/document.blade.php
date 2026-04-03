@@ -351,6 +351,127 @@
         </div>
     </div>
 
+    {{-- Amount in words --}}
+    @php
+        function numberToFrenchWords($number) {
+            $number = abs($number);
+            $intPart = intval($number);
+            $decPart = round(($number - $intPart) * 100);
+
+            $units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',
+                       'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+            $tens = ['', 'dix', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante', 'quatre-vingt', 'quatre-vingt'];
+
+            $convert = function($n) use (&$convert, $units, $tens) {
+                if ($n < 0) return '';
+                if ($n == 0) return 'zero';
+                if ($n < 20) return $units[$n];
+                if ($n < 70) {
+                    $t = $tens[intval($n / 10)];
+                    $u = $n % 10;
+                    if ($u == 1 && $n < 70) return $t . ' et un';
+                    return $u > 0 ? $t . '-' . $units[$u] : $t;
+                }
+                if ($n < 80) {
+                    $sub = $n - 60;
+                    if ($sub == 11) return 'soixante et onze';
+                    return 'soixante-' . ($sub < 20 ? $units[$sub] : $tens[intval($sub/10)] . ($sub%10 > 0 ? '-'.$units[$sub%10] : ''));
+                }
+                if ($n < 100) {
+                    $sub = $n - 80;
+                    if ($sub == 0) return 'quatre-vingts';
+                    return 'quatre-vingt-' . ($sub < 20 ? $units[$sub] : $tens[intval($sub/10)] . ($sub%10 > 0 ? '-'.$units[$sub%10] : ''));
+                }
+                if ($n < 200) {
+                    $r = $n - 100;
+                    return $r == 0 ? 'cent' : 'cent ' . $convert($r);
+                }
+                if ($n < 1000) {
+                    $h = intval($n / 100);
+                    $r = $n % 100;
+                    $prefix = $units[$h] . ' cent';
+                    if ($r == 0) return $prefix . 's';
+                    return $prefix . ' ' . $convert($r);
+                }
+                if ($n < 2000) {
+                    $r = $n - 1000;
+                    return $r == 0 ? 'mille' : 'mille ' . $convert($r);
+                }
+                if ($n < 1000000) {
+                    $k = intval($n / 1000);
+                    $r = $n % 1000;
+                    return $convert($k) . ' mille' . ($r > 0 ? ' ' . $convert($r) : '');
+                }
+                if ($n < 1000000000) {
+                    $m = intval($n / 1000000);
+                    $r = $n % 1000000;
+                    $prefix = ($m == 1 ? 'un million' : $convert($m) . ' millions');
+                    return $prefix . ($r > 0 ? ' ' . $convert($r) : '');
+                }
+                return (string)$n;
+            };
+
+            $result = $convert($intPart);
+            if ($decPart > 0) {
+                $result .= ' dirhams et ' . $convert($decPart) . ' centimes';
+            } else {
+                $result .= ' dirhams';
+            }
+            return mb_strtoupper(mb_substr($result, 0, 1)) . mb_substr($result, 1);
+        }
+
+        function numberToEnglishWords($number) {
+            $number = abs($number);
+            $intPart = intval($number);
+            $decPart = round(($number - $intPart) * 100);
+
+            $ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+                     'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+            $tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+            $convert = function($n) use (&$convert, $ones, $tens) {
+                if ($n == 0) return 'zero';
+                if ($n < 20) return $ones[$n];
+                if ($n < 100) return $tens[intval($n/10)] . ($n%10 > 0 ? '-' . $ones[$n%10] : '');
+                if ($n < 1000) {
+                    $h = intval($n/100);
+                    $r = $n % 100;
+                    return $ones[$h] . ' hundred' . ($r > 0 ? ' and ' . $convert($r) : '');
+                }
+                if ($n < 1000000) {
+                    $k = intval($n/1000);
+                    $r = $n % 1000;
+                    return $convert($k) . ' thousand' . ($r > 0 ? ' ' . $convert($r) : '');
+                }
+                if ($n < 1000000000) {
+                    $m = intval($n/1000000);
+                    $r = $n % 1000000;
+                    return $convert($m) . ' million' . ($r > 0 ? ' ' . $convert($r) : '');
+                }
+                return (string)$n;
+            };
+
+            $result = $convert($intPart);
+            if ($decPart > 0) {
+                $result .= ' dirhams and ' . $convert($decPart) . ' centimes';
+            } else {
+                $result .= ' dirhams';
+            }
+            return ucfirst($result);
+        }
+
+        $amountInWords = $isFr ? numberToFrenchWords($totalTtc) : numberToEnglishWords($totalTtc);
+    @endphp
+
+    <div style="margin-bottom: 24px; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 14px; background: var(--main-light);">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--main); margin-bottom: 6px; letter-spacing: 0.03em;">
+            {{ $isFr ? 'Arrêtée la présente facture à la somme de :' : 'This invoice is set at the amount of:' }}
+        </div>
+        <div style="font-size: 13px; font-weight: 600; color: #1e293b; font-style: italic;">
+            {{ $amountInWords }}
+        </div>
+    </div>
+
     {{-- Bank Details --}}
     @if($type === 'facture' || $type === 'proforma')
     @if(!empty($settings['bank_name']) || !empty($settings['bank_rib']))
