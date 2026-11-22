@@ -1,0 +1,10 @@
+; Recommended PHP settings (php.ini, .user.ini on cPanel, or MultiPHP INI Editor).
+; Videos are uploaded in chunks of VIDEO_CHUNK_MB, so these only need to exceed one chunk.
+upload_max_filesize = 32M
+post_max_size = 40M
+memory_limit = 256M
+max_execution_time = 120
+max_input_time = 120
+; Recommended in production
+expose_php = Off
+opcache.enable = 1

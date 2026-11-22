@@ -1,0 +1,15 @@
+{
+ "Verify Email Address": "تأكيد البريد الإلكتروني",
+ "Please click the button below to verify your email address.": "اضغط على الزر أدناه لتأكيد بريدك الإلكتروني.",
+ "If you did not create an account, no further action is required.": "إذا لم تنشئ حسابًا، فلا داعي لأي إجراء.",
+ "Reset Password Notification": "إعادة تعيين كلمة المرور",
+ "You are receiving this email because we received a password reset request for your account.": "وصلتك هذه الرسالة لأننا تلقينا طلبًا لإعادة تعيين كلمة مرور حسابك.",
+ "Reset Password": "إعادة تعيين كلمة المرور",
+ "This password reset link will expire in :count minutes.": "تنتهي صلاحية هذا الرابط خلال :count دقيقة.",
+ "If you did not request a password reset, no further action is required.": "إذا لم تطلب ذلك، فلا داعي لأي إجراء.",
+ "Hello!": "مرحبًا!",
+ "Regards,": "مع التحية،",
+ "Whoops!": "عذرًا!",
+ "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "إذا لم يعمل زر «:actionText»، انسخ الرابط التالي والصقه في المتصفح:",
+ "All rights reserved.": "جميع الحقوق محفوظة."
+}

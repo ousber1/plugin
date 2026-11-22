@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', __('الصفحة غير موجودة'))
+@section('icon', 'search')
+@section('heading', __('الصفحة غير موجودة'))
+@section('message', __('ربما نُقلت الصفحة أو لم تعد متاحة.'))

@@ -1,0 +1,2 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>الموقع قيد الصيانة</title><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="container"><div class="card empty form-card"><h1 style="font-size:1.5rem">الموقع قيد الصيانة</h1><p>سنعود قريبًا.</p><a class="btn btn--primary" href="/">العودة إلى الرئيسية</a></div></main></body></html>

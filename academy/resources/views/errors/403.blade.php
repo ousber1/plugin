@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', __('غير مسموح'))
+@section('icon', 'lock')
+@section('heading', __('غير مسموح'))
+@section('message', (isset($exception) && $exception->getMessage()) ? $exception->getMessage() : __('ليست لديك صلاحية الوصول إلى هذه الصفحة.'))
