@@ -155,3 +155,38 @@
         });
     });
 })();
+
+/* Store: product gallery, lightbox and tabs. */
+(function () {
+    document.querySelectorAll('[data-gallery]').forEach(function (g) {
+        var main = g.querySelector('[data-gallery-main]');
+        g.querySelectorAll('[data-gallery-thumb]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                main.src = b.getAttribute('data-gallery-thumb');
+                g.querySelectorAll('[data-gallery-thumb]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+            });
+        });
+        var dlg = document.querySelector('[data-gallery-dialog]'), zoom = g.querySelector('[data-gallery-zoom]');
+        if (dlg && zoom && dlg.showModal) {
+            zoom.addEventListener('click', function () { dlg.querySelector('img').src = main.src; dlg.showModal(); });
+            dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+        } else if (zoom) { zoom.addEventListener('click', function () { window.open(main.src, '_blank'); }); }
+    });
+    document.querySelectorAll('[data-tabs]').forEach(function (t) {
+        var tabs = Array.prototype.slice.call(t.querySelectorAll('[role=tab]'));
+        function select(tab) {
+            tabs.forEach(function (x) {
+                var on = x === tab; x.setAttribute('aria-selected', on ? 'true' : 'false'); x.tabIndex = on ? 0 : -1;
+                var p = document.getElementById(x.getAttribute('aria-controls')); if (p) p.hidden = !on;
+            });
+        }
+        tabs.forEach(function (x, i) {
+            x.addEventListener('click', function () { select(x); });
+            x.addEventListener('keydown', function (e) {
+                var d = (e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0) * (document.dir === 'rtl' ? 1 : -1);
+                if (d) { e.preventDefault(); var n = tabs[(i + d + tabs.length) % tabs.length]; select(n); n.focus(); }
+            });
+        });
+        if (location.hash === '#reviews') { var r = t.querySelector('[aria-controls=tab-rev]'); if (r) select(r); }
+    });
+})();

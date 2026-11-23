@@ -87,13 +87,53 @@
             @endforeach
             @break
         @case('store')
-            <p class="muted small">تُعرض هذه المعلومات للمشتري بعد إنشاء طلب في المتجر الرقمي فقط (الدورات والشهادات لا تتطلب أي دفع عبر الموقع).</p>
-            <div class="form-grid">
-                <div class="field"><label for="bank_name">اسم البنك</label><input class="input" id="bank_name" name="bank_name" value="{{ old('bank_name', $s['bank_name']) }}"></div>
-                <div class="field"><label for="bank_account_holder">صاحب الحساب</label><input class="input" id="bank_account_holder" name="bank_account_holder" value="{{ old('bank_account_holder', $s['bank_account_holder']) }}"></div>
-                <div class="field"><label for="bank_rib">RIB (24 رقمًا)</label><input class="input ltr" id="bank_rib" name="bank_rib" value="{{ old('bank_rib', $s['bank_rib']) }}"></div>
-            </div>
-            <div class="field"><label for="bank_instructions">تعليمات إضافية</label><textarea class="textarea" id="bank_instructions" name="bank_instructions" rows="3">{{ old('bank_instructions', $s['bank_instructions']) }}</textarea></div>
+            @php $accounts = \App\Support\Shop::bankAccounts() ?: [['bank' => '', 'holder' => '', 'rib' => '']]; @endphp
+            <p class="muted small">المتجر مستقل عن الدورات المجانية والشهادات. فعّله من «الوحدات والقائمة». المنتجات: <a href="{{ route('admin.products.index') }}">إدارة المنتجات</a>.</p>
+            <x-admin.tr name="store_title" label="عنوان صفحة المتجر" :value="$s['store_title']"/>
+            <x-admin.tr name="store_subtitle" label="وصف صفحة المتجر" :value="$s['store_subtitle']" type="textarea" :rows="2"/>
+            <fieldset class="box"><legend class="label">العملات</legend>
+                <div class="form-grid">
+                    <div class="field"><label for="store_default_currency">العملة الافتراضية</label><select class="select" id="store_default_currency" name="store_default_currency"><option value="MAD" @selected($s['store_default_currency'] === 'MAD')>الدرهم المغربي (MAD)</option><option value="USD" @selected($s['store_default_currency'] === 'USD')>الدولار (USD)</option></select></div>
+                    <div class="field"><label for="store_usd_rate">سعر الدولار بالدرهم</label><input class="input ltr" type="number" step="0.01" min="0.1" id="store_usd_rate" name="store_usd_rate" value="{{ old('store_usd_rate', $s['store_usd_rate']) }}">
+                        <p class="hint">يُستعمل للمنتجات التي ليس لها سعر بالدولار. مثال: 10 يعني 499 درهم ≈ 50$.</p></div>
+                </div>
+                <label class="check"><input type="checkbox" name="store_usd_enabled" value="1" @checked($s['store_usd_enabled'])> السماح للزبائن بالدفع بالدولار</label>
+            </fieldset>
+            <fieldset class="box"><legend class="label">طرق الدفع</legend>
+                <label class="check field"><input type="checkbox" name="pay_bank_enabled" value="1" @checked($s['pay_bank_enabled'])> <strong>تحويل بنكي</strong> (بالدرهم)</label>
+                <div data-repeater class="field">
+                    <div data-list>
+                        @foreach ($accounts as $i => $a)
+                            <div class="repeater-item" data-item style="flex-wrap:wrap">
+                                <input class="input" style="flex:1 1 150px" name="bank_accounts[{{ $i }}][bank]" value="{{ $a['bank'] }}" placeholder="البنك (CIH، Attijariwafa…)" aria-label="البنك">
+                                <input class="input" style="flex:1 1 150px" name="bank_accounts[{{ $i }}][holder]" value="{{ $a['holder'] }}" placeholder="صاحب الحساب" aria-label="صاحب الحساب">
+                                <input class="input ltr" style="flex:2 1 220px" name="bank_accounts[{{ $i }}][rib]" value="{{ $a['rib'] }}" placeholder="RIB — 24 رقمًا" aria-label="RIB">
+                                <button class="btn btn--ghost btn--sm" type="button" data-remove>حذف</button>
+                            </div>
+                        @endforeach
+                    </div>
+                    <template><div class="repeater-item" data-item style="flex-wrap:wrap">
+                        <input class="input" style="flex:1 1 150px" name="bank_accounts[__INDEX__][bank]" placeholder="البنك" aria-label="البنك">
+                        <input class="input" style="flex:1 1 150px" name="bank_accounts[__INDEX__][holder]" placeholder="صاحب الحساب" aria-label="صاحب الحساب">
+                        <input class="input ltr" style="flex:2 1 220px" name="bank_accounts[__INDEX__][rib]" placeholder="RIB" aria-label="RIB">
+                        <button class="btn btn--ghost btn--sm" type="button" data-remove>حذف</button></div></template>
+                    <button class="btn btn--outline btn--sm" type="button" data-add><x-icon name="plus" size="16"/> حساب بنكي آخر</button>
+                </div>
+                <div class="field"><label for="bank_instructions">تعليمات إضافية</label><textarea class="textarea" id="bank_instructions" name="bank_instructions" rows="2">{{ old('bank_instructions', $s['bank_instructions']) }}</textarea></div>
+                <hr style="border:0;border-top:1px solid var(--border)">
+                <label class="check field"><input type="checkbox" name="pay_agency_enabled" value="1" @checked($s['pay_agency_enabled'])> <strong>وكالات تحويل الأموال</strong> (بالدرهم)</label>
+                <div class="form-grid">
+                    <div class="field"><label for="agency_names">الوكالات المقبولة</label><input class="input" id="agency_names" name="agency_names" value="{{ old('agency_names', $s['agency_names']) }}"></div>
+                    <div class="field"><label for="agency_receiver">اسم المستفيد (كما في البطاقة الوطنية)</label><input class="input" id="agency_receiver" name="agency_receiver" value="{{ old('agency_receiver', $s['agency_receiver']) }}"></div>
+                    <div class="field"><label for="agency_city">المدينة</label><input class="input" id="agency_city" name="agency_city" value="{{ old('agency_city', $s['agency_city']) }}"></div>
+                    <div class="field"><label for="agency_phone">هاتف المستفيد</label><input class="input ltr" id="agency_phone" name="agency_phone" value="{{ old('agency_phone', $s['agency_phone']) }}"></div>
+                </div>
+                <hr style="border:0;border-top:1px solid var(--border)">
+                <label class="check field"><input type="checkbox" name="pay_whatsapp_enabled" value="1" @checked($s['pay_whatsapp_enabled'])> <strong>الدفع عبر واتساب</strong> (تتفقون على الطريقة في المحادثة)</label>
+                <label class="check field"><input type="checkbox" name="pay_paypal_enabled" value="1" @checked($s['pay_paypal_enabled'])> <strong>PayPal / بطاقة</strong> (بالدولار)</label>
+                <div class="field"><label for="paypal_link">رابط PayPal.me أو رابط الدفع</label><input class="input ltr" type="url" id="paypal_link" name="paypal_link" value="{{ old('paypal_link', $s['paypal_link']) }}" placeholder="https://paypal.me/yourname"></div>
+            </fieldset>
+            <label class="check field"><input type="checkbox" name="store_reviews_moderated" value="1" @checked($s['store_reviews_moderated'])> مراجعة تقييمات المنتجات قبل نشرها</label>
             @break
         @case('ai')
             <div class="alert alert--info"><x-icon name="info"/> <span>مولّد الاختبارات بالذكاء الاصطناعي اختياري. عند تفعيله، يُرسَل النص الذي يلصقه المشرف إلى Anthropic لتوليد أسئلة قابلة للتعديل. يُخزَّن المفتاح مشفّرًا. النموذج: <span class="ltr">{{ config('academy.ai.model') }}</span>.</span></div>

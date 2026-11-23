@@ -78,12 +78,21 @@ Route::middleware('feature:tools')->group(function () {
 // Optional digital store (disabled by default; independent from learning)
 Route::middleware('feature:store')->group(function () {
     Route::get('/store', [C\StoreController::class, 'index'])->name('store.index');
-    Route::get('/store/{product}', [C\StoreController::class, 'show'])->name('store.show');
-    Route::middleware(['auth', 'verified'])->group(function () {
-        Route::post('/store/{product}/checkout', [C\StoreController::class, 'checkout'])->middleware('throttle:forms')->name('store.checkout');
+    Route::get('/store/cart', [C\StoreController::class, 'cart'])->name('store.cart');
+    Route::post('/store/cart/{product}', [C\StoreController::class, 'add'])->middleware('throttle:shop')->name('store.cart.add');
+    Route::delete('/store/cart/{product}', [C\StoreController::class, 'remove'])->name('store.cart.remove');
+    Route::post('/store/coupon', [C\StoreController::class, 'coupon'])->middleware('throttle:shop')->name('store.coupon');
+    Route::get('/store/currency/{currency}', [C\StoreController::class, 'currency'])->name('store.currency');
+    Route::middleware('auth')->group(function () {
+        Route::get('/store/checkout', [C\StoreController::class, 'checkout'])->name('store.checkout');
+        Route::post('/store/checkout', [C\StoreController::class, 'place'])->middleware('throttle:checkout')->name('store.place');
+        Route::get('/store/account', [C\StoreController::class, 'account'])->name('store.account');
+        Route::post('/store/{product}/review', [C\StoreController::class, 'review'])->middleware('throttle:forms')->name('store.review');
         Route::get('/orders/{order:reference}', [C\StoreController::class, 'order'])->name('store.order');
-        Route::get('/orders/{order:reference}/download', [C\StoreController::class, 'download'])->name('store.download');
+        Route::post('/orders/{order:reference}/receipt', [C\StoreController::class, 'receipt'])->middleware('throttle:uploads')->name('store.receipt');
+        Route::get('/orders/{order:reference}/download/{item?}', [C\StoreController::class, 'download'])->name('store.download');
     });
+    Route::get('/store/{product}', [C\StoreController::class, 'show'])->name('store.show');
 });
 
 /*
@@ -199,7 +208,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::resource('products', A\ProductController::class)->except(['show']);
 
         Route::get('orders', [A\OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [A\OrderController::class, 'show'])->name('orders.show');
         Route::put('orders/{order}', [A\OrderController::class, 'update'])->name('orders.update');
+        Route::get('orders/{order}/receipt', [A\OrderController::class, 'receipt'])->name('orders.receipt');
+        Route::resource('coupons', A\CouponController::class)->except(['show']);
+        Route::get('product-reviews', [A\ProductReviewController::class, 'index'])->name('product-reviews.index');
+        Route::post('product-reviews/{review}/approve', [A\ProductReviewController::class, 'approve'])->name('product-reviews.approve');
+        Route::delete('product-reviews/{review}', [A\ProductReviewController::class, 'destroy'])->name('product-reviews.destroy');
 
         Route::get('tools', [A\ToolController::class, 'index'])->name('tools.index');
         Route::put('tools', [A\ToolController::class, 'update'])->name('tools.update');

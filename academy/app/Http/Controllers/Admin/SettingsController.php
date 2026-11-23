@@ -158,11 +158,30 @@ class SettingsController extends AdminController
     private function store(Request $request): array
     {
         $data = $request->validate([
-            'bank_name' => ['nullable', 'string', 'max:120'], 'bank_account_holder' => ['nullable', 'string', 'max:120'],
-            'bank_rib' => ['nullable', 'string', 'max:40'], 'bank_instructions' => ['nullable', 'string', 'max:1000'],
+            ...$this->trRules('store_title', false, 80), ...$this->trRules('store_subtitle', false, 300),
+            'store_default_currency' => ['required', 'in:MAD,USD'], 'store_usd_rate' => ['required', 'numeric', 'min:0.1', 'max:1000'],
+            'bank_accounts' => ['nullable', 'array', 'max:6'], 'bank_accounts.*.bank' => ['nullable', 'string', 'max:120'],
+            'bank_accounts.*.holder' => ['nullable', 'string', 'max:120'], 'bank_accounts.*.rib' => ['nullable', 'string', 'max:40'],
+            'bank_instructions' => ['nullable', 'string', 'max:1000'],
+            'agency_names' => ['nullable', 'string', 'max:160'], 'agency_receiver' => ['nullable', 'string', 'max:120'],
+            'agency_city' => ['nullable', 'string', 'max:80'], 'agency_phone' => ['nullable', 'string', 'max:40'],
+            'paypal_link' => ['nullable', 'url', 'max:255', 'regex:/^https:\/\//'],
         ]);
+        $accounts = collect($data['bank_accounts'] ?? [])->filter(fn ($a) => trim((string) ($a['rib'] ?? '')) !== '')
+            ->map(fn ($a) => ['bank' => trim((string) ($a['bank'] ?? '')), 'holder' => trim((string) ($a['holder'] ?? '')), 'rib' => trim($a['rib'])])->values()->all();
 
-        return $data;
+        return [
+            'store_title' => $this->trInput($request, 'store_title'), 'store_subtitle' => $this->trInput($request, 'store_subtitle'),
+            'store_default_currency' => $data['store_default_currency'], 'store_usd_enabled' => $request->boolean('store_usd_enabled'),
+            'store_usd_rate' => (float) $data['store_usd_rate'], 'store_reviews_moderated' => $request->boolean('store_reviews_moderated'),
+            'pay_bank_enabled' => $request->boolean('pay_bank_enabled'), 'pay_agency_enabled' => $request->boolean('pay_agency_enabled'),
+            'pay_whatsapp_enabled' => $request->boolean('pay_whatsapp_enabled'), 'pay_paypal_enabled' => $request->boolean('pay_paypal_enabled'),
+            'bank_accounts' => $accounts, 'bank_instructions' => $data['bank_instructions'] ?? null,
+            // Keep the legacy single-account fields in sync with the first account.
+            'bank_name' => $accounts[0]['bank'] ?? null, 'bank_account_holder' => $accounts[0]['holder'] ?? null, 'bank_rib' => $accounts[0]['rib'] ?? null,
+            'agency_names' => $data['agency_names'] ?? '', 'agency_receiver' => $data['agency_receiver'] ?? '',
+            'agency_city' => $data['agency_city'] ?? '', 'agency_phone' => $data['agency_phone'] ?? '', 'paypal_link' => $data['paypal_link'] ?? '',
+        ];
     }
 
     private function ai(Request $request): array

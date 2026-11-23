@@ -46,9 +46,13 @@
                 <a class="{{ request()->route('group') === 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit', 'appearance') }}"><x-icon name="eye" size="18"/> الثيمات والألوان</a>
                 <a class="{{ $is('admin.layout.*') }}" href="{{ route('admin.layout.edit') }}"><x-icon name="layers" size="18"/> الهيدر والتذييل</a>
                 <a class="{{ $is('admin.optimize.*') }}" href="{{ route('admin.optimize.index') }}"><x-icon name="chart" size="18"/> تحسين الموقع و SEO</a>
-                <h2>المتجر (اختياري)</h2>
+                <h2>المتجر</h2>
+                @php $ordersToReview = \App\Models\Order::where('status', 'review')->count(); @endphp
                 <a class="{{ $is('admin.products.*') }}" href="{{ route('admin.products.index') }}"><x-icon name="store" size="18"/> المنتجات</a>
-                <a class="{{ $is('admin.orders.*') }}" href="{{ route('admin.orders.index') }}"><x-icon name="receipt" size="18"/> الطلبات</a>
+                <a class="{{ $is('admin.orders.*') }}" href="{{ route('admin.orders.index') }}"><x-icon name="receipt" size="18"/> الطلبات @if ($ordersToReview)<span class="count">{{ $ordersToReview }}</span>@endif</a>
+                <a class="{{ $is('admin.coupons.*') }}" href="{{ route('admin.coupons.index') }}"><x-icon name="sparkles" size="18"/> رموز الخصم</a>
+                <a class="{{ $is('admin.product-reviews.*') }}" href="{{ route('admin.product-reviews.index') }}"><x-icon name="star" size="18"/> تقييمات المنتجات</a>
+                <a class="{{ request()->route('group') === 'store' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit', 'store') }}"><x-icon name="settings" size="18"/> الدفع والعملات</a>
                 <h2>النظام</h2>
                 <a class="{{ $is('admin.users.*') }}" href="{{ route('admin.users.index') }}"><x-icon name="users" size="18"/> المستخدمون</a>
                 <a class="{{ $is('admin.settings.*') && request()->route('group') !== 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit') }}"><x-icon name="settings" size="18"/> الإعدادات</a>

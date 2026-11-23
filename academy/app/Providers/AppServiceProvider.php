@@ -33,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perMinute(20)->by($request->ip()),
         ]);
+        // Shopping: adding to cart / coupons is frequent; placing orders is limited separately.
+        RateLimiter::for('shop', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('checkout', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('forms', fn (Request $request) => Limit::perMinute(6)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('verify', fn (Request $request) => Limit::perMinute(15)->by($request->ip()));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(600)->by($request->user()?->id ?: $request->ip()));

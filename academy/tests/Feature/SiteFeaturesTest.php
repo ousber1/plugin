@@ -97,7 +97,8 @@ class SiteFeaturesTest extends TestCase
         $product->forceFill(['disk' => 'local', 'file_path' => 'products/e.pdf', 'original_name' => 'e.pdf'])->save();
 
         $buyer = $this->student();
-        $this->actingAs($buyer)->post(route('store.checkout', $product), ['accept' => 1])->assertRedirect();
+        $this->actingAs($buyer)->post(route('store.cart.add', $product), ['buy_now' => 1])->assertRedirect(route('store.checkout'));
+        $this->post(route('store.place'), ['name' => 'Buyer', 'phone' => '0612345678', 'email' => 'b@example.com', 'payment_method' => 'bank', 'accept' => 1])->assertRedirect();
         $order = Order::firstOrFail();
         $this->get(route('store.download', $order))->assertForbidden();
         $this->actingAs($this->admin())->put(route('admin.orders.update', $order), ['status' => 'paid']);

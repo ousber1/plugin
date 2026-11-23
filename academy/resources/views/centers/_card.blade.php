@@ -11,7 +11,7 @@
         <h3><a href="{{ route('centers.show', $center) }}">{{ $center->tr('name') }}</a></h3>
         @if ($center->tr('address'))<p class="small muted center-card__line"><x-icon name="map-pin" size="16"/> <span>{{ $center->tr('address') }}</span></p>@endif
         @if ($center->tr('hours'))<p class="small muted center-card__line"><x-icon name="clock" size="16"/> <span>{{ $center->tr('hours') }}</span></p>@endif
-        @if (isset($center->courses_count) && $center->courses_count)<p class="small center-card__line"><x-icon name="book" size="16"/> <span>{{ trans_choice(':count دورة حضورية|:count دورات حضورية', $center->courses_count, ['count' => $center->courses_count]) }}</span></p>@endif
+        @if (isset($center->courses_count) && $center->courses_count)<p class="small center-card__line"><x-icon name="book" size="16"/> <span>{{ trans_choice('{1} دورة حضورية واحدة|{2} دورتان حضوريتان|[3,10] :count دورات حضورية|[11,*] :count دورة حضورية', $center->courses_count, ['count' => $center->courses_count]) }}</span></p>@endif
     </div>
     <div class="center-card__foot">
         <a class="btn btn--primary btn--sm" href="{{ route('centers.show', $center) }}">{{ __('التفاصيل') }}</a>

@@ -9,13 +9,13 @@ use Illuminate\Validation\Rule;
 
 class CategoryController extends AdminController
 {
-    private const TYPES = ['course' => 'تصنيفات الدورات', 'post' => 'تصنيفات المدونة', 'resource' => 'تصنيفات المكتبة'];
+    private const TYPES = ['course' => 'تصنيفات الدورات', 'post' => 'تصنيفات المدونة', 'resource' => 'تصنيفات المكتبة', 'product' => 'تصنيفات المتجر'];
 
     public function index(Request $request)
     {
         $type = $this->type($request);
 
-        return view('admin.categories.index', ['categories' => Category::ofType($type)->withCount(['courses', 'posts', 'resources'])->get(), 'type' => $type, 'types' => self::TYPES]);
+        return view('admin.categories.index', ['categories' => Category::ofType($type)->withCount(['courses', 'posts', 'resources', 'products'])->get(), 'type' => $type, 'types' => self::TYPES]);
     }
 
     public function create(Request $request)

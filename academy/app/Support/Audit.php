@@ -40,6 +40,8 @@ class Audit
             'system.migrated' => 'تحديث قاعدة البيانات',
             'system.optimized' => 'تحسين الموقع',
             'theme.applied' => 'تطبيق ثيم',
+            'order.created' => 'طلب جديد في المتجر',
+            'order.receipt_uploaded' => 'رفع وصل دفع',
             'center.created' => 'إضافة مركز',
             'center.updated' => 'تعديل مركز',
             'center.deleted' => 'حذف مركز',

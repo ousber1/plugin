@@ -50,6 +50,9 @@
             @if ($features['tools'] ?? false)
                 <a class="nav__link {{ $is('tools.*') }}" href="{{ route('tools.index') }}">{{ __('الأدوات') }}</a>
             @endif
+            @if ($features['store'] ?? false)
+                <a class="nav__link {{ $is('store.*') }}" href="{{ route('store.index') }}">{{ __('المتجر') }}</a>
+            @endif
             @if ($features['blog'] ?? false)
                 <a class="nav__link {{ $is('blog.*') }}" href="{{ route('blog.index') }}">{{ __('المدونة') }}</a>
             @endif
@@ -57,7 +60,7 @@
                 <a class="nav__link" href="{{ $link['url'] }}">{{ $link['label'][$locale] ?? ($link['label']['ar'] ?? '') }}</a>
             @endforeach
             <div class="dropdown">
-                <button class="nav__toggle {{ $is('about', 'contact', 'privacy', 'pages.*', 'verify.*', 'store.*') }}" data-dropdown-toggle aria-expanded="false" aria-haspopup="true">{{ __('المزيد') }} <x-icon name="chevron-down" size="16"/></button>
+                <button class="nav__toggle {{ $is('about', 'contact', 'privacy', 'pages.*', 'verify.*') }}" data-dropdown-toggle aria-expanded="false" aria-haspopup="true">{{ __('المزيد') }} <x-icon name="chevron-down" size="16"/></button>
                 <div class="dropdown__menu" role="menu">
                     <a class="dropdown__item" role="menuitem" href="{{ route('about') }}"><x-icon name="info" size="18"/> {{ __('من نحن') }}</a>
                     @if ($features['verification'] ?? false)
@@ -65,9 +68,6 @@
                     @endif
                     @if ($features['blog'] ?? false)
                         <a class="dropdown__item" role="menuitem" href="{{ route('blog.category', 'news') }}"><x-icon name="file-text" size="18"/> {{ __('أخبارنا') }}</a>
-                    @endif
-                    @if ($features['store'] ?? false)
-                        <a class="dropdown__item" role="menuitem" href="{{ route('store.index') }}"><x-icon name="store" size="18"/> {{ __('المتجر') }}</a>
                     @endif
                     <a class="dropdown__item" role="menuitem" href="{{ route('contact') }}"><x-icon name="mail" size="18"/> {{ __('تواصل معنا') }}</a>
                     <a class="dropdown__item" role="menuitem" href="{{ route('privacy') }}"><x-icon name="lock" size="18"/> {{ __('سياسة الخصوصية') }}</a>
@@ -88,6 +88,10 @@
                     </div>
                 </div>
             @endif
+            @if ($features['store'] ?? false)
+                @php $cartCount = \App\Support\Shop::cartCount(); @endphp
+                <a class="icon-btn icon-btn--cart hide-mobile" href="{{ route('store.cart') }}" aria-label="{{ __('السلة') }}{{ $cartCount ? ' ('.$cartCount.')' : '' }}"><x-icon name="store" size="18"/>@if ($cartCount)<span class="cart-dot">{{ $cartCount }}</span>@endif</a>
+            @endif
             @auth
                 <div class="dropdown hide-mobile">
                     <button class="icon-btn icon-btn--user" data-dropdown-toggle aria-expanded="false" aria-haspopup="true" aria-label="{{ __('حسابي') }}: {{ auth()->user()->name }}">
@@ -97,6 +101,7 @@
                         <div class="dropdown__head">{{ auth()->user()->name }}</div>
                         <a class="dropdown__item" role="menuitem" href="{{ route('dashboard') }}"><x-icon name="home" size="18"/> {{ __('لوحة التعلم') }}</a>
                         <a class="dropdown__item" role="menuitem" href="{{ route('profile.edit') }}"><x-icon name="settings" size="18"/> {{ __('الملف الشخصي') }}</a>
+                        @if ($features['store'] ?? false)<a class="dropdown__item" role="menuitem" href="{{ route('store.account') }}"><x-icon name="download" size="18"/> {{ __('مشترياتي') }}</a>@endif
                         @if (auth()->user()->isStaff())
                             <a class="dropdown__item" role="menuitem" href="{{ route('admin.dashboard') }}"><x-icon name="layers" size="18"/> {{ __('لوحة الإدارة') }}</a>
                         @endif
@@ -143,6 +148,7 @@
             </details>
         @endif
         @if ($features['tools'] ?? false)<a href="{{ route('tools.index') }}">{{ __('الأدوات') }}</a>@endif
+        @if ($features['store'] ?? false)<a href="{{ route('store.index') }}">{{ __('المتجر') }}</a>@endif
         @if ($features['blog'] ?? false)<a href="{{ route('blog.index') }}">{{ __('المدونة') }}</a>@endif
         @foreach ($extraLinks as $link)<a href="{{ $link['url'] }}">{{ $link['label'][$locale] ?? ($link['label']['ar'] ?? '') }}</a>@endforeach
         <details>
@@ -150,7 +156,6 @@
             <a href="{{ route('about') }}">{{ __('من نحن') }}</a>
             @if ($features['verification'] ?? false)<a href="{{ route('verify.index') }}">{{ __('التحقق من الشهادة') }}</a>@endif
             @if ($features['blog'] ?? false)<a href="{{ route('blog.category', 'news') }}">{{ __('أخبارنا') }}</a>@endif
-            @if ($features['store'] ?? false)<a href="{{ route('store.index') }}">{{ __('المتجر') }}</a>@endif
             <a href="{{ route('contact') }}">{{ __('تواصل معنا') }}</a>
             <a href="{{ route('privacy') }}">{{ __('سياسة الخصوصية') }}</a>
         </details>
@@ -162,6 +167,7 @@
         @auth
             <a href="{{ route('dashboard') }}">{{ __('لوحة التعلم') }}</a>
             <a href="{{ route('profile.edit') }}">{{ __('الملف الشخصي') }}</a>
+            @if ($features['store'] ?? false)<a href="{{ route('store.account') }}">{{ __('مشترياتي') }}</a><a href="{{ route('store.cart') }}">{{ __('السلة') }} ({{ \App\Support\Shop::cartCount() }})</a>@endif
             @if (auth()->user()->isStaff())<a href="{{ route('admin.dashboard') }}">{{ __('لوحة الإدارة') }}</a>@endif
             <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn--ghost btn--block" type="submit">{{ __('تسجيل الخروج') }}</button></form>
         @else
