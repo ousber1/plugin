@@ -36,6 +36,8 @@ class Audit
             'certificate.revoked' => 'إلغاء شهادة',
             'certificate.restored' => 'إعادة تفعيل شهادة',
             'settings.updated' => 'تعديل الإعدادات',
+            'builder.saved' => 'نشر تصميم صفحة بالمحرّر',
+            'system.migrated' => 'تحديث قاعدة البيانات',
             'order.status_changed' => 'تغيير حالة طلب متجر',
             'review.approved' => 'اعتماد مراجعة',
         ][$action] ?? $action;

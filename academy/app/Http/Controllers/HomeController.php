@@ -16,6 +16,10 @@ class HomeController extends Controller
 {
     public function index()
     {
+        if (Settings::get('home_builder_enabled') && ($blocks = Settings::get('home_blocks'))) {
+            return view('builder.page', ['blocks' => \App\Support\Builder::sanitize($blocks), 'canonical' => route('home')]);
+        }
+
         $sections = collect(Settings::homeSections())->where('enabled', true)->pluck('key')->all();
         $has = fn ($key) => in_array($key, $sections, true);
 

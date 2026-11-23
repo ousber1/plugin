@@ -2,7 +2,7 @@
 @php $logo = \App\Support\Settings::get('logo_path'); @endphp
 <span {{ $attributes->merge(['class' => 'logo'.($light ? ' logo--light' : '')]) }}>
     @if ($logo)
-        <img src="{{ asset('storage/'.$logo) }}" alt="{{ $siteName }}" height="40">
+        <img src="{{ \App\Support\Media::url($logo) }}" alt="{{ $siteName }}" height="40">
     @else
         {{-- Original mark: a lamp (نبراس) whose flame forms an open book. --}}
         <svg class="logo__mark" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">

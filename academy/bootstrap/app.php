@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\EnsureActiveUser::class,
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\MaintenanceMode::class,
         ]);
         $middleware->encryptCookies(except: ['locale']);
         $middleware->alias([

@@ -126,3 +126,22 @@
         group.addEventListener('change', paint); paint();
     });
 })();
+
+/* Builder block entrance animations, cookie notice. */
+(function () {
+    var anim = document.querySelectorAll('.bk--anim');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (anim.length) {
+        if (!('IntersectionObserver' in window) || reduce) anim.forEach(function (n) { n.classList.add('is-in'); });
+        else {
+            var io = new IntersectionObserver(function (entries) { entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }); }, { threshold: .12 });
+            anim.forEach(function (n) { io.observe(n); });
+        }
+    }
+    var bar = document.getElementById('cookie-bar');
+    if (bar) {
+        var ok = false; try { ok = localStorage.getItem('cookie-ok') === '1'; } catch (e) {}
+        if (!ok) bar.hidden = false;
+        bar.querySelector('[data-cookie-ok]').addEventListener('click', function () { try { localStorage.setItem('cookie-ok', '1'); } catch (e) {} bar.hidden = true; });
+    }
+})();

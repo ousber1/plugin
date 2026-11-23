@@ -32,7 +32,7 @@ class Product extends Model
     public function coverUrl(): string
     {
         return $this->cover_path
-            ? Storage::disk('public')->url($this->cover_path)
+            ? \App\Support\Media::url($this->cover_path)
             : route('covers.product', ['product' => $this->id]);
     }
 }

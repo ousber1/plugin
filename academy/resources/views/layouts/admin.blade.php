@@ -35,6 +35,7 @@
                 <h2>المحتوى</h2>
                 <a class="{{ $is('admin.posts.*') }}" href="{{ route('admin.posts.index') }}"><x-icon name="file-text" size="18"/> المدونة</a>
                 <a class="{{ $is('admin.resources.*') }}" href="{{ route('admin.resources.index') }}"><x-icon name="folder" size="18"/> المكتبة</a>
+                <a class="{{ request()->routeIs('admin.builder.*') && request()->route('target') === 'home' ? 'is-active' : '' }}" href="{{ route('admin.builder.edit', 'home') }}"><x-icon name="sparkles" size="18"/> تصميم الصفحة الرئيسية</a>
                 <a class="{{ $is('admin.pages.*') }}" href="{{ route('admin.pages.index') }}"><x-icon name="list" size="18"/> الصفحات</a>
                 <a class="{{ $is('admin.testimonials.*') }}" href="{{ route('admin.testimonials.index') }}"><x-icon name="users" size="18"/> آراء الطلاب</a>
                 <a class="{{ $is('admin.partners.*') }}" href="{{ route('admin.partners.index') }}"><x-icon name="award" size="18"/> الشركاء</a>
@@ -45,7 +46,8 @@
                 <a class="{{ $is('admin.orders.*') }}" href="{{ route('admin.orders.index') }}"><x-icon name="receipt" size="18"/> الطلبات</a>
                 <h2>النظام</h2>
                 <a class="{{ $is('admin.users.*') }}" href="{{ route('admin.users.index') }}"><x-icon name="users" size="18"/> المستخدمون</a>
-                <a class="{{ $is('admin.settings.*') }}" href="{{ route('admin.settings.edit') }}"><x-icon name="settings" size="18"/> الإعدادات</a>
+                <a class="{{ $is('admin.settings.*') && request()->route('group') !== 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit') }}"><x-icon name="settings" size="18"/> الإعدادات</a>
+                <a class="{{ request()->route('group') === 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit', 'appearance') }}"><x-icon name="eye" size="18"/> المظهر والألوان</a>
                 <a class="{{ $is('admin.audit.*') }}" href="{{ route('admin.audit.index') }}"><x-icon name="list" size="18"/> سجل العمليات</a>
             @endif
         </nav>
@@ -64,6 +66,12 @@
                 @if (session($key))<div class="alert alert--{{ $type }}" role="status"><x-icon :name="$type === 'error' ? 'alert' : 'check-circle'"/> <span>{{ session($key) }}</span></div>@endif
             @endforeach
             @include('partials.form-errors')
+            @if ($u->isAdmin() && ($pendingMigrations = \App\Http\Controllers\Admin\SystemController::pendingMigrations()))
+                <div class="alert alert--warning" role="alert"><x-icon name="alert"/>
+                    <div style="flex:1">تم رفع نسخة جديدة من الموقع وتحتاج قاعدة البيانات إلى تحديث ({{ count($pendingMigrations) }}). اضغط الزر مرة واحدة؛ لن تُحذف أي بيانات.</div>
+                    <form method="POST" action="{{ route('admin.system.migrate') }}">@csrf<button class="btn btn--primary btn--sm" type="submit">تحديث قاعدة البيانات</button></form>
+                </div>
+            @endif
             @yield('content')
         </main>
     </div>

@@ -40,7 +40,7 @@ class Post extends Model
     public function coverUrl(): string
     {
         return $this->cover_path
-            ? Storage::disk('public')->url($this->cover_path)
+            ? \App\Support\Media::url($this->cover_path)
             : route('covers.post', ['post' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6)]);
     }
 

@@ -98,7 +98,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function avatarUrl(): ?string
     {
-        return $this->avatar_path ? asset('storage/'.$this->avatar_path) : null;
+        return $this->avatar_path ? \App\Support\Media::url($this->avatar_path) : null;
     }
 
     public function initials(): string

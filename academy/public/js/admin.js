@@ -136,3 +136,26 @@
     });
     doc.addEventListener('submit', function (e) { var m = e.target.getAttribute('data-confirm'); if (m && !confirm(m)) e.preventDefault(); });
 })();
+
+/* Line chart hover: crosshair + tooltip with the day's values. */
+(function () {
+    document.querySelectorAll('[data-linechart]').forEach(function (plot) {
+        var data; try { data = JSON.parse(plot.getAttribute('data-linechart')); } catch (e) { return; }
+        var svg = plot.querySelector('svg'), hit = plot.querySelector('.chart__hit'), cross = plot.querySelector('.chart__cross'), tip = plot.querySelector('.chart__tip');
+        var W = +hit.dataset.w, padL = +hit.dataset.padL, padR = +hit.dataset.padR, n = data.days.length;
+        function show(evt) {
+            var r = svg.getBoundingClientRect();
+            var vx = (evt.clientX - r.left) * W / r.width;
+            var i = Math.max(0, Math.min(n - 1, Math.round((vx - padL) / ((W - padL - padR) / Math.max(1, n - 1)))));
+            var px = padL + i * (W - padL - padR) / Math.max(1, n - 1);
+            cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
+            tip.innerHTML = '<b>' + data.days[i] + '</b>' + data.series.map(function (s) { return '<div><i style="background:' + s.color + '"></i>' + s.label + ': <b style="display:inline">' + s.values[i] + '</b></div>'; }).join('');
+            tip.hidden = false;
+            var left = px * r.width / W;
+            tip.style.left = Math.min(r.width - tip.offsetWidth - 4, Math.max(4, left + 12)) + 'px';
+        }
+        function hide() { cross.setAttribute('visibility', 'hidden'); tip.hidden = true; }
+        hit.addEventListener('pointermove', show);
+        hit.addEventListener('pointerleave', hide);
+    });
+})();

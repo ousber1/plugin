@@ -61,6 +61,33 @@ class Settings
                 ['key' => 'cta', 'enabled' => true],
             ],
             'nav_extra_links' => [],
+            // Floating WhatsApp button (all public pages)
+            'wa_float_enabled' => true,
+            'wa_float_side' => 'auto', // auto | left | right
+            'wa_float_show_label' => true,
+            'wa_float_pulse' => true,
+            'wa_float_label' => ['ar' => 'تواصل معنا', 'fr' => 'Écrivez-nous', 'en' => 'Chat with us'],
+            'wa_float_message' => ['ar' => 'السلام عليكم، لدي سؤال حول الأكاديمية.', 'fr' => 'Bonjour, j’ai une question sur l’académie.', 'en' => 'Hello, I have a question about the academy.'],
+            // Appearance
+            'theme_primary' => '#3a2a9e',
+            'theme_accent' => '#f5b82e',
+            'theme_bg' => '#fbf8f1',
+            'theme_footer' => '#15122b',
+            'theme_radius' => 'normal', // square | normal | round
+            'theme_font' => 'tajawal', // tajawal | system
+            'topbar_enabled' => true,
+            'sticky_header' => true,
+            'custom_css' => '',
+            // Advanced
+            'head_code' => '',
+            'body_code' => '',
+            'cookie_banner' => false,
+            'cookie_text' => ['ar' => 'نستعمل ملفات تعريف الارتباط الضرورية لتشغيل الموقع وتحسين تجربتك.', 'fr' => 'Nous utilisons des cookies nécessaires au fonctionnement du site.', 'en' => 'We use cookies needed to run the site and improve your experience.'],
+            'maintenance_enabled' => false,
+            'maintenance_message' => ['ar' => 'نعمل على تحسين الموقع وسنعود قريبًا.', 'fr' => 'Le site est en maintenance, nous revenons très vite.', 'en' => 'We are improving the site and will be back soon.'],
+            // Visual builder for the homepage (falls back to the default design when off).
+            'home_builder_enabled' => false,
+            'home_blocks' => [],
             'accreditation_enabled' => false,
             'accreditation_text' => ['ar' => '', 'fr' => '', 'en' => ''],
             'verify_public_fields' => ['holder_name', 'course_title', 'issued_on'],

@@ -38,6 +38,17 @@
                 @endforeach
                 <p class="hint">رمز التحقق والحالة يظهران دائمًا. بيانات الشحن والملاحظات لا تظهر أبدًا.</p>
             </fieldset>
+            <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">زر واتساب العائم (في كل صفحات الموقع)</legend>
+                <label class="check field"><input type="checkbox" name="wa_float_enabled" value="1" @checked($s['wa_float_enabled'] ?? true)> إظهار الزر العائم</label>
+                <div class="form-grid">
+                    <div class="field"><label for="wa_float_side">المكان</label><select class="select" id="wa_float_side" name="wa_float_side">
+                        @foreach (['auto' => 'تلقائي (حسب اتجاه اللغة)', 'left' => 'يسار الشاشة', 'right' => 'يمين الشاشة'] as $k => $l)<option value="{{ $k }}" @selected(($s['wa_float_side'] ?? 'auto') === $k)>{{ $l }}</option>@endforeach</select></div>
+                    <div class="field"><label class="check" style="margin-top:28px"><input type="checkbox" name="wa_float_show_label" value="1" @checked($s['wa_float_show_label'] ?? true)> إظهار نص بجانب الأيقونة (على الحاسوب)</label>
+                        <label class="check"><input type="checkbox" name="wa_float_pulse" value="1" @checked($s['wa_float_pulse'] ?? true)> حركة نبض لجذب الانتباه</label></div>
+                </div>
+                <x-admin.tr name="wa_float_label" label="نص الزر" :value="$s['wa_float_label'] ?? []" :max="40"/>
+                <x-admin.tr name="wa_float_message" label="الرسالة الجاهزة عند فتح واتساب" :value="$s['wa_float_message'] ?? []" type="textarea" :rows="2"/>
+            </fieldset>
             @break
         @case('features')
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">الوحدات الظاهرة (تختفي من القائمة والتذييل وخريطة الموقع عند تعطيلها)</legend>
@@ -93,6 +104,36 @@
                 <div class="field"><label for="ai_public_daily_limit">الحد اليومي لكل مستخدم (عدد مرات التوليد)</label><input class="input" type="number" min="1" max="500" id="ai_public_daily_limit" name="ai_public_daily_limit" value="{{ old('ai_public_daily_limit', $s['ai_public_daily_limit'] ?? 10) }}" style="max-width:160px" required>
                     <p class="hint">كل عملية توليد تُحتسب على حسابك لدى Anthropic. الحد يحمي ميزانيتك. يقبل المولّد النصوص وملفات PDF وWord وترجمات الفيديو (SRT/VTT).</p></div>
             </fieldset>
+            @break
+        @case('appearance')
+            <p class="muted small">غيّر ألوان الموقع وشكله. تُطبّق الألوان على الأزرار والعناوين والخلفيات تلقائيًا.</p>
+            <div class="form-grid">
+                <div class="field"><label for="theme_primary">اللون الأساسي</label><input class="input" type="color" id="theme_primary" name="theme_primary" value="{{ $s['theme_primary'] }}" style="height:46px;padding:4px"></div>
+                <div class="field"><label for="theme_accent">لون التمييز (الأزرار الكهرمانية)</label><input class="input" type="color" id="theme_accent" name="theme_accent" value="{{ $s['theme_accent'] }}" style="height:46px;padding:4px"></div>
+                <div class="field"><label for="theme_bg">لون خلفية الصفحات</label><input class="input" type="color" id="theme_bg" name="theme_bg" value="{{ $s['theme_bg'] }}" style="height:46px;padding:4px"></div>
+                <div class="field"><label for="theme_footer">لون التذييل</label><input class="input" type="color" id="theme_footer" name="theme_footer" value="{{ $s['theme_footer'] }}" style="height:46px;padding:4px"></div>
+                <div class="field"><label for="theme_radius">شكل الزوايا</label><select class="select" id="theme_radius" name="theme_radius">@foreach (['square' => 'حادة', 'normal' => 'متوسطة', 'round' => 'دائرية'] as $k => $l)<option value="{{ $k }}" @selected($s['theme_radius'] === $k)>{{ $l }}</option>@endforeach</select></div>
+                <div class="field"><label for="theme_font">الخط</label><select class="select" id="theme_font" name="theme_font"><option value="tajawal" @selected($s['theme_font'] === 'tajawal')>Tajawal + Inter (افتراضي)</option><option value="system" @selected($s['theme_font'] === 'system')>خط الجهاز (أسرع)</option></select></div>
+            </div>
+            <div class="row" style="margin:6px 0 14px">@foreach (['#3a2a9e' => 'نيلي', '#0f766e' => 'زمردي', '#1d4ed8' => 'أزرق', '#b91c1c' => 'أحمر', '#7c3aed' => 'بنفسجي', '#1f2937' => 'فحمي'] as $hex => $n)
+                <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('theme_primary').value='{{ $hex }}'"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:{{ $hex }}"></span> {{ $n }}</button>@endforeach</div>
+            <label class="check field"><input type="checkbox" name="topbar_enabled" value="1" @checked($s['topbar_enabled'])> إظهار الشريط العلوي (نص الإعلان والتواصل)</label>
+            <label class="check field"><input type="checkbox" name="sticky_header" value="1" @checked($s['sticky_header'])> تثبيت القائمة العلوية عند التمرير</label>
+            <div class="field"><label for="custom_css">CSS مخصص (متقدم)</label><textarea class="textarea code-area" id="custom_css" name="custom_css" rows="6" dir="ltr" placeholder=".hero { ... }">{{ old('custom_css', $s['custom_css']) }}</textarea></div>
+            <label class="check field"><input type="checkbox" name="reset_colors" value="1"> استرجاع الألوان والشكل الافتراضي</label>
+            @break
+        @case('advanced')
+            <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">وضع الصيانة</legend>
+                <label class="check field"><input type="checkbox" name="maintenance_enabled" value="1" @checked($s['maintenance_enabled'])> تفعيل وضع الصيانة (يبقى الموقع متاحًا لك وللمدرّسين بعد تسجيل الدخول)</label>
+                <x-admin.tr name="maintenance_message" label="رسالة الصيانة" :value="$s['maintenance_message']" type="textarea" :rows="2"/>
+            </fieldset>
+            <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">تنبيه ملفات تعريف الارتباط</legend>
+                <label class="check field"><input type="checkbox" name="cookie_banner" value="1" @checked($s['cookie_banner'])> إظهار تنبيه ملفات تعريف الارتباط للزوار</label>
+                <x-admin.tr name="cookie_text" label="نص التنبيه" :value="$s['cookie_text']" type="textarea" :rows="2"/>
+            </fieldset>
+            <div class="alert alert--warning small"><x-icon name="alert"/> <span>الأكواد التالية تُضاف كما هي إلى كل الصفحات (مثل Google Analytics أو Meta Pixel). أضف فقط أكوادًا من مصادر موثوقة.</span></div>
+            <div class="field"><label for="head_code">كود داخل &lt;head&gt;</label><textarea class="textarea code-area" id="head_code" name="head_code" rows="5" dir="ltr">{{ old('head_code', $s['head_code']) }}</textarea></div>
+            <div class="field"><label for="body_code">كود قبل نهاية &lt;/body&gt;</label><textarea class="textarea code-area" id="body_code" name="body_code" rows="5" dir="ltr">{{ old('body_code', $s['body_code']) }}</textarea></div>
             @break
     @endswitch
     <button class="btn btn--primary btn--lg" type="submit">حفظ الإعدادات</button>

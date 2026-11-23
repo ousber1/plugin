@@ -13,7 +13,7 @@ class Page extends Model
 
     protected $fillable = ['slug', 'title', 'body', 'status', 'show_in_footer', 'seo_title', 'seo_description'];
 
-    protected $casts = ['show_in_footer' => 'boolean'];
+    protected $casts = ['show_in_footer' => 'boolean', 'use_builder' => 'boolean', 'blocks' => \App\Casts\Json::class];
 
     public function getRouteKeyName(): string
     {

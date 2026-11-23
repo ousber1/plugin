@@ -146,7 +146,7 @@
                                 @if ($t->rating)<div class="stars" aria-label="{{ __('التقييم :r من 5', ['r' => $t->rating]) }}">@for ($i = 1; $i <= 5; $i++)<x-icon name="star" size="16" class="{{ $i <= $t->rating ? 'on' : '' }}"/>@endfor</div>@endif
                                 <blockquote dir="auto">“{{ $t->tr('body') }}”</blockquote>
                                 <figcaption class="row">
-                                    @if ($t->photo_path)<img class="avatar" src="{{ asset('storage/'.$t->photo_path) }}" alt="" width="44" height="44">@else<span class="avatar">{{ mb_substr($t->name, 0, 1) }}</span>@endif
+                                    @if ($t->photo_path)<img class="avatar" src="{{ \App\Support\Media::url($t->photo_path) }}" alt="" width="44" height="44">@else<span class="avatar">{{ mb_substr($t->name, 0, 1) }}</span>@endif
                                     <span><strong>{{ $t->name }}</strong>@if ($t->role)<br><span class="muted small">{{ $t->role }}</span>@endif</span>
                                 </figcaption>
                             </figure>
@@ -179,8 +179,8 @@
                     <p class="muted" style="text-align:center">{{ __('شركاؤنا') }}</p>
                     <div class="partners">
                         @foreach ($partners as $p)
-                            @if ($p->url)<a href="{{ $p->url }}" target="_blank" rel="noopener"><img src="{{ asset('storage/'.$p->logo_path) }}" alt="{{ $p->name }}" loading="lazy"></a>
-                            @else<img src="{{ asset('storage/'.$p->logo_path) }}" alt="{{ $p->name }}" loading="lazy">@endif
+                            @if ($p->url)<a href="{{ $p->url }}" target="_blank" rel="noopener"><img src="{{ \App\Support\Media::url($p->logo_path) }}" alt="{{ $p->name }}" loading="lazy"></a>
+                            @else<img src="{{ \App\Support\Media::url($p->logo_path) }}" alt="{{ $p->name }}" loading="lazy">@endif
                         @endforeach
                     </div>
                 </div>

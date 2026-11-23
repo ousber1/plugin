@@ -96,7 +96,7 @@ class Course extends Model
     public function thumbnailUrl(): string
     {
         return $this->thumbnail_path
-            ? Storage::disk('public')->url($this->thumbnail_path)
+            ? \App\Support\Media::url($this->thumbnail_path)
             : route('covers.course', ['course' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6)]);
     }
 

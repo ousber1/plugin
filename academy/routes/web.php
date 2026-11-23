@@ -16,6 +16,9 @@ Route::get('/locale/{locale}', [C\LocaleController::class, 'switch'])->name('loc
 Route::get('/robots.txt', [C\SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [C\SeoController::class, 'sitemap'])->name('sitemap');
 
+// Uploaded images when the hosting does not allow the public/storage symlink.
+Route::get('/storage/{path}', [C\PublicFileController::class, 'show'])->where('path', '.*')->name('storage.public');
+
 // Generated original artwork for items without an uploaded image.
 Route::get('/covers/course/{course:id}.svg', [C\CoverController::class, 'course'])->name('covers.course');
 Route::get('/covers/post/{post:id}.svg', [C\CoverController::class, 'post'])->name('covers.post');
@@ -208,5 +211,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::put('settings/{group}', [A\SettingsController::class, 'update'])->name('settings.update');
 
         Route::get('audit-log', [A\AuditLogController::class, 'index'])->name('audit.index');
+
+        Route::post('system/migrate', [A\SystemController::class, 'migrate'])->name('system.migrate');
+
+        // Visual page builder (target = "home" or a page id)
+        Route::post('builder/upload', [A\BuilderController::class, 'upload'])->middleware('throttle:uploads')->name('builder.upload');
+        Route::get('builder/{target}', [A\BuilderController::class, 'edit'])->name('builder.edit');
+        Route::put('builder/{target}', [A\BuilderController::class, 'save'])->name('builder.save');
+        Route::post('builder/{target}/preview', [A\BuilderController::class, 'preview'])->name('builder.preview');
+        Route::post('builder/{target}/disable', [A\BuilderController::class, 'disable'])->name('builder.disable');
     });
 });

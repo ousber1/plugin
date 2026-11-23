@@ -12,12 +12,14 @@ class SettingsController extends AdminController
 {
     private const GROUPS = [
         'general' => 'الهوية والتواصل',
+        'appearance' => 'المظهر والألوان',
         'whatsapp' => 'واتساب والشهادات',
         'features' => 'الوحدات والقائمة',
         'home' => 'الصفحة الرئيسية',
         'social' => 'الشبكات الاجتماعية',
         'store' => 'المتجر والدفع',
         'ai' => 'الذكاء الاصطناعي',
+        'advanced' => 'متقدم',
     ];
 
     public function edit(?string $group = 'general')
@@ -38,6 +40,8 @@ class SettingsController extends AdminController
             'social' => $this->social($request),
             'store' => $this->store($request),
             'ai' => $this->ai($request),
+            'appearance' => $this->appearance($request),
+            'advanced' => $this->advanced($request),
         };
         Settings::set($values);
         Audit::log('settings.updated', null, ['group' => $group, 'keys' => array_keys($values)]);
@@ -86,6 +90,8 @@ class SettingsController extends AdminController
             'require_verified_email_for_certificate' => ['nullable', 'boolean'],
             'certificate_requires_completion' => ['nullable', 'boolean'],
             'verify_public_fields' => ['nullable', 'array'], 'verify_public_fields.*' => ['in:holder_name,course_title,issued_on'],
+            'wa_float_side' => ['nullable', 'in:auto,left,right'],
+            ...$this->trRules('wa_float_label', false, 40), ...$this->trRules('wa_float_message', false, 300),
         ], ['whatsapp_number.regex' => 'أدخل الرقم بالصيغة الدولية بدون رموز، مثل 212600000000.']);
 
         return [
@@ -94,6 +100,12 @@ class SettingsController extends AdminController
             'require_verified_email_for_certificate' => $request->boolean('require_verified_email_for_certificate'),
             'certificate_requires_completion' => $request->boolean('certificate_requires_completion'),
             'verify_public_fields' => array_values($data['verify_public_fields'] ?? []),
+            'wa_float_enabled' => $request->boolean('wa_float_enabled'),
+            'wa_float_side' => $data['wa_float_side'] ?? 'auto',
+            'wa_float_show_label' => $request->boolean('wa_float_show_label'),
+            'wa_float_pulse' => $request->boolean('wa_float_pulse'),
+            'wa_float_label' => $this->trInput($request, 'wa_float_label'),
+            'wa_float_message' => $this->trInput($request, 'wa_float_message'),
         ];
     }
 
@@ -168,5 +180,38 @@ class SettingsController extends AdminController
         }
 
         return $values;
+    }
+
+    private function appearance(Request $request): array
+    {
+        $color = ['required', 'regex:/^#[0-9a-fA-F]{6}$/'];
+        $data = $request->validate([
+            'theme_primary' => $color, 'theme_accent' => $color, 'theme_bg' => $color, 'theme_footer' => $color,
+            'theme_radius' => ['required', 'in:square,normal,round'], 'theme_font' => ['required', 'in:tajawal,system'],
+            'custom_css' => ['nullable', 'string', 'max:20000'],
+        ]);
+        if ($request->boolean('reset_colors')) {
+            $data = array_merge($data, ['theme_primary' => '#3a2a9e', 'theme_accent' => '#f5b82e', 'theme_bg' => '#fbf8f1', 'theme_footer' => '#15122b', 'theme_radius' => 'normal', 'theme_font' => 'tajawal']);
+        }
+
+        return $data + [
+            'custom_css' => (string) ($data['custom_css'] ?? ''),
+            'topbar_enabled' => $request->boolean('topbar_enabled'),
+            'sticky_header' => $request->boolean('sticky_header'),
+        ];
+    }
+
+    private function advanced(Request $request): array
+    {
+        $data = $request->validate([
+            'head_code' => ['nullable', 'string', 'max:20000'], 'body_code' => ['nullable', 'string', 'max:20000'],
+            ...$this->trRules('cookie_text', false, 300), ...$this->trRules('maintenance_message', false, 500),
+        ]);
+
+        return [
+            'head_code' => (string) ($data['head_code'] ?? ''), 'body_code' => (string) ($data['body_code'] ?? ''),
+            'cookie_banner' => $request->boolean('cookie_banner'), 'cookie_text' => $this->trInput($request, 'cookie_text'),
+            'maintenance_enabled' => $request->boolean('maintenance_enabled'), 'maintenance_message' => $this->trInput($request, 'maintenance_message'),
+        ];
     }
 }

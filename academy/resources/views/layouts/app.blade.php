@@ -33,15 +33,18 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#1e1550">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="{{ $favicon ? asset('storage/'.$favicon) : asset('favicon.svg') }}">
+    <link rel="icon" href="{{ $favicon ? \App\Support\Media::url($favicon) : asset('favicon.svg') }}">
     <link rel="preload" href="{{ asset('fonts/tajawal-arabic-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
+    @include('partials.theme')
     @stack('head')
+    {!! Settings::get('head_code') !!}
 </head>
 <body class="@yield('body_class')">
 <a class="skip-link" href="#main">{{ __('انتقل إلى المحتوى') }}</a>
 <div id="live-region" class="sr-only" aria-live="polite"></div>
 
+@if (Settings::get('topbar_enabled'))
 <div class="topbar">
     <div class="container">
         <p class="topbar__text">{{ Settings::tr('topbar_text') }}</p>
@@ -53,8 +56,9 @@
         </div>
     </div>
 </div>
+@endif
 
-<header class="site-header">
+<header class="site-header{{ Settings::get('sticky_header') ? '' : ' is-static' }}">
     <div class="container">
         <a href="{{ route('home') }}" aria-label="{{ $siteName }} — {{ __('الرئيسية') }}"><x-logo/></a>
 
@@ -263,10 +267,10 @@
 </footer>
 @endunless
 
-@if ($whatsapp && ! View::hasSection('hide_footer'))
-    <a class="wa-float" href="{{ $whatsapp }}" target="_blank" rel="noopener" aria-label="{{ __('راسلنا عبر واتساب') }}"><x-icon name="whatsapp" size="28"/></a>
-@endif
+@include('partials.whatsapp-float')
+@include('partials.cookie-bar')
 <script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}" defer></script>
 @stack('scripts')
+{!! Settings::get('body_code') !!}
 </body>
 </html>
