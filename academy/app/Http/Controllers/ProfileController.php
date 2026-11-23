@@ -23,12 +23,16 @@ class ProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:40'],
             'locale' => ['nullable', Rule::in(Locales::codes())],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'center_id' => ['nullable', 'integer', Rule::exists('centers', 'id')->where('is_active', true)],
         ]);
         $emailChanged = $data['email'] !== $user->email;
         $user->fill(collect($data)->only(['name', 'email', 'phone', 'locale'])->all());
+        if ($request->has('center_id')) {
+            $user->center_id = $data['center_id'] ?? null;
+        }
         if ($request->hasFile('avatar')) {
             $old = $user->avatar_path;
-            $user->avatar_path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar_path = \App\Support\ImageOptimizer::store($request->file('avatar'), 'avatars');
             if ($old) {
                 \Storage::disk('public')->delete($old);
             }

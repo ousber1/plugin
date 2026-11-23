@@ -33,6 +33,6 @@ class Product extends Model
     {
         return $this->cover_path
             ? \App\Support\Media::url($this->cover_path)
-            : route('covers.product', ['product' => $this->id]);
+            : route('covers.product', ['product' => $this->id, 'v' => \App\Support\CoverArt::version()]);
     }
 }

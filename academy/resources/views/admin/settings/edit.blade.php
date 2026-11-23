@@ -2,7 +2,7 @@
 @section('title', 'الإعدادات')
 @section('content')
 @php
-    $sectionLabels = ['hero' => 'الواجهة والبحث', 'stats' => 'الإحصائيات (من قاعدة البيانات)', 'categories' => 'المجالات', 'featured' => 'الدورات المميزة', 'how' => 'كيف تعمل الأكاديمية', 'recent' => 'أحدث الدورات', 'benefits' => 'المزايا والاعتماد', 'testimonials' => 'آراء الطلاب المعتمدة', 'articles' => 'أحدث المقالات', 'partners' => 'شعارات الشركاء', 'cta' => 'الدعوة الختامية'];
+    $sectionLabels = ['hero' => 'الواجهة والبحث', 'stats' => 'الإحصائيات (من قاعدة البيانات)', 'categories' => 'المجالات', 'featured' => 'الدورات المميزة', 'how' => 'كيف تعمل الأكاديمية', 'recent' => 'أحدث الدورات', 'benefits' => 'المزايا والاعتماد', 'centers' => 'مراكز التكوين', 'testimonials' => 'آراء الطلاب المعتمدة', 'articles' => 'أحدث المقالات', 'partners' => 'شعارات الشركاء', 'cta' => 'الدعوة الختامية'];
 @endphp
 <div class="page-head"><h1>الإعدادات</h1></div>
 <nav class="tabs">@foreach ($groups as $k => $label)<a href="{{ route('admin.settings.edit', $k) }}" class="{{ $group === $k ? 'is-active' : '' }}">{{ $label }}</a>@endforeach</nav>
@@ -30,6 +30,7 @@
                 <p class="hint">بدون + أو مسافات. يُستعمل في زر «اطلب شهادتك عبر واتساب» والزر العائم.</p></div>
             <div class="field"><label for="whatsapp_template">نص رسالة طلب الشهادة</label><textarea class="textarea" id="whatsapp_template" name="whatsapp_template" rows="4" dir="rtl" required>{{ old('whatsapp_template', $s['whatsapp_template']) }}</textarea>
                 <p class="hint">استعمل {course} لاسم الدورة و {reference} لرقم الطلب. لا تضف العنوان؛ يُؤكَّد داخل المحادثة.</p></div>
+            <x-admin.tr name="cert_button_label" label="نص زر طلب الشهادة في صفحة الدورة" :value="$s['cert_button_label'] ?? []" :max="60"/>
             <label class="check field"><input type="checkbox" name="certificate_requires_completion" value="1" @checked($s['certificate_requires_completion'] ?? false)> <span>اشتراط إكمال الدورة (الدروس المطلوبة والاختبارات إن وُجدت) قبل طلب الشهادة<br><small class="muted">عند إلغاء التفعيل يستطيع الطالب طلب الشهادة عبر واتساب في أي وقت، حتى قبل بدء الدورة. يظهر تقدّمه لفريقك في صفحة الطلب.</small></span></label>
             <label class="check field"><input type="checkbox" name="require_verified_email_for_certificate" value="1" @checked($s['require_verified_email_for_certificate'])> اشتراط تأكيد البريد الإلكتروني قبل طلب الشهادة (فعّله فقط بعد ضبط إعدادات البريد MAIL_* في ملف .env)</label>
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">البيانات الظاهرة في صفحة التحقق العامة</legend>
@@ -52,8 +53,8 @@
             @break
         @case('features')
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">الوحدات الظاهرة (تختفي من القائمة والتذييل وخريطة الموقع عند تعطيلها)</legend>
-                @foreach (['blog' => 'المدونة والأخبار', 'library' => 'المكتبة', 'tools' => 'الأدوات', 'verification' => 'التحقق من الشهادة', 'store' => 'المتجر الرقمي (اختياري، معطّل افتراضيًا)'] as $k => $l)
-                    <label class="check"><input type="checkbox" name="features[{{ $k }}]" value="1" @checked($s['features'][$k] ?? false)> {{ $l }}</label>
+                @foreach (['blog' => 'المدونة والأخبار', 'library' => 'المكتبة', 'tools' => 'الأدوات', 'verification' => 'التحقق من الشهادة', 'centers' => 'مراكز التكوين', 'store' => 'المتجر الرقمي (اختياري، معطّل افتراضيًا)'] as $k => $l)
+                    <label class="check"><input type="checkbox" name="features[{{ $k }}]" value="1" @checked($s['features'][$k] ?? ($k === 'centers'))> {{ $l }}</label>
                 @endforeach
             </fieldset>
             <div data-repeater class="field">
@@ -106,21 +107,41 @@
             </fieldset>
             @break
         @case('appearance')
-            <p class="muted small">غيّر ألوان الموقع وشكله. تُطبّق الألوان على الأزرار والعناوين والخلفيات تلقائيًا.</p>
+            @php $themes = \App\Support\Themes::all(); $current = $s['site_theme'] ?? 'nibras'; @endphp
+            <h2 class="card__title" style="margin-top:0">الثيمات الجاهزة</h2>
+            <p class="muted small">اختر ثيمًا بنقرة واحدة: يغيّر الألوان وشكل الهيدر والأزرار والبطاقات والواجهة معًا. يمكنك بعدها تعديل أي تفصيل أسفله.</p>
+            <div class="theme-gallery">
+                @foreach ($themes as $key => $t)
+                    <div class="theme-card {{ $current === $key ? 'is-current' : '' }}" style="--tp:{{ $t['primary'] }};--ta:{{ $t['accent'] }};--tb:{{ $t['bg'] }};--tf:{{ $t['footer'] }}">
+                        <div class="theme-card__preview theme-card__preview--{{ $t['header'] }} theme-card__preview--{{ $t['hero'] }} theme-card__preview--{{ $t['buttons'] }}" aria-hidden="true">
+                            <div class="tp-header"><span class="tp-logo"></span><span class="tp-links"><i></i><i></i><i></i></span><span class="tp-btn"></span></div>
+                            <div class="tp-hero"><b></b><b class="short"></b><span class="tp-btn tp-btn--lg"></span></div>
+                            <div class="tp-cards"><span></span><span></span><span></span></div>
+                            <div class="tp-footer"></div>
+                        </div>
+                        <div class="theme-card__body">
+                            <div><strong>{{ $t['name'] }}</strong> @if ($current === $key)<span class="badge badge--green">الحالي</span>@endif
+                                <p class="small muted" style="margin:2px 0 0">{{ $t['desc'] }}</p></div>
+                            <button class="btn btn--sm {{ $current === $key ? 'btn--ghost' : 'btn--primary' }}" type="submit" form="theme-{{ $key }}">{{ $current === $key ? 'إعادة تطبيق' : 'تطبيق' }}</button>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <h2 class="card__title" style="margin-top:26px">تخصيص دقيق</h2>
             <div class="form-grid">
                 <div class="field"><label for="theme_primary">اللون الأساسي</label><input class="input" type="color" id="theme_primary" name="theme_primary" value="{{ $s['theme_primary'] }}" style="height:46px;padding:4px"></div>
-                <div class="field"><label for="theme_accent">لون التمييز (الأزرار الكهرمانية)</label><input class="input" type="color" id="theme_accent" name="theme_accent" value="{{ $s['theme_accent'] }}" style="height:46px;padding:4px"></div>
+                <div class="field"><label for="theme_accent">لون التمييز (أزرار الدعوة)</label><input class="input" type="color" id="theme_accent" name="theme_accent" value="{{ $s['theme_accent'] }}" style="height:46px;padding:4px"></div>
                 <div class="field"><label for="theme_bg">لون خلفية الصفحات</label><input class="input" type="color" id="theme_bg" name="theme_bg" value="{{ $s['theme_bg'] }}" style="height:46px;padding:4px"></div>
-                <div class="field"><label for="theme_footer">لون التذييل</label><input class="input" type="color" id="theme_footer" name="theme_footer" value="{{ $s['theme_footer'] }}" style="height:46px;padding:4px"></div>
-                <div class="field"><label for="theme_radius">شكل الزوايا</label><select class="select" id="theme_radius" name="theme_radius">@foreach (['square' => 'حادة', 'normal' => 'متوسطة', 'round' => 'دائرية'] as $k => $l)<option value="{{ $k }}" @selected($s['theme_radius'] === $k)>{{ $l }}</option>@endforeach</select></div>
+                <div class="field"><label for="theme_footer">لون التذييل الداكن</label><input class="input" type="color" id="theme_footer" name="theme_footer" value="{{ $s['theme_footer'] }}" style="height:46px;padding:4px"></div>
+                @foreach (['header_style' => ['شكل الهيدر', \App\Support\Themes::HEADER], 'hero_style' => ['خلفية الواجهة الرئيسية', \App\Support\Themes::HEROES], 'button_shape' => ['شكل الأزرار', \App\Support\Themes::BUTTONS], 'card_style' => ['شكل البطاقات', \App\Support\Themes::CARDS], 'footer_style' => ['لون التذييل', \App\Support\Themes::FOOTERS]] as $field => [$label, $options])
+                    <div class="field"><label for="{{ $field }}">{{ $label }}</label><select class="select" id="{{ $field }}" name="{{ $field }}">@foreach ($options as $k => $l)<option value="{{ $k }}" @selected(($s[$field] ?? '') === $k)>{{ $l }}</option>@endforeach</select></div>
+                @endforeach
+                <div class="field"><label for="theme_radius">زوايا البطاقات</label><select class="select" id="theme_radius" name="theme_radius">@foreach (['square' => 'حادة', 'normal' => 'متوسطة', 'round' => 'دائرية'] as $k => $l)<option value="{{ $k }}" @selected($s['theme_radius'] === $k)>{{ $l }}</option>@endforeach</select></div>
                 <div class="field"><label for="theme_font">الخط</label><select class="select" id="theme_font" name="theme_font"><option value="tajawal" @selected($s['theme_font'] === 'tajawal')>Tajawal + Inter (افتراضي)</option><option value="system" @selected($s['theme_font'] === 'system')>خط الجهاز (أسرع)</option></select></div>
             </div>
-            <div class="row" style="margin:6px 0 14px">@foreach (['#3a2a9e' => 'نيلي', '#0f766e' => 'زمردي', '#1d4ed8' => 'أزرق', '#b91c1c' => 'أحمر', '#7c3aed' => 'بنفسجي', '#1f2937' => 'فحمي'] as $hex => $n)
-                <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('theme_primary').value='{{ $hex }}'"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:{{ $hex }}"></span> {{ $n }}</button>@endforeach</div>
-            <label class="check field"><input type="checkbox" name="topbar_enabled" value="1" @checked($s['topbar_enabled'])> إظهار الشريط العلوي (نص الإعلان والتواصل)</label>
-            <label class="check field"><input type="checkbox" name="sticky_header" value="1" @checked($s['sticky_header'])> تثبيت القائمة العلوية عند التمرير</label>
+            <p class="hint">الهيدر والتذييل (النصوص، الأعمدة، زر «اطلب شهادتك الآن»): <a href="{{ route('admin.layout.edit') }}">الهيدر والتذييل</a>.</p>
             <div class="field"><label for="custom_css">CSS مخصص (متقدم)</label><textarea class="textarea code-area" id="custom_css" name="custom_css" rows="6" dir="ltr" placeholder=".hero { ... }">{{ old('custom_css', $s['custom_css']) }}</textarea></div>
-            <label class="check field"><input type="checkbox" name="reset_colors" value="1"> استرجاع الألوان والشكل الافتراضي</label>
+            <label class="check field"><input type="checkbox" name="reset_colors" value="1"> استرجاع التصميم الافتراضي (ثيم نبراس)</label>
             @break
         @case('advanced')
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">وضع الصيانة</legend>
@@ -138,4 +159,9 @@
     @endswitch
     <button class="btn btn--primary btn--lg" type="submit">حفظ الإعدادات</button>
 </form>
+@if ($group === 'appearance')
+    @foreach (\App\Support\Themes::all() as $key => $t)
+        <form id="theme-{{ $key }}" method="POST" action="{{ route('admin.themes.apply', $key) }}" hidden>@csrf</form>
+    @endforeach
+@endif
 @endsection

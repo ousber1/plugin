@@ -12,7 +12,7 @@ class SettingsController extends AdminController
 {
     private const GROUPS = [
         'general' => 'الهوية والتواصل',
-        'appearance' => 'المظهر والألوان',
+        'appearance' => 'الثيمات والألوان',
         'whatsapp' => 'واتساب والشهادات',
         'features' => 'الوحدات والقائمة',
         'home' => 'الصفحة الرئيسية',
@@ -92,6 +92,7 @@ class SettingsController extends AdminController
             'verify_public_fields' => ['nullable', 'array'], 'verify_public_fields.*' => ['in:holder_name,course_title,issued_on'],
             'wa_float_side' => ['nullable', 'in:auto,left,right'],
             ...$this->trRules('wa_float_label', false, 40), ...$this->trRules('wa_float_message', false, 300),
+            ...$this->trRules('cert_button_label', false, 60),
         ], ['whatsapp_number.regex' => 'أدخل الرقم بالصيغة الدولية بدون رموز، مثل 212600000000.']);
 
         return [
@@ -106,6 +107,7 @@ class SettingsController extends AdminController
             'wa_float_pulse' => $request->boolean('wa_float_pulse'),
             'wa_float_label' => $this->trInput($request, 'wa_float_label'),
             'wa_float_message' => $this->trInput($request, 'wa_float_message'),
+            'cert_button_label' => $this->trInput($request, 'cert_button_label'),
         ];
     }
 
@@ -118,7 +120,7 @@ class SettingsController extends AdminController
             'links.*.label.*' => ['nullable', 'string', 'max:40'],
         ], ['links.*.url.regex' => 'يجب أن يبدأ الرابط بـ https:// أو /']);
         $features = [];
-        foreach (['blog', 'library', 'tools', 'store', 'verification'] as $f) {
+        foreach (['blog', 'library', 'tools', 'store', 'verification', 'centers'] as $f) {
             $features[$f] = $request->boolean("features.$f");
         }
         $links = collect($request->input('links', []))->filter(fn ($l) => ! empty($l['url']) && ! empty($l['label']['ar']))
@@ -188,16 +190,22 @@ class SettingsController extends AdminController
         $data = $request->validate([
             'theme_primary' => $color, 'theme_accent' => $color, 'theme_bg' => $color, 'theme_footer' => $color,
             'theme_radius' => ['required', 'in:square,normal,round'], 'theme_font' => ['required', 'in:tajawal,system'],
+            'header_style' => ['nullable', 'in:'.implode(',', array_keys(\App\Support\Themes::HEADER))],
+            'button_shape' => ['nullable', 'in:'.implode(',', array_keys(\App\Support\Themes::BUTTONS))],
+            'card_style' => ['nullable', 'in:'.implode(',', array_keys(\App\Support\Themes::CARDS))],
+            'hero_style' => ['nullable', 'in:'.implode(',', array_keys(\App\Support\Themes::HEROES))],
+            'footer_style' => ['nullable', 'in:'.implode(',', array_keys(\App\Support\Themes::FOOTERS))],
             'custom_css' => ['nullable', 'string', 'max:20000'],
         ]);
+        foreach (['header_style', 'button_shape', 'card_style', 'hero_style', 'footer_style'] as $k) {
+            $data[$k] ??= Settings::get($k);
+        }
         if ($request->boolean('reset_colors')) {
-            $data = array_merge($data, ['theme_primary' => '#3a2a9e', 'theme_accent' => '#f5b82e', 'theme_bg' => '#fbf8f1', 'theme_footer' => '#15122b', 'theme_radius' => 'normal', 'theme_font' => 'tajawal']);
+            $data = array_merge($data, \App\Support\Themes::settingsFor('nibras'), ['theme_font' => 'tajawal']);
         }
 
         return $data + [
             'custom_css' => (string) ($data['custom_css'] ?? ''),
-            'topbar_enabled' => $request->boolean('topbar_enabled'),
-            'sticky_header' => $request->boolean('sticky_header'),
         ];
     }
 

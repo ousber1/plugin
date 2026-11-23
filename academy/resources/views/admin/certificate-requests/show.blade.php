@@ -9,6 +9,14 @@
         <div class="field"><label for="status">الحالة</label><select class="select" id="status" name="status">@foreach (\App\Enums\CertificateStatus::cases() as $st)<option value="{{ $st->value }}" @selected($req->status === $st)>{{ $st->label() }}</option>@endforeach</select></div>
         <fieldset class="field" style="border:1px dashed var(--border-strong);border-radius:12px;padding:12px"><legend class="label">بيانات خاصة (لا تظهر للعموم)</legend>
             <div class="field"><label for="printed_name">الاسم المطبوع على الشهادة (كما أكّده الطالب)</label><input class="input" id="printed_name" name="printed_name" value="{{ old('printed_name', $req->printed_name) }}" dir="auto"></div>
+            @php $allCenters = \App\Models\Center::orderBy('sort_order')->get(); @endphp
+            @if ($allCenters->isNotEmpty() || $req->isPickup())
+                <div class="form-grid">
+                    <div class="field"><label for="delivery_method">طريقة الاستلام</label><select class="select" id="delivery_method" name="delivery_method" data-toggle-target="dm">
+                        <option value="shipping" @selected(! $req->isPickup())>توصيل إلى العنوان</option><option value="pickup" @selected($req->isPickup())>استلام من مركز</option></select></div>
+                    <div class="field" data-show-when="dm=pickup"><label for="center_id">المركز</label><select class="select" id="center_id" name="center_id">@foreach ($allCenters as $c)<option value="{{ $c->id }}" @selected($req->center_id === $c->id)>{{ $c->tr('city') }} — {{ $c->tr('name') }}</option>@endforeach</select></div>
+                </div>
+            @endif
             <div class="field"><label for="shipping_address">عنوان التوصيل</label><textarea class="textarea" id="shipping_address" name="shipping_address" rows="3" dir="auto">{{ old('shipping_address', $req->shipping_address) }}</textarea></div>
             <div class="field"><label for="private_notes">ملاحظات داخلية</label><textarea class="textarea" id="private_notes" name="private_notes" rows="3" dir="auto">{{ old('private_notes', $req->private_notes) }}</textarea></div>
         </fieldset>

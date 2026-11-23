@@ -67,7 +67,7 @@ class TestimonialController extends AdminController
             if ($item->photo_path) {
                 Storage::disk('public')->delete($item->photo_path);
             }
-            $item->photo_path = $request->file('photo')->store('testimonials', 'public');
+            $item->photo_path = \App\Support\ImageOptimizer::store($request->file('photo'), 'testimonials');
         }
         $item->save();
     }

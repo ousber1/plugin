@@ -70,7 +70,7 @@ class ProductController extends AdminController
             if ($item->cover_path) {
                 Storage::disk('public')->delete($item->cover_path);
             }
-            $item->cover_path = $request->file('cover')->store('products', 'public');
+            $item->cover_path = \App\Support\ImageOptimizer::store($request->file('cover'), 'products');
         }
         if ($request->hasFile('file')) {
             $stored = $media->storeUpload($request->file('file'), 'products');

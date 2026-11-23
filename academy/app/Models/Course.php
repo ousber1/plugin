@@ -58,6 +58,11 @@ class Course extends Model
         return $this->belongsToMany(User::class);
     }
 
+    public function centers()
+    {
+        return $this->belongsToMany(Center::class);
+    }
+
     public function sections()
     {
         return $this->hasMany(Section::class)->orderBy('sort_order')->orderBy('id');
@@ -97,7 +102,7 @@ class Course extends Model
     {
         return $this->thumbnail_path
             ? \App\Support\Media::url($this->thumbnail_path)
-            : route('covers.course', ['course' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6)]);
+            : route('covers.course', ['course' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6).\App\Support\CoverArt::version()]);
     }
 
     /** Total duration of published video lessons, in seconds. */

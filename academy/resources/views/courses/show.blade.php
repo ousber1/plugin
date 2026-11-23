@@ -213,6 +213,13 @@
                         <li><x-icon name="globe" size="18"/> {{ \App\Support\Locales::all()[$course->language]['name'] ?? $course->language }}</li>
                         @if ($course->requires_quiz_pass)<li><x-icon name="check-square" size="18"/> {{ __('يتطلب النجاح في الاختبارات') }}</li>@endif
                     </ul>
+                    @php $courseCenters = \App\Support\Settings::feature('centers') ? $course->centers()->where('is_active', true)->get() : collect(); @endphp
+                    @if ($courseCenters->isNotEmpty())
+                        <div class="course-centers">
+                            <strong class="small"><x-icon name="map-pin" size="16"/> {{ __('متوفرة أيضًا حضوريًا في:') }}</strong>
+                            <ul class="list-plain small">@foreach ($courseCenters as $cc)<li><a href="{{ route('centers.show', $cc) }}">{{ $cc->tr('city') }} — {{ $cc->tr('name') }}</a></li>@endforeach</ul>
+                        </div>
+                    @endif
                     @include('partials.certificate-box')
                 </div>
             </div>

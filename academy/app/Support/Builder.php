@@ -158,6 +158,11 @@ class Builder
             'categories' => ['label' => 'مجالات الدورات', 'icon' => 'layers', 'group' => 'ديناميكي', 'fields' => [
                 ['k' => 'title', 'type' => 'text', 'tr' => true, 'label' => 'العنوان'],
             ]],
+            'centers' => ['label' => 'مراكز التكوين', 'icon' => 'map-pin', 'group' => 'ديناميكي', 'fields' => [
+                ['k' => 'title', 'type' => 'text', 'tr' => true, 'label' => 'العنوان'],
+                ['k' => 'subtitle', 'type' => 'textarea', 'tr' => true, 'label' => 'وصف'],
+                ['k' => 'count', 'type' => 'number', 'label' => 'العدد', 'default' => 6, 'min' => 1, 'max' => 12],
+            ]],
             'posts' => ['label' => 'مقالات المدونة', 'icon' => 'file-text', 'group' => 'ديناميكي', 'fields' => [
                 ['k' => 'title', 'type' => 'text', 'tr' => true, 'label' => 'العنوان'],
                 ['k' => 'count', 'type' => 'number', 'label' => 'العدد', 'default' => 3, 'min' => 1, 'max' => 9],
@@ -323,6 +328,7 @@ class Builder
                 ['icon' => 'globe', 'title' => $tr('بلغتك', 'Dans votre langue', 'In your language'), 'text' => $tr('شرح بالعربية والدارجة مع المصطلحات بالفرنسية والإنجليزية.', 'Explications en arabe et darija, termes en français et anglais.', 'Explained in Arabic and Darija, with French and English terms.')],
                 ['icon' => 'award', 'title' => $tr('شهادة ورقية', 'Certificat imprimé', 'Printed certificate'), 'text' => $tr('اطلبها عبر واتساب وتصلك إلى عنوانك.', 'Demandez-le sur WhatsApp, il arrive chez vous.', 'Request it on WhatsApp and get it delivered.')],
             ]]),
+            $b('centers', ['title' => $tr('مراكزنا في المغرب', 'Nos centres au Maroc', 'Our centres in Morocco'), 'subtitle' => $tr('', '', ''), 'count' => 6]),
             $b('testimonials', ['title' => $tr('ماذا يقول طلابنا؟', 'Ce que disent nos apprenants', 'What our students say')], ['bg' => 'white']),
             $b('posts', ['title' => $tr('أحدث المقالات', 'Derniers articles', 'Latest articles'), 'count' => 3]),
             $b('cta', ['title' => $tr('جاهز للبدء؟', 'Prêt à commencer ?', 'Ready to start?'), 'text' => $tr('اختر دورتك الأولى الآن وابدأ التعلم مجانًا.', 'Choisissez votre première formation et commencez gratuitement.', 'Pick your first course and start learning for free.'),

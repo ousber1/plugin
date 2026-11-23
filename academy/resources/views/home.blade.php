@@ -171,6 +171,21 @@
             @endif
             @break
 
+        @case('centers')
+            @php $homeCenters = \App\Support\Settings::feature('centers') && \App\Models\Center::hasPublic() ? \App\Models\Center::active()->limit(6)->get() : collect(); @endphp
+            @if ($homeCenters->isNotEmpty())
+            <section class="section" style="background:var(--surface)">
+                <div class="container">
+                    <div class="section__head">
+                        <div><span class="eyebrow">{{ __('قريبون منك') }}</span><h2>{{ __('مراكزنا في المغرب') }}</h2></div>
+                        <a class="btn btn--outline" href="{{ route('centers.index') }}">{{ __('كل المراكز') }}</a>
+                    </div>
+                    <div class="center-grid">@foreach ($homeCenters as $center)@include('centers._card', ['center' => $center])@endforeach</div>
+                </div>
+            </section>
+            @endif
+            @break
+
         @case('partners')
             @if (isset($partners) && $partners->isNotEmpty())
             <section class="section section--white section--tight">

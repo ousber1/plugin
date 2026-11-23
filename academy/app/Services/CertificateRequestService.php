@@ -20,10 +20,15 @@ class CertificateRequestService
      *
      * @throws \DomainException when the student is not eligible
      */
-    public function requestFor(User $user, Course $course): CertificateRequest
+    public function requestFor(User $user, Course $course, ?\App\Models\Center $pickup = null): CertificateRequest
     {
         $existing = CertificateRequest::where('user_id', $user->id)->where('course_id', $course->id)->first();
         if ($existing) {
+            // The student may still change pickup/shipping until staff confirm the request.
+            if (func_num_args() >= 3 && $existing->status === CertificateStatus::PendingContact) {
+                $existing->update(['delivery_method' => $pickup ? 'pickup' : 'shipping', 'center_id' => $pickup?->id]);
+            }
+
             return $existing;
         }
 
@@ -39,12 +44,14 @@ class CertificateRequestService
         }
 
         try {
-            return DB::transaction(function () use ($user, $course) {
+            return DB::transaction(function () use ($user, $course, $pickup) {
                 $request = new CertificateRequest([
                     'reference' => $this->newReference(),
                     'user_id' => $user->id,
                     'course_id' => $course->id,
                     'status' => CertificateStatus::PendingContact,
+                    'delivery_method' => $pickup ? 'pickup' : 'shipping',
+                    'center_id' => $pickup?->id,
                 ]);
                 $request->save();
 
@@ -60,14 +67,24 @@ class CertificateRequestService
     {
         $template = (string) Settings::get('whatsapp_template');
 
-        return strtr($template, [
+        $message = strtr($template, [
             '{course}' => $request->course->tr('title', 'ar'),
             '{reference}' => $request->reference,
         ]);
+        if ($request->isPickup() && $request->center) {
+            $message .= "\nطريقة الاستلام: من مركز ".$request->center->tr('name', 'ar').' ('.$request->center->tr('city', 'ar').').';
+        }
+
+        return $message;
     }
 
+    /** Pickup requests go to the centre's own WhatsApp number when it has one. */
     public function whatsappUrl(CertificateRequest $request): ?string
     {
+        if ($request->isPickup() && $request->center) {
+            return $request->center->whatsappLink($this->whatsappMessage($request));
+        }
+
         return Settings::whatsappLink($this->whatsappMessage($request));
     }
 

@@ -46,6 +46,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /** Courses an instructor is assigned to manage. */
+    public function center()
+    {
+        return $this->belongsTo(Center::class);
+    }
+
     public function assignedCourses()
     {
         return $this->belongsToMany(Course::class);

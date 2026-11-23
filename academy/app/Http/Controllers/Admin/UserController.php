@@ -13,13 +13,16 @@ class UserController extends AdminController
 {
     public function index(Request $request)
     {
-        $request->validate(['q' => ['nullable', 'string', 'max:120'], 'role' => ['nullable', Rule::enum(Role::class)]]);
-        $users = User::query()->withCount('enrollments')
+        $request->validate(['q' => ['nullable', 'string', 'max:120'], 'role' => ['nullable', Rule::enum(Role::class)], 'center' => ['nullable', 'integer']]);
+        $users = User::query()->withCount('enrollments')->with('center')
+            ->when($request->input('center'), fn ($q, $c) => $q->where('center_id', $c))
             ->when($request->input('q'), fn ($q, $t) => $q->where(fn ($w) => $w->where('name', 'like', "%$t%")->orWhere('email', 'like', "%$t%")->orWhere('phone', 'like', "%$t%")))
             ->when($request->input('role'), fn ($q, $r) => $q->where('role', $r))
             ->latest()->paginate(25)->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        $centers = \App\Models\Center::orderBy('sort_order')->get();
+
+        return view('admin.users.index', compact('users', 'centers'));
     }
 
     public function edit(User $user)
@@ -27,6 +30,7 @@ class UserController extends AdminController
         return view('admin.users.edit', [
             'user' => $user->load('assignedCourses'),
             'courses' => Course::orderBy('slug')->get(['id', 'title', 'slug']),
+            'centers' => \App\Models\Center::orderBy('sort_order')->get(),
             'enrollments' => $user->enrollments()->with('course:id,title,slug')->get(),
         ]);
     }
@@ -41,6 +45,7 @@ class UserController extends AdminController
             'courses' => ['nullable', 'array'],
             'courses.*' => ['integer', 'exists:courses,id'],
             'verify_email' => ['nullable', 'boolean'],
+            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
         ]);
 
         if ($user->is($request->user()) && ($data['role'] !== 'admin' || ! $request->boolean('is_active'))) {
@@ -53,6 +58,7 @@ class UserController extends AdminController
         $user->is_active = $request->boolean('is_active');
         $user->headline = $data['headline'] ?? null;
         $user->bio = $data['bio'] ?? null;
+        $user->center_id = $data['center_id'] ?? null;
         if ($request->boolean('verify_email') && ! $user->hasVerifiedEmail()) {
             $user->email_verified_at = now();
         }

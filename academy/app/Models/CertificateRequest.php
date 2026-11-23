@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CertificateRequest extends Model
 {
-    protected $fillable = ['reference', 'user_id', 'course_id', 'status'];
+    protected $fillable = ['reference', 'user_id', 'course_id', 'status', 'delivery_method', 'center_id'];
 
     protected $casts = [
         'status' => CertificateStatus::class,
@@ -25,6 +25,16 @@ class CertificateRequest extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function center()
+    {
+        return $this->belongsTo(Center::class);
+    }
+
+    public function isPickup(): bool
+    {
+        return $this->delivery_method === 'pickup' && $this->center_id;
     }
 
     public function issuedCertificate()

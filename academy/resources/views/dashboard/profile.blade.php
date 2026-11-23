@@ -13,6 +13,7 @@
             <div class="field"><label for="email">{{ __('البريد الإلكتروني') }}</label><input class="input input-ltr" id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required autocomplete="email">
                 <p class="hint">{{ __('تغيير البريد يتطلب تأكيده من جديد.') }}</p></div>
             <div class="field"><label for="phone">{{ __('الهاتف (اختياري)') }}</label><input class="input input-ltr" id="phone" name="phone" value="{{ old('phone', $user->phone) }}" autocomplete="tel" inputmode="tel"></div>
+            @include('partials.center-select', ['selected' => $user->center_id])
             <div class="field"><label for="locale">{{ __('لغة الواجهة') }}</label>
                 <select class="select" id="locale" name="locale">@foreach (\App\Support\Locales::all() as $code => $m)<option value="{{ $code }}" @selected(($user->locale ?? app()->getLocale()) === $code)>{{ $m['name'] }}</option>@endforeach</select></div>
             <div class="field"><label for="avatar">{{ __('الصورة الشخصية') }}</label><input class="input" id="avatar" type="file" name="avatar" accept="image/jpeg,image/png,image/webp"></div>

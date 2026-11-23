@@ -28,6 +28,7 @@ class RegisterController extends Controller
             'phone' => ['nullable', 'string', 'max:40'],
             'password' => ['required', 'confirmed', Password::min(8)],
             'terms' => ['accepted'],
+            'center_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('centers', 'id')->where('is_active', true)],
         ]);
 
         $user = new User([
@@ -38,6 +39,7 @@ class RegisterController extends Controller
             'locale' => app()->getLocale(),
         ]);
         $user->role = 'student';
+        $user->center_id = $data['center_id'] ?? null;
         $user->save();
 
         event(new Registered($user));

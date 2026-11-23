@@ -29,25 +29,29 @@
             @if ($u->isAdmin())
                 <a class="{{ request()->routeIs('admin.categories.*') && request('type', 'course') === 'course' ? 'is-active' : '' }}" href="{{ route('admin.categories.index', ['type' => 'course']) }}"><x-icon name="layers" size="18"/> التصنيفات</a>
                 <a class="{{ $is('admin.reviews.*') }}" href="{{ route('admin.reviews.index') }}"><x-icon name="star" size="18"/> المراجعات @if ($pendingReviews)<span class="count">{{ $pendingReviews }}</span>@endif</a>
+                <a class="{{ $is('admin.centers.*') }}" href="{{ route('admin.centers.index') }}"><x-icon name="map-pin" size="18"/> مراكز التكوين</a>
                 <h2>الشهادات</h2>
                 <a class="{{ $is('admin.certificate-requests.*') }}" href="{{ route('admin.certificate-requests.index') }}"><x-icon name="truck" size="18"/> طلبات الشهادات @if ($pendingCerts)<span class="count">{{ $pendingCerts }}</span>@endif</a>
                 <a class="{{ $is('admin.certificates.*') }}" href="{{ route('admin.certificates.index') }}"><x-icon name="shield" size="18"/> سجل التحقق</a>
                 <h2>المحتوى</h2>
                 <a class="{{ $is('admin.posts.*') }}" href="{{ route('admin.posts.index') }}"><x-icon name="file-text" size="18"/> المدونة</a>
                 <a class="{{ $is('admin.resources.*') }}" href="{{ route('admin.resources.index') }}"><x-icon name="folder" size="18"/> المكتبة</a>
-                <a class="{{ request()->routeIs('admin.builder.*') && request()->route('target') === 'home' ? 'is-active' : '' }}" href="{{ route('admin.builder.edit', 'home') }}"><x-icon name="sparkles" size="18"/> تصميم الصفحة الرئيسية</a>
                 <a class="{{ $is('admin.pages.*') }}" href="{{ route('admin.pages.index') }}"><x-icon name="list" size="18"/> الصفحات</a>
                 <a class="{{ $is('admin.testimonials.*') }}" href="{{ route('admin.testimonials.index') }}"><x-icon name="users" size="18"/> آراء الطلاب</a>
                 <a class="{{ $is('admin.partners.*') }}" href="{{ route('admin.partners.index') }}"><x-icon name="award" size="18"/> الشركاء</a>
                 <a class="{{ $is('admin.tools.*') }}" href="{{ route('admin.tools.index') }}"><x-icon name="sparkles" size="18"/> الأدوات والاقتراحات</a>
                 <a class="{{ $is('admin.messages.*') }}" href="{{ route('admin.messages.index') }}"><x-icon name="inbox" size="18"/> رسائل التواصل @if ($unread)<span class="count">{{ $unread }}</span>@endif</a>
+                <h2>تصميم الموقع</h2>
+                <a class="{{ request()->routeIs('admin.builder.*') && request()->route('target') === 'home' ? 'is-active' : '' }}" href="{{ route('admin.builder.edit', 'home') }}"><x-icon name="sparkles" size="18"/> تصميم الصفحة الرئيسية</a>
+                <a class="{{ request()->route('group') === 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit', 'appearance') }}"><x-icon name="eye" size="18"/> الثيمات والألوان</a>
+                <a class="{{ $is('admin.layout.*') }}" href="{{ route('admin.layout.edit') }}"><x-icon name="layers" size="18"/> الهيدر والتذييل</a>
+                <a class="{{ $is('admin.optimize.*') }}" href="{{ route('admin.optimize.index') }}"><x-icon name="chart" size="18"/> تحسين الموقع و SEO</a>
                 <h2>المتجر (اختياري)</h2>
                 <a class="{{ $is('admin.products.*') }}" href="{{ route('admin.products.index') }}"><x-icon name="store" size="18"/> المنتجات</a>
                 <a class="{{ $is('admin.orders.*') }}" href="{{ route('admin.orders.index') }}"><x-icon name="receipt" size="18"/> الطلبات</a>
                 <h2>النظام</h2>
                 <a class="{{ $is('admin.users.*') }}" href="{{ route('admin.users.index') }}"><x-icon name="users" size="18"/> المستخدمون</a>
                 <a class="{{ $is('admin.settings.*') && request()->route('group') !== 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit') }}"><x-icon name="settings" size="18"/> الإعدادات</a>
-                <a class="{{ request()->route('group') === 'appearance' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit', 'appearance') }}"><x-icon name="eye" size="18"/> المظهر والألوان</a>
                 <a class="{{ $is('admin.audit.*') }}" href="{{ route('admin.audit.index') }}"><x-icon name="list" size="18"/> سجل العمليات</a>
             @endif
         </nav>

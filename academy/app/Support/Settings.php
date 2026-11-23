@@ -46,7 +46,7 @@ class Settings
             'whatsapp_number' => '212600000000',
             'whatsapp_template' => "السلام عليكم، أود طلب الشهادة الورقية لدورة {course}.\nرقم طلب الشهادة: {reference}.",
             'social' => ['facebook' => null, 'instagram' => null, 'youtube' => null, 'tiktok' => null, 'linkedin' => null, 'x' => null],
-            'features' => ['blog' => true, 'library' => true, 'tools' => true, 'store' => false, 'verification' => true],
+            'features' => ['blog' => true, 'library' => true, 'tools' => true, 'store' => false, 'verification' => true, 'centers' => true],
             'home_sections' => [
                 ['key' => 'hero', 'enabled' => true],
                 ['key' => 'stats', 'enabled' => true],
@@ -55,6 +55,7 @@ class Settings
                 ['key' => 'how', 'enabled' => true],
                 ['key' => 'recent', 'enabled' => true],
                 ['key' => 'benefits', 'enabled' => true],
+                ['key' => 'centers', 'enabled' => true],
                 ['key' => 'testimonials', 'enabled' => true],
                 ['key' => 'articles', 'enabled' => true],
                 ['key' => 'partners', 'enabled' => true],
@@ -66,8 +67,53 @@ class Settings
             'wa_float_side' => 'auto', // auto | left | right
             'wa_float_show_label' => true,
             'wa_float_pulse' => true,
-            'wa_float_label' => ['ar' => 'تواصل معنا', 'fr' => 'Écrivez-nous', 'en' => 'Chat with us'],
-            'wa_float_message' => ['ar' => 'السلام عليكم، لدي سؤال حول الأكاديمية.', 'fr' => 'Bonjour, j’ai une question sur l’académie.', 'en' => 'Hello, I have a question about the academy.'],
+            'wa_float_label' => ['ar' => 'اطلب شهادتك الآن', 'fr' => 'Demandez votre certificat', 'en' => 'Get your certificate'],
+            'wa_float_message' => ['ar' => 'السلام عليكم، أريد طلب شهادتي من الأكاديمية.', 'fr' => 'Bonjour, je souhaite demander mon certificat.', 'en' => 'Hello, I would like to request my certificate.'],
+            // Certificate button on course pages
+            'cert_button_label' => ['ar' => 'اطلب شهادتك عبر واتساب', 'fr' => 'Demander mon certificat sur WhatsApp', 'en' => 'Request your certificate on WhatsApp'],
+            // Header
+            'header_cta_enabled' => true,
+            'header_cta_label' => ['ar' => 'اطلب شهادتك الآن', 'fr' => 'Mon certificat', 'en' => 'Get your certificate'],
+            'header_cta_action' => 'whatsapp', // whatsapp | url
+            'header_cta_url' => '',
+            'header_cta_message' => ['ar' => 'السلام عليكم، أريد طلب شهادتي من الأكاديمية.', 'fr' => 'Bonjour, je souhaite demander mon certificat.', 'en' => 'Hello, I would like to request my certificate.'],
+            'header_show_auth' => true,
+            'header_show_lang' => true,
+            // Footer
+            'footer_cta_enabled' => true,
+            'footer_cta_title' => ['ar' => 'ابدأ رحلتك التعليمية اليوم — مجانًا', 'fr' => 'Commencez à apprendre aujourd’hui — gratuitement', 'en' => 'Start learning today — for free'],
+            'footer_cta_text' => ['ar' => 'دورات عملية، تقدّم محفوظ، وشهادة ورقية تصلك إلى عنوانك.', 'fr' => 'Des cours pratiques, une progression sauvegardée et un certificat imprimé livré chez vous.', 'en' => 'Practical courses, saved progress and a printed certificate delivered to you.'],
+            'footer_cta_button' => ['ar' => 'تصفّح الدورات', 'fr' => 'Voir les formations', 'en' => 'Browse courses'],
+            'footer_cta_url' => '/courses',
+            'footer_columns' => [
+                ['type' => 'categories', 'title' => ['ar' => 'مجالات الدورات', 'fr' => 'Domaines', 'en' => 'Course areas'], 'links' => []],
+                ['type' => 'pages', 'title' => ['ar' => 'روابط مفيدة', 'fr' => 'Liens utiles', 'en' => 'Useful links'], 'links' => []],
+                ['type' => 'services', 'title' => ['ar' => 'خدمات', 'fr' => 'Services', 'en' => 'Services'], 'links' => []],
+            ],
+            'footer_show_contact' => true,
+            'footer_show_social' => true,
+            'footer_show_back_top' => true,
+            'footer_copyright' => ['ar' => '© {year} {site} — جميع الحقوق محفوظة', 'fr' => '© {year} {site} — Tous droits réservés', 'en' => '© {year} {site} — All rights reserved'],
+            'footer_bottom_links' => [],
+            // Theme & style
+            'site_theme' => 'nibras',
+            'header_style' => 'light', // light | dark | brand
+            'button_shape' => 'rounded', // rounded | pill | square
+            'card_style' => 'elevated', // elevated | bordered | flat
+            'hero_style' => 'gradient', // gradient | mesh | zellige | light
+            'footer_style' => 'dark', // dark | brand | light
+            // Optimization & SEO
+            'image_optimize' => true,
+            'image_max_width' => 1600,
+            'image_quality' => 82,
+            'lazy_images' => true,
+            'html_minify' => false,
+            'seo_title_suffix' => true,
+            'google_verification' => '',
+            'bing_verification' => '',
+            'robots_extra' => '',
+            'og_image_path' => null,
+            'org_schema' => true,
             // Appearance
             'theme_primary' => '#3a2a9e',
             'theme_accent' => '#f5b82e',
@@ -165,7 +211,9 @@ class Settings
 
     public static function feature(string $name): bool
     {
-        return (bool) (self::get('features')[$name] ?? false);
+        $features = (self::get('features') ?: []) + self::defaults()['features'];
+
+        return (bool) ($features[$name] ?? false);
     }
 
     public static function set(array $values): void

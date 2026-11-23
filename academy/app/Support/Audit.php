@@ -38,6 +38,11 @@ class Audit
             'settings.updated' => 'تعديل الإعدادات',
             'builder.saved' => 'نشر تصميم صفحة بالمحرّر',
             'system.migrated' => 'تحديث قاعدة البيانات',
+            'system.optimized' => 'تحسين الموقع',
+            'theme.applied' => 'تطبيق ثيم',
+            'center.created' => 'إضافة مركز',
+            'center.updated' => 'تعديل مركز',
+            'center.deleted' => 'حذف مركز',
             'order.status_changed' => 'تغيير حالة طلب متجر',
             'review.approved' => 'اعتماد مراجعة',
         ][$action] ?? $action;

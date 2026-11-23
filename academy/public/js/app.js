@@ -145,3 +145,13 @@
         bar.querySelector('[data-cookie-ok]').addEventListener('click', function () { try { localStorage.setItem('cookie-ok', '1'); } catch (e) {} bar.hidden = true; });
     }
 })();
+
+/* Certificate delivery choice: show the centre list only for pickup. */
+(function () {
+    document.querySelectorAll('[data-delivery]').forEach(function (r) {
+        r.addEventListener('change', function () {
+            var sel = r.form.querySelector('[data-delivery-center]');
+            if (sel) sel.hidden = r.form.querySelector('[data-delivery]:checked').value !== 'pickup';
+        });
+    });
+})();

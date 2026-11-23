@@ -21,7 +21,7 @@ class CoverArt
     public static function svg(string $title, string $label = '', int $seed = 0, string $dir = 'rtl'): string
     {
         $h = $seed ?: crc32($title);
-        [$dark, $mid, $accent] = self::PALETTES[$h % count(self::PALETTES)];
+        [$dark, $mid, $accent] = self::palette($h);
         $motif = $h % 4;
         $e = fn ($s) => htmlspecialchars($s, ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
@@ -76,5 +76,32 @@ class CoverArt
         }
 
         return $lines ?: [''];
+    }
+
+    /** Default covers follow the site theme colours (original palettes for the Nibras theme). */
+    private static function palette(int $h): array
+    {
+        $p = (string) Settings::get('theme_primary');
+        $a = (string) Settings::get('theme_accent');
+        if (! preg_match('/^#[0-9a-f]{6}$/i', $p) || ! preg_match('/^#[0-9a-f]{6}$/i', $a) || strtolower($p) === '#3a2a9e') {
+            return self::PALETTES[$h % count(self::PALETTES)];
+        }
+        $mix = function (string $hex, string $with, float $w) {
+            [$r1, $g1, $b1] = sscanf($hex, '#%02x%02x%02x');
+            [$r2, $g2, $b2] = sscanf($with, '#%02x%02x%02x');
+
+            return sprintf('#%02x%02x%02x', $r1 * $w + $r2 * (1 - $w), $g1 * $w + $g2 * (1 - $w), $b1 * $w + $b2 * (1 - $w));
+        };
+        // Three variations so neighbouring cards are not identical.
+        $variant = $h % 3;
+        $dark = $mix($p, '#000000', [.5, .42, .6][$variant]);
+        $mid = $mix($p, '#ffffff', [1, .85, .72][$variant]);
+
+        return [$dark, $mid, $a];
+    }
+
+    public static function version(): string
+    {
+        return substr(md5(Settings::get('theme_primary').Settings::get('theme_accent')), 0, 4);
     }
 }

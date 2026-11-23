@@ -14,6 +14,7 @@
             <input class="input input-ltr" id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email" @error('email') aria-invalid="true" @enderror></div>
         <div class="field"><label for="phone">{{ __('الهاتف (اختياري)') }}</label>
             <input class="input input-ltr" id="phone" name="phone" value="{{ old('phone') }}" autocomplete="tel" inputmode="tel" placeholder="+212 6…"></div>
+        @include('partials.center-select', ['selected' => null])
         <div class="field"><label for="password">{{ __('كلمة المرور') }} <span class="req">*</span></label>
             <input class="input input-ltr" id="password" type="password" name="password" required minlength="8" autocomplete="new-password" aria-describedby="pw-hint" @error('password') aria-invalid="true" @enderror>
             <p class="hint" id="pw-hint">{{ __('8 أحرف على الأقل.') }}</p></div>

@@ -82,7 +82,7 @@ class PostController extends AdminController
             if ($post->cover_path) {
                 Storage::disk('public')->delete($post->cover_path);
             }
-            $post->cover_path = $request->file('cover')->store('posts', 'public');
+            $post->cover_path = \App\Support\ImageOptimizer::store($request->file('cover'), 'posts');
         }
         $post->save();
     }

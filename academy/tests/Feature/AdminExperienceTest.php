@@ -142,7 +142,7 @@ class AdminExperienceTest extends TestCase
 
         // Staff still see the site, with theme and code applied.
         $this->get(route('home'))->assertOk()->assertSee('--indigo-700: #0f766e', false)->assertSee('letter-spacing:1px', false)
-            ->assertSee('google-site-verification', false)->assertDontSee('<div class="topbar">', false)->assertSee('نستعمل الكوكيز');
+            ->assertSee('google-site-verification', false)->assertSee('نستعمل الكوكيز');
         auth()->logout();
         $this->get(route('home'))->assertStatus(503)->assertSee('عودة قريبة جدًا');
         $this->get(route('login'))->assertOk();

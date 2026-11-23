@@ -18,8 +18,19 @@ class CertificateRequestController extends Controller
     {
         abort_unless($course->isPublished(), 404);
 
+        $request->validate(['delivery' => ['nullable', 'in:shipping,pickup'], 'center_id' => ['nullable', 'integer']]);
+        $pickup = null;
+        if ($request->input('delivery') === 'pickup') {
+            $pickup = \App\Models\Center::where('is_active', true)->find($request->integer('center_id'));
+            if (! $pickup) {
+                return redirect()->route('courses.show', $course)->with('error', __('اختر المركز الذي تريد استلام الشهادة منه.'));
+            }
+        }
+
         try {
-            $certificateRequest = $service->requestFor($request->user(), $course);
+            $certificateRequest = $request->has('delivery')
+                ? $service->requestFor($request->user(), $course, $pickup)
+                : $service->requestFor($request->user(), $course);
         } catch (\DomainException $e) {
             return redirect()->route('courses.show', $course)->with('error', $e->getMessage());
         }

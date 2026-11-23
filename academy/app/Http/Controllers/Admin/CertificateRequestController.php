@@ -13,8 +13,9 @@ class CertificateRequestController extends AdminController
 {
     public function index(Request $request)
     {
-        $request->validate(['q' => ['nullable', 'string', 'max:120'], 'status' => ['nullable', Rule::enum(CertificateStatus::class)]]);
-        $requests = CertificateRequest::with(['user:id,name,email,phone', 'course:id,slug,title', 'issuedCertificate'])
+        $request->validate(['q' => ['nullable', 'string', 'max:120'], 'status' => ['nullable', Rule::enum(CertificateStatus::class)], 'center' => ['nullable', 'integer']]);
+        $requests = CertificateRequest::with(['user:id,name,email,phone', 'course:id,slug,title', 'issuedCertificate', 'center'])
+            ->when($request->input('center'), fn ($q, $c) => $q->where('center_id', $c))
             ->when($request->input('status'), fn ($q, $s) => $q->where('status', $s))
             ->when($request->input('q'), function ($q, $t) {
                 $q->where(fn ($w) => $w->where('reference', 'like', "%$t%")->orWhere('tracking_number', 'like', "%$t%")
@@ -26,12 +27,14 @@ class CertificateRequestController extends AdminController
         $progress = app(\App\Services\ProgressService::class);
         $percents = $requests->getCollection()->mapWithKeys(fn ($r) => [$r->id => $r->user && $r->course ? $progress->progress($r->user, $r->course)['percent'] : null]);
 
-        return view('admin.certificate-requests.index', compact('requests', 'counts', 'percents'));
+        $centers = \App\Models\Center::orderBy('sort_order')->get();
+
+        return view('admin.certificate-requests.index', compact('requests', 'counts', 'percents', 'centers'));
     }
 
     public function show(CertificateRequest $certificateRequest, CertificateRequestService $service)
     {
-        $certificateRequest->load(['user', 'course', 'issuedCertificate']);
+        $certificateRequest->load(['user', 'course', 'issuedCertificate', 'center']);
 
         return view('admin.certificate-requests.show', [
             'req' => $certificateRequest,
@@ -52,6 +55,8 @@ class CertificateRequestController extends AdminController
             'shipped_on' => ['nullable', 'date'],
             'show_tracking' => ['nullable', 'boolean'],
             'private_notes' => ['nullable', 'string', 'max:5000'],
+            'delivery_method' => ['nullable', 'in:shipping,pickup'],
+            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
         ]);
         $old = $certificateRequest->status;
         $new = CertificateStatus::from($data['status']);
@@ -65,6 +70,8 @@ class CertificateRequestController extends AdminController
             'shipped_on' => $data['shipped_on'] ?? ($new === CertificateStatus::Shipped && ! $certificateRequest->shipped_on ? now()->toDateString() : $certificateRequest->shipped_on),
             'show_tracking' => $request->boolean('show_tracking'),
             'private_notes' => $data['private_notes'] ?? null,
+            'delivery_method' => ($data['delivery_method'] ?? 'shipping') === 'pickup' && ! empty($data['center_id']) ? 'pickup' : 'shipping',
+            'center_id' => ($data['delivery_method'] ?? 'shipping') === 'pickup' ? ($data['center_id'] ?? null) : null,
         ]);
         if ($new !== CertificateStatus::PendingContact && ! $certificateRequest->received_at) {
             $certificateRequest->received_at = now();

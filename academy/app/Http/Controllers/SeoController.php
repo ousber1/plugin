@@ -21,8 +21,13 @@ class SeoController extends Controller
             'Disallow: /media/',
             'Disallow: /profile',
             'Disallow: /orders/',
-            'Sitemap: '.route('sitemap'),
         ];
+        foreach (preg_split('/\R/', (string) Settings::get('robots_extra')) as $rule) {
+            if (preg_match('/^(Disallow|Allow):\s*\/\S*$/i', trim($rule))) {
+                $lines[] = trim($rule);
+            }
+        }
+        $lines[] = 'Sitemap: '.route('sitemap');
 
         return response(implode("\n", $lines)."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
@@ -40,6 +45,12 @@ class SeoController extends Controller
         }
         foreach (Page::where('status', 'published')->get(['slug', 'updated_at']) as $p) {
             $urls[] = ['loc' => route('pages.show', $p), 'lastmod' => $p->updated_at];
+        }
+        if (Settings::feature('centers') && \App\Models\Center::hasPublic()) {
+            $urls[] = ['loc' => route('centers.index'), 'lastmod' => null];
+            foreach (\App\Models\Center::active()->get(['slug', 'updated_at']) as $c) {
+                $urls[] = ['loc' => route('centers.show', $c), 'lastmod' => $c->updated_at];
+            }
         }
         if (Settings::feature('blog')) {
             $urls[] = ['loc' => route('blog.index'), 'lastmod' => null];

@@ -178,7 +178,7 @@ class CourseController extends AdminController
         }
         if ($request->hasFile('thumbnail')) {
             $old = $course->thumbnail_path;
-            $course->thumbnail_path = $request->file('thumbnail')->store('courses', 'public');
+            $course->thumbnail_path = \App\Support\ImageOptimizer::store($request->file('thumbnail'), 'courses');
             if ($old) {
                 Storage::disk('public')->delete($old);
             }

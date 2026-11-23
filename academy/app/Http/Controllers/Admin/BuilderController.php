@@ -64,7 +64,7 @@ class BuilderController extends AdminController
         $request->validate(['image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:6144']], [
             'image.image' => 'الملف ليس صورة.', 'image.mimes' => 'الصيغ المقبولة: JPG، PNG، WebP، GIF.', 'image.max' => 'حجم الصورة أكبر من 6 م.ب.',
         ]);
-        $path = $request->file('image')->store('builder', 'public');
+        $path = \App\Support\ImageOptimizer::store($request->file('image'), 'builder');
 
         return response()->json(['path' => $path, 'url' => Media::url($path)]);
     }

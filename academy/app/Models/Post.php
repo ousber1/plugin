@@ -41,7 +41,7 @@ class Post extends Model
     {
         return $this->cover_path
             ? \App\Support\Media::url($this->cover_path)
-            : route('covers.post', ['post' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6)]);
+            : route('covers.post', ['post' => $this->id, 'v' => substr(md5($this->tr('title')), 0, 6).\App\Support\CoverArt::version()]);
     }
 
     public function readingMinutes(): int

@@ -42,6 +42,12 @@ Route::get('/privacy', fn () => app(C\PageController::class)->show(Page::where('
 Route::get('/contact', [C\ContactController::class, 'create'])->name('contact');
 Route::post('/contact', [C\ContactController::class, 'store'])->middleware('throttle:forms')->name('contact.store');
 
+// Training centres
+Route::middleware('feature:centers')->group(function () {
+    Route::get('/centers', [C\CenterController::class, 'index'])->name('centers.index');
+    Route::get('/centers/{center}', [C\CenterController::class, 'show'])->name('centers.show');
+});
+
 // Blog
 Route::middleware('feature:blog')->group(function () {
     Route::get('/blog', [C\BlogController::class, 'index'])->name('blog.index');
@@ -178,6 +184,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
 
         Route::resource('testimonials', A\TestimonialController::class)->except(['show']);
         Route::resource('partners', A\PartnerController::class)->except(['show']);
+        Route::resource('centers', A\CenterController::class)->except(['show']);
+
+        // Site design: header/footer, themes; optimization tools
+        Route::get('layout', [A\LayoutController::class, 'edit'])->name('layout.edit');
+        Route::put('layout', [A\LayoutController::class, 'update'])->name('layout.update');
+        Route::post('themes/{theme}', [A\LayoutController::class, 'applyTheme'])->name('themes.apply');
+        Route::get('optimize', [A\OptimizeController::class, 'index'])->name('optimize.index');
+        Route::put('optimize', [A\OptimizeController::class, 'update'])->name('optimize.update');
+        Route::post('optimize/{action}', [A\OptimizeController::class, 'run'])->name('optimize.run');
         Route::resource('posts', A\PostController::class)->except(['show']);
         Route::resource('resources', A\ResourceController::class)->except(['show']);
         Route::resource('pages', A\PageController::class)->except(['show']);

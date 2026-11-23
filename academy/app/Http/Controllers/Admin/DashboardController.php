@@ -92,7 +92,13 @@ class DashboardController extends AdminController
             ? collect(CertificateStatus::cases())->map(fn ($s) => ['label' => $s->label(), 'value' => CertificateRequest::where('status', $s)->count(), 'url' => route('admin.certificate-requests.index', ['status' => $s->value])])->all()
             : [];
 
+        $byCenter = $user->isAdmin() && \App\Models\Center::hasPublic()
+            ? \App\Models\Center::active()->withCount('students')->get()
+                ->map(fn ($c) => ['label' => $c->tr('city').' — '.$c->tr('name'), 'value' => $c->students_count, 'url' => route('admin.users.index', ['center' => $c->id])])->all()
+            : [];
+
         return view('admin.dashboard', [
+            'byCenter' => $byCenter,
             'kpis' => $kpis, 'totals' => $totals, 'todo' => $todo, 'courses' => $courses, 'completionRate' => $completionRate,
             'days' => $days->all(), 'series' => $series, 'topCourses' => $topCourses, 'certStatus' => $certStatus,
             'activity' => $this->activity($ids), 'health' => $user->isAdmin() ? $this->health() : [],
@@ -136,6 +142,8 @@ class DashboardController extends AdminController
         return [
             ['ok' => $wa !== '' && $wa !== '212600000000', 'label' => 'رقم واتساب الأكاديمية مضبوط', 'url' => route('admin.settings.edit', 'whatsapp')],
             ['ok' => ! in_array(config('mail.default'), ['log', 'array'], true), 'label' => 'إرسال البريد مفعّل (SMTP)', 'hint' => 'أضف إعدادات MAIL_* في ملف .env لتأكيد الحسابات واستعادة كلمات المرور.'],
+            ['ok' => app()->configurationIsCached(), 'label' => 'الموقع مُسرَّع (ذاكرة مؤقتة)', 'hint' => 'اضغط «تسريع الموقع» في صفحة تحسين الموقع.', 'url' => route('admin.optimize.index'), 'optional' => true],
+            ['ok' => (bool) Settings::get('google_verification'), 'label' => 'الموقع مربوط بـ Google Search Console', 'hint' => 'يساعد على الظهور في جوجل.', 'url' => route('admin.optimize.index'), 'optional' => true],
             ['ok' => ! config('app.debug'), 'label' => 'وضع التصحيح معطّل', 'hint' => 'اجعل APP_DEBUG=false في ملف .env.'],
             ['ok' => str_starts_with((string) config('app.url'), 'https://'), 'label' => 'الموقع يعمل بـ HTTPS', 'hint' => 'فعّل شهادة SSL من cPanel ثم اجعل APP_URL يبدأ بـ https://'],
             ['ok' => is_writable(storage_path('app/public')) && is_writable(storage_path('app/private')), 'label' => 'مجلدات التخزين قابلة للكتابة', 'hint' => 'اجعل صلاحيات المجلد storage 755.'],

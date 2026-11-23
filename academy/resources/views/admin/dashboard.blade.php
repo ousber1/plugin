@@ -21,6 +21,8 @@
         @if ($u->isAdmin())
             <a class="btn btn--primary" href="{{ route('admin.courses.create') }}"><x-icon name="plus" size="18"/> دورة جديدة</a>
             <a class="btn btn--outline" href="{{ route('admin.builder.edit', 'home') }}"><x-icon name="layers" size="18"/> تصميم الرئيسية</a>
+            <a class="btn btn--ghost" href="{{ route('admin.settings.edit', 'appearance') }}"><x-icon name="sparkles" size="18"/> الثيمات</a>
+            <a class="btn btn--ghost" href="{{ route('admin.optimize.index') }}"><x-icon name="chart" size="18"/> تحسين الموقع</a>
             <a class="btn btn--ghost" href="{{ route('admin.posts.create') }}"><x-icon name="file-text" size="18"/> مقال</a>
         @else
             <a class="btn btn--primary" href="{{ route('admin.courses.index') }}"><x-icon name="book" size="18"/> دوراتي</a>
@@ -86,6 +88,13 @@
         </section>
     @endif
 </div>
+
+@if ($byCenter)
+    <section class="card card--pad" style="margin-bottom:16px">
+        <div class="row row--between"><h2 class="card__title" style="margin:0">الطلاب حسب المركز</h2><a class="small" href="{{ route('admin.centers.index') }}">إدارة المراكز</a></div>
+        <x-admin.bar-chart :rows="$byCenter" unit="طالب" empty="لم يختر أي طالب مركزًا بعد."/>
+    </section>
+@endif
 
 <div class="dash-cols dash-cols--even">
     <section class="card card--pad">

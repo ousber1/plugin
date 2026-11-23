@@ -159,3 +159,16 @@
         hit.addEventListener('pointerleave', hide);
     });
 })();
+
+/* Show/hide fields based on a select: data-toggle-target="key" + data-show-when="key=value". */
+(function () {
+    document.querySelectorAll('[data-toggle-target]').forEach(function (sel) {
+        var key = sel.getAttribute('data-toggle-target');
+        function apply() {
+            document.querySelectorAll('[data-show-when^="' + key + '="]').forEach(function (el) {
+                el.hidden = el.getAttribute('data-show-when').split('=')[1].split('|').indexOf(sel.value) === -1;
+            });
+        }
+        sel.addEventListener('change', apply); apply();
+    });
+})();
