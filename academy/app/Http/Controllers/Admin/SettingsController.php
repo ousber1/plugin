@@ -151,11 +151,20 @@ class SettingsController extends AdminController
 
     private function ai(Request $request): array
     {
-        $request->validate(['ai_api_key' => ['nullable', 'string', 'max:300'], 'remove_ai_key' => ['nullable', 'boolean']]);
+        $request->validate([
+            'ai_api_key' => ['nullable', 'string', 'max:300'], 'remove_ai_key' => ['nullable', 'boolean'],
+            'ai_public_tool' => ['nullable', 'boolean'], 'ai_public_daily_limit' => ['required', 'integer', 'between:1,500'],
+        ]);
+        $values = [
+            'ai_public_tool' => $request->boolean('ai_public_tool'),
+            'ai_public_daily_limit' => (int) $request->input('ai_public_daily_limit'),
+        ];
         if ($request->boolean('remove_ai_key')) {
-            return ['ai_api_key' => null];
+            $values['ai_api_key'] = null;
+        } elseif ($request->filled('ai_api_key')) {
+            $values['ai_api_key'] = trim($request->input('ai_api_key'));
         }
 
-        return $request->filled('ai_api_key') ? ['ai_api_key' => trim($request->input('ai_api_key'))] : [];
+        return $values;
     }
 }

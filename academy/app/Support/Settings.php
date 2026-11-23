@@ -70,6 +70,9 @@ class Settings
             'bank_rib' => null,
             'bank_instructions' => null,
             'ai_api_key' => null,
+            // Public AI quiz generator on the Tools page (uses the same key).
+            'ai_public_tool' => true,
+            'ai_public_daily_limit' => 10,
             'seo_description' => [
                 'ar' => 'دورات مجانية عملية في البرمجة والتصميم واللغات والمهارات الرقمية، مع شهادة ورقية تصلك إلى عنوانك في المغرب.',
                 'fr' => 'Formations gratuites et pratiques en programmation, design, langues et compétences numériques, avec certificat imprimé livré au Maroc.',

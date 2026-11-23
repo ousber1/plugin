@@ -62,6 +62,7 @@ Route::middleware('feature:verification')->group(function () {
 Route::middleware('feature:tools')->group(function () {
     Route::get('/tools', [C\ToolController::class, 'index'])->name('tools.index');
     Route::post('/tools/suggest', [C\ToolController::class, 'suggest'])->middleware('throttle:forms')->name('tools.suggest');
+    Route::post('/tools/quiz-generator/generate', [C\ToolController::class, 'generateQuiz'])->middleware(['auth', 'throttle:ai'])->name('tools.quiz.generate');
     Route::get('/tools/{tool}', [C\ToolController::class, 'show'])->name('tools.show');
 });
 

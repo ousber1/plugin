@@ -109,6 +109,14 @@
         s.addEventListener('change', function () { s.form.submit(); });
     });
 
+    // Character counters for textareas with maxlength
+    doc.querySelectorAll('textarea[data-maxcount]').forEach(function (ta) {
+        var out = doc.querySelector('[data-count-for="' + ta.id + '"]');
+        if (!out) return;
+        var upd = function () { out.textContent = ta.value.length; };
+        ta.addEventListener('input', upd); upd();
+    });
+
     // Star rating radio groups get keyboard-friendly labels already; highlight on change.
     doc.querySelectorAll('[data-stars]').forEach(function (group) {
         var paint = function () {

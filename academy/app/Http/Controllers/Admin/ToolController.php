@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Tool;
 use App\Models\ToolSuggestion;
+use App\Support\Locales;
 use Illuminate\Http\Request;
 
 class ToolController extends AdminController
@@ -18,13 +19,23 @@ class ToolController extends AdminController
 
     public function update(Request $request)
     {
-        $request->validate(['tools' => ['array'], 'tools.*.sort_order' => ['nullable', 'integer', 'min:0'], 'tools.*.badge' => ['nullable', 'string', 'max:30']]);
+        $rules = ['tools' => ['array'], 'tools.*.sort_order' => ['nullable', 'integer', 'min:0'], 'tools.*.badge' => ['nullable', 'string', 'max:30']];
+        foreach (Locales::codes() as $code) {
+            $rules["tools.*.name.$code"] = [$code === 'ar' ? 'required' : 'nullable', 'string', 'max:80'];
+            $rules["tools.*.description.$code"] = ['nullable', 'string', 'max:300'];
+        }
+        $request->validate($rules, ['tools.*.name.ar.required' => 'اسم الأداة بالعربية مطلوب.']);
         foreach (Tool::all() as $tool) {
-            $row = $request->input('tools.'.$tool->id, []);
+            $row = $request->input('tools.'.$tool->id);
+            if (! is_array($row)) {
+                continue;
+            }
             $tool->update([
                 'is_enabled' => ! empty($row['is_enabled']),
                 'sort_order' => (int) ($row['sort_order'] ?? $tool->sort_order),
                 'badge' => $row['badge'] ?? null,
+                'name' => isset($row['name']) ? array_map(fn ($v) => trim((string) $v), $row['name']) : $tool->name,
+                'description' => isset($row['description']) ? array_map(fn ($v) => trim((string) $v), $row['description']) : $tool->description,
             ]);
         }
 

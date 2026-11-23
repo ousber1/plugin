@@ -15,7 +15,7 @@
                 <div class="row row--between"><span class="tool-card__icon" style="background:{{ $colors[$tool->key] ?? '#4b37c4' }}"><x-icon :name="$icons[$tool->key] ?? 'sparkles'" size="26"/></span>@if ($tool->badge)<span class="badge">{{ $tool->badge }}</span>@endif</div>
                 <h2 style="font-size:1.15rem;margin:0">{{ $tool->tr('name') }}</h2>
                 <p>{{ $tool->tr('description') }}</p>
-                <a href="{{ route('tools.show', $tool) }}" class="row" style="gap:6px;font-weight:700">{{ __('ابدأ الآن') }} <x-icon name="chevron-end" size="16"/></a>
+                <a href="{{ route('tools.show', $tool) }}" class="row" style="gap:6px;font-weight:700">{{ $tool->key === 'quiz-builder' ? __('جرّب الأداة') : __('ابدأ الآن') }} <x-icon name="chevron-end" size="16"/></a>
             </article>
         @endforeach
         <article class="card tool-card" style="border-style:dashed;background:transparent">
@@ -30,9 +30,10 @@
             <form method="POST" action="{{ route('tools.suggest') }}">
                 @csrf
                 @include('partials.form-errors')
-                <div style="position:absolute;left:-9999px" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+                <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
                 <div class="field"><label for="idea">{{ __('فكرتك') }} <span class="req">*</span></label>
-                    <textarea class="textarea" id="idea" name="idea" required minlength="10" maxlength="1500" dir="auto" placeholder="{{ __('مثال: أداة لتحويل الصور إلى PDF…') }}">{{ old('idea') }}</textarea></div>
+                    <textarea class="textarea" id="idea" name="idea" required minlength="10" maxlength="1500" dir="auto" placeholder="{{ __('مثال: أداة لتحويل الصور إلى PDF…') }}" data-maxcount>{{ old('idea') }}</textarea>
+                    <p class="hint" aria-live="polite"><span data-count-for="idea">0</span> / 1500</p></div>
                 <div class="form-grid">
                     <div class="field"><label for="s-name">{{ __('الاسم (اختياري)') }}</label><input class="input" id="s-name" name="name" value="{{ old('name') }}" maxlength="120"></div>
                     <div class="field"><label for="s-email">{{ __('البريد الإلكتروني (اختياري، لنخبرك عند إضافتها)') }}</label><input class="input input-ltr" id="s-email" type="email" name="email" value="{{ old('email') }}"></div>

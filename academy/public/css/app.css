@@ -462,3 +462,5 @@ body.no-scroll { overflow: hidden; }
 .logo__mark { width: 40px; height: 40px; }
 @media (max-width: 1240px) { .nav__link, .nav__toggle { padding-inline: 8px; font-size: .9rem; } }
 @media (max-width: 1180px) { .nav, .header-actions .hide-mobile { display: none; } .nav-burger { display: inline-grid; margin-inline-start: auto; } }
+.hp { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.site-footer .btn--white, .site-footer .btn--white:hover { color: var(--indigo-700); }

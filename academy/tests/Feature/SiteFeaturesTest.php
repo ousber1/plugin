@@ -154,7 +154,7 @@ class SiteFeaturesTest extends TestCase
         $this->get(route('home'))->assertDontSee('من التسجيل إلى الشهادة في أربع خطوات');
 
         $this->actingAs($admin)->put(route('admin.users.update', $admin), ['role' => 'student'])->assertSessionHas('error');
-        $this->put(route('admin.settings.update', 'ai'), ['ai_api_key' => 'sk-ant-test']);
+        $this->put(route('admin.settings.update', 'ai'), ['ai_api_key' => 'sk-ant-test', 'ai_public_daily_limit' => 10, 'ai_public_tool' => 1]);
         $this->assertTrue(app(QuizGenerator::class)->enabled());
         $this->assertStringNotContainsString('sk-ant-test', Setting::find('ai_api_key')->value); // encrypted at rest
     }

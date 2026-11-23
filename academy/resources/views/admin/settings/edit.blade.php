@@ -87,6 +87,11 @@
             <p>الحالة: @if (app(\App\Services\QuizGenerator::class)->enabled())<span class="badge badge--green">مفعّل</span>@else<span class="badge badge--gray">غير مفعّل</span>@endif</p>
             <div class="field"><label for="ai_api_key">مفتاح Anthropic API</label><input class="input ltr" type="password" id="ai_api_key" name="ai_api_key" autocomplete="off" placeholder="{{ \App\Support\Settings::get('ai_api_key') ? '•••••••• (محفوظ — اتركه فارغًا للإبقاء عليه)' : 'sk-ant-…' }}"></div>
             @if (\App\Support\Settings::get('ai_api_key'))<label class="check field"><input type="checkbox" name="remove_ai_key" value="1"> حذف المفتاح وتعطيل المولّد</label>@endif
+            <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">المولّد العام في صفحة الأدوات</legend>
+                <label class="check field"><input type="checkbox" name="ai_public_tool" value="1" @checked($s['ai_public_tool'] ?? true)> إتاحة «مولّد الاختبارات بالذكاء الاصطناعي» للمستخدمين المسجّلين في صفحة الأدوات</label>
+                <div class="field"><label for="ai_public_daily_limit">الحد اليومي لكل مستخدم (عدد مرات التوليد)</label><input class="input" type="number" min="1" max="500" id="ai_public_daily_limit" name="ai_public_daily_limit" value="{{ old('ai_public_daily_limit', $s['ai_public_daily_limit'] ?? 10) }}" style="max-width:160px" required>
+                    <p class="hint">كل عملية توليد تُحتسب على حسابك لدى Anthropic. الحد يحمي ميزانيتك. يقبل المولّد النصوص وملفات PDF وWord وترجمات الفيديو (SRT/VTT).</p></div>
+            </fieldset>
             @break
     @endswitch
     <button class="btn btn--primary btn--lg" type="submit">حفظ الإعدادات</button>
