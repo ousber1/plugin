@@ -2,7 +2,7 @@
 @section('title', 'الإعدادات')
 @section('content')
 @php
-    $sectionLabels = ['hero' => 'الواجهة والبحث', 'stats' => 'الإحصائيات (من قاعدة البيانات)', 'categories' => 'المجالات', 'featured' => 'الدورات المميزة', 'how' => 'كيف تعمل الأكاديمية', 'recent' => 'أحدث الدورات', 'benefits' => 'المزايا والاعتماد', 'centers' => 'مراكز التكوين', 'testimonials' => 'آراء الطلاب المعتمدة', 'articles' => 'أحدث المقالات', 'partners' => 'شعارات الشركاء', 'cta' => 'الدعوة الختامية'];
+    $sectionLabels = ['hero' => 'الواجهة والبحث', 'stats' => 'الإحصائيات (من قاعدة البيانات)', 'categories' => 'المجالات', 'featured' => 'الدورات المميزة', 'how' => 'كيف تعمل الأكاديمية', 'recent' => 'أحدث الدورات', 'benefits' => 'المزايا والاعتماد', 'accreditation' => 'الاعتماد (يُضبط من تبويب «الاعتماد»)', 'centers' => 'مراكز التكوين', 'testimonials' => 'آراء الطلاب المعتمدة', 'articles' => 'أحدث المقالات', 'partners' => 'شعارات الشركاء', 'cta' => 'الدعوة الختامية'];
 @endphp
 <div class="page-head"><h1>الإعدادات</h1></div>
 <nav class="tabs">@foreach ($groups as $k => $label)<a href="{{ route('admin.settings.edit', $k) }}" class="{{ $group === $k ? 'is-active' : '' }}">{{ $label }}</a>@endforeach</nav>
@@ -51,6 +51,42 @@
                 <x-admin.tr name="wa_float_message" label="الرسالة الجاهزة عند فتح واتساب" :value="$s['wa_float_message'] ?? []" type="textarea" :rows="2"/>
             </fieldset>
             @break
+        @case('accreditation')
+            @php
+                $facts = array_values($s['accreditation_facts'] ?? []);
+                while (count($facts) < 4) { $facts[] = ['icon' => ['hash', 'globe', 'award', 'calendar'][count($facts)], 'label' => [], 'value' => []]; }
+                $icons = ['hash' => '#', 'globe' => 'بلد / عالمي', 'award' => 'شهادة', 'shield' => 'درع', 'calendar' => 'تاريخ', 'check-circle' => 'علامة صح', 'map-pin' => 'مكان', 'users' => 'أشخاص'];
+            @endphp
+            <div class="alert alert--warning small"><x-icon name="alert"/> <span>اكتب فقط اعتمادات حقيقية وموثّقة، وارفع وثيقة الاعتماد ليطّلع عليها الزوار. الاعتمادات غير الصحيحة تضر بثقة الطلاب وقد تعرّضك للمساءلة.</span></div>
+            <label class="check field"><input type="checkbox" name="accreditation_enabled" value="1" @checked($s['accreditation_enabled'])> إظهار قسم الاعتماد في الصفحة الرئيسية</label>
+            <label class="check field"><input type="checkbox" name="accreditation_on_verify" value="1" @checked($s['accreditation_on_verify'] ?? true)> إظهاره أيضًا في صفحة «التحقق من الشهادة»</label>
+            <x-admin.tr name="accreditation_badge" label="الشارة الصغيرة" :value="$s['accreditation_badge']" :max="60"/>
+            <x-admin.tr name="accreditation_title" label="العنوان" :value="$s['accreditation_title']" hint="مثال: شهاداتنا معتمدة من …"/>
+            <x-admin.tr name="accreditation_text" label="النص" :value="$s['accreditation_text']" type="textarea" :rows="3"/>
+            <div class="form-grid">
+                <div class="field"><label for="accreditation_logo">شعار الجهة المعتمِدة</label><input class="input" type="file" id="accreditation_logo" name="accreditation_logo" accept="image/*">
+                    @if ($s['accreditation_logo_path'])<img src="{{ \App\Support\Media::url($s['accreditation_logo_path']) }}" alt="" style="max-height:80px;margin-top:6px"><label class="check small"><input type="checkbox" name="remove_accreditation_logo" value="1"> حذف</label>@endif</div>
+                <div class="field"><label for="accreditation_doc">وثيقة الاعتماد (PDF أو صورة)</label><input class="input" type="file" id="accreditation_doc" name="accreditation_doc" accept="application/pdf,image/*">
+                    @if ($s['accreditation_doc_path'])<a class="small" href="{{ \App\Support\Media::url($s['accreditation_doc_path']) }}" target="_blank">عرض الوثيقة الحالية</a> <label class="check small"><input type="checkbox" name="remove_accreditation_doc" value="1"> حذف</label>@endif
+                    <p class="hint">أو ضع رابطًا خارجيًا (موقع الجهة المعتمِدة):</p>
+                    <input class="input ltr" type="url" name="accreditation_doc_url" value="{{ old('accreditation_doc_url', $s['accreditation_doc_url']) }}" placeholder="https://" aria-label="رابط وثيقة الاعتماد"></div>
+            </div>
+            <x-admin.tr name="accreditation_doc_label" label="نص زر الوثيقة" :value="$s['accreditation_doc_label']" :max="60"/>
+            <label class="check field"><input type="checkbox" name="accreditation_verify_button" value="1" @checked($s['accreditation_verify_button'] ?? true)> زر «تحقق من صحة شهادة»</label>
+            <fieldset class="box"><legend class="label">معلومات الاعتماد (حتى 4، مثل: رقم التسجيل، بلد التسجيل، نوع الشهادة)</legend>
+                @foreach ($facts as $i => $f)
+                    <div class="repeater-item" style="flex-wrap:wrap;align-items:end">
+                        <div class="field" style="flex:0 1 130px"><label for="fi{{ $i }}">الأيقونة</label><select class="select" id="fi{{ $i }}" name="facts[{{ $i }}][icon]">@foreach ($icons as $k => $l)<option value="{{ $k }}" @selected(($f['icon'] ?? '') === $k)>{{ $l }}</option>@endforeach</select></div>
+                        <div class="field" style="flex:1 1 150px"><label for="fl{{ $i }}">العنوان (عربي)</label><input class="input" id="fl{{ $i }}" name="facts[{{ $i }}][label][ar]" value="{{ $f['label']['ar'] ?? '' }}" placeholder="رقم التسجيل"></div>
+                        <div class="field" style="flex:1 1 150px"><label for="fv{{ $i }}">القيمة (عربي)</label><input class="input" id="fv{{ $i }}" name="facts[{{ $i }}][value][ar]" value="{{ $f['value']['ar'] ?? '' }}" placeholder="N° 15636127"></div>
+                        <div class="field" style="flex:1 1 130px"><label for="flf{{ $i }}">Libellé (FR)</label><input class="input" id="flf{{ $i }}" dir="ltr" name="facts[{{ $i }}][label][fr]" value="{{ $f['label']['fr'] ?? '' }}"></div>
+                        <div class="field" style="flex:1 1 130px"><label for="fvf{{ $i }}">Valeur (FR)</label><input class="input" id="fvf{{ $i }}" dir="ltr" name="facts[{{ $i }}][value][fr]" value="{{ $f['value']['fr'] ?? '' }}"></div>
+                        <input type="hidden" name="facts[{{ $i }}][label][en]" value="{{ $f['label']['en'] ?? '' }}"><input type="hidden" name="facts[{{ $i }}][value][en]" value="{{ $f['value']['en'] ?? '' }}">
+                    </div>
+                @endforeach
+                <p class="hint">اترك القيمة فارغة لإخفاء السطر. النسخة الإنجليزية تستعمل الفرنسية عند غيابها.</p>
+            </fieldset>
+            @break
         @case('features')
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">الوحدات الظاهرة (تختفي من القائمة والتذييل وخريطة الموقع عند تعطيلها)</legend>
                 @foreach (['blog' => 'المدونة والأخبار', 'library' => 'المكتبة', 'tools' => 'الأدوات', 'verification' => 'التحقق من الشهادة', 'centers' => 'مراكز التكوين', 'store' => 'المتجر الرقمي (اختياري، معطّل افتراضيًا)'] as $k => $l)
@@ -77,8 +113,7 @@
                         <td><input class="input" type="number" name="sections[{{ $i }}][order]" value="{{ $i + 1 }}" style="max-width:90px" aria-label="ترتيب {{ $sectionLabels[$sec['key']] ?? '' }}"></td></tr>
                 @endforeach
             </tbody></table></div>
-            <label class="check field"><input type="checkbox" name="accreditation_enabled" value="1" @checked($s['accreditation_enabled'])> إظهار نص الاعتماد</label>
-            <x-admin.tr name="accreditation_text" label="نص الاعتماد (اكتب فقط اعتمادات حقيقية وموثّقة)" :value="$s['accreditation_text']" type="textarea" :rows="2"/>
+            <p class="hint">قسم الاعتماد يُضبط من تبويب <a href="{{ route('admin.settings.edit', 'accreditation') }}">الاعتماد</a>.</p>
             @break
         @case('social')
             <p class="muted small">الروابط الفارغة لا تظهر في الموقع.</p>

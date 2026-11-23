@@ -866,3 +866,19 @@ body:has(.wa-float) .footer-bottom { padding-bottom: 84px; }
 .store-hero__in .hero__actions { flex-wrap: wrap; }
 .footer-logo { display: inline-block; text-decoration: none !important; }
 .footer-logo .logo img { max-height: var(--logo-h, 44px); height: var(--logo-h, 44px); }
+
+/* ---------- Accreditation band ---------- */
+.accr { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; padding: 40px 48px; border-radius: var(--radius-lg); color: #fff;
+    background: radial-gradient(500px 300px at 0% 100%, color-mix(in srgb, var(--indigo-500) 55%, transparent), transparent 70%), linear-gradient(135deg, var(--indigo-950), color-mix(in srgb, var(--indigo-950) 70%, var(--indigo-700))); box-shadow: var(--shadow-lg); }
+.accr h2 { color: #fff; margin: 12px 0 10px; }
+.accr p { color: #d9d5f0; max-width: 70ch; }
+.accr__badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--amber) 50%, transparent); background: color-mix(in srgb, var(--amber) 14%, transparent); color: var(--amber); font-weight: 800; font-size: .85rem; }
+.accr__facts { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 20px; }
+.accr__facts > div { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); min-width: 150px; }
+.accr__facts small { display: block; color: #bdb8d9; font-size: .78rem; }
+.accr__facts strong { color: #fff; }
+.accr__ficon { color: var(--amber); display: grid; }
+.accr__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.accr__logo { width: 260px; height: 260px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 14px rgba(255,255,255,.08); padding: 26px; }
+.accr__logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+@media (max-width: 860px) { .accr { grid-template-columns: 1fr; padding: 28px 22px; } .accr__logo { order: -1; width: 170px; height: 170px; justify-self: center; } }

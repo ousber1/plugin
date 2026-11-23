@@ -14,6 +14,7 @@ class SettingsController extends AdminController
         'general' => 'الهوية والتواصل',
         'appearance' => 'الثيمات والألوان',
         'whatsapp' => 'واتساب والشهادات',
+        'accreditation' => 'الاعتماد',
         'features' => 'الوحدات والقائمة',
         'home' => 'الصفحة الرئيسية',
         'social' => 'الشبكات الاجتماعية',
@@ -35,6 +36,7 @@ class SettingsController extends AdminController
         $values = match ($group) {
             'general' => $this->general($request),
             'whatsapp' => $this->whatsapp($request),
+            'accreditation' => $this->accreditation($request),
             'features' => $this->features($request),
             'home' => $this->home($request),
             'social' => $this->social($request),
@@ -111,6 +113,49 @@ class SettingsController extends AdminController
         ];
     }
 
+    private function accreditation(Request $request): array
+    {
+        $data = $request->validate([
+            ...$this->trRules('accreditation_badge', false, 60), ...$this->trRules('accreditation_title', false, 160),
+            ...$this->trRules('accreditation_text', false, 800), ...$this->trRules('accreditation_doc_label', false, 60),
+            'accreditation_doc_url' => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//'],
+            'accreditation_logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+            'accreditation_doc' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:8192'],
+            'facts' => ['nullable', 'array', 'max:4'],
+            'facts.*.icon' => ['nullable', 'in:hash,globe,award,shield,calendar,check-circle,map-pin,users'],
+            'facts.*.label' => ['nullable', 'array'], 'facts.*.label.*' => ['nullable', 'string', 'max:60'],
+            'facts.*.value' => ['nullable', 'array'], 'facts.*.value.*' => ['nullable', 'string', 'max:80'],
+        ]);
+        $values = [
+            'accreditation_enabled' => $request->boolean('accreditation_enabled'),
+            'accreditation_on_verify' => $request->boolean('accreditation_on_verify'),
+            'accreditation_verify_button' => $request->boolean('accreditation_verify_button'),
+            'accreditation_badge' => $this->trInput($request, 'accreditation_badge'),
+            'accreditation_title' => $this->trInput($request, 'accreditation_title'),
+            'accreditation_text' => $this->trInput($request, 'accreditation_text'),
+            'accreditation_doc_label' => $this->trInput($request, 'accreditation_doc_label'),
+            'accreditation_doc_url' => (string) ($data['accreditation_doc_url'] ?? ''),
+            'accreditation_facts' => collect($request->input('facts', []))
+                ->filter(fn ($f) => trim((string) ($f['value']['ar'] ?? '')) !== '' || trim((string) ($f['value']['fr'] ?? '')) !== '')
+                ->map(fn ($f) => [
+                    'icon' => $f['icon'] ?? 'award',
+                    'label' => collect(Locales::codes())->mapWithKeys(fn ($c) => [$c => trim((string) ($f['label'][$c] ?? ''))])->all(),
+                    'value' => collect(Locales::codes())->mapWithKeys(fn ($c) => [$c => trim((string) ($f['value'][$c] ?? ''))])->all(),
+                ])->values()->all(),
+        ];
+        foreach (['logo' => 'accreditation_logo_path', 'doc' => 'accreditation_doc_path'] as $field => $key) {
+            if (($request->boolean('remove_accreditation_'.$field) || $request->hasFile('accreditation_'.$field)) && Settings::get($key)) {
+                Storage::disk('public')->delete(Settings::get($key));
+                $values[$key] = null;
+            }
+            if ($request->hasFile('accreditation_'.$field)) {
+                $values[$key] = $request->file('accreditation_'.$field)->store('accreditation', 'public');
+            }
+        }
+
+        return $values;
+    }
+
     private function features(Request $request): array
     {
         $request->validate([
@@ -133,7 +178,6 @@ class SettingsController extends AdminController
     {
         $request->validate([
             'sections' => ['required', 'array'], 'sections.*.key' => ['required', 'string'], 'sections.*.order' => ['nullable', 'integer'],
-            ...$this->trRules('accreditation_text', false, 400),
         ]);
         $known = array_column(Settings::defaults()['home_sections'], 'key');
         $sections = collect($request->input('sections'))->filter(fn ($s) => in_array($s['key'], $known, true))
@@ -142,8 +186,6 @@ class SettingsController extends AdminController
 
         return [
             'home_sections' => $sections,
-            'accreditation_enabled' => $request->boolean('accreditation_enabled'),
-            'accreditation_text' => $this->trInput($request, 'accreditation_text'),
         ];
     }
 

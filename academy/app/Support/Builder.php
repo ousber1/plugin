@@ -158,6 +158,9 @@ class Builder
             'categories' => ['label' => 'مجالات الدورات', 'icon' => 'layers', 'group' => 'ديناميكي', 'fields' => [
                 ['k' => 'title', 'type' => 'text', 'tr' => true, 'label' => 'العنوان'],
             ]],
+            'accreditation' => ['label' => 'قسم الاعتماد', 'icon' => 'shield', 'group' => 'ديناميكي', 'fields' => [
+                ['k' => 'note', 'type' => 'checkbox', 'label' => 'يُعرض المحتوى من الإعدادات › الاعتماد (فعّله هناك)'],
+            ]],
             'centers' => ['label' => 'مراكز التكوين', 'icon' => 'map-pin', 'group' => 'ديناميكي', 'fields' => [
                 ['k' => 'title', 'type' => 'text', 'tr' => true, 'label' => 'العنوان'],
                 ['k' => 'subtitle', 'type' => 'textarea', 'tr' => true, 'label' => 'وصف'],

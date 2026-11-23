@@ -104,6 +104,7 @@
 
     function renderField(f, obj, onChange) {
         var id = nextId();
+        if (typeof f.placeholder === 'function') f = Object.assign({}, f, { placeholder: f.placeholder() });
         var wrap = el('div', { class: 'tk-field' + (f.half ? ' is-half' : '') + (f.third ? ' is-third' : '') });
         var label = f.type === 'checkbox' ? null : el('label', { for: id }, esc(L(f.label)) + (f.hint ? ' <small>' + esc(L(f.hint)) + '</small>' : ''));
         if (label) wrap.appendChild(label);

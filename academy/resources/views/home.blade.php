@@ -128,9 +128,6 @@
                         <div class="feature"><div class="feature__icon"><x-icon name="shield" size="26"/></div><h3>{{ __('قابلة للتحقق') }}</h3><p>{{ __('كل شهادة تحمل رمزًا يمكن لأي جهة التحقق منه عبر موقعنا.') }}</p></div>
                         <div class="feature"><div class="feature__icon"><x-icon name="phone" size="26"/></div><h3>{{ __('على الهاتف أيضًا') }}</h3><p>{{ __('واجهة خفيفة وسريعة تعمل جيدًا على الهواتف.') }}</p></div>
                     </div>
-                    @if (\App\Support\Settings::get('accreditation_enabled') && \App\Support\Settings::tr('accreditation_text'))
-                        <div class="alert alert--info" style="margin-top:24px"><x-icon name="award"/> <span>{{ \App\Support\Settings::tr('accreditation_text') }}</span></div>
-                    @endif
                 </div>
             </section>
             @break
@@ -169,6 +166,10 @@
                 </div>
             </section>
             @endif
+            @break
+
+        @case('accreditation')
+            @include('partials.accreditation')
             @break
 
         @case('centers')

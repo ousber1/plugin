@@ -13,4 +13,7 @@
     </form>
     @error('code')<p class="error" style="color:#fff">{{ $message }}</p>@enderror
 </div></section>
+@if (\App\Support\Settings::get('accreditation_on_verify'))
+    @include('partials.accreditation')
+@endif
 @endsection

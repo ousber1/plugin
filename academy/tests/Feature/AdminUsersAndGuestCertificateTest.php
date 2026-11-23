@@ -108,4 +108,25 @@ class AdminUsersAndGuestCertificateTest extends TestCase
         $this->put(route('admin.layout.update'), ['header_cta_action' => 'whatsapp', 'columns' => [['type' => 'categories']]]);
         $this->get(route('home'))->assertDontSee('class="footer-logo"', false);
     }
+
+    public function test_accreditation_section_is_managed_from_settings(): void
+    {
+        $this->get(route('home'))->assertDontSee('class="accr"', false);
+        Storage::fake('public');
+        $this->actingAs($this->admin())->get(route('admin.settings.edit', 'accreditation'))->assertOk()->assertSee('معلومات الاعتماد');
+        $this->put(route('admin.settings.update', 'accreditation'), [
+            'accreditation_enabled' => 1, 'accreditation_on_verify' => 1, 'accreditation_verify_button' => 1,
+            'accreditation_badge' => ['ar' => 'اعتماد دولي'], 'accreditation_title' => ['ar' => 'شهاداتنا معتمدة من جهة دولية'],
+            'accreditation_text' => ['ar' => 'نص الاعتماد'], 'accreditation_doc_label' => ['ar' => 'اطّلع على شهادة الاعتماد'],
+            'accreditation_logo' => UploadedFile::fake()->image('seal.png', 400, 400),
+            'accreditation_doc' => UploadedFile::fake()->create('accreditation.pdf', 120, 'application/pdf'),
+            'facts' => [['icon' => 'hash', 'label' => ['ar' => 'رقم التسجيل'], 'value' => ['ar' => 'N° 15636127']], ['icon' => 'globe', 'label' => ['ar' => 'بلد التسجيل'], 'value' => ['ar' => '']]],
+        ])->assertSessionHas('success');
+        $this->assertCount(1, Settings::get('accreditation_facts'));
+        auth()->logout();
+        $this->get(route('home'))->assertSee('class="accr"', false)->assertSee('شهاداتنا معتمدة من جهة دولية')->assertSee('N° 15636127')
+            ->assertSee('اطّلع على شهادة الاعتماد')->assertSee(route('verify.index'));
+        $this->get(route('verify.index'))->assertSee('شهاداتنا معتمدة من جهة دولية');
+        $this->get(route('tools.show', 'certificate-designer'))->assertOk()->assertSee('js/tools/cert.js', false);
+    }
 }

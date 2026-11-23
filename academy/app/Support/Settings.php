@@ -55,6 +55,7 @@ class Settings
                 ['key' => 'how', 'enabled' => true],
                 ['key' => 'recent', 'enabled' => true],
                 ['key' => 'benefits', 'enabled' => true],
+                ['key' => 'accreditation', 'enabled' => true],
                 ['key' => 'centers', 'enabled' => true],
                 ['key' => 'testimonials', 'enabled' => true],
                 ['key' => 'articles', 'enabled' => true],
@@ -139,6 +140,15 @@ class Settings
             'home_blocks' => [],
             'accreditation_enabled' => false,
             'accreditation_text' => ['ar' => '', 'fr' => '', 'en' => ''],
+            'accreditation_badge' => ['ar' => 'اعتماد دولي', 'fr' => 'Accréditation internationale', 'en' => 'International accreditation'],
+            'accreditation_title' => ['ar' => '', 'fr' => '', 'en' => ''],
+            'accreditation_logo_path' => null,
+            'accreditation_doc_path' => null,
+            'accreditation_doc_url' => '',
+            'accreditation_doc_label' => ['ar' => 'اطّلع على شهادة الاعتماد', 'fr' => 'Voir le certificat d’accréditation', 'en' => 'View the accreditation certificate'],
+            'accreditation_verify_button' => true,
+            'accreditation_facts' => [],
+            'accreditation_on_verify' => true,
             'verify_public_fields' => ['holder_name', 'course_title', 'issued_on'],
             // Students may request the printed certificate on WhatsApp without finishing
             // (or starting) the course. Turn on to require completion first.
