@@ -12,7 +12,7 @@ Les 14 dernières sont conservées (`--keep=N`). Ce dossier est hors du web. **C
 1. Passez le site en maintenance : `php artisan down` (ou créez `storage/framework/down` via le Gestionnaire de fichiers avec le contenu `{}`).
 2. Décompressez la sauvegarde sur votre poste.
 3. phpMyAdmin → sélectionnez la base → **Importer** `database.sql` (le fichier supprime puis recrée chaque table). Pour un gros fichier, utilisez *Assistant* ou SSH : `mysql -u USER -p BASE < database.sql`.
-4. Replacez `files/private/*` dans `hocreative/storage/app/private/` et `files/public/*` dans `hocreative/storage/app/public/`.
+4. Replacez `files/private/*` dans `public_html/hocreative/storage/app/private/` et `files/public/*` dans `public_html/hocreative/storage/app/public/`.
 5. `php artisan optimize:clear` puis `php artisan up`.
 
 Testez une restauration sur une base vide au moins une fois après la mise en ligne.
@@ -20,7 +20,7 @@ Testez une restauration sur une base vide au moins une fois après la mise en li
 ## Mise à jour de l'application
 1. Sauvegarde : `php artisan hocreative:backup`.
 2. `php artisan down`.
-3. Téléversez la nouvelle archive dans votre dossier personnel et extrayez-la : elle remplace `hocreative/` et `public_html/`. **Conservez** `hocreative/.env` et `hocreative/storage/` (dont `storage/app/installed.lock`) – faites-en une copie avant si besoin – et le lien `public_html/storage`.
+3. Copiez de côté `public_html/hocreative/.env` et `public_html/hocreative/storage/`. Téléversez la nouvelle archive dans `public_html` et extrayez-la (écraser). Remettez `.env` et `storage/` (dont `storage/app/installed.lock`) à leur place.
 4. `php artisan migrate --force` (Cron unique ou SSH). Les migrations sont additives ; aucune ne modifie les montants des documents émis.
 5. `php artisan db:seed --class=Database\\Seeders\\RolesSeeder --force` si de nouvelles permissions ont été ajoutées.
 6. `php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache`.

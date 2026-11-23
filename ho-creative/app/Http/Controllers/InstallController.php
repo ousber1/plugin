@@ -11,8 +11,8 @@ use Illuminate\Support\Str;
 /**
  * One-time web installer for hosts without SSH.
  *  - Inactive (404) as soon as storage/app/installed.lock exists.
- *  - Proof of server access: the operator must paste the token written to
- *    storage/app/install-token.txt (readable via cPanel File Manager only).
+ *  - Proof of server access: only a MySQL database hosted on this server (localhost)
+ *    is accepted, so only someone holding this cPanel account's database credentials can install.
  *  - Stateless (no session/cookies) because APP_KEY may not exist yet.
  */
 class InstallController extends Controller
@@ -20,11 +20,6 @@ class InstallController extends Controller
     protected function lockPath(): string
     {
         return storage_path('app/installed.lock');
-    }
-
-    protected function tokenPath(): string
-    {
-        return storage_path('app/install-token.txt');
     }
 
     protected function guard(): void
@@ -35,11 +30,6 @@ class InstallController extends Controller
     public function show()
     {
         $this->guard();
-        if (! file_exists($this->tokenPath())) {
-            @mkdir(dirname($this->tokenPath()), 0775, true);
-            file_put_contents($this->tokenPath(), Str::random(40));
-            @chmod($this->tokenPath(), 0600);
-        }
         $checks = [
             'PHP ≥ 8.3' => version_compare(PHP_VERSION, '8.3.0', '>='),
             'pdo_mysql' => extension_loaded('pdo_mysql'), 'mbstring' => extension_loaded('mbstring'), 'gd' => extension_loaded('gd'),
@@ -54,16 +44,15 @@ class InstallController extends Controller
     public function run(Request $request)
     {
         $this->guard();
-        $token = trim((string) @file_get_contents($this->tokenPath()));
-        if (! $token || ! hash_equals($token, trim((string) $request->input('token')))) {
-            return response()->view('install.show', ['checks' => [], 'url' => $request->input('app_url'), 'error' => 'Jeton d\'installation invalide.', 'done' => false], 403);
-        }
         $v = validator($request->all(), [
-            'app_url' => 'required|url', 'db_host' => 'required', 'db_port' => 'required|integer', 'db_database' => 'required', 'db_username' => 'required', 'db_password' => 'nullable',
+            'app_url' => 'required|url', 'db_host' => 'required|in:localhost,127.0.0.1,::1', 'db_port' => 'required|integer', 'db_database' => 'required', 'db_username' => 'required', 'db_password' => 'nullable',
             'admin_name' => 'required|max:120', 'admin_email' => 'required|email', 'admin_password' => 'required|min:10',
             'mail_host' => 'nullable', 'mail_port' => 'nullable|integer', 'mail_username' => 'nullable', 'mail_password' => 'nullable', 'mail_from' => 'nullable|email', 'demo' => 'nullable',
         ]);
         if ($v->fails()) {
+            if ($v->errors()->has('db_host')) {
+                return response()->view('install.show', ['checks' => [], 'url' => $request->input('app_url'), 'error' => 'Par sécurité, seule une base de données de cet hébergement est acceptée : serveur « localhost ».', 'done' => false], 422);
+            }
             return response()->view('install.show', ['checks' => [], 'url' => $request->input('app_url'), 'error' => implode(' ', $v->errors()->all()), 'done' => false], 422);
         }
         $d = $v->validated();
@@ -86,6 +75,9 @@ class InstallController extends Controller
         foreach (['host', 'port', 'database', 'username', 'password'] as $k) {
             $set('DB_'.strtoupper($k), (string) ($d['db_'.$k] ?? ''));
         }
+        // Default: the hosting's own mail system (exim via sendmail on cPanel) – works without SMTP settings.
+        $set('MAIL_MAILER', 'sendmail');
+        $set('MAIL_FROM_ADDRESS', $d['mail_from'] ?? $d['admin_email']);
         if (! empty($d['mail_host'])) {
             $set('MAIL_MAILER', 'smtp');
             $set('MAIL_HOST', $d['mail_host']);
@@ -125,7 +117,6 @@ class InstallController extends Controller
             return response()->view('install.show', ['checks' => [], 'url' => $d['app_url'], 'error' => 'Erreur pendant l\'installation : '.$e->getMessage(), 'done' => false], 500);
         }
         file_put_contents($this->lockPath(), 'installed '.now()->toIso8601String());
-        @unlink($this->tokenPath());
 
         return response()->view('install.show', ['checks' => [], 'url' => $d['app_url'], 'error' => null, 'done' => true]);
     }

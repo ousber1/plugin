@@ -1,110 +1,72 @@
-# Déploiement sur hébergement cPanel – HO CREATIVE
+# Installation sur hébergement cPanel (mutualisé) – HO CREATIVE
 
-Ce guide installe l'application sur **https://hocreative.shop/** à partir de `ho-creative-cpanel.zip` (dépendances PHP et fichiers front-end déjà inclus : **ni Composer, ni Node.js, ni SSH ne sont nécessaires**).
+Installation simple, directement sur votre domaine (ex. **https://hocreative.shop/**). Aucun SSH, aucun Composer, aucun Node.js, aucune modification de « racine du document ».
 
-## 1. Prérequis serveur
+## Avant de commencer (5 minutes, une seule fois)
+1. **PHP 8.3** : cPanel → *Logiciel* → **MultiPHP Manager** (ou **Select PHP Version**) → choisissez **PHP 8.3** (ou 8.4) pour le domaine.
+   Dans *Select PHP Version → Extensions*, vérifiez que sont cochées : `pdo_mysql`, `mbstring`, `intl`, `gd`, `zip`, `fileinfo`, `curl`, `xml`/`dom`, `openssl`, `bcmath`.
+2. **Base de données** : cPanel → **Bases de données MySQL** →
+   * *Créer une base* (ex. `moncompte_hoc`),
+   * *Ajouter un utilisateur* avec un mot de passe fort (ex. `moncompte_hocuser`),
+   * *Ajouter l'utilisateur à la base* → cochez **TOUS LES PRIVILÈGES**.
+   Notez les noms **complets** (avec le préfixe de votre compte) et le mot de passe.
+3. **SSL** : cPanel → *SSL/TLS Status* → lancez **AutoSSL** pour avoir `https://`.
 
-| Élément | Requis |
-|---|---|
-| PHP | **8.3 ou plus** (cPanel → *Select PHP Version* / *MultiPHP Manager*) |
-| Extensions PHP | `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath` *ou* `gmp` (recommandé), `fileinfo`, `gd`, `intl`, `zip`, `curl`, `dom` |
-| Base de données | MySQL ≥ 8.0 ou MariaDB ≥ 10.6 (testé sur MariaDB 10.11), interclassement `utf8mb4_unicode_ci` |
-| HTTPS | Certificat SSL actif (AutoSSL / Let's Encrypt dans cPanel) |
-| Cron | Accès « Tâches Cron » cPanel |
-| Espace disque | ~120 Mo pour l'application + vos fichiers clients |
+## Installation en 3 étapes
+1. cPanel → **Gestionnaire de fichiers** → ouvrez **`public_html`**. Supprimez la page par défaut de l'hébergeur si elle existe (`index.html`, `default.html`). Ne touchez pas à `cgi-bin` ni `.well-known`.
+2. Cliquez **Téléverser**, envoyez `ho-creative-cpanel.zip` dans `public_html`, puis clic droit sur le fichier → **Extraire** → dossier `/public_html`. Vous devez obtenir :
+   ```
+   public_html/
+   ├── index.php
+   ├── .htaccess          (fichier caché : Paramètres → « Afficher les fichiers cachés »)
+   ├── assets/  images/  docs/  vendor/
+   └── hocreative/        ← application (protégée, inaccessible depuis le web)
+   ```
+   Vous pouvez ensuite supprimer le fichier `.zip`.
+3. Ouvrez **https://hocreative.shop/** : l'assistant d'installation s'affiche. Saisissez le nom de la base, l'utilisateur MySQL, son mot de passe (serveur : `localhost`), puis votre compte administrateur (e-mail + mot de passe ≥ 10 caractères). Cliquez **Installer**.
 
-Réglages PHP conseillés (cPanel → *MultiPHP INI Editor*) :
+C'est terminé : la boutique est en ligne et le back-office est sur **https://hocreative.shop/admin**. L'assistant se verrouille automatiquement après l'installation (`/install` répond 404).
 
+> Si une page « HO CREATIVE – configuration de l'hébergement » apparaît à la place, elle indique exactement quoi corriger (version PHP, extension manquante, dossier non inscriptible).
+
+## Tâche Cron (recommandée)
+cPanel → **Tâches Cron** → réglage commun « **Une fois par minute** » → commande :
 ```
-upload_max_filesize = 100M
-post_max_size       = 110M     (≥ upload_max_filesize ; l'éditeur en ligne envoie jusqu'à ~40 Mo)
-memory_limit        = 512M     (génération PDF / export d'images)
-max_execution_time  = 120
+/usr/local/bin/php /home/VOTRE_UTILISATEUR/public_html/hocreative/artisan schedule:run >/dev/null 2>&1
 ```
-La taille maximale acceptée par l'application se règle ensuite dans *Admin → Paramètres → Délais & fichiers* et doit rester ≤ `upload_max_filesize`.
+`VOTRE_UTILISATEUR` = votre identifiant cPanel (visible dans cPanel). Si votre hébergeur utilise un autre chemin pour PHP 8.3, demandez-le au support (ex. `/opt/cpanel/ea-php83/root/usr/bin/php`).
+Le Cron gère : expiration des devis, nettoyage, alerte de stock bas et **sauvegarde quotidienne**. Le site fonctionne sans, mais ces tâches ne s'exécutent pas.
 
-## 2. Créer la base de données
-cPanel → **Bases de données MySQL** :
-1. Créez une base (ex. `cpuser_hocreative`).
-2. Créez un utilisateur avec un mot de passe fort.
-3. Ajoutez l'utilisateur à la base avec **TOUS LES PRIVILÈGES**.
-
-## 3. Téléverser les fichiers – site directement sur https://hocreative.shop/
-L'archive contient deux dossiers : `hocreative/` (l'application) et `public_html/` (les fichiers web). Aucune modification de la racine du document n'est nécessaire et l'adresse ne contient jamais `/public`.
-
-1. cPanel → **Gestionnaire de fichiers** → ouvrez votre **dossier personnel** (`/home/VOTRE_UTILISATEUR/`, le dossier qui *contient* `public_html`, pas `public_html` lui-même).
-2. Si `public_html` contient la page par défaut de l'hébergeur (`index.html`, `default.html`), supprimez-la ou renommez-la (gardez `cgi-bin` et `.well-known`).
-3. Téléversez `ho-creative-cpanel.zip` dans ce dossier personnel, puis clic droit → **Extraire** (vers `/home/VOTRE_UTILISATEUR`). Acceptez la fusion avec le dossier `public_html` existant.
-4. Résultat attendu :
-```
-/home/VOTRE_UTILISATEUR/
-├── hocreative/      ← application, .env, fichiers clients, sauvegardes (NON accessible depuis le web)
-└── public_html/     ← index.php, .htaccess, assets/, images/, docs/ (servi sur https://hocreative.shop/)
-```
-5. Pensez à afficher les fichiers cachés (Paramètres du Gestionnaire de fichiers → « Afficher les fichiers cachés ») pour vérifier que `public_html/.htaccess` est présent.
-
-> Le code, le fichier `.env`, les fichiers clients (`hocreative/storage/app/private`) et les sauvegardes (`hocreative/storage/app/backups`) restent **en dehors** de `public_html`. Ne déplacez pas le dossier `hocreative` dans `public_html` (s'il y était placé par erreur, un `.htaccess` « Require all denied » bloque l'accès, mais ce n'est qu'un filet de sécurité).
-
-## 4. Domaine
-Le domaine principal `hocreative.shop` pointe déjà sur `public_html` : rien à changer. Pour un sous-domaine ou un domaine supplémentaire, choisissez `public_html` (ou extrayez le contenu de `public_html/` de l'archive dans la racine de ce domaine, en gardant `hocreative/` à côté de cette racine).
-
-## 5. Permissions
-Les dossiers `hocreative/storage/` et `hocreative/bootstrap/cache/` doivent être inscriptibles par PHP (755 suffit sur la plupart des cPanel en suPHP/LSAPI ; sinon 775). Le dossier `hocreative/` doit être inscriptible le temps de l'installation (création de `.env`).
-
-## 6. Installation (assistant web à usage unique)
-1. Ouvrez `https://hocreative.shop/` : vous êtes redirigé vers `https://hocreative.shop/install`.
-2. La page affiche les prérequis et crée `storage/app/install-token.txt`.
-3. Ouvrez `hocreative/storage/app/install-token.txt` dans le Gestionnaire de fichiers, copiez son contenu (jeton) dans le formulaire. *Ce jeton prouve que vous contrôlez le serveur ; il n'est jamais affiché par le site.*
-4. Renseignez l'URL du site (https), les accès MySQL, le compte **propriétaire** (mot de passe ≥ 10 caractères) et, si possible, le SMTP.
-5. Cochez « données de démonstration » uniquement pour un essai.
-6. Validez. L'assistant : écrit `.env` (clé `APP_KEY` aléatoire, `APP_ENV=production`, `APP_DEBUG=false`), exécute les migrations, crée les rôles, le contenu de base et le catalogue d'exemple, crée le propriétaire, puis écrit `storage/app/installed.lock`.
-7. À partir de là, `/install` répond **404** définitivement. Le jeton est supprimé.
-
-**Alternative avec SSH :**
-```bash
-cd ~/hocreative && cp .env.example .env && php artisan key:generate
-# éditez .env (DB_*, APP_URL, MAIL_*)
-php artisan hocreative:install --email=vous@domaine.ma --name="Votre nom"
-```
-
-## 7. Tâche Cron (obligatoire)
-cPanel → **Tâches Cron** → « Une fois par minute » :
-```
-* * * * * /usr/local/bin/php /home/cpuser/hocreative/artisan schedule:run >> /dev/null 2>&1
-```
-(Vérifiez le chemin de PHP 8.3 avec votre hébergeur, ex. `/opt/cpanel/ea-php83/root/usr/bin/php`.)
-
-Le planificateur exécute : expiration des devis, purge des paniers abandonnés, rétention des fichiers, alerte de stock bas (02:30), **sauvegarde quotidienne** (03:15), et — seulement si `QUEUE_CONNECTION=database` — un traitement borné de la file d'attente (`queue:work --stop-when-empty --max-time=50`). Aucun processus permanent n'est requis.
-
-## 8. E-mail
-Dans `.env` (Gestionnaire de fichiers → *Modifier*) :
+## E-mails
+Par défaut, l'application utilise le serveur d'e-mail de l'hébergement (aucun réglage). Pour une meilleure délivrabilité, créez une boîte (cPanel → *Comptes de messagerie*, ex. `commandes@hocreative.shop`) et renseignez-la dans l'assistant (SMTP) ou plus tard dans `public_html/hocreative/.env` :
 ```
 MAIL_MAILER=smtp
-MAIL_HOST=mail.votredomaine.ma
+MAIL_HOST=mail.hocreative.shop
 MAIL_PORT=587
-MAIL_USERNAME=commandes@votredomaine.ma
+MAIL_USERNAME=commandes@hocreative.shop
 MAIL_PASSWORD=********
-MAIL_FROM_ADDRESS=commandes@votredomaine.ma
+MAIL_FROM_ADDRESS=commandes@hocreative.shop
 ```
-Créez la boîte dans cPanel → *Comptes de messagerie*. Configurez SPF/DKIM (cPanel → *Délivrabilité des e-mails*).
+Activez SPF et DKIM dans cPanel → *Délivrabilité des e-mails*.
 
-## 9. HTTPS
-Activez AutoSSL, puis vérifiez que `APP_URL` commence par `https://` et que `SESSION_SECURE_COOKIE=true`. Optionnel : forcer HTTPS en ajoutant en tête de `public_html/.htaccess` :
-```
-RewriteEngine On
-RewriteCond %{HTTPS} !=on
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-```
+## Taille des fichiers clients
+cPanel → *MultiPHP INI Editor* → `upload_max_filesize = 100M`, `post_max_size = 110M`, `memory_limit = 512M`. Ajustez ensuite la limite dans *Admin → Paramètres → Délais & fichiers*.
 
-## 10. Avant la mise en ligne – à saisir par le propriétaire
-Voir la liste complète dans `README.md` (section « Checklist de mise en production ») : informations légales (ICE, RC, IF, patente, CNSS, RIB), taux de TVA validé par votre comptable, prix réels de chaque produit, zones et tarifs de livraison, jours fériés religieux de l'année, moyens de paiement, textes CGV/confidentialité, purge des données démo.
+## Sécurité de cette disposition
+Le dossier `hocreative/` (code, `.env`, fichiers clients, sauvegardes) est dans `public_html` mais **bloqué** par trois protections : règle de `public_html/.htaccess`, `hocreative/.htaccess` « Require all denied », et refus de tout fichier caché. Testez après installation : `https://hocreative.shop/hocreative/.env` doit répondre **403**. (Ces règles nécessitent Apache ou LiteSpeed, ce qui est le cas de cPanel.)
+
+Option avancée (encore plus isolée) : déplacer `hocreative/` dans votre dossier personnel, à côté de `public_html` — l'application le détecte automatiquement (adaptez alors le chemin du Cron).
 
 ## Dépannage
 | Symptôme | Solution |
 |---|---|
-| Page blanche / erreur 500 | Consultez `storage/logs/laravel-AAAA-MM-JJ.log`. Vérifiez la version PHP et les extensions. |
-| « Fichier trop volumineux » | Augmentez `upload_max_filesize` / `post_max_size`. |
-| Images téléversées absentes | Le lien `public_html/storage` est créé par l'installateur ; si l'hébergeur interdit les liens symboliques, l'application sert ces images elle-même (route de secours). |
-| La page par défaut de l'hébergeur s'affiche | Supprimez `public_html/index.html` / `default.html`. |
-| E-mails non reçus | Vérifiez `MAIL_*`, puis `php artisan tinker` → `Mail::raw('test', fn($m)=>$m->to('vous@…'))`. |
-| Le Cron ne tourne pas | Vérifiez le chemin de PHP ; testez `php artisan schedule:list`. |
+| Page « configuration de l'hébergement » | Suivez les points listés (souvent : passer en PHP 8.3). |
+| Page par défaut de l'hébergeur | Supprimez `public_html/index.html` / `default.html`. |
+| Erreur 500 sans texte | Vérifiez que `.htaccess` a bien été extrait ; consultez `public_html/hocreative/storage/logs/` et le *Journal des erreurs* cPanel. |
+| « Connexion MySQL impossible » | Noms complets avec préfixe, utilisateur ajouté à la base avec tous les privilèges, serveur `localhost`. |
+| Erreur « Fichier trop volumineux » | Voir « Taille des fichiers clients ». |
+| E-mails non reçus | Vérifiez les spams, configurez SMTP + SPF/DKIM. |
+
+## Avant l'ouverture au public
+Voir la checklist du `README.md` : informations légales (ICE, RC, IF…), TVA validée par votre comptable, vrais prix de chaque produit, zones de livraison, moyens de paiement, CGV, puis suppression des données de démonstration (Cron unique) :
+`/usr/local/bin/php /home/VOTRE_UTILISATEUR/public_html/hocreative/artisan hocreative:purge-demo --force`

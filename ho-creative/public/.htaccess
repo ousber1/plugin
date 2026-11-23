@@ -1,12 +1,24 @@
-# Serve Laravel before cPanel's default index.html placeholder
+# HO CREATIVE – Apache / LiteSpeed (cPanel)
 DirectoryIndex index.php index.html
 
-<IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
+# Never serve hidden files (.env, .git…) or the application folder, whatever the layout.
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
     </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
 
+<IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Block direct access to the application folder (simple layout: public_html/hocreative)
+    RewriteRule ^hocreative(/|$) - [F,L]
+    # Block hidden paths except Let's Encrypt / AutoSSL validation
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

@@ -35,10 +35,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         );
     })->create();
 
-// cPanel layout: web files live in ~/public_html next to the application folder (~/hocreative).
-// Lets artisan / cron (storage:link, PDFs, asset versions) use the right public directory.
-if (! is_file($app->basePath('public/index.php')) && is_file(dirname($app->basePath()).'/public_html/index.php')) {
-    $app->usePublicPath(dirname($app->basePath()).'/public_html');
+// cPanel layouts: tell artisan / cron (storage:link, PDFs, asset versions) where the web files are.
+//  - public_html/hocreative  (everything extracted into public_html)
+//  - ~/hocreative next to ~/public_html
+if (! is_file($app->basePath('public/index.php'))) {
+    foreach ([dirname($app->basePath()), dirname($app->basePath()).'/public_html'] as $web) {
+        if (is_file($web.'/index.php') && is_file($web.'/.htaccess')) {
+            $app->usePublicPath($web);
+            break;
+        }
+    }
 }
 
 return $app;
