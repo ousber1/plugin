@@ -4,6 +4,8 @@ Application Laravel 13 (PHP 8.3+, MySQL/MariaDB) pour une imprimerie au Maroc. E
 1. une **boutique en ligne** (FR par défaut, AR en RTL) avec configurateur et prix en direct, parcours fichier, éditeur en ligne, BAT, devis, panier, commande et espace client ;
 2. un **back-office** complet : ventes multicanal (web, comptoir, téléphone, WhatsApp, B2B), CRM, devis, paiements, documents PDF, production Kanban, stock, achats, livraisons, rapports, rôles et audit.
 
+**Hébergement** : l'archive se déploie directement à la racine du domaine (ex. `https://hocreative.shop/`) – `public_html/` reçoit les fichiers web, `hocreative/` (à côté, hors web) contient l'application.
+
 Guides : [Déploiement cPanel](docs/DEPLOIEMENT-CPANEL.md) · [Moteur de prix](docs/TARIFICATION.md) · [Mises à jour & sauvegardes](docs/MISE-A-JOUR-ET-SAUVEGARDE.md)
 
 ## Architecture

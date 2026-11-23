@@ -211,3 +211,13 @@ Route::get('/robots.txt', function () {
 
     return response(implode("\n", $lines)."\n", 200, ['Content-Type' => 'text/plain']);
 });
+
+// Fallback for hosts that forbid symlinks: serve public uploads (logo, product images) when
+// public_html/storage does not exist. Only the "public" disk is reachable here, never private files.
+Route::get('/storage/{path}', function (string $path) {
+    abort_if(str_contains($path, '..'), 404);
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    abort_unless($disk->exists($path), 404);
+
+    return $disk->response($path, null, ['Cache-Control' => 'public, max-age=604800']);
+})->where('path', '.*')->name('storage.fallback');

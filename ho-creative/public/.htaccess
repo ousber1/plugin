@@ -1,3 +1,6 @@
+# Serve Laravel before cPanel's default index.html placeholder
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

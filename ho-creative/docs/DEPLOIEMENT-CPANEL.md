@@ -1,6 +1,6 @@
 # Déploiement sur hébergement cPanel – HO CREATIVE
 
-Ce guide installe l'application à partir de `ho-creative-cpanel.zip` (dépendances PHP et fichiers front-end déjà inclus : **ni Composer, ni Node.js, ni SSH ne sont nécessaires**).
+Ce guide installe l'application sur **https://hocreative.shop/** à partir de `ho-creative-cpanel.zip` (dépendances PHP et fichiers front-end déjà inclus : **ni Composer, ni Node.js, ni SSH ne sont nécessaires**).
 
 ## 1. Prérequis serveur
 
@@ -29,28 +29,32 @@ cPanel → **Bases de données MySQL** :
 2. Créez un utilisateur avec un mot de passe fort.
 3. Ajoutez l'utilisateur à la base avec **TOUS LES PRIVILÈGES**.
 
-## 3. Téléverser les fichiers (hors du dossier public)
-1. cPanel → **Gestionnaire de fichiers** → dans votre dossier personnel (ex. `/home/cpuser/`), créez `hocreative`.
-2. Téléversez `ho-creative-cpanel.zip` dans `/home/cpuser/hocreative/` puis **Extraire**.
-3. Vous obtenez `/home/cpuser/hocreative/app`, `…/public`, `…/storage`, `…/vendor`, etc.
+## 3. Téléverser les fichiers – site directement sur https://hocreative.shop/
+L'archive contient deux dossiers : `hocreative/` (l'application) et `public_html/` (les fichiers web). Aucune modification de la racine du document n'est nécessaire et l'adresse ne contient jamais `/public`.
 
-> Le code, le fichier `.env`, les fichiers clients (`storage/app/private`) et les sauvegardes (`storage/app/backups`) restent **en dehors** du dossier web. Seul `public/` est exposé.
+1. cPanel → **Gestionnaire de fichiers** → ouvrez votre **dossier personnel** (`/home/VOTRE_UTILISATEUR/`, le dossier qui *contient* `public_html`, pas `public_html` lui-même).
+2. Si `public_html` contient la page par défaut de l'hébergeur (`index.html`, `default.html`), supprimez-la ou renommez-la (gardez `cgi-bin` et `.well-known`).
+3. Téléversez `ho-creative-cpanel.zip` dans ce dossier personnel, puis clic droit → **Extraire** (vers `/home/VOTRE_UTILISATEUR`). Acceptez la fusion avec le dossier `public_html` existant.
+4. Résultat attendu :
+```
+/home/VOTRE_UTILISATEUR/
+├── hocreative/      ← application, .env, fichiers clients, sauvegardes (NON accessible depuis le web)
+└── public_html/     ← index.php, .htaccess, assets/, images/, docs/ (servi sur https://hocreative.shop/)
+```
+5. Pensez à afficher les fichiers cachés (Paramètres du Gestionnaire de fichiers → « Afficher les fichiers cachés ») pour vérifier que `public_html/.htaccess` est présent.
 
-## 4. Pointer le domaine vers `/public`
-- **Domaine supplémentaire ou sous-domaine** (recommandé) : cPanel → *Domaines* → *Gérer* → **Racine du document** = `/home/cpuser/hocreative/public`.
-- **Domaine principal** dont la racine est imposée à `public_html` : renommez `public_html` en `public_html_old`, puis créez un lien symbolique via *Tâches Cron* (exécution unique) ou *Terminal* :
-  `ln -s /home/cpuser/hocreative/public /home/cpuser/public_html`
-  Si votre hébergeur interdit les liens symboliques, utilisez un sous-domaine (`boutique.votredomaine.ma`) ou demandez au support de changer la racine du document.
+> Le code, le fichier `.env`, les fichiers clients (`hocreative/storage/app/private`) et les sauvegardes (`hocreative/storage/app/backups`) restent **en dehors** de `public_html`. Ne déplacez pas le dossier `hocreative` dans `public_html` (s'il y était placé par erreur, un `.htaccess` « Require all denied » bloque l'accès, mais ce n'est qu'un filet de sécurité).
 
-Ne copiez **jamais** l'ensemble de l'application dans `public_html`.
+## 4. Domaine
+Le domaine principal `hocreative.shop` pointe déjà sur `public_html` : rien à changer. Pour un sous-domaine ou un domaine supplémentaire, choisissez `public_html` (ou extrayez le contenu de `public_html/` de l'archive dans la racine de ce domaine, en gardant `hocreative/` à côté de cette racine).
 
 ## 5. Permissions
-Les dossiers `storage/` et `bootstrap/cache/` doivent être inscriptibles par PHP (755 suffit sur la plupart des cPanel en suPHP/LSAPI ; sinon 775). Le dossier racine doit être inscriptible le temps de l'installation (création de `.env`).
+Les dossiers `hocreative/storage/` et `hocreative/bootstrap/cache/` doivent être inscriptibles par PHP (755 suffit sur la plupart des cPanel en suPHP/LSAPI ; sinon 775). Le dossier `hocreative/` doit être inscriptible le temps de l'installation (création de `.env`).
 
 ## 6. Installation (assistant web à usage unique)
-1. Ouvrez `https://votredomaine.ma/install`.
+1. Ouvrez `https://hocreative.shop/` : vous êtes redirigé vers `https://hocreative.shop/install`.
 2. La page affiche les prérequis et crée `storage/app/install-token.txt`.
-3. Ouvrez ce fichier dans le Gestionnaire de fichiers, copiez son contenu (jeton) dans le formulaire. *Ce jeton prouve que vous contrôlez le serveur ; il n'est jamais affiché par le site.*
+3. Ouvrez `hocreative/storage/app/install-token.txt` dans le Gestionnaire de fichiers, copiez son contenu (jeton) dans le formulaire. *Ce jeton prouve que vous contrôlez le serveur ; il n'est jamais affiché par le site.*
 4. Renseignez l'URL du site (https), les accès MySQL, le compte **propriétaire** (mot de passe ≥ 10 caractères) et, si possible, le SMTP.
 5. Cochez « données de démonstration » uniquement pour un essai.
 6. Validez. L'assistant : écrit `.env` (clé `APP_KEY` aléatoire, `APP_ENV=production`, `APP_DEBUG=false`), exécute les migrations, crée les rôles, le contenu de base et le catalogue d'exemple, crée le propriétaire, puis écrit `storage/app/installed.lock`.
@@ -85,8 +89,9 @@ MAIL_FROM_ADDRESS=commandes@votredomaine.ma
 Créez la boîte dans cPanel → *Comptes de messagerie*. Configurez SPF/DKIM (cPanel → *Délivrabilité des e-mails*).
 
 ## 9. HTTPS
-Activez AutoSSL, puis vérifiez que `APP_URL` commence par `https://` et que `SESSION_SECURE_COOKIE=true`. Optionnel : forcer HTTPS dans `public/.htaccess` :
+Activez AutoSSL, puis vérifiez que `APP_URL` commence par `https://` et que `SESSION_SECURE_COOKIE=true`. Optionnel : forcer HTTPS en ajoutant en tête de `public_html/.htaccess` :
 ```
+RewriteEngine On
 RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 ```
@@ -99,6 +104,7 @@ Voir la liste complète dans `README.md` (section « Checklist de mise en produc
 |---|---|
 | Page blanche / erreur 500 | Consultez `storage/logs/laravel-AAAA-MM-JJ.log`. Vérifiez la version PHP et les extensions. |
 | « Fichier trop volumineux » | Augmentez `upload_max_filesize` / `post_max_size`. |
-| Images produits absentes | Le lien `public/storage` doit exister ; sinon exécutez `php artisan storage:link` (Cron unique) ou copiez `storage/app/public` vers `public/storage`. |
+| Images téléversées absentes | Le lien `public_html/storage` est créé par l'installateur ; si l'hébergeur interdit les liens symboliques, l'application sert ces images elle-même (route de secours). |
+| La page par défaut de l'hébergeur s'affiche | Supprimez `public_html/index.html` / `default.html`. |
 | E-mails non reçus | Vérifiez `MAIL_*`, puis `php artisan tinker` → `Mail::raw('test', fn($m)=>$m->to('vous@…'))`. |
 | Le Cron ne tourne pas | Vérifiez le chemin de PHP ; testez `php artisan schedule:list`. |

@@ -22,7 +22,12 @@ find vendor/mpdf/mpdf/ttfonts -type f ! -name 'DejaVu*' ! -name 'XB Riyaz*' ! -n
 mkdir -p storage/app/private storage/app/public storage/app/backups storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
 for d in storage/app/private storage/app/public storage/app/backups storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs; do printf '*\n!.gitignore\n' > "$d/.gitignore"; done
 chmod -R ug+rwX storage bootstrap/cache
+# Safety net: if someone extracts the app inside the web root, deny all HTTP access to it.
+printf '<IfModule mod_authz_core.c>\n  Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n  Deny from all\n</IfModule>\n' > .htaccess
 cd ..
+# cPanel layout: web files go to ~/public_html, the application stays in ~/hocreative (outside the web root)
+mv hocreative/public public_html
+cp hocreative/docs/DEPLOIEMENT-CPANEL.md LISEZ-MOI-INSTALLATION.md
 rm -f "$OUT/ho-creative-cpanel.zip"
-zip -qr -X "$OUT/ho-creative-cpanel.zip" hocreative
+zip -qr -X "$OUT/ho-creative-cpanel.zip" hocreative public_html LISEZ-MOI-INSTALLATION.md
 echo "Built $OUT/ho-creative-cpanel.zip ($(du -h "$OUT/ho-creative-cpanel.zip" | cut -f1))"
