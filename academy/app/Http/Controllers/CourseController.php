@@ -15,7 +15,8 @@ class CourseController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
             'level' => ['nullable', 'in:beginner,intermediate,advanced,all'],
-            'sort' => ['nullable', 'in:newest,oldest,popular,title'],
+            'sort' => ['nullable', 'in:newest,oldest,popular,title,price_asc,price_desc'],
+            'price' => ['nullable', 'in:free,paid'],
         ]);
 
         $categories = Category::ofType('course')->where('is_active', true)
@@ -26,12 +27,16 @@ class CourseController extends Controller
             ->searchTranslated(['title', 'subtitle', 'description'], $validated['q'] ?? null)
             ->when($activeCategory, fn ($q) => $q->where('category_id', $activeCategory->id))
             ->when(isset($validated['category']) && ! $activeCategory, fn ($q) => $q->whereRaw('1 = 0'))
-            ->when($validated['level'] ?? null, fn ($q, $level) => $q->where('level', $level));
+            ->when($validated['level'] ?? null, fn ($q, $level) => $q->where('level', $level))
+            ->when(($validated['price'] ?? null) === 'free', fn ($q) => $q->where('price_cents', 0))
+            ->when(($validated['price'] ?? null) === 'paid', fn ($q) => $q->where('price_cents', '>', 0));
 
         match ($validated['sort'] ?? 'newest') {
             'oldest' => $courses->oldest('published_at'),
             'popular' => $courses->withCount('enrollments')->orderByDesc('enrollments_count'),
             'title' => $courses->orderBy('slug'),
+            'price_asc' => $courses->orderBy('price_cents'),
+            'price_desc' => $courses->orderByDesc('price_cents'),
             default => $courses->latest('published_at'),
         };
 

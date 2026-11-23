@@ -26,7 +26,7 @@
         </div>
     </div>
     <div class="course-card__foot">
-        <span class="badge badge--free">{{ __('مجانية') }}</span>
+        @include('partials.price-badge')
         <span class="btn btn--outline btn--sm" aria-hidden="true">{{ __('عرض الدورة') }}</span>
     </div>
 </article>

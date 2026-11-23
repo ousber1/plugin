@@ -41,6 +41,24 @@
                 <label class="check field"><input type="checkbox" name="requires_quiz_pass" value="1" @checked(old('requires_quiz_pass', $course->requires_quiz_pass))> يتطلب النجاح في جميع الاختبارات لطلب الشهادة</label>
                 <p class="hint">التقدّم يُحسب من الدروس المنشورة المطلوبة. فعّل هذا الخيار لاشتراط النجاح في الاختبارات أيضًا.</p>
             </div>
+            @if (auth()->user()->isAdmin())
+                @php $pricing = old('pricing', $course->isPaid() ? 'paid' : 'free'); $m = fn ($c) => $c ? $c / 100 : ''; @endphp
+                <div class="card card--pad">
+                    <h2 class="card__title">السعر</h2>
+                    <div class="pricing-switch" role="radiogroup" aria-label="نوع الدورة">
+                        <label><input type="radio" name="pricing" value="free" @checked($pricing === 'free') data-pricing> <span><strong>مجانية</strong><small>تسجيل مفتوح للجميع</small></span></label>
+                        <label><input type="radio" name="pricing" value="paid" @checked($pricing === 'paid') data-pricing> <span><strong>مدفوعة</strong><small>تُشترى عبر السلة والدفع</small></span></label>
+                    </div>
+                    <div data-paid-fields @if ($pricing !== 'paid') hidden @endif>
+                        <div class="form-grid">
+                            <div class="field"><label for="price">السعر (درهم) <span class="req">*</span></label><input class="input ltr" type="number" min="1" step="0.01" id="price" name="price" value="{{ old('price', $m($course->price_cents)) }}"></div>
+                            <div class="field"><label for="compare_price">السعر قبل الخصم</label><input class="input ltr" type="number" min="0" step="0.01" id="compare_price" name="compare_price" value="{{ old('compare_price', $m($course->compare_price_cents)) }}"></div>
+                            <div class="field"><label for="price_usd">السعر بالدولار (اختياري)</label><input class="input ltr" type="number" min="0" step="0.01" id="price_usd" name="price_usd" value="{{ old('price_usd', $m($course->price_usd_cents)) }}" placeholder="تلقائي"></div>
+                        </div>
+                        <p class="hint">يدفع الطالب بطرق الدفع المفعّلة في <a href="{{ route('admin.settings.edit', 'store') }}">الدفع والعملات</a>. عند تأكيد الطلب («مدفوع») يُسجَّل الطالب في الدورة تلقائيًا. الدروس المعلَّمة «معاينة مجانية» تبقى مفتوحة للجميع.</p>
+                    </div>
+                </div>
+            @endif
             <div class="card card--pad">
                 <div class="label">صورة الدورة</div>
                 @if ($course->exists)<img src="{{ $course->thumbnailUrl() }}" alt="الصورة الحالية للدورة" style="border-radius:12px;margin-bottom:8px;aspect-ratio:16/9;object-fit:cover;width:100%">@endif

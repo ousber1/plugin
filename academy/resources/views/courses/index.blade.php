@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', $activeCategory ? $activeCategory->tr('name') : __('جميع الدورات'))
-@section('description', __('تصفّح كل الدورات المجانية: ابحث وصفِّ حسب المجال والمستوى.'))
+@section('description', \App\Models\Course::anyPaid() ? __('تصفّح كل الدورات المجانية والمدفوعة: ابحث وصفِّ حسب المجال والمستوى والسعر.') : __('تصفّح كل الدورات المجانية: ابحث وصفِّ حسب المجال والمستوى.'))
 @section('canonical', $activeCategory ? route('courses.index', ['category' => $activeCategory->slug]) : route('courses.index'))
 @if (!empty($filters['q']))
     @section('noindex', '1')
@@ -13,10 +13,10 @@
         <div class="row row--between" style="align-items:end">
             <div>
                 <h1>{{ $activeCategory ? $activeCategory->tr('name') : __('جميع الدورات') }}</h1>
-                <p>{{ __('دورات عملية مجانية في البرمجة والتصميم واللغات والمهارات الرقمية. اختر مجالك وابدأ الآن.') }}</p>
+                <p>{{ \App\Models\Course::anyPaid() ? __('دورات عملية مجانية ومدفوعة في البرمجة والتصميم واللغات والمهارات الرقمية. اختر مجالك وابدأ الآن.') : __('دورات عملية مجانية في البرمجة والتصميم واللغات والمهارات الرقمية. اختر مجالك وابدأ الآن.') }}</p>
             </div>
             <div class="card card--pad" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;text-align:center;min-width:140px">
-                <strong style="font-size:2rem;color:var(--amber);display:block;line-height:1">{{ $totalPublished }}</strong>{{ __('دورة مجانية') }}
+                <strong style="font-size:2rem;color:var(--amber);display:block;line-height:1">{{ $totalPublished }}</strong>{{ \App\Models\Course::anyPaid() ? __('دورة') : __('دورة مجانية') }}
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
         <x-icon name="search"/>
         <label for="q" class="sr-only">{{ __('ابحث عن دورة') }}</label>
         <input id="q" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('ابحث عن دورة، مهارة أو مجال…') }}" dir="auto">
-        @foreach (['category', 'level', 'sort'] as $keep)
+        @foreach (['category', 'level', 'sort', 'price'] as $keep)
             @if (!empty($filters[$keep]))<input type="hidden" name="{{ $keep }}" value="{{ $filters[$keep] }}">@endif
         @endforeach
         <button class="btn btn--primary" type="submit">{{ __('ابحث') }}</button>
@@ -55,11 +55,22 @@
                     @endforeach
                 </select>
             </div>
+            @if (\App\Models\Course::anyPaid())
+                <div class="field">
+                    <label for="price">{{ __('السعر') }}</label>
+                    <select class="select" id="price" name="price">
+                        <option value="">{{ __('الكل') }}</option>
+                        <option value="free" @selected(($filters['price'] ?? '') === 'free')>{{ __('مجانية') }}</option>
+                        <option value="paid" @selected(($filters['price'] ?? '') === 'paid')>{{ __('مدفوعة') }}</option>
+                    </select>
+                </div>
+            @endif
             <div class="field">
                 <label for="sort">{{ __('الترتيب') }}</label>
                 <select class="select" id="sort" name="sort">
                     <option value="newest" @selected(($filters['sort'] ?? 'newest') === 'newest')>{{ __('الأحدث') }}</option>
                     <option value="popular" @selected(($filters['sort'] ?? '') === 'popular')>{{ __('الأكثر تسجيلًا') }}</option>
+                    @if (\App\Models\Course::anyPaid())<option value="price_asc" @selected(($filters['sort'] ?? '') === 'price_asc')>{{ __('السعر: من الأقل') }}</option><option value="price_desc" @selected(($filters['sort'] ?? '') === 'price_desc')>{{ __('السعر: من الأعلى') }}</option>@endif
                     <option value="oldest" @selected(($filters['sort'] ?? '') === 'oldest')>{{ __('الأقدم') }}</option>
                     <option value="title" @selected(($filters['sort'] ?? '') === 'title')>{{ __('أبجديًا') }}</option>
                 </select>

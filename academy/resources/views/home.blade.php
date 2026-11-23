@@ -8,7 +8,7 @@
             <section class="hero">
                 <div class="container hero__grid">
                     <div>
-                        <span class="hero__badge"><span class="dot"></span> {{ __('كل الدورات مجانية 100%') }}</span>
+                        <span class="hero__badge"><span class="dot"></span> {{ \App\Models\Course::anyPaid() ? __('دورات مجانية وأخرى احترافية مدفوعة') : __('كل الدورات مجانية 100%') }}</span>
                         <h1>{{ __('تعلّم مهارة جديدة اليوم، واحصل على شهادتك الورقية غدًا') }}</h1>
                         <p class="hero__lead">{{ \App\Support\Settings::tr('tagline') }}</p>
                         <form class="search-bar" action="{{ route('courses.index') }}" method="GET" role="search">
@@ -44,7 +44,7 @@
             <section class="section--tight">
                 <div class="container">
                     <div class="stats overlap">
-                        <div class="stat"><strong>{{ number_format($stats['courses']) }}</strong><span>{{ __('دورة مجانية منشورة') }}</span></div>
+                        <div class="stat"><strong>{{ number_format($stats['courses']) }}</strong><span>{{ \App\Models\Course::anyPaid() ? __('دورة منشورة') : __('دورة مجانية منشورة') }}</span></div>
                         <div class="stat"><strong>{{ number_format($stats['lessons']) }}</strong><span>{{ __('درس متاح') }}</span></div>
                         <div class="stat"><strong>{{ number_format($stats['students']) }}</strong><span>{{ __('طالب مسجّل') }}</span></div>
                         <div class="stat"><strong>{{ number_format($stats['certificates']) }}</strong><span>{{ __('شهادة مسلّمة') }}</span></div>

@@ -11,13 +11,14 @@
 </form>
 <div class="table-wrap">
     <table class="table">
-        <thead><tr><th>الدورة</th><th>التصنيف</th><th>المدرّس</th><th>الدروس</th><th>الطلاب</th><th>الحالة</th><th><span class="sr-only">إجراءات</span></th></tr></thead>
+        <thead><tr><th>الدورة</th><th>التصنيف</th><th>المدرّس</th><th>السعر</th><th>الدروس</th><th>الطلاب</th><th>الحالة</th><th><span class="sr-only">إجراءات</span></th></tr></thead>
         <tbody>
         @forelse ($courses as $course)
             <tr>
                 <td><strong dir="auto">{{ $course->tr('title') }}</strong> @if ($course->is_demo)<span class="badge demo-tag">محتوى تجريبي</span>@endif @if ($course->is_featured)<span class="badge badge--amber">مميزة</span>@endif<br><span class="muted small ltr">/{{ $course->slug }}</span></td>
                 <td>{{ $course->category?->tr('name') ?? '—' }}</td>
                 <td>{{ $course->instructor?->name ?? '—' }}</td>
+                <td class="small">@if ($course->isPaid())<strong class="ltr">{{ \App\Support\Shop::money($course->price_cents, 'MAD') }}</strong>@else<span class="badge badge--free">مجانية</span>@endif</td>
                 <td>{{ $course->lessons_count }}</td>
                 <td><a href="{{ route('admin.courses.enrollments', $course) }}">{{ $course->enrollments_count }}</a></td>
                 <td><x-admin.status :status="$course->status"/></td>
@@ -28,7 +29,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="7" class="muted" style="text-align:center;padding:30px">لا توجد دورات.</td></tr>
+            <tr><td colspan="8" class="muted" style="text-align:center;padding:30px">لا توجد دورات.</td></tr>
         @endforelse
         </tbody>
     </table>

@@ -23,6 +23,9 @@
         if ($state['enrolled']) {
             return '<a class="btn btn--amber btn--block btn--lg '.$extra.'" href="'.e($resume ? route('learn.show', [$course, $resume]) : route('learn.show', $course)).'">'.e(__('تابع التعلم')).'</a>';
         }
+        if ($course->isPaid()) {
+            return '<form method="POST" action="'.e(route('courses.buy', $course)).'" style="flex:1">'.csrf_field().'<input type="hidden" name="buy_now" value="1"><button class="btn btn--amber btn--block btn--lg '.$extra.'" type="submit">'.e(__('اشترِ الدورة')).' — '.e($course->priceLabel()).'</button></form>';
+        }
         if (auth()->check()) {
             return '<form method="POST" action="'.e(route('courses.enroll', $course)).'" style="flex:1">'.csrf_field().'<button class="btn btn--amber btn--block btn--lg '.$extra.'" type="submit">'.e(__('سجّل مجانًا')).'</button></form>';
         }
@@ -45,7 +48,7 @@
                     @if ($course->category)<li><a href="{{ route('courses.index', ['category' => $course->category->slug]) }}">{{ $course->category->tr('name') }}</a></li>@endif
                 </ol>
                 <div class="row" style="margin-bottom:12px">
-                    <span class="badge badge--free">{{ __('مجانية') }}</span>
+                    @include('partials.price-badge')
                     @if ($course->category)<span class="badge badge--indigo">{{ $course->category->tr('name') }}</span>@endif
                     <span class="badge badge--gray"><x-icon name="level" size="14"/> {{ $course->level->label() }}</span>
                     @if ($rating)<span class="badge badge--amber"><x-icon name="star" size="14"/> {{ $rating }} ({{ $course->approved_reviews_count }})</span>@endif
@@ -196,7 +199,7 @@
             <div class="card">
                 <div class="course-aside__media"><img src="{{ $course->thumbnailUrl() }}" alt="{{ __('صورة دورة :title', ['title' => $title]) }}" width="640" height="360"></div>
                 <div class="card--pad stack">
-                    <div class="row row--between"><span class="badge badge--free" style="font-size:1rem">{{ __('مجانية') }}</span>
+                    <div class="row row--between">@include('partials.price-badge', ['big' => true])
                         @if ($state['enrolled'])<span class="badge badge--green"><x-icon name="check" size="14"/> {{ __('أنت مسجّل') }}</span>@endif</div>
                     @if ($state['progress'])
                         <div>
@@ -205,6 +208,10 @@
                         </div>
                     @endif
                     {!! $mainAction() !!}
+                    @if ($course->isPaid() && ! $state['enrolled'])
+                        <form method="POST" action="{{ route('courses.buy', $course) }}">@csrf<button class="btn btn--outline btn--block" type="submit"><x-icon name="store" size="18"/> {{ __('أضف إلى السلة') }}</button></form>
+                        <p class="small muted" style="margin:0;text-align:center"><x-icon name="lock" size="14"/> {{ __('الدفع بالتحويل البنكي أو وكالات التحويل أو واتساب. يُفعَّل وصولك مباشرة بعد تأكيد الدفع.') }}</p>
+                    @endif
                     @guest<p class="small muted" style="text-align:center;margin:0">{{ __('لديك حساب؟') }} <a href="{{ route('login', ['intended' => route('courses.show', $course)]) }}">{{ __('سجّل الدخول') }}</a></p>@endguest
                     <ul class="facts">
                         <li><x-icon name="level" size="18"/> {{ $course->level->label() }}</li>
@@ -236,7 +243,7 @@
 </div>
 
 <div class="mobile-cta">
-    <span class="badge badge--free">{{ __('مجانية') }}</span>
+    @include('partials.price-badge')
     {!! $mainAction() !!}
 </div>
 @endsection

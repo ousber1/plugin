@@ -7,7 +7,10 @@
 @endphp
 <div class="cert-box" id="certificate">
     <h3><x-icon name="award"/> {{ __('الشهادة الورقية') }}</h3>
-    @if ($req)
+    @if (! $req && $course->isPaid() && ! ($state['enrolled'] ?? false))
+        <p class="small">{{ __('تحصل على الشهادة الورقية بعد شراء الدورة، ويمكنك طلبها عبر واتساب من هذه الصفحة.') }}</p>
+        <button class="btn btn--whatsapp btn--block" type="button" disabled><x-icon name="whatsapp"/> {{ $certLabel }}</button>
+    @elseif ($req)
         <p class="small" style="margin-bottom:6px">{{ __('رقم طلبك:') }} <strong class="ltr">{{ $req->reference }}</strong></p>
         <p style="margin:0"><span class="badge badge--{{ $req->status->color() }}">{{ $req->status->label() }}</span></p>
         <ol class="timeline" aria-label="{{ __('مراحل الطلب') }}">

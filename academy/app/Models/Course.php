@@ -17,7 +17,7 @@ class Course extends Model
     protected $fillable = [
         'category_id', 'instructor_id', 'slug', 'title', 'subtitle', 'description', 'outcomes', 'prerequisites',
         'audience', 'level', 'language', 'thumbnail_path', 'is_featured', 'featured_order', 'requires_quiz_pass',
-        'seo_title', 'seo_description',
+        'seo_title', 'seo_description', 'price_cents', 'compare_price_cents', 'price_usd_cents',
     ];
 
     protected $casts = [
@@ -96,6 +96,74 @@ class Course extends Model
     public function approvedReviews()
     {
         return $this->hasMany(Review::class)->where('is_approved', true);
+    }
+
+    // ---- Pricing (free when price_cents = 0) ----
+
+    public function isFree(): bool
+    {
+        return (int) $this->price_cents <= 0;
+    }
+
+    public function isPaid(): bool
+    {
+        return ! $this->isFree();
+    }
+
+    /** Whether any published course is paid (adapts "all courses are free" wording). */
+    public static function anyPaid(): bool
+    {
+        try {
+            return once(fn () => self::published()->where('price_cents', '>', 0)->exists());
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    public function price(?string $currency = null): int
+    {
+        $currency ??= \App\Support\Shop::currency();
+        if ($this->isFree()) {
+            return 0;
+        }
+
+        return $currency === 'USD' ? ($this->price_usd_cents ?: \App\Support\Shop::toUsd($this->price_cents)) : (int) $this->price_cents;
+    }
+
+    public function comparePrice(?string $currency = null): ?int
+    {
+        if (! $this->compare_price_cents || $this->isFree()) {
+            return null;
+        }
+        $currency ??= \App\Support\Shop::currency();
+        $v = $currency === 'USD' ? \App\Support\Shop::toUsd($this->compare_price_cents) : (int) $this->compare_price_cents;
+
+        return $v > $this->price($currency) ? $v : null;
+    }
+
+    public function priceLabel(?string $currency = null): string
+    {
+        return $this->isFree() ? __('مجانية') : \App\Support\Shop::money($this->price($currency), $currency);
+    }
+
+    public function billingLabel(): ?string
+    {
+        return null;
+    }
+
+    public function coverUrl(): string
+    {
+        return $this->thumbnailUrl();
+    }
+
+    public function cartKey(): string
+    {
+        return 'c:'.$this->id;
+    }
+
+    public function itemUrl(): string
+    {
+        return route('courses.show', $this);
     }
 
     public function thumbnailUrl(): string

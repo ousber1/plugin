@@ -39,10 +39,10 @@ class LearnController extends Controller
         if (! $this->access->canViewLesson($user, $lesson)) {
             if (! $user) {
                 return redirect()->route('login', ['intended' => route('courses.show', $course)])
-                    ->with('info', __('سجّل الدخول ثم سجّل في الدورة مجانًا لمتابعة هذا الدرس.'));
+                    ->with('info', $course->isPaid() ? __('سجّل الدخول واشترِ الدورة لمتابعة هذا الدرس.') : __('سجّل الدخول ثم سجّل في الدورة مجانًا لمتابعة هذا الدرس.'));
             }
 
-            return redirect()->route('courses.show', $course)->with('info', __('سجّل في الدورة مجانًا لمشاهدة هذا الدرس.'));
+            return redirect()->route('courses.show', $course)->with('info', $course->isPaid() ? __('اشترِ الدورة لمشاهدة هذا الدرس.') : __('سجّل في الدورة مجانًا لمشاهدة هذا الدرس.'));
         }
 
         $enrolled = $user?->isEnrolledIn($course) ?? false;

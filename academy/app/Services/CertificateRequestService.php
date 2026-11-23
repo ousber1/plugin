@@ -32,6 +32,9 @@ class CertificateRequestService
             return $existing;
         }
 
+        if ($course->isPaid() && ! $user->isEnrolledIn($course)) {
+            throw new \DomainException(__('اشترِ الدورة أولًا لطلب شهادتها.'));
+        }
         $eligibility = $this->progress->eligibility($user, $course);
         if (! $eligibility['eligible']) {
             throw new \DomainException(implode(' ', $eligibility['missing']));

@@ -172,3 +172,12 @@
         sel.addEventListener('change', apply); apply();
     });
 })();
+
+/* Course pricing: show price fields only for paid courses. */
+(function () {
+    var box = document.querySelector('[data-paid-fields]');
+    if (!box) return;
+    document.querySelectorAll('[data-pricing]').forEach(function (r) {
+        r.addEventListener('change', function () { box.hidden = document.querySelector('[data-pricing]:checked').value !== 'paid'; });
+    });
+})();

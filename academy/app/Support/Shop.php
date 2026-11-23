@@ -71,33 +71,56 @@ class Shop
         return $list;
     }
 
-    // ---- Cart (session: list of product ids; digital licences, quantity 1) ----
+    // ---- Cart (session: keys "p:ID" for products, "c:ID" for paid courses; quantity 1) ----
 
-    public static function cartIds(): array
+    public static function cartKeys(): array
     {
-        return array_values(array_unique(array_map('intval', (array) session('cart', []))));
+        return array_values(array_unique(array_map(fn ($k) => is_numeric($k) ? 'p:'.(int) $k : (string) $k, (array) session('cart', []))));
     }
 
+    /** Product ids in the cart. */
+    public static function cartIds(): array
+    {
+        return array_values(array_map(fn ($k) => (int) substr($k, 2), array_filter(self::cartKeys(), fn ($k) => str_starts_with($k, 'p:'))));
+    }
+
+    public static function cartCourseIds(): array
+    {
+        return array_values(array_map(fn ($k) => (int) substr($k, 2), array_filter(self::cartKeys(), fn ($k) => str_starts_with($k, 'c:'))));
+    }
+
+    /** Mixed collection of Product and Course models, in the order they were added. */
     public static function cart(): Collection
     {
-        $ids = self::cartIds();
+        $keys = self::cartKeys();
+        if (! $keys) {
+            return collect();
+        }
+        $items = collect();
+        if ($ids = self::cartIds()) {
+            $items = $items->merge(Product::published()->whereIn('id', $ids)->get());
+        }
+        if ($ids = self::cartCourseIds()) {
+            $items = $items->merge(\App\Models\Course::published()->where('price_cents', '>', 0)->whereIn('id', $ids)->get());
+        }
 
-        return $ids ? Product::published()->whereIn('id', $ids)->get()->sortBy(fn ($p) => array_search($p->id, $ids))->values() : collect();
+        return $items->sortBy(fn ($i) => array_search($i->cartKey(), $keys))->values();
     }
 
     public static function cartCount(): int
     {
-        return count(self::cartIds());
+        return count(self::cartKeys());
     }
 
-    public static function addToCart(Product $product): void
+    public static function addToCart(Product|\App\Models\Course $item): void
     {
-        session(['cart' => array_values(array_unique([...self::cartIds(), $product->id]))]);
+        session(['cart' => array_values(array_unique([...self::cartKeys(), $item->cartKey()]))]);
     }
 
-    public static function removeFromCart(int $id): void
+    public static function removeFromCart(string|int $key): void
     {
-        session(['cart' => array_values(array_diff(self::cartIds(), [$id]))]);
+        $key = is_numeric($key) ? 'p:'.(int) $key : $key;
+        session(['cart' => array_values(array_diff(self::cartKeys(), [$key]))]);
     }
 
     public static function clearCart(): void
@@ -130,6 +153,14 @@ class Shop
     public static function fulfil(Order $order): void
     {
         foreach ($order->items()->get() as $item) {
+            if ($item->course_id) {
+                // Paid course: access is granted by enrolling the buyer.
+                if ($order->user_id) {
+                    \App\Models\Enrollment::firstOrCreate(['user_id' => $order->user_id, 'course_id' => $item->course_id]);
+                }
+
+                continue;
+            }
             if ($item->license_key) {
                 continue;
             }

@@ -6,10 +6,10 @@
         @foreach ($items as $p)
             <li>
                 <img src="{{ $p->coverUrl() }}" alt="" width="64" height="48">
-                <div><a href="{{ route('store.show', $p) }}" dir="auto">{{ $p->tr('title') }}</a>@if ($p->billingLabel())<small class="muted">({{ __('اشتراك :p', ['p' => $p->billingLabel()]) }})</small>@endif</div>
+                <div><a href="{{ $p->itemUrl() }}" dir="auto">{{ $p->tr('title') }}</a>@if ($p instanceof \App\Models\Course)<small class="muted">({{ __('دورة') }})</small>@endif @if ($p->billingLabel())<small class="muted">({{ __('اشتراك :p', ['p' => $p->billingLabel()]) }})</small>@endif</div>
                 <strong>{{ Shop::money($p->price($currency), $currency) }}</strong>
                 @if (! empty($editable))
-                    <form method="POST" action="{{ route('store.cart.remove', $p) }}">@csrf @method('DELETE')
+                    <form method="POST" action="{{ route('store.cart.remove', $p->cartKey()) }}">@csrf @method('DELETE')
                         <button class="icon-btn icon-btn--sm" type="submit" aria-label="{{ __('حذف «:t» من السلة', ['t' => $p->tr('title')]) }}"><x-icon name="trash" size="14"/></button></form>
                 @endif
             </li>

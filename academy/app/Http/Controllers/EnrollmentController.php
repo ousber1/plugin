@@ -14,6 +14,11 @@ class EnrollmentController extends Controller
     {
         abort_unless($course->isPublished(), 404);
         $user = $request->user();
+        if ($course->isPaid() && ! $user->isEnrolledIn($course) && ! $user->isStaff()) {
+            \App\Support\Shop::addToCart($course);
+
+            return redirect()->route('store.checkout')->with('info', __('هذه دورة مدفوعة. أكمل الطلب للتسجيل فيها.'));
+        }
 
         try {
             Enrollment::firstOrCreate(['user_id' => $user->id, 'course_id' => $course->id]);
@@ -27,6 +32,6 @@ class EnrollmentController extends Controller
             ->select('lessons.*')->first();
 
         return redirect($first ? route('learn.show', [$course, $first]) : route('courses.show', $course))
-            ->with('success', __('تم تسجيلك في الدورة مجانًا. بالتوفيق!'));
+            ->with('success', $course->isPaid() ? __('تم تسجيلك في الدورة. بالتوفيق!') : __('تم تسجيلك في الدورة مجانًا. بالتوفيق!'));
     }
 }

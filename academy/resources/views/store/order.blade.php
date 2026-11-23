@@ -16,8 +16,13 @@
         <div class="stack">
             @if ($paid)
                 <div class="card card--pad">
-                    <h2 class="card__title"><x-icon name="download" size="20"/> {{ __('ملفاتك ومفاتيح الترخيص') }}</h2>
+                    <h2 class="card__title"><x-icon name="download" size="20"/> {{ __('مشترياتك') }}</h2>
                     @foreach ($items as $it)
+                        @if ($it->course_id)
+                            <div class="lic"><div><strong dir="auto">{{ $it->title }}</strong><br><small class="muted">{{ __('دورة — تم تسجيلك فيها') }}</small></div>
+                                @if ($it->course)<a class="btn btn--primary btn--sm" href="{{ route('learn.show', $it->course) }}"><x-icon name="play" size="16"/> {{ __('ابدأ الدورة') }}</a>@endif</div>
+                            @continue
+                        @endif
                         <div class="lic">
                             <div><strong dir="auto">{{ $it->title }}</strong>
                                 @if ($it->license_key)<div class="lic__key"><code class="ltr">{{ $it->license_key }}</code><button class="icon-btn icon-btn--sm" type="button" data-copy="{{ $it->license_key }}" data-copied="{{ __('تم النسخ') }}" aria-label="{{ __('نسخ المفتاح') }}"><x-icon name="copy" size="14"/></button></div>@endif

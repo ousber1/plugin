@@ -171,3 +171,8 @@ body.admin { background: #f6f4ee; }
 .footer-logo-preview { border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; }
 .footer-logo-preview img { max-width: 100%; }
 .cred-box { margin-bottom: 16px; border-color: var(--green); background: #f0fdf4; }
+.pricing-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.pricing-switch label { display: flex; gap: 8px; align-items: flex-start; border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.pricing-switch label:has(input:checked) { border-color: var(--indigo-600); background: var(--indigo-50); }
+.pricing-switch span { display: grid; }
+.pricing-switch small { color: var(--muted); }

@@ -53,6 +53,9 @@ class CertificateRequestController extends Controller
         if ($request->user()) {
             return $this->store($request, $course, $service);
         }
+        if ($course->isPaid()) {
+            return redirect()->route('courses.show', $course)->with('info', __('اشترِ الدورة أولًا لطلب شهادتها.'));
+        }
         if (\App\Support\Settings::get('certificate_requires_completion')) {
             return redirect()->route('register', ['intended' => route('courses.show', $course).'#certificate'])
                 ->with('info', __('أنشئ حسابًا وأكمل الدورة لطلب الشهادة.'));

@@ -79,22 +79,26 @@ Route::middleware('feature:tools')->group(function () {
 });
 
 // Optional digital store (disabled by default; independent from learning)
+// Cart, checkout and orders serve both the store and paid courses (always available).
+Route::get('/store/cart', [C\StoreController::class, 'cart'])->name('store.cart');
+Route::delete('/store/cart/item/{key}', [C\StoreController::class, 'remove'])->name('store.cart.remove');
+Route::post('/store/coupon', [C\StoreController::class, 'coupon'])->middleware('throttle:shop')->name('store.coupon');
+Route::get('/store/currency/{currency}', [C\StoreController::class, 'currency'])->name('store.currency');
+Route::post('/courses/{course}/buy', [C\StoreController::class, 'buyCourse'])->middleware('throttle:shop')->name('courses.buy');
+Route::middleware('auth')->group(function () {
+    Route::get('/store/checkout', [C\StoreController::class, 'checkout'])->name('store.checkout');
+    Route::post('/store/checkout', [C\StoreController::class, 'place'])->middleware('throttle:checkout')->name('store.place');
+    Route::get('/store/account', [C\StoreController::class, 'account'])->name('store.account');
+    Route::get('/orders/{order:reference}', [C\StoreController::class, 'order'])->name('store.order');
+    Route::post('/orders/{order:reference}/receipt', [C\StoreController::class, 'receipt'])->middleware('throttle:uploads')->name('store.receipt');
+    Route::get('/orders/{order:reference}/download/{item?}', [C\StoreController::class, 'download'])->name('store.download');
+});
+
+// Digital products store (optional module)
 Route::middleware('feature:store')->group(function () {
     Route::get('/store', [C\StoreController::class, 'index'])->name('store.index');
-    Route::get('/store/cart', [C\StoreController::class, 'cart'])->name('store.cart');
     Route::post('/store/cart/{product}', [C\StoreController::class, 'add'])->middleware('throttle:shop')->name('store.cart.add');
-    Route::delete('/store/cart/{product}', [C\StoreController::class, 'remove'])->name('store.cart.remove');
-    Route::post('/store/coupon', [C\StoreController::class, 'coupon'])->middleware('throttle:shop')->name('store.coupon');
-    Route::get('/store/currency/{currency}', [C\StoreController::class, 'currency'])->name('store.currency');
-    Route::middleware('auth')->group(function () {
-        Route::get('/store/checkout', [C\StoreController::class, 'checkout'])->name('store.checkout');
-        Route::post('/store/checkout', [C\StoreController::class, 'place'])->middleware('throttle:checkout')->name('store.place');
-        Route::get('/store/account', [C\StoreController::class, 'account'])->name('store.account');
-        Route::post('/store/{product}/review', [C\StoreController::class, 'review'])->middleware('throttle:forms')->name('store.review');
-        Route::get('/orders/{order:reference}', [C\StoreController::class, 'order'])->name('store.order');
-        Route::post('/orders/{order:reference}/receipt', [C\StoreController::class, 'receipt'])->middleware('throttle:uploads')->name('store.receipt');
-        Route::get('/orders/{order:reference}/download/{item?}', [C\StoreController::class, 'download'])->name('store.download');
-    });
+    Route::post('/store/{product}/review', [C\StoreController::class, 'review'])->middleware(['auth', 'throttle:forms'])->name('store.review');
     Route::get('/store/{product}', [C\StoreController::class, 'show'])->name('store.show');
 });
 

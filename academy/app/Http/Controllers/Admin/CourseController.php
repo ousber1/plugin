@@ -145,7 +145,11 @@ class CourseController extends AdminController
             'is_featured' => [$isAdmin ? 'nullable' : 'prohibited', 'boolean'],
             'featured_order' => [$isAdmin ? 'nullable' : 'prohibited', 'integer', 'min:0', 'max:9999'],
             'requires_quiz_pass' => ['nullable', 'boolean'],
-        ]);
+            'pricing' => [$isAdmin ? 'nullable' : 'prohibited', 'in:free,paid'],
+            'price' => [$isAdmin ? 'nullable' : 'prohibited', 'required_if:pricing,paid', 'numeric', 'min:1', 'max:1000000'],
+            'compare_price' => [$isAdmin ? 'nullable' : 'prohibited', 'numeric', 'min:0', 'max:1000000'],
+            'price_usd' => [$isAdmin ? 'nullable' : 'prohibited', 'numeric', 'min:0', 'max:100000'],
+        ], ['price.required_if' => 'أدخل سعر الدورة المدفوعة.']);
     }
 
     private function fill(Course $course, Request $request, array $data): void
@@ -165,6 +169,13 @@ class CourseController extends AdminController
             'requires_quiz_pass' => $request->boolean('requires_quiz_pass'),
         ]);
         $course->slug = $data['slug'] ?? null ?: ($course->slug ?: $this->uniqueSlug(Course::class, $data['title']['en'] ?? '' ?: ($data['title']['fr'] ?? '' ?: $data['title']['ar']), $course->id));
+        if ($request->user()->isAdmin() && $request->has('pricing')) {
+            $paid = ($data['pricing'] ?? 'free') === 'paid';
+            $cents = fn ($v) => $v === null || $v === '' ? null : (int) round($v * 100);
+            $course->price_cents = $paid ? (int) $cents($data['price'] ?? 0) : 0;
+            $course->compare_price_cents = $paid ? $cents($data['compare_price'] ?? null) : null;
+            $course->price_usd_cents = $paid ? $cents($data['price_usd'] ?? null) : null;
+        }
         if ($request->user()->isAdmin()) {
             $course->instructor_id = $data['instructor_id'] ?? null;
             $course->is_featured = $request->boolean('is_featured');

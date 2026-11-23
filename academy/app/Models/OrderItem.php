@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $fillable = ['order_id', 'product_id', 'title', 'price_cents', 'billing', 'license_key', 'expires_at'];
+    protected $fillable = ['order_id', 'product_id', 'course_id', 'title', 'price_cents', 'billing', 'license_key', 'expires_at'];
 
     protected $casts = ['expires_at' => 'datetime'];
 
@@ -18,6 +18,11 @@ class OrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
     }
 
     public function isActive(): bool

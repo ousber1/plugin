@@ -87,6 +87,21 @@ class StoreController extends Controller
         return back();
     }
 
+    /** Paid course: add to the cart (optionally go straight to checkout). */
+    public function buyCourse(Request $request, \App\Models\Course $course)
+    {
+        abort_unless($course->isPublished() && $course->isPaid(), 404);
+        if ($request->user()?->isEnrolledIn($course)) {
+            return redirect()->route('courses.show', $course)->with('info', __('أنت مسجّل في هذه الدورة.'));
+        }
+        Shop::addToCart($course);
+        if ($request->boolean('buy_now')) {
+            return redirect()->route('store.checkout');
+        }
+
+        return back()->with('success', __('أُضيفت الدورة إلى السلة.'));
+    }
+
     public function cart()
     {
         return view('store.cart', Shop::totals());
@@ -103,9 +118,10 @@ class StoreController extends Controller
         return back()->with('success', __('أُضيف «:title» إلى السلة.', ['title' => $product->tr('title')]));
     }
 
-    public function remove(Product $product)
+    public function remove(string $key)
     {
-        Shop::removeFromCart($product->id);
+        abort_unless(preg_match('/^[pc]:\d+$/', $key) || ctype_digit($key), 404);
+        Shop::removeFromCart($key);
 
         return back()->with('info', __('حُذف المنتج من السلة.'));
     }
@@ -161,7 +177,11 @@ class StoreController extends Controller
                 'status' => 'pending', 'customer_note' => $data['customer_note'] ?? null,
             ]);
             foreach ($totals['items'] as $p) {
-                $order->items()->create(['product_id' => $p->id, 'title' => $p->tr('title'), 'price_cents' => $p->price($totals['currency']), 'billing' => $p->billing]);
+                $isCourse = $p instanceof \App\Models\Course;
+                $order->items()->create([
+                    'product_id' => $isCourse ? null : $p->id, 'course_id' => $isCourse ? $p->id : null,
+                    'title' => $p->tr('title'), 'price_cents' => $p->price($totals['currency']), 'billing' => $isCourse ? 'once' : $p->billing,
+                ]);
             }
             $totals['coupon']?->increment('used');
 
@@ -179,7 +199,7 @@ class StoreController extends Controller
     public function order(Request $request, Order $order)
     {
         abort_unless($order->user_id === $request->user()->id || $request->user()->isAdmin(), 404);
-        $order->load('items.product', 'product');
+        $order->load('items.product', 'items.course', 'product');
         $wa = Settings::whatsappLink(__('السلام عليكم، أريد إتمام دفع طلبي :ref بمبلغ :total.', ['ref' => $order->reference, 'total' => $order->totalLabel()]));
 
         return view('store.order', [
@@ -211,7 +231,7 @@ class StoreController extends Controller
 
     public function account(Request $request)
     {
-        $orders = Order::where('user_id', $request->user()->id)->with('items.product')->latest()->get();
+        $orders = Order::where('user_id', $request->user()->id)->with(['items.product', 'items.course'])->latest()->get();
         $licenses = $orders->where('status', 'paid')->flatMap->items->filter(fn ($i) => $i->license_key)
             ->groupBy('license_key')->map(fn ($g) => $g->sortByDesc('expires_at')->first())->values();
 

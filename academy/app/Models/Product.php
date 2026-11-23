@@ -124,6 +124,16 @@ class Product extends Model
         return collect($this->changelog ?: [])->filter(fn ($e) => is_array($e) && ! empty($e['version']))->values()->all();
     }
 
+    public function cartKey(): string
+    {
+        return 'p:'.$this->id;
+    }
+
+    public function itemUrl(): string
+    {
+        return route('store.show', $this);
+    }
+
     public function coverUrl(): string
     {
         return $this->cover_path

@@ -30,6 +30,17 @@
                 <p class="muted">{{ __('لا توجد مشتريات مفعّلة بعد.') }} <a href="{{ route('store.index') }}">{{ __('تصفّح المتجر') }}</a></p>
             @endforelse
         </section>
+        @php $paidCourses = $orders->where('status', 'paid')->flatMap->items->filter(fn ($i) => $i->course_id && $i->course)->unique('course_id'); @endphp
+        @if ($paidCourses->isNotEmpty())
+            <section class="card card--pad">
+                <h2 class="card__title"><x-icon name="book" size="20"/> {{ __('دوراتي المشتراة') }}</h2>
+                @foreach ($paidCourses as $it)
+                    <div class="lic"><img src="{{ $it->course->thumbnailUrl() }}" alt="" width="72" height="48" class="lic__img">
+                        <div style="flex:1"><strong dir="auto">{{ $it->course->tr('title') }}</strong></div>
+                        <a class="btn btn--primary btn--sm" href="{{ route('learn.show', $it->course) }}"><x-icon name="play" size="16"/> {{ __('تابع التعلم') }}</a></div>
+                @endforeach
+            </section>
+        @endif
         <section class="card card--pad">
             <h2 class="card__title"><x-icon name="receipt" size="20"/> {{ __('طلباتي') }}</h2>
             @if ($orders->isEmpty())
