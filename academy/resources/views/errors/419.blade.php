@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', __('انتهت صلاحية الصفحة'))
+@section('icon', 'clock')
+@section('heading', __('انتهت صلاحية الصفحة'))
+@section('message', __('أعد تحميل الصفحة وحاول مجددًا.'))
