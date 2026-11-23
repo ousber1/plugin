@@ -30,7 +30,8 @@
                 <p class="hint">بدون + أو مسافات. يُستعمل في زر «اطلب شهادتك عبر واتساب» والزر العائم.</p></div>
             <div class="field"><label for="whatsapp_template">نص رسالة طلب الشهادة</label><textarea class="textarea" id="whatsapp_template" name="whatsapp_template" rows="4" dir="rtl" required>{{ old('whatsapp_template', $s['whatsapp_template']) }}</textarea>
                 <p class="hint">استعمل {course} لاسم الدورة و {reference} لرقم الطلب. لا تضف العنوان؛ يُؤكَّد داخل المحادثة.</p></div>
-            <label class="check field"><input type="checkbox" name="require_verified_email_for_certificate" value="1" @checked($s['require_verified_email_for_certificate'])> اشتراط تأكيد البريد الإلكتروني قبل طلب الشهادة</label>
+            <label class="check field"><input type="checkbox" name="certificate_requires_completion" value="1" @checked($s['certificate_requires_completion'] ?? false)> <span>اشتراط إكمال الدورة (الدروس المطلوبة والاختبارات إن وُجدت) قبل طلب الشهادة<br><small class="muted">عند إلغاء التفعيل يستطيع الطالب طلب الشهادة عبر واتساب في أي وقت، حتى قبل بدء الدورة. يظهر تقدّمه لفريقك في صفحة الطلب.</small></span></label>
+            <label class="check field"><input type="checkbox" name="require_verified_email_for_certificate" value="1" @checked($s['require_verified_email_for_certificate'])> اشتراط تأكيد البريد الإلكتروني قبل طلب الشهادة (فعّله فقط بعد ضبط إعدادات البريد MAIL_* في ملف .env)</label>
             <fieldset class="field" style="border:1px solid var(--border);border-radius:12px;padding:12px"><legend class="label">البيانات الظاهرة في صفحة التحقق العامة</legend>
                 @foreach (['holder_name' => 'اسم الحاصل على الشهادة', 'course_title' => 'عنوان الدورة', 'issued_on' => 'تاريخ الإصدار'] as $k => $l)
                     <label class="check small"><input type="checkbox" name="verify_public_fields[]" value="{{ $k }}" @checked(in_array($k, $s['verify_public_fields'] ?? []))> {{ $l }}</label>

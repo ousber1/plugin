@@ -32,6 +32,12 @@ class CertificateRequestService
             throw new \DomainException(implode(' ', $eligibility['missing']));
         }
 
+        // Requests are allowed before finishing (or starting) the course when the academy
+        // does not require completion; enroll the student so the course appears in their dashboard.
+        if (! $user->isEnrolledIn($course)) {
+            \App\Models\Enrollment::firstOrCreate(['user_id' => $user->id, 'course_id' => $course->id]);
+        }
+
         try {
             return DB::transaction(function () use ($user, $course) {
                 $request = new CertificateRequest([

@@ -60,7 +60,7 @@ class CourseController extends Controller
             'enrolled' => $enrolled,
             'wishlisted' => $user ? $user->wishlist()->whereKey($course->id)->exists() : false,
             'progress' => $enrolled ? $progress->progress($user, $course) : null,
-            'eligibility' => $enrolled ? $progress->eligibility($user, $course) : null,
+            'eligibility' => $user ? $progress->eligibility($user, $course) : null,
             'completed' => $enrolled ? $progress->completedLessonIds($user, $course) : [],
             'request' => $user ? $user->certificateRequests()->where('course_id', $course->id)->first() : null,
             'myReview' => $user ? $user->reviews()->where('course_id', $course->id)->first() : null,

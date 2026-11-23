@@ -23,8 +23,10 @@ class CertificateRequestController extends AdminController
             ->latest()->paginate(25)->withQueryString();
 
         $counts = CertificateRequest::selectRaw('status, count(*) as c')->groupBy('status')->pluck('c', 'status');
+        $progress = app(\App\Services\ProgressService::class);
+        $percents = $requests->getCollection()->mapWithKeys(fn ($r) => [$r->id => $r->user && $r->course ? $progress->progress($r->user, $r->course)['percent'] : null]);
 
-        return view('admin.certificate-requests.index', compact('requests', 'counts'));
+        return view('admin.certificate-requests.index', compact('requests', 'counts', 'percents'));
     }
 
     public function show(CertificateRequest $certificateRequest, CertificateRequestService $service)
@@ -35,6 +37,7 @@ class CertificateRequestController extends AdminController
             'req' => $certificateRequest,
             'message' => $service->whatsappMessage($certificateRequest),
             'studentWhatsapp' => $certificateRequest->user->phone ? 'https://wa.me/'.preg_replace('/\D+/', '', $certificateRequest->user->phone) : null,
+            'progress' => app(\App\Services\ProgressService::class)->progress($certificateRequest->user, $certificateRequest->course),
         ]);
     }
 

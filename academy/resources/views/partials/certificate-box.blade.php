@@ -23,11 +23,18 @@
             </form>
         @endif
     @elseif ($elig && $elig['eligible'])
-        <p class="small">{{ __('أكملت متطلبات الدورة! اطلب شهادتك الورقية، وسيؤكد معك فريقنا الاسم المطبوع وعنوان التوصيل عبر واتساب.') }}</p>
+        <p class="small">{{ $elig['requires_completion']
+            ? __('أكملت متطلبات الدورة! اطلب شهادتك الورقية، وسيؤكد معك فريقنا الاسم المطبوع وعنوان التوصيل عبر واتساب.')
+            : __('اطلب شهادتك الورقية لهذه الدورة، وسيؤكد معك فريقنا الاسم المطبوع وعنوان التوصيل عبر واتساب.') }}</p>
         <form method="POST" action="{{ route('certificates.request', $course) }}" target="_blank">@csrf
             <button class="btn btn--whatsapp btn--block btn--lg" type="submit"><x-icon name="whatsapp"/> {{ __('اطلب شهادتك عبر واتساب') }}</button>
         </form>
         <p class="small muted" style="margin:8px 0 0">{{ __('لا تُرسل عنوانك في الموقع؛ نؤكده معك مباشرة في المحادثة.') }}</p>
+    @elseif (! $elig && ! \App\Support\Settings::get('certificate_requires_completion'))
+        {{-- Visitor: sign up first (the request is linked to an account), then come back to this course. --}}
+        <p class="small">{{ __('اطلب شهادتك الورقية لهذه الدورة عبر واتساب. أنشئ حسابًا مجانيًا أولًا ليُربط الطلب باسمك.') }}</p>
+        <a class="btn btn--whatsapp btn--block btn--lg" href="{{ route('register', ['intended' => route('courses.show', $course).'#certificate']) }}"><x-icon name="whatsapp"/> {{ __('اطلب شهادتك عبر واتساب') }}</a>
+        <p class="small muted" style="margin:8px 0 0">{{ __('لديك حساب؟') }} <a href="{{ route('login', ['intended' => route('courses.show', $course).'#certificate']) }}">{{ __('سجّل الدخول') }}</a></p>
     @else
         <p class="small">{{ __('بعد إتمام متطلبات الدورة يمكنك طلب شهادة ورقية تُرسل إلى عنوانك.') }}</p>
         <button class="btn btn--whatsapp btn--block" type="button" disabled aria-describedby="cert-missing"><x-icon name="whatsapp"/> {{ __('اطلب شهادتك عبر واتساب') }}</button>

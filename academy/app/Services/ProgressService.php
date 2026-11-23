@@ -56,19 +56,22 @@ class ProgressService
     {
         $missing = [];
         $progress = $this->progress($user, $course);
+        $requiresCompletion = (bool) Settings::get('certificate_requires_completion');
 
-        if (! $user->isEnrolledIn($course)) {
-            $missing[] = __('سجّل في الدورة أولًا.');
-        }
-        if ($progress['total'] === 0) {
-            $missing[] = __('لا تحتوي الدورة بعد على دروس مطلوبة منشورة.');
-        } elseif ($progress['completed'] < $progress['total']) {
-            $missing[] = __('أكمل جميع الدروس المطلوبة (:done من :total).', ['done' => $progress['completed'], 'total' => $progress['total']]);
-        }
-        if ($course->requires_quiz_pass) {
-            foreach ($this->requiredQuizzes($course) as $quiz) {
-                if (! $quiz->passedBy($user)) {
-                    $missing[] = __('انجح في اختبار «:title» بنسبة :score% على الأقل.', ['title' => $quiz->lesson->tr('title'), 'score' => $quiz->pass_score]);
+        if ($requiresCompletion) {
+            if (! $user->isEnrolledIn($course)) {
+                $missing[] = __('سجّل في الدورة أولًا.');
+            }
+            if ($progress['total'] === 0) {
+                $missing[] = __('لا تحتوي الدورة بعد على دروس مطلوبة منشورة.');
+            } elseif ($progress['completed'] < $progress['total']) {
+                $missing[] = __('أكمل جميع الدروس المطلوبة (:done من :total).', ['done' => $progress['completed'], 'total' => $progress['total']]);
+            }
+            if ($course->requires_quiz_pass) {
+                foreach ($this->requiredQuizzes($course) as $quiz) {
+                    if (! $quiz->passedBy($user)) {
+                        $missing[] = __('انجح في اختبار «:title» بنسبة :score% على الأقل.', ['title' => $quiz->lesson->tr('title'), 'score' => $quiz->pass_score]);
+                    }
                 }
             }
         }
@@ -76,7 +79,7 @@ class ProgressService
             $missing[] = __('أكّد بريدك الإلكتروني من خلال الرابط المرسل إليك.');
         }
 
-        return ['eligible' => $missing === [], 'missing' => $missing, 'progress' => $progress];
+        return ['eligible' => $missing === [], 'missing' => $missing, 'progress' => $progress, 'requires_completion' => $requiresCompletion];
     }
 
     public function markComplete(User $user, Lesson $lesson): void

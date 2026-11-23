@@ -13,13 +13,13 @@
     <div class="field" style="flex:2"><label for="q">بحث</label><input class="input" id="q" name="q" value="{{ request('q') }}" placeholder="رقم المرجع، اسم الطالب، البريد، الهاتف أو رقم التتبع"></div>
     <button class="btn btn--primary">بحث</button>
 </form>
-<div class="table-wrap"><table class="table"><thead><tr><th>المرجع</th><th>الطالب</th><th>الدورة</th><th>الحالة</th><th>التتبع</th><th>التاريخ</th><th></th></tr></thead><tbody>
+<div class="table-wrap"><table class="table"><thead><tr><th>المرجع</th><th>الطالب</th><th>الدورة</th><th>التقدّم</th><th>الحالة</th><th>التتبع</th><th>التاريخ</th><th></th></tr></thead><tbody>
 @forelse ($requests as $r)
     <tr><td class="ltr"><strong>{{ $r->reference }}</strong></td><td>{{ $r->user?->name }}<br><span class="small ltr muted">{{ $r->user?->phone ?: $r->user?->email }}</span></td>
-        <td class="small" dir="auto">{{ $r->course?->tr('title') }}</td><td><span class="badge badge--{{ $r->status->color() }}">{{ $r->status->label() }}</span></td>
+        <td class="small" dir="auto">{{ $r->course?->tr('title') }}</td><td>@if (! is_null($percents[$r->id] ?? null))<span class="badge {{ $percents[$r->id] === 100 ? 'badge--green' : 'badge--gray' }}">{{ $percents[$r->id] }}%</span>@endif</td><td><span class="badge badge--{{ $r->status->color() }}">{{ $r->status->label() }}</span></td>
         <td class="small ltr">{{ $r->tracking_number ?: '—' }}</td><td class="small">{{ $r->created_at->format('Y-m-d') }}</td>
         <td><a class="btn btn--outline btn--sm" href="{{ route('admin.certificate-requests.show', $r) }}">معالجة</a></td></tr>
-@empty<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">لا توجد طلبات.</td></tr>@endforelse
+@empty<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">لا توجد طلبات.</td></tr>@endforelse
 </tbody></table></div>
 {{ $requests->links() }}
 @endsection

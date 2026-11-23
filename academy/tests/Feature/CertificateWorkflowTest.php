@@ -15,7 +15,7 @@ class CertificateWorkflowTest extends TestCase
 
     private function setupCourse(bool $requireQuiz = true): array
     {
-        Settings::set(['whatsapp_number' => '212611223344']);
+        Settings::set(['whatsapp_number' => '212611223344', 'certificate_requires_completion' => true]);
         $course = $this->makeCourse(['slug' => 'ai-intro', 'title' => ['ar' => 'مدخل إلى الذكاء الاصطناعي'], 'requires_quiz_pass' => $requireQuiz]);
         $video = $this->makeLesson($course, ['type' => 'text', 'body' => ['ar' => '<p>نص</p>']]);
         $quizLesson = $this->makeLesson($course, ['type' => 'quiz', 'sort_order' => 2]);
@@ -84,6 +84,7 @@ class CertificateWorkflowTest extends TestCase
     {
         [$course, $text, $quizLesson, $student] = $this->setupCourse(requireQuiz: false);
         $quizLesson->forceFill(['is_required' => false])->save();
+        Settings::set(['require_verified_email_for_certificate' => true]);
         $student->forceFill(['email_verified_at' => null])->save();
         $this->actingAs($student)->post(route('learn.complete', [$course, $text]));
         $this->post(route('certificates.request', $course))->assertSessionHas('error');
@@ -128,5 +129,47 @@ class CertificateWorkflowTest extends TestCase
         $quizLesson->forceFill(['is_required' => false])->save();
         $this->actingAs($student)->post(route('learn.complete', [$course, $text]));
         $this->get(route('courses.show', $course))->assertDontSee('.pdf')->assertDontSee('تحميل الشهادة');
+    }
+
+    public function test_by_default_students_can_request_before_starting_the_course(): void
+    {
+        Settings::set(['whatsapp_number' => '212611223344']);
+        $course = $this->makeCourse(['slug' => 'excel', 'title' => ['ar' => 'دورة إكسل'], 'requires_quiz_pass' => true]);
+        $this->makeLesson($course);
+        $quizLesson = $this->makeLesson($course, ['type' => 'quiz', 'sort_order' => 2]);
+        $this->addQuiz($quizLesson);
+
+        // Visitor: the WhatsApp button leads to sign-up, then back to the course.
+        $this->get(route('courses.show', $course))->assertSee('اطلب شهادتك عبر واتساب')
+            ->assertSee(e(route('register', ['intended' => route('courses.show', $course).'#certificate'])), false);
+
+        // New, unverified student who never enrolled nor opened a lesson.
+        $student = $this->student();
+        $student->forceFill(['email_verified_at' => null])->save();
+        $this->actingAs($student)->get(route('courses.show', $course))->assertSee('اطلب شهادتك الورقية لهذه الدورة');
+
+        $first = $this->post(route('certificates.request', $course));
+        $request = CertificateRequest::firstOrFail();
+        $first->assertRedirect('https://wa.me/212611223344?text='.rawurlencode("السلام عليكم، أود طلب الشهادة الورقية لدورة دورة إكسل.\nرقم طلب الشهادة: {$request->reference}."));
+        $this->post(route('certificates.request', $course))->assertRedirectContains($request->reference);
+        $this->assertDatabaseCount('certificate_requests', 1);
+
+        // The course now appears in the student's dashboard; staff see 0% progress.
+        $this->assertTrue($student->isEnrolledIn($course));
+        $this->get(route('dashboard'))->assertSee($request->reference);
+        $this->actingAs($this->admin())->get(route('admin.certificate-requests.show', $request))->assertSee('0% (0/2)');
+    }
+
+    public function test_admin_can_require_completion_again(): void
+    {
+        Settings::set(['whatsapp_number' => '212611223344']);
+        $course = $this->makeCourse();
+        $this->makeLesson($course);
+        $this->actingAs($this->admin())->put(route('admin.settings.update', 'whatsapp'), [
+            'whatsapp_number' => '212611223344', 'whatsapp_template' => 'طلب {course} رقم {reference}', 'certificate_requires_completion' => 1,
+        ])->assertSessionHas('success');
+
+        $this->actingAs($this->student())->post(route('certificates.request', $course))->assertSessionHas('error');
+        $this->assertDatabaseCount('certificate_requests', 0);
     }
 }

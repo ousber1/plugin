@@ -11,7 +11,7 @@ A complete, installable PHP application for an online academy in Morocco. Every 
 1. An admin creates a course and uploads MP4 lesson videos directly from the dashboard (resumable chunked uploads, private storage).
 2. A student registers and enrolls in any course for free.
 3. The student watches lessons, completes required lessons and quizzes, and tracks progress.
-4. When eligible, "اطلب شهادتك عبر واتساب" creates a request with a unique reference and opens WhatsApp with a prefilled Arabic message.
+4. "اطلب شهادتك عبر واتساب" (available at any time by default, or only after completion if the admin requires it) creates a request with a unique reference and opens WhatsApp with a prefilled Arabic message.
 5. Staff confirm the printed name and address in WhatsApp, prepare and ship the certificate.
 6. Staff update the status (بانتظار التواصل → تم الاستلام → قيد التجهيز → تم الشحن → تم التسليم), and the student sees the status and tracking number.
 7. Printed certificates can be registered for public verification (code + QR link), and revoked if needed.

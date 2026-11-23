@@ -84,6 +84,7 @@ class SettingsController extends AdminController
                 }
             }],
             'require_verified_email_for_certificate' => ['nullable', 'boolean'],
+            'certificate_requires_completion' => ['nullable', 'boolean'],
             'verify_public_fields' => ['nullable', 'array'], 'verify_public_fields.*' => ['in:holder_name,course_title,issued_on'],
         ], ['whatsapp_number.regex' => 'أدخل الرقم بالصيغة الدولية بدون رموز، مثل 212600000000.']);
 
@@ -91,6 +92,7 @@ class SettingsController extends AdminController
             'whatsapp_number' => preg_replace('/\D+/', '', (string) ($data['whatsapp_number'] ?? '')),
             'whatsapp_template' => $data['whatsapp_template'],
             'require_verified_email_for_certificate' => $request->boolean('require_verified_email_for_certificate'),
+            'certificate_requires_completion' => $request->boolean('certificate_requires_completion'),
             'verify_public_fields' => array_values($data['verify_public_fields'] ?? []),
         ];
     }

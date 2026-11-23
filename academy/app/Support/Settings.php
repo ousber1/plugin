@@ -64,7 +64,11 @@ class Settings
             'accreditation_enabled' => false,
             'accreditation_text' => ['ar' => '', 'fr' => '', 'en' => ''],
             'verify_public_fields' => ['holder_name', 'course_title', 'issued_on'],
-            'require_verified_email_for_certificate' => true,
+            // Students may request the printed certificate on WhatsApp without finishing
+            // (or starting) the course. Turn on to require completion first.
+            'certificate_requires_completion' => false,
+            // Off by default: confirmation emails need SMTP settings (MAIL_*) first.
+            'require_verified_email_for_certificate' => false,
             'bank_name' => null,
             'bank_account_holder' => null,
             'bank_rib' => null,
