@@ -508,5 +508,10 @@
  "يجب الموافقة على إرسال المحتوى إلى مزوّد الذكاء الاصطناعي.": "Vous devez accepter l’envoi du contenu au fournisseur d’IA.",
  "الصق نص الدرس أو ارفع ملفًا.": "Collez le texte de la leçon ou importez un fichier.",
  "بلغت الحد اليومي لتوليد الاختبارات (:n). حاول غدًا.": "Limite quotidienne atteinte (:n). Réessayez demain.",
- "التوليد بالذكاء الاصطناعي غير متاح حاليًا. يمكنك إنشاء اختبارك يدويًا وتجربته وطباعته.": "La génération par IA n’est pas disponible pour le moment. Vous pouvez créer votre quiz à la main, le tester et l’imprimer."
+ "التوليد بالذكاء الاصطناعي غير متاح حاليًا. يمكنك إنشاء اختبارك يدويًا وتجربته وطباعته.": "La génération par IA n’est pas disponible pour le moment. Vous pouvez créer votre quiz à la main, le tester et l’imprimer.",
+ "صمّم فاتورتك الاحترافية في دقائق": "Créez votre facture professionnelle en quelques minutes",
+ "اختر اللغة والقالب، أضف شعارك وألوانك، املأ المعلومات وحمّل الفاتورة PDF. الحسابات (الضريبة، الخصم، المجموع والمبلغ بالحروف) تتم تلقائيًا.": "Choisissez la langue et le modèle, ajoutez votre logo et vos couleurs, remplissez les informations et téléchargez le PDF. TVA, remise, totaux et montant en lettres sont calculés automatiquement.",
+ "هذه الأداة تحتاج إلى تفعيل JavaScript في المتصفح.": "Cet outil nécessite JavaScript.",
+ "أنشئ سيرتك الذاتية في دقائق": "Créez votre CV en quelques minutes",
+ "اختر لغة السيرة والقالب، ثم املأ معلوماتك وشاهد النتيجة مباشرة. تُحفظ بياناتك في متصفحك فقط.": "Choisissez la langue et le modèle, puis remplissez vos informations avec un aperçu en direct. Vos données restent dans votre navigateur."
 }

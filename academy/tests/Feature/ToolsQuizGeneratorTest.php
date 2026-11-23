@@ -119,6 +119,17 @@ class ToolsQuizGeneratorTest extends TestCase
         $this->postJson(route('tools.quiz.generate'), $base + ['consent' => 1, 'text' => 'نص الدرس'])->assertStatus(429);
     }
 
+    public function test_invoice_and_cv_designers_load_their_scripts(): void
+    {
+        $this->get(route('tools.show', 'invoice'))->assertOk()->assertSee('صمّم فاتورتك الاحترافية في دقائق')
+            ->assertSee('id="tool-app"', false)->assertSee('js/tools/engine.js', false)->assertSee('js/tools/invoice.js', false)->assertSee('css/tools.css', false);
+        $this->get(route('tools.show', 'cv-builder'))->assertOk()->assertSee('أنشئ سيرتك الذاتية في دقائق')
+            ->assertSee('js/tools/cv.js', false);
+        foreach (['js/tools/engine.js', 'js/tools/invoice.js', 'js/tools/cv.js', 'css/tools.css'] as $asset) {
+            $this->assertFileExists(public_path($asset));
+        }
+    }
+
     public function test_subtitle_reader_strips_timestamps(): void
     {
         $vtt = "WEBVTT\n\n00:00.000 --> 00:02.000\n<v Teacher>Bonjour</v>\n\n00:02.000 --> 00:04.000\nBonjour\n\n00:04.000 --> 00:06.000\nOn commence.";

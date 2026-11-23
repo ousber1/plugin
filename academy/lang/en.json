@@ -495,5 +495,10 @@
  "يجب الموافقة على إرسال المحتوى إلى مزوّد الذكاء الاصطناعي.": "You must agree to send the content to the AI provider.",
  "الصق نص الدرس أو ارفع ملفًا.": "Paste the lesson text or upload a file.",
  "بلغت الحد اليومي لتوليد الاختبارات (:n). حاول غدًا.": "Daily generation limit reached (:n). Try again tomorrow.",
- "التوليد بالذكاء الاصطناعي غير متاح حاليًا. يمكنك إنشاء اختبارك يدويًا وتجربته وطباعته.": "AI generation is not available right now. You can build your quiz by hand, try it and print it."
+ "التوليد بالذكاء الاصطناعي غير متاح حاليًا. يمكنك إنشاء اختبارك يدويًا وتجربته وطباعته.": "AI generation is not available right now. You can build your quiz by hand, try it and print it.",
+ "صمّم فاتورتك الاحترافية في دقائق": "Design your professional invoice in minutes",
+ "اختر اللغة والقالب، أضف شعارك وألوانك، املأ المعلومات وحمّل الفاتورة PDF. الحسابات (الضريبة، الخصم، المجموع والمبلغ بالحروف) تتم تلقائيًا.": "Pick the language and template, add your logo and colors, fill in the details and download the PDF. Tax, discount, totals and amount in words are calculated automatically.",
+ "هذه الأداة تحتاج إلى تفعيل JavaScript في المتصفح.": "This tool requires JavaScript.",
+ "أنشئ سيرتك الذاتية في دقائق": "Create your CV in minutes",
+ "اختر لغة السيرة والقالب، ثم املأ معلوماتك وشاهد النتيجة مباشرة. تُحفظ بياناتك في متصفحك فقط.": "Choose the language and template, then fill in your details with a live preview. Your data stays in your browser."
 }
