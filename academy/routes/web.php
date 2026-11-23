@@ -42,6 +42,9 @@ Route::get('/privacy', fn () => app(C\PageController::class)->show(Page::where('
 Route::get('/contact', [C\ContactController::class, 'create'])->name('contact');
 Route::post('/contact', [C\ContactController::class, 'store'])->middleware('throttle:forms')->name('contact.store');
 
+// Certificate request on WhatsApp for visitors without an account
+Route::post('/courses/{course}/certificate/whatsapp', [C\CertificateRequestController::class, 'guest'])->middleware('throttle:forms')->name('certificates.guest');
+
 // Training centres
 Route::middleware('feature:centers')->group(function () {
     Route::get('/centers', [C\CenterController::class, 'index'])->name('centers.index');
@@ -183,6 +186,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     // Admin-only management
     Route::middleware('admin')->group(function () {
         Route::get('users', [A\UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [A\UserController::class, 'create'])->name('users.create');
+        Route::post('users', [A\UserController::class, 'store'])->name('users.store');
         Route::get('users/{user}/edit', [A\UserController::class, 'edit'])->name('users.edit');
         Route::put('users/{user}', [A\UserController::class, 'update'])->name('users.update');
 

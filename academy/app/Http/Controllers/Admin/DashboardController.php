@@ -120,7 +120,7 @@ class DashboardController extends AdminController
             ->each(fn ($e) => $items->push(['at' => $e->created_at, 'icon' => 'book', 'text' => ($e->user?->name ?? '—').' سجّل في «'.($e->course?->tr('title') ?? '—').'»', 'url' => $e->course ? route('admin.courses.enrollments', $e->course) : null]));
         if ($ids === null) {
             CertificateRequest::with(['user:id,name'])->latest()->limit(6)->get()
-                ->each(fn ($r) => $items->push(['at' => $r->created_at, 'icon' => 'award', 'text' => ($r->user?->name ?? '—').' طلب شهادة ('.$r->reference.')', 'url' => route('admin.certificate-requests.show', $r)]));
+                ->each(fn ($r) => $items->push(['at' => $r->created_at, 'icon' => 'award', 'text' => ($r->user?->name ?? 'زائر').' طلب شهادة ('.$r->reference.')', 'url' => route('admin.certificate-requests.show', $r)]));
             ContactMessage::latest()->limit(4)->get()
                 ->each(fn ($m) => $items->push(['at' => $m->created_at, 'icon' => 'mail', 'text' => 'رسالة تواصل من '.$m->name, 'url' => route('admin.messages.show', $m)]));
             Review::with(['user:id,name'])->latest()->limit(4)->get()

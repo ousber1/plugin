@@ -10,7 +10,7 @@
         <a class="btn btn--outline" href="{{ route('home') }}" target="_blank"><x-icon name="eye" size="18"/> معاينة الموقع</a></div></div>
 <p class="muted small">تحكّم في أعلى وأسفل كل صفحات الموقع. لتغيير لون الهيدر أو التذييل (فاتح/داكن/بلون الهوية) استعمل صفحة الثيمات.</p>
 
-<form method="POST" action="{{ route('admin.layout.update') }}" class="layout-editor">
+<form method="POST" action="{{ route('admin.layout.update') }}" class="layout-editor" enctype="multipart/form-data">
     @csrf @method('PUT')
 
     <section class="card card--pad">
@@ -51,6 +51,18 @@
             <div class="form-grid">
                 <x-admin.tr name="footer_cta_button" label="نص الزر" :value="$s['footer_cta_button']" :max="40"/>
                 <div class="field"><label for="footer_cta_url">رابط الزر</label><input class="input ltr" id="footer_cta_url" name="footer_cta_url" value="{{ old('footer_cta_url', $s['footer_cta_url']) }}" placeholder="/courses"></div>
+            </div>
+        </fieldset>
+        <fieldset class="field box"><legend class="label">شعار التذييل</legend>
+            <div class="footer-logo-preview" style="background:var(--footer)">
+                @if ($s['footer_logo_path'])<img src="{{ \App\Support\Media::url($s['footer_logo_path']) }}" alt="" style="height:{{ $s['footer_logo_height'] }}px">@else<x-logo light/>@endif
+            </div>
+            <label class="check field"><input type="checkbox" name="footer_show_logo" value="1" @checked($s['footer_show_logo'] ?? true)> إظهار الشعار في التذييل</label>
+            <div class="form-grid">
+                <div class="field"><label for="footer_logo">شعار خاص بالتذييل (PNG شفاف، يفضَّل بنسخة فاتحة)</label><input class="input" type="file" id="footer_logo" name="footer_logo" accept="image/png,image/webp,image/jpeg">
+                    <p class="hint">إذا تُرك فارغًا يُستعمل شعار الموقع الرئيسي (الإعدادات › الهوية).</p>
+                    @if ($s['footer_logo_path'])<label class="check small"><input type="checkbox" name="remove_footer_logo" value="1"> حذف شعار التذييل والعودة للشعار الرئيسي</label>@endif</div>
+                <div class="field"><label for="footer_logo_height">ارتفاع الشعار (بكسل)</label><input class="input" type="number" min="24" max="140" id="footer_logo_height" name="footer_logo_height" value="{{ old('footer_logo_height', $s['footer_logo_height'] ?? 44) }}"></div>
             </div>
         </fieldset>
         <x-admin.tr name="footer_about" label="نبذة عن الأكاديمية (العمود الأول)" :value="$s['footer_about']" type="textarea" :rows="2"/>

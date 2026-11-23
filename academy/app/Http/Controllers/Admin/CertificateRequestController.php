@@ -39,8 +39,8 @@ class CertificateRequestController extends AdminController
         return view('admin.certificate-requests.show', [
             'req' => $certificateRequest,
             'message' => $service->whatsappMessage($certificateRequest),
-            'studentWhatsapp' => $certificateRequest->user->phone ? 'https://wa.me/'.preg_replace('/\D+/', '', $certificateRequest->user->phone) : null,
-            'progress' => app(\App\Services\ProgressService::class)->progress($certificateRequest->user, $certificateRequest->course),
+            'studentWhatsapp' => $certificateRequest->user?->phone ? 'https://wa.me/'.preg_replace('/\D+/', '', $certificateRequest->user->phone) : null,
+            'progress' => $certificateRequest->user ? app(\App\Services\ProgressService::class)->progress($certificateRequest->user, $certificateRequest->course) : null,
         ]);
     }
 

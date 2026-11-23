@@ -864,3 +864,5 @@ body:has(.wa-float) .footer-bottom { padding-bottom: 84px; }
 .phead h1 { overflow-wrap: anywhere; }
 .store-hero__in > * { max-width: 100%; min-width: 0; }
 .store-hero__in .hero__actions { flex-wrap: wrap; }
+.footer-logo { display: inline-block; text-decoration: none !important; }
+.footer-logo .logo img { max-height: var(--logo-h, 44px); height: var(--logo-h, 44px); }

@@ -90,6 +90,9 @@ class Settings
                 ['type' => 'pages', 'title' => ['ar' => 'روابط مفيدة', 'fr' => 'Liens utiles', 'en' => 'Useful links'], 'links' => []],
                 ['type' => 'services', 'title' => ['ar' => 'خدمات', 'fr' => 'Services', 'en' => 'Services'], 'links' => []],
             ],
+            'footer_logo_path' => null,     // separate logo for the dark footer (falls back to the main logo)
+            'footer_logo_height' => 44,
+            'footer_show_logo' => true,
             'footer_show_contact' => true,
             'footer_show_social' => true,
             'footer_show_back_top' => true,

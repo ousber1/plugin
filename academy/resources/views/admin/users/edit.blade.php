@@ -2,6 +2,7 @@
 @section('title', $user->name)
 @section('content')
 <div class="page-head"><h1>{{ $user->name }}</h1><span class="ltr muted">{{ $user->email }}</span></div>
+@include('admin.users._credentials')
 <div class="dash-grid">
     <form class="card card--pad" method="POST" action="{{ route('admin.users.update', $user) }}">
         @csrf @method('PUT')
@@ -22,6 +23,11 @@
                 @foreach ($courses as $c)<label class="check small"><input type="checkbox" name="courses[]" value="{{ $c->id }}" @checked(in_array($c->id, $assigned))> {{ $c->tr('title') }}</label>@endforeach
             </div>
         </fieldset>
+        <fieldset class="field box"><legend class="label">تسجيل في دورات</legend>
+            @php $enrolledIds = $enrollments->pluck('course_id')->all(); @endphp
+            <div class="check-grid">@foreach ($courses as $c)@continue(in_array($c->id, $enrolledIds))<label class="check small"><input type="checkbox" name="enroll[]" value="{{ $c->id }}"> {{ $c->tr('title') }}</label>@endforeach</div>
+        </fieldset>
+        <div class="field"><label for="new_password">كلمة مرور جديدة (اختياري)</label><input class="input ltr" id="new_password" name="new_password" minlength="8" autocomplete="new-password" placeholder="اتركها فارغة للإبقاء على الحالية"></div>
         <button class="btn btn--primary" type="submit">حفظ</button>
     </form>
     <div class="card card--pad"><h2 class="card__title">الدورات المسجّل فيها</h2>

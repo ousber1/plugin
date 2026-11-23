@@ -25,6 +25,52 @@ class UserController extends AdminController
         return view('admin.users.index', compact('users', 'centers'));
     }
 
+    public function create(Request $request)
+    {
+        $role = in_array($request->query('role'), ['admin', 'instructor', 'student'], true) ? $request->query('role') : 'student';
+
+        return view('admin.users.create', [
+            'role' => $role,
+            'courses' => Course::orderBy('slug')->get(['id', 'title', 'slug']),
+            'centers' => \App\Models\Center::orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'role' => ['required', Rule::enum(Role::class)],
+            'password' => ['nullable', 'string', 'min:8', 'max:100'],
+            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
+            'headline' => ['nullable', 'string', 'max:190'],
+            'bio' => ['nullable', 'string', 'max:2000'],
+            'courses' => ['nullable', 'array'], 'courses.*' => ['integer', 'exists:courses,id'],
+            'enroll' => ['nullable', 'array'], 'enroll.*' => ['integer', 'exists:courses,id'],
+        ]);
+        $password = $data['password'] ?? \Illuminate\Support\Str::password(10, symbols: false);
+        $user = new User([
+            'name' => $data['name'], 'email' => mb_strtolower($data['email']), 'phone' => $data['phone'] ?? null,
+            'password' => $password, 'locale' => 'ar', 'headline' => $data['headline'] ?? null, 'bio' => $data['bio'] ?? null,
+        ]);
+        $user->role = $data['role'];
+        $user->center_id = $data['center_id'] ?? null;
+        $user->email_verified_at = now(); // created by an admin
+        $user->save();
+        if ($user->role === Role::Instructor) {
+            $user->assignedCourses()->sync($data['courses'] ?? []);
+        }
+        foreach ($data['enroll'] ?? [] as $courseId) {
+            \App\Models\Enrollment::firstOrCreate(['user_id' => $user->id, 'course_id' => $courseId]);
+        }
+        Audit::log('user.created', $user, ['role' => $user->role->value]);
+
+        return redirect()->route('admin.users.edit', $user)->with('success', 'تمت إضافة '.$user->role->label().' «'.$user->name.'».')
+            ->with('new_credentials', ['email' => $user->email, 'password' => $password, 'phone' => $user->phone]);
+    }
+
     public function edit(User $user)
     {
         return view('admin.users.edit', [
@@ -46,6 +92,8 @@ class UserController extends AdminController
             'courses.*' => ['integer', 'exists:courses,id'],
             'verify_email' => ['nullable', 'boolean'],
             'center_id' => ['nullable', 'integer', 'exists:centers,id'],
+            'new_password' => ['nullable', 'string', 'min:8', 'max:100'],
+            'enroll' => ['nullable', 'array'], 'enroll.*' => ['integer', 'exists:courses,id'],
         ]);
 
         if ($user->is($request->user()) && ($data['role'] !== 'admin' || ! $request->boolean('is_active'))) {
@@ -59,6 +107,15 @@ class UserController extends AdminController
         $user->headline = $data['headline'] ?? null;
         $user->bio = $data['bio'] ?? null;
         $user->center_id = $data['center_id'] ?? null;
+        if (! empty($data['new_password'])) {
+            $user->password = $data['new_password'];
+            $user->setRememberToken(\Illuminate\Support\Str::random(60));
+            Audit::log('user.password_reset', $user);
+            session()->flash('new_credentials', ['email' => $user->email, 'password' => $data['new_password'], 'phone' => $user->phone]);
+        }
+        foreach ($data['enroll'] ?? [] as $courseId) {
+            \App\Models\Enrollment::firstOrCreate(['user_id' => $user->id, 'course_id' => $courseId]);
+        }
         if ($request->boolean('verify_email') && ! $user->hasVerifiedEmail()) {
             $user->email_verified_at = now();
         }

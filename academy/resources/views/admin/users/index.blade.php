@@ -1,7 +1,11 @@
 @extends('layouts.admin')
 @section('title', 'المستخدمون')
 @section('content')
-<div class="page-head"><h1>المستخدمون</h1></div>
+<div class="page-head"><h1>المستخدمون</h1>
+    <div class="row">
+        <a class="btn btn--outline" href="{{ route('admin.users.create', ['role' => 'instructor']) }}"><x-icon name="user-plus" size="18"/> إضافة مدرّس</a>
+        <a class="btn btn--primary" href="{{ route('admin.users.create', ['role' => 'student']) }}"><x-icon name="user-plus" size="18"/> إضافة طالب</a>
+    </div></div>
 <form class="filters" method="GET">
     <div class="field" style="flex:2"><label for="q">بحث</label><input class="input" id="q" name="q" value="{{ request('q') }}" placeholder="الاسم، البريد أو الهاتف"></div>
     <div class="field"><label for="role">الدور</label><select class="select" id="role" name="role"><option value="">الكل</option>@foreach (\App\Enums\Role::cases() as $r)<option value="{{ $r->value }}" @selected(request('role') === $r->value)>{{ $r->label() }}</option>@endforeach</select></div>

@@ -50,10 +50,23 @@
         </form>
         <p class="small muted" style="margin:8px 0 0">{{ __('لا تُرسل عنوانك في الموقع؛ نؤكده معك مباشرة في المحادثة.') }}</p>
     @elseif (! $elig && ! \App\Support\Settings::get('certificate_requires_completion'))
-        {{-- Visitor: sign up first (the request is linked to an account), then come back to this course. --}}
-        <p class="small">{{ __('اطلب شهادتك الورقية لهذه الدورة عبر واتساب. أنشئ حسابًا مجانيًا أولًا ليُربط الطلب باسمك.') }}</p>
-        <a class="btn btn--whatsapp btn--block btn--lg" href="{{ route('register', ['intended' => route('courses.show', $course).'#certificate']) }}"><x-icon name="whatsapp"/> {{ $certLabel }}</a>
-        <p class="small muted" style="margin:8px 0 0">{{ __('لديك حساب؟') }} <a href="{{ route('login', ['intended' => route('courses.show', $course).'#certificate']) }}">{{ __('سجّل الدخول') }}</a></p>
+        {{-- Visitor without an account: straight to WhatsApp (a reference is created for tracking). --}}
+        <p class="small">{{ __('اطلب شهادتك الورقية لهذه الدورة مباشرة عبر واتساب، وسيؤكد معك فريقنا الاسم المطبوع وعنوان التوصيل.') }}</p>
+        <form method="POST" action="{{ route('certificates.guest', $course) }}" target="_blank">@csrf
+            @if ($centers->isNotEmpty())
+                <fieldset class="cert-delivery">
+                    <legend class="small"><strong>{{ __('طريقة استلام الشهادة') }}</strong></legend>
+                    <label class="check small"><input type="radio" name="delivery" value="shipping" checked data-delivery> {{ __('توصيل إلى عنواني') }}</label>
+                    <label class="check small"><input type="radio" name="delivery" value="pickup" data-delivery> {{ __('استلام من أحد مراكزنا') }}</label>
+                    <label class="sr-only" for="cert-center-g">{{ __('المركز') }}</label>
+                    <select class="select" id="cert-center-g" name="center_id" data-delivery-center hidden>
+                        @foreach ($centers as $c)<option value="{{ $c->id }}">{{ $c->tr('city') }} — {{ $c->tr('name') }}</option>@endforeach
+                    </select>
+                </fieldset>
+            @endif
+            <button class="btn btn--whatsapp btn--block btn--lg" type="submit"><x-icon name="whatsapp"/> {{ $certLabel }}</button>
+        </form>
+        <p class="small muted" style="margin:8px 0 0">{{ __('تريد متابعة طلبك وتقدّمك؟') }} <a href="{{ route('register', ['intended' => route('courses.show', $course).'#certificate']) }}">{{ __('أنشئ حسابًا مجانيًا') }}</a> {{ __('أو') }} <a href="{{ route('login', ['intended' => route('courses.show', $course).'#certificate']) }}">{{ __('سجّل الدخول') }}</a></p>
     @else
         <p class="small">{{ __('بعد إتمام متطلبات الدورة يمكنك طلب شهادة ورقية تُرسل إلى عنوانك.') }}</p>
         <button class="btn btn--whatsapp btn--block" type="button" disabled aria-describedby="cert-missing"><x-icon name="whatsapp"/> {{ $certLabel }}</button>

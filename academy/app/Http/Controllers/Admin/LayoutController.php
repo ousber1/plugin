@@ -32,6 +32,8 @@ class LayoutController extends AdminController
             'columns.*.title' => ['nullable', 'array'], 'columns.*.title.*' => ['nullable', 'string', 'max:60'],
             'columns.*.links' => ['nullable', 'array', 'max:12'],
             'columns.*.links.*.url' => $url, 'columns.*.links.*.label' => ['nullable', 'array'], 'columns.*.links.*.label.*' => ['nullable', 'string', 'max:60'],
+            'footer_logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:1024'],
+            'footer_logo_height' => ['nullable', 'integer', 'between:24,140'],
             'bottom_links' => ['nullable', 'array', 'max:6'],
             'bottom_links.*.url' => $url, 'bottom_links.*.label' => ['nullable', 'array'], 'bottom_links.*.label.*' => ['nullable', 'string', 'max:60'],
         ], ['regex' => 'يجب أن يبدأ الرابط بـ https:// أو / أو mailto: أو tel:']);
@@ -66,6 +68,15 @@ class LayoutController extends AdminController
             'footer_copyright' => $this->trInput($request, 'footer_copyright'),
             'footer_bottom_links' => $this->links($request->input('bottom_links', [])),
         ];
+        $values['footer_show_logo'] = $request->boolean('footer_show_logo');
+        $values['footer_logo_height'] = (int) ($request->input('footer_logo_height') ?: 44);
+        if (($request->boolean('remove_footer_logo') || $request->hasFile('footer_logo')) && Settings::get('footer_logo_path')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete(Settings::get('footer_logo_path'));
+            $values['footer_logo_path'] = null;
+        }
+        if ($request->hasFile('footer_logo')) {
+            $values['footer_logo_path'] = $request->file('footer_logo')->store('branding', 'public');
+        }
         Settings::set($values);
         Audit::log('settings.updated', null, ['group' => 'layout', 'keys' => array_keys($values)]);
 

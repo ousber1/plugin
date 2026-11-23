@@ -63,6 +63,21 @@ class CertificateRequestService
         }
     }
 
+    /** Visitor without an account: a tracked request (reference) without a user. */
+    public function guestRequest(Course $course, ?\App\Models\Center $pickup = null): CertificateRequest
+    {
+        $request = new CertificateRequest([
+            'reference' => $this->newReference(),
+            'course_id' => $course->id,
+            'status' => CertificateStatus::PendingContact,
+            'delivery_method' => $pickup ? 'pickup' : 'shipping',
+            'center_id' => $pickup?->id,
+        ]);
+        $request->save();
+
+        return $request;
+    }
+
     public function whatsappMessage(CertificateRequest $request): string
     {
         $template = (string) Settings::get('whatsapp_template');

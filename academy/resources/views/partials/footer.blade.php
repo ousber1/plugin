@@ -25,7 +25,13 @@
         @endif
         <div class="footer-grid footer-grid--{{ count($columns) + 1 }}">
             <div>
-                <x-logo :light="$style !== 'light'"/>
+                @if (Settings::get('footer_show_logo') ?? true)
+                    @if (Settings::get('footer_logo_path'))
+                        <a href="{{ route('home') }}" class="footer-logo"><img src="{{ \App\Support\Media::url(Settings::get('footer_logo_path')) }}" alt="{{ $siteName }}" style="height:{{ (int) Settings::get('footer_logo_height', 44) }}px;width:auto"></a>
+                    @else
+                        <a href="{{ route('home') }}" class="footer-logo" style="--logo-h:{{ (int) Settings::get('footer_logo_height', 44) }}px"><x-logo :light="$style !== 'light'"/></a>
+                    @endif
+                @endif
                 @if (Settings::tr('footer_about'))<p style="margin-top:14px;max-width:46ch">{{ Settings::tr('footer_about') }}</p>@endif
                 @if (Settings::get('footer_show_contact') && ! collect($columns)->contains('type', 'contact'))
                     @include('partials.footer-contact')

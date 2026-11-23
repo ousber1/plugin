@@ -24,6 +24,8 @@ class Audit
     {
         return [
             'user.role_changed' => 'تغيير دور مستخدم',
+            'user.created' => 'إضافة مستخدم',
+            'user.password_reset' => 'تغيير كلمة مرور مستخدم',
             'user.status_changed' => 'تفعيل/تعطيل حساب',
             'user.courses_assigned' => 'تعيين دورات لمدرّس',
             'course.created' => 'إنشاء دورة',

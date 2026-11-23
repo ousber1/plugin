@@ -31,9 +31,13 @@
     <div class="stack">
         <div class="card card--pad">
             <h2 class="card__title">الطالب والدورة</h2>
-            <p><strong>{{ $req->user->name }}</strong><br><span class="ltr small">{{ $req->user->email }}</span> @if ($req->user->phone)<br><span class="ltr small">{{ $req->user->phone }}</span>@endif</p>
+            @if ($req->user)
+                <p><strong>{{ $req->user->name }}</strong><br><span class="ltr small">{{ $req->user->email }}</span> @if ($req->user->phone)<br><span class="ltr small">{{ $req->user->phone }}</span>@endif</p>
+            @else
+                <p><span class="badge badge--amber">زائر بدون حساب</span><br><small class="muted">طلب الشهادة مباشرة عبر واتساب. خذ الاسم والهاتف والعنوان من المحادثة وأضفها في الملاحظات.</small></p>
+            @endif
             <p class="small" dir="auto">{{ $req->course->tr('title') }}</p>
-            <p class="small">تقدّم الطالب في الدورة: <span class="badge {{ $progress['percent'] === 100 ? 'badge--green' : 'badge--amber' }}">{{ $progress['percent'] }}% ({{ $progress['completed'] }}/{{ $progress['total'] }})</span></p>
+            @if ($progress)<p class="small">تقدّم الطالب في الدورة: <span class="badge {{ $progress['percent'] === 100 ? 'badge--green' : 'badge--amber' }}">{{ $progress['percent'] }}% ({{ $progress['completed'] }}/{{ $progress['total'] }})</span></p>@endif
             <p class="small muted">أُنشئ: {{ $req->created_at->format('Y-m-d H:i') }} @if ($req->received_at)<br>استُلم: {{ $req->received_at->format('Y-m-d H:i') }}@endif @if ($req->delivered_at)<br>سُلّم: {{ $req->delivered_at->format('Y-m-d') }}@endif</p>
             @if ($studentWhatsapp)<a class="btn btn--whatsapp btn--sm" href="{{ $studentWhatsapp }}" target="_blank" rel="noopener"><x-icon name="whatsapp" size="16"/> مراسلة الطالب</a>@endif
         </div>

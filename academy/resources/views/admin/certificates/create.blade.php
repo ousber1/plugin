@@ -9,7 +9,7 @@
         <input type="hidden" name="course_id" value="{{ $fromRequest->course_id }}">
         <div class="alert alert--info small"><x-icon name="info"/> مرتبطة بالطلب <span class="ltr">{{ $fromRequest->reference }}</span>. بيانات الشحن لا تظهر أبدًا في صفحة التحقق.</div>
     @endif
-    <div class="field"><label for="holder_name">الاسم كما طُبع على الشهادة</label><input class="input" id="holder_name" name="holder_name" value="{{ old('holder_name', $fromRequest?->printed_name ?: $fromRequest?->user->name) }}" required dir="auto"></div>
+    <div class="field"><label for="holder_name">الاسم كما طُبع على الشهادة</label><input class="input" id="holder_name" name="holder_name" value="{{ old('holder_name', $fromRequest?->printed_name ?: $fromRequest?->user?->name) }}" required dir="auto"></div>
     @unless ($fromRequest)
         <div class="field"><label for="course_id">الدورة (اختياري)</label><select class="select" id="course_id" name="course_id"><option value="">—</option>@foreach ($courses as $c)<option value="{{ $c->id }}" @selected(old('course_id') == $c->id)>{{ $c->tr('title') }}</option>@endforeach</select></div>
     @endunless
