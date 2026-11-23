@@ -65,6 +65,8 @@ Open http://127.0.0.1:8000 for the site and `/admin` for the dashboard. The demo
 
 ## Production
 
+**Easiest (cPanel, no Terminal):** upload `academy-deploy.zip`, point the domain to `academy/public`, open the site and fill the one-page installer. See [docs/CPANEL.md](docs/CPANEL.md).
+
 - [docs/INSTALL.md](docs/INSTALL.md): Apache/Nginx, extensions, writable folders, `/public` document root, cron, large uploads, S3
 - [docs/CPANEL.md](docs/CPANEL.md): shared hosting
 - [docs/VIDEO.md](docs/VIDEO.md): encoding (H.264/AAC), upload and playback details

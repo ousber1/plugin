@@ -1,105 +1,73 @@
-# Installing on cPanel shared hosting
+# Installing on cPanel (simple, no Terminal)
 
-The application runs on shared hosting that offers **PHP 8.3+**, **MySQL/MariaDB** and lets you choose the domain's document root. Node.js is not needed.
+You need: cPanel hosting with **PHP 8.3+** and MySQL, plus the file `academy-deploy.zip`.
 
-## 1. Check the host
+## Step 1 — Create a database (2 minutes)
 
-In cPanel › *Select PHP Version* (or *MultiPHP Manager*):
+cPanel › **MySQL® Databases**:
 
-- PHP **8.3** or newer
-- Extensions enabled: `pdo_mysql`, `mbstring`, `openssl`, `fileinfo`, `tokenizer`, `xml`, `ctype`, `curl`, `intl` (recommended), `gd` (recommended)
+1. **Create New Database**, e.g. `academy`. cPanel shows the full name, e.g. `cpuser_academy`.
+2. **Add New User** with a strong password. Note the full name, e.g. `cpuser_academy`.
+3. **Add User To Database**, then tick **ALL PRIVILEGES**.
 
-In *MultiPHP INI Editor* set (see `deploy/php.ini.example`):
+Write down the database name, user name and password.
 
-```
-upload_max_filesize = 32M
-post_max_size = 40M
-memory_limit = 256M
-max_execution_time = 120
-```
+## Step 2 — Choose PHP 8.3
 
-Videos are sent in chunks of 5 MB, so you can upload large videos even when the host does not allow big single uploads. If the host only allows smaller uploads, lower `VIDEO_CHUNK_MB` in `.env` (e.g. `2`).
+cPanel › **Select PHP Version** (or **MultiPHP Manager**): choose **8.3** or newer for your domain.
 
-## 2. Create the database
+## Step 3 — Upload and extract
 
-cPanel › *MySQL Databases*: create a database and a user, grant **ALL PRIVILEGES**, and note the names (cPanel prefixes them, e.g. `cpuser_academy`).
+cPanel › **File Manager**:
 
-## 3. Upload the files
+1. Open your home folder (the folder that *contains* `public_html`, not `public_html` itself).
+2. Click **Upload**, upload `academy-deploy.zip`, and go back.
+3. Right-click the zip › **Extract**, into a folder named `academy`.
 
-1. Upload `academy-deploy.zip` (it already contains `vendor/`) to your home folder, **outside** `public_html`, e.g. `/home/cpuser/academy`.
-2. Extract it with *File Manager › Extract*.
+## Step 4 — Point your domain to the `public` folder
 
-## 4. Point the domain to `/public`
-
-cPanel › *Domains* (or *Addon Domains/Subdomains*) › edit the domain › set **Document Root** to:
+cPanel › **Domains** › **Manage** next to your domain › set **Document Root** to:
 
 ```
-/home/cpuser/academy/public
+academy/public
 ```
 
-This is the recommended and secure setup: `.env`, `storage/` and source files stay outside the web root.
+Save. (If you cannot change the main domain, create a subdomain such as `learn.yourdomain.ma` and give *it* this document root.)
 
-If your host does not let you change the document root of the primary domain, use a subdomain (e.g. `learn.example.ma`) pointed at `academy/public`, or ask the host to change it. Do **not** move the whole project into `public_html`.
+## Step 5 — Open your site and fill one form
 
-## 5. Configure `.env`
+Visit your domain. The installer opens automatically:
 
-In File Manager, copy `.env.example` to `.env` and edit it:
+1. It checks the server (everything should be ✅).
+2. Enter the academy name, your WhatsApp number, the database details from Step 1, and your admin email and password.
+3. Click **تثبيت الآن (Install now)**.
 
-```
-APP_URL=https://example.ma
-APP_ENV=production
-APP_DEBUG=false
-DB_HOST=localhost
-DB_DATABASE=cpuser_academy
-DB_USERNAME=cpuser_academy
-DB_PASSWORD=...
-MAIL_HOST=mail.example.ma
-MAIL_USERNAME=no-reply@example.ma
-MAIL_PASSWORD=...
-```
+The installer creates everything, then deletes itself. Click **تسجيل الدخول** and log in.
 
-## 6. Run the installer
+**Done.** In the dashboard, open **الإعدادات (Settings)** to add your logo and contact details, then create your first course.
 
-**With Terminal access** (cPanel › *Terminal* or SSH):
+---
 
-```bash
-cd ~/academy
-```
+## Recommended extras (optional)
 
-```bash
-php artisan key:generate
-```
+**Bigger video uploads:** cPanel › **MultiPHP INI Editor** › set `upload_max_filesize = 32M` and `post_max_size = 40M`. Videos upload in 5 MB pieces, so this is usually enough even for long videos.
 
-```bash
-php artisan academy:install
-```
-
-If `php` points to an older version, use the full path given by your host, e.g. `/opt/cpanel/ea-php83/root/usr/bin/php`.
-
-**Without Terminal access:** ask your host to run the three commands above once, or use cPanel › *Cron Jobs* to schedule each command one time, removing it after it has run:
+**Cleanup job:** cPanel › **Cron Jobs** › *Once Per Day*:
 
 ```
-cd ~/academy && php artisan key:generate --force
-cd ~/academy && php artisan migrate --force && php artisan db:seed --class=Database\\Seeders\\BaseSeeder --force && php artisan storage:link
-cd ~/academy && php artisan academy:create-admin --name="Admin" --email=you@example.ma --password="Change-Me-123"
+cd ~/academy && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Change that password immediately after logging in (Profile › Change password).
+**Emails (account confirmation, password reset):** edit `academy/.env` in File Manager and fill in the `MAIL_*` lines with your email account from cPanel › **Email Accounts** › *Connect Devices*. Set `MAIL_MAILER=smtp`. Until then, you can switch off "require email confirmation before requesting a certificate" in Settings › WhatsApp & certificates.
 
-If `storage:link` is not allowed (symlinks disabled), ask the host to enable `FollowSymLinks`. Otherwise uploaded thumbnails will not display, though videos and files still work because they are served by the application.
+## Troubleshooting
 
-## 7. Cron job
+| Problem | Fix |
+|---|---|
+| A ❌ in the installer checks | Select PHP Version › enable the missing extension, or set folder permissions to 755 |
+| "Cannot connect to the database" | Use the **full** names with the cPanel prefix, and check the user was added to the database |
+| Blank page or error 500 | Make sure the document root is `academy/public` and PHP is 8.3+. Details are in `academy/storage/logs/` |
+| Course images don't appear | Ask your host to allow symbolic links (FollowSymLinks). Videos and files work anyway |
+| You want to reinstall | Delete `academy/.env` and empty the database. Re-upload `public/install.php` from the zip, then open the site again |
 
-cPanel › *Cron Jobs* › every minute:
-
-```
-cd /home/cpuser/academy && php artisan schedule:run >> /dev/null 2>&1
-```
-
-## 8. Permissions
-
-`storage/` and `bootstrap/cache/` must be writable (755 for folders is usually enough on cPanel because PHP runs as your user).
-
-## 9. Finish in the dashboard
-
-Log in at `/login`, open `/admin/settings`, and set the academy name, logo, contact details, **WhatsApp number** (international format, e.g. `212600000000`) and social links.
+Prefer the command line? See [INSTALL.md](INSTALL.md) (`php artisan academy:install`).
