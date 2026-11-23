@@ -26,5 +26,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /dist
-/storage/app/chunks
 /public/storage

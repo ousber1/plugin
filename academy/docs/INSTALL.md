@@ -74,7 +74,7 @@ php artisan academy:create-admin
 
 The web server user (e.g. `www-data`) must be able to write to:
 
-- `storage/` (including `storage/app/private` for lesson videos and `storage/app/chunks` for in-progress uploads)
+- `storage/` (including `storage/app/private` for lesson videos and `storage/app/private/chunks` for in-progress uploads)
 - `bootstrap/cache/`
 
 ```bash

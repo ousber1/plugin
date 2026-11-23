@@ -7,6 +7,7 @@ use App\Models\LessonAttachment;
 use App\Models\Quiz;
 use App\Models\Section;
 use App\Services\MediaService;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -42,7 +43,7 @@ class LessonController extends AdminController
         return view('admin.lessons.form', [
             'lesson' => $lesson, 'section' => $lesson->section, 'course' => $lesson->course,
             'maxBytes' => config('academy.video.max_mb') * 1048576,
-            'chunkBytes' => config('academy.video.chunk_mb') * 1048576,
+            'chunkBytes' => Uploads::chunkBytes(),
         ]);
     }
 

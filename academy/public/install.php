@@ -62,6 +62,8 @@ if (empty($_SESSION['install_token'])) {
 
 $scheme = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https' : 'http';
 $path = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+// Installed from the hosting root (root .htaccess): the public URL has no /public.
+$path = preg_replace('#/public$#', '', $path);
 $guessUrl = $scheme.'://'.($_SERVER['HTTP_HOST'] ?? 'localhost').$path;
 
 $old = $_POST + [

@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# Lets the site run from the hosting root (e.g. public_html) without changing
+# the domain's Document Root: every request is served from the public/ folder.
+# Private files (.env, app code, storage, vendor) are never reachable.
+# ---------------------------------------------------------------------------
+Options -Indexes
+DirectoryIndex index.php
+
+# Never serve configuration or dot files from the project root.
+<FilesMatch "^(\.env.*|\.git.*|composer\.(json|lock)|artisan|phpunit\.xml|README\.md|.*\.sqlite)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block dot paths anywhere (.env, .git ...), except Let's Encrypt checks.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Serve everything from public/ (assets directly, the rest via index.php).
+    RewriteRule ^$ public/ [L]
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Without mod_rewrite the app cannot run safely from here: deny everything.
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>

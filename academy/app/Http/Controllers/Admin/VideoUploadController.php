@@ -6,6 +6,7 @@ use App\Models\Lesson;
 use App\Models\VideoUpload;
 use App\Services\MediaService;
 use App\Services\Mp4Inspector;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
 
 /**
@@ -37,7 +38,7 @@ class VideoUploadController extends AdminController
             $upload->save();
         }
         if (! $upload) {
-            if (! is_dir(storage_path('app/chunks')) && ! @mkdir(storage_path('app/chunks'), 0775, true)) {
+            if (! is_dir(storage_path('app/private/chunks')) && ! @mkdir(storage_path('app/private/chunks'), 0775, true)) {
                 return response()->json(['message' => 'مجلد التخزين المؤقت غير قابل للكتابة على الخادم.'], 500);
             }
             $upload = VideoUpload::create([
@@ -69,7 +70,7 @@ class VideoUploadController extends AdminController
             return response()->json(['message' => 'offset_mismatch', 'received' => $current], 409);
         }
         $chunk = $request->file('chunk');
-        if ($chunk->getSize() > config('academy.video.chunk_mb') * 1048576 + 1024 || $current + $chunk->getSize() > $upload->total_size) {
+        if ($chunk->getSize() > Uploads::chunkBytes() + 1024 || $current + $chunk->getSize() > $upload->total_size) {
             return response()->json(['message' => 'حجم الجزء غير صالح.'], 422);
         }
         if ($current === 0 && ! $this->looksLikeMp4($chunk->getRealPath())) {

@@ -18,6 +18,6 @@ class VideoUpload extends Model
 
     public function tempPath(): string
     {
-        return storage_path('app/chunks/'.$this->id.'.part');
+        return storage_path('app/private/chunks/'.$this->id.'.part');
     }
 }
