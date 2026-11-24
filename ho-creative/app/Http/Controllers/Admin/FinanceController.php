@@ -33,8 +33,8 @@ class FinanceController extends Controller
     public function creditNote(Request $request, Document $document, DocumentService $docs)
     {
         $this->authorize('payments.refund');
-        $v = $request->validate(['amount' => 'required|numeric|min:0.01', 'reason' => 'required|string|max:500']);
-        $cn = $docs->creditNote($document, (string) $v['amount'], $v['reason']);
+        $v = $request->validate(['amount' => 'required|numeric|min:0.01', 'reason' => 'required|string|max:500', 'tax_rate' => 'nullable|numeric|min:0|max:100']);
+        $cn = $docs->creditNote($document, (string) $v['amount'], $v['reason'], isset($v['tax_rate']) ? (string) $v['tax_rate'] : null);
 
         return back()->with('ok', 'Avoir '.$cn->number.' émis. Enregistrez le remboursement éventuel dans les paiements de la commande.');
     }

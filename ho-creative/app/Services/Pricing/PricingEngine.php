@@ -93,8 +93,8 @@ class PricingEngine
                     $w = $w->dividedBy($roundTo, 0, RoundingMode::Ceiling)->multipliedBy($roundTo);
                     $h = $h->dividedBy($roundTo, 0, RoundingMode::Ceiling)->multipliedBy($roundTo);
                 }
-                $bad = $w->isLessThan($dimDef['min_w'] ?? 1) || $w->isGreaterThan($dimDef['max_w'] ?? 100000)
-                    || $h->isLessThan($dimDef['min_h'] ?? 1) || $h->isGreaterThan($dimDef['max_h'] ?? 100000);
+                $bad = $w->isLessThan(Money::of($dimDef['min_w'] ?? 1)) || $w->isGreaterThan(Money::of($dimDef['max_w'] ?? 100000))
+                    || $h->isLessThan(Money::of($dimDef['min_h'] ?? 1)) || $h->isGreaterThan(Money::of($dimDef['max_h'] ?? 100000));
                 if ($bad) {
                     $r->errors[] = __('Dimensions hors limites : largeur :minw–:maxw mm, hauteur :minh–:maxh mm.', [
                         'minw' => $dimDef['min_w'] ?? 1, 'maxw' => $dimDef['max_w'] ?? 100000,
@@ -214,7 +214,7 @@ class PricingEngine
             $rates = $this->mostSpecific($def['area']['rates'] ?? [], $resolved);
             $rate = null;
             foreach (collect($rates)->sortBy(fn ($b) => (float) ($b['min_m2'] ?? 0)) as $band) {
-                if ($total->isGreaterThanOrEqualTo($band['min_m2'] ?? 0)) {
+                if ($total->isGreaterThanOrEqualTo(Money::of($band['min_m2'] ?? 0))) {
                     $rate = $band;
                 }
             }
@@ -222,7 +222,7 @@ class PricingEngine
             if (! $rate) {
                 return PriceResult::invalid([__('Aucun tarif au m² ne correspond à cette configuration.')]);
             }
-            $base = $total->multipliedBy($rate['rate']);
+            $base = $total->multipliedBy(Money::of($rate['rate']));
             $r->addComponent('base', __('Impression :area m² × :rate/m²', ['area' => (string) $total->toScale(2, RoundingMode::HalfUp), 'rate' => Money::format($rate['rate'], $locale)]), $base);
         } else {
             $tiers = collect($this->mostSpecific($def['tiers'] ?? [], $resolved))->sortBy('qty')->values();

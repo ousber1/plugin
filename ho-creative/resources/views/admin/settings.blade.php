@@ -14,6 +14,7 @@
         @case('color')<label>{{ $f[1] }}</label><input type="color" name="{{ $name }}" value="{{ $val }}">@break
         @case('select')<label>{{ $f[1] }}</label><select name="{{ $name }}">@foreach($f[2] as $k => $l)<option value="{{ $k }}" @selected($val === $k)>{{ $l }}</option>@endforeach</select>@break
         @case('image')<label>{{ $f[1] }}</label>@if($val)<img src="{{ $val }}" alt="" style="max-height:50px"><label class="check small"><input type="checkbox" name="{{ $name }}_remove" value="1"> retirer</label>@endif<input type="file" name="{{ $name }}" accept="image/*">@break
+        @case('list')<label>{{ $f[1] }}</label><input name="{{ $name }}" value="{{ implode(', ', (array) $val) }}">@break
         @case('days')<label>{{ $f[1] }}</label><div class="flex">@foreach([1 => 'Lun', 2 => 'Mar', 3 => 'Mer', 4 => 'Jeu', 5 => 'Ven', 6 => 'Sam', 7 => 'Dim'] as $n => $l)<label class="check"><input type="checkbox" name="{{ $name }}[]" value="{{ $n }}" @checked(in_array($n, (array) $val))> {{ $l }}</label>@endforeach</div>@break
         @default<label>{{ $f[1] }}</label><input name="{{ $name }}" value="{{ is_array($val) ? '' : $val }}" @if($f[0] === 'number') type="number" step="any" @endif>
       @endswitch

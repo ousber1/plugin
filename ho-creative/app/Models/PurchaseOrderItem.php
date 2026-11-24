@@ -36,4 +36,9 @@ class PurchaseOrderItem extends Model
     {
         return $this->belongsTo(ProductionJob::class, 'production_job_id');
     }
+
+    public function retailProduct()
+    {
+        return $this->belongsTo(RetailProduct::class);
+    }
 }

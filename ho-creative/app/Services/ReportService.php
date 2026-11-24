@@ -24,6 +24,8 @@ class ReportService
         'sales_product' => 'Ventes par produit', 'sales_channel' => 'Ventes par canal', 'sales_customer' => 'Ventes par client',
         'margins' => 'Marges par travail', 'receivables' => 'Créances clients', 'expenses' => 'Dépenses', 'turnaround' => 'Délais de production',
         'stock_consumption' => 'Consommation de matières', 'waste' => 'Gâche',
+        'retail_daily' => 'Magasin – ventes par jour', 'retail_products' => 'Magasin – ventes par article', 'retail_payments' => 'Magasin – encaissements',
+        'retail_stock' => 'Magasin – valorisation du stock', 'supplier_balances' => 'Fournisseurs – soldes',
     ];
 
     public function period(?string $from, ?string $to): array
@@ -79,6 +81,11 @@ class ReportService
             'turnaround' => $this->turnaround($f, $t),
             'stock_consumption' => $this->stock($f, $t, ['consumption']),
             'waste' => $this->stock($f, $t, ['waste']),
+            'retail_daily' => $this->retailDaily($f, $t),
+            'retail_products' => $this->retailProducts($f, $t),
+            'retail_payments' => $this->retailPayments($f, $t),
+            'retail_stock' => $this->retailStock(),
+            'supplier_balances' => $this->supplierBalances(),
             default => abort(404),
         };
     }
@@ -173,5 +180,103 @@ class ReportService
 
         return ['columns' => ['Réf.', 'Matière', 'Unité', 'Quantité', 'Valeur (coût moyen)'], 'rows' => $rows,
             'definition' => in_array('waste', $types) ? 'Quantités déclarées en gâche sur les travaux, valorisées au coût unitaire au moment du mouvement.' : 'Quantités consommées sur les travaux (hors gâche), valorisées au coût unitaire au moment du mouvement.'];
+    }
+
+    /* ------------------------------------------------------------- store (point of sale) */
+
+    public function retailKpis($f, $t): array
+    {
+        $sales = \App\Models\RetailSale::whereBetween('created_at', [$f, $t])->get(['total_ttc', 'subtotal_ht', 'refunded_total', 'cost_total', 'tax_total']);
+        $today = \App\Models\RetailSale::whereDate('created_at', today())->get(['total_ttc', 'refunded_total']);
+        $ht = Money::sum($sales->pluck('subtotal_ht'));
+        $refundHt = Money::sum($sales->map(fn ($s) => (float) $s->total_ttc > 0 ? Money::of($s->refunded_total)->multipliedBy($s->subtotal_ht)->dividedBy($s->total_ttc, 2, \Brick\Math\RoundingMode::HalfUp) : 0));
+
+        return [
+            'count' => $sales->count(),
+            'net_ttc' => Money::str(Money::sum($sales->pluck('total_ttc'))->minus(Money::sum($sales->pluck('refunded_total')))),
+            'margin' => Money::str($ht->minus($refundHt)->minus(Money::sum($sales->pluck('cost_total')))),
+            'today_ttc' => Money::str(Money::sum($today->pluck('total_ttc'))->minus(Money::sum($today->pluck('refunded_total')))),
+            'today_count' => $today->count(),
+            'low_stock' => \App\Models\RetailProduct::where('is_active', true)->where('track_stock', true)->whereColumn('stock_qty', '<=', 'low_stock_threshold')->count(),
+            'open_sessions' => \App\Models\CashSession::where('status', 'open')->count(),
+        ];
+    }
+
+    /** Last 14 days of store sales (TTC, net of refunds) for the dashboard chart. */
+    public function retailSeries(int $days = 14): array
+    {
+        $rows = \App\Models\RetailSale::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())->get(['created_at', 'total_ttc', 'refunded_total'])
+            ->groupBy(fn ($s) => $s->created_at->toDateString());
+        $out = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $d = now()->subDays($i)->toDateString();
+            $out[$d] = (float) Money::str(Money::sum(($rows[$d] ?? collect())->pluck('total_ttc'))->minus(Money::sum(($rows[$d] ?? collect())->pluck('refunded_total'))));
+        }
+
+        return $out;
+    }
+
+    protected function retailDaily($f, $t): array
+    {
+        $rows = [];
+        foreach (\App\Models\RetailSale::whereBetween('created_at', [$f, $t])->orderBy('created_at')->get()->groupBy(fn ($s) => $s->created_at->toDateString()) as $day => $ss) {
+            $rows[] = [d($day), $ss->count(), Money::str(Money::sum($ss->pluck('subtotal_ht'))), Money::str(Money::sum($ss->pluck('tax_total'))), Money::str(Money::sum($ss->pluck('total_ttc'))),
+                Money::str(Money::sum($ss->pluck('refunded_total'))), Money::str(Money::sum($ss->pluck('discount_total'))), Money::str(Money::sum($ss->pluck('subtotal_ht'))->minus(Money::sum($ss->pluck('cost_total'))))];
+        }
+
+        return ['columns' => ['Jour', 'Tickets', 'Total HT', 'TVA', 'Total TTC', 'Remboursé TTC', 'Remises TTC', 'Marge brute HT*'], 'rows' => $rows,
+            'definition' => 'Tickets de caisse de la période (date de vente). Marge brute HT = total HT − coût d\'achat moyen pondéré des articles au moment de la vente. *Avant retours : les retours apparaissent dans la colonne « Remboursé ».'];
+    }
+
+    protected function retailProducts($f, $t): array
+    {
+        $rows = [];
+        $items = \App\Models\RetailSaleItem::whereHas('sale', fn ($q) => $q->whereBetween('created_at', [$f, $t]))->get();
+        foreach ($items->groupBy('sku') as $sku => $is) {
+            $qty = Money::sum($is->map(fn ($i) => Money::of($i->quantity)->minus($i->returned_qty)));
+            $ht = Money::sum($is->map(fn ($i) => Money::of($i->total_ht)->multipliedBy(Money::of($i->quantity)->minus($i->returned_qty))->dividedBy($i->quantity, 2, \Brick\Math\RoundingMode::HalfUp)));
+            $cost = Money::sum($is->map(fn ($i) => Money::of($i->unit_cost)->multipliedBy(Money::of($i->quantity)->minus($i->returned_qty))));
+            $rows[] = [$sku, $is->first()->name, Money::str($qty, 3), Money::str($ht), Money::str($cost), Money::str($ht->minus($cost)), $ht->isPositive() ? Money::str($ht->minus($cost)->multipliedBy(100)->dividedBy($ht, 1, \Brick\Math\RoundingMode::HalfUp), 1).' %' : '—'];
+        }
+        usort($rows, fn ($a, $b) => (float) $b[3] <=> (float) $a[3]);
+
+        return ['columns' => ['Réf.', 'Article', 'Qté nette', 'CA HT net', 'Coût', 'Marge', 'Taux'], 'rows' => $rows,
+            'definition' => 'Quantités vendues moins retournées ; CA HT au prorata des retours ; coût = coût moyen pondéré enregistré sur chaque ligne au moment de la vente.'];
+    }
+
+    protected function retailPayments($f, $t): array
+    {
+        $rows = [];
+        foreach (\App\Models\RetailSalePayment::whereBetween('created_at', [$f, $t])->get()->groupBy('method') as $m => $ps) {
+            $in = Money::sum($ps->where('type', 'payment')->pluck('amount'));
+            $out = Money::sum($ps->where('type', 'refund')->pluck('amount'));
+            $rows[] = [__('payment.'.$m), $ps->where('type', 'payment')->count(), Money::str($in), Money::str($out), Money::str($in->minus($out))];
+        }
+
+        return ['columns' => ['Moyen', 'Encaissements', 'Encaissé', 'Remboursé', 'Net'], 'rows' => $rows,
+            'definition' => 'Paiements nets enregistrés en caisse (monnaie rendue déjà déduite des espèces) et remboursements de la période.'];
+    }
+
+    protected function retailStock(): array
+    {
+        $rows = [];
+        foreach (\App\Models\RetailProduct::with('category')->where('track_stock', true)->orderBy('name')->get() as $p) {
+            $rows[] = [$p->sku, $p->name, $p->category?->name, (float) $p->stock_qty, Money::str($p->cost_price, 4), Money::str(Money::max($p->stock_qty, 0)->multipliedBy($p->cost_price)), $p->price_ttc, $p->isLow() ? 'Stock bas' : ''];
+        }
+
+        return ['columns' => ['Réf.', 'Article', 'Rayon', 'Stock', 'Coût moyen HT', 'Valeur HT', 'Prix TTC', 'Alerte'], 'rows' => $rows,
+            'definition' => 'Valorisation à l\'instant présent : stock positif × coût moyen pondéré d\'achat (HT). Indépendant de la période.'];
+    }
+
+    protected function supplierBalances(): array
+    {
+        $rows = [];
+        foreach (\App\Models\Supplier::orderBy('name')->get() as $s) {
+            $b = $s->balance();
+            $rows[] = [$s->name, $s->phone, $b['received'], $b['paid'], $b['due']];
+        }
+
+        return ['columns' => ['Fournisseur', 'Téléphone', 'Marchandises reçues HT', 'Réglé', 'Reste à payer'], 'rows' => $rows,
+            'definition' => 'Valeur des quantités réellement reçues sur les bons de commande non annulés (quantité reçue × coût unitaire) moins les règlements fournisseurs enregistrés.'];
     }
 }

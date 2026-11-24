@@ -70,7 +70,7 @@
     @if((float) ($t['discount'] ?? 0) > 0)<tr><td>{{ __('Remise') }}</td><td class="num">−{{ $m($t['discount']) }}</td></tr>@endif
     @if((float) ($t['shipping'] ?? 0) > 0)<tr><td>{{ __('Livraison') }}</td><td class="num">{{ $m($t['shipping']) }}</td></tr>@endif
     <tr><td>{{ __('Total HT') }}</td><td class="num">{{ $m($t['ht'] ?? $t['subtotal'] ?? 0) }}</td></tr>
-    <tr><td>{{ __('TVA') }} {{ rtrim(rtrim((string) ($t['tax_rate'] ?? '0'), '0'), '.') }} %</td><td class="num">{{ $m($t['tax'] ?? 0) }}</td></tr>
+    <tr><td>{{ __('TVA') }} @if(($t['tax_rate'] ?? '') !== ''){{ rtrim(rtrim((string) $t['tax_rate'], '0'), '.') }} %@endif</td><td class="num">{{ $m($t['tax'] ?? 0) }}</td></tr>
   @endif
   <tr class="grand"><td>{{ empty($s['no_tax']) ? __('Total TTC') : __('Montant') }}</td><td class="num">{{ $m($t['total'] ?? 0) }}</td></tr>
   @isset($t['paid'])<tr><td>{{ __('Déjà payé') }}</td><td class="num">{{ $m($t['paid']) }}</td></tr><tr><td><strong>{{ __('Reste à payer') }}</strong></td><td class="num"><strong>{{ $m($t['balance']) }}</strong></td></tr>@endisset

@@ -140,7 +140,7 @@ class DocumentService
     }
 
     /** Credit note against an issued invoice: full reversal or a partial TTC amount. */
-    public function creditNote(Document $invoice, string $amountTtc, string $reason): Document
+    public function creditNote(Document $invoice, string $amountTtc, string $reason, ?string $taxRate = null): Document
     {
         if ($invoice->type !== 'invoice') {
             throw ValidationException::withMessages(['document' => 'Un avoir doit se rapporter à une facture.']);
@@ -151,16 +151,44 @@ class DocumentService
         if (! $amt->isPositive() || $amt->isGreaterThan($remaining)) {
             throw ValidationException::withMessages(['amount' => 'Montant d\'avoir invalide (maximum '.Money::format($remaining).').']);
         }
-        $rate = Money::of($invoice->snapshot['totals']['tax_rate'] ?? 0);
-        $ht = $amt->multipliedBy(100)->dividedBy($rate->plus(100), 2, RoundingMode::HalfUp);
+        // VAT split: explicit rate (returned item's rate), else the invoice's single rate,
+        // else proportional to the original invoice (mixed rates, no rate given).
+        $rate = $taxRate !== null && $taxRate !== '' ? (string) $taxRate : (string) ($invoice->snapshot['totals']['tax_rate'] ?? '');
+        if ($rate !== '') {
+            $ht = $amt->multipliedBy(100)->dividedBy(Money::of($rate)->plus(100), 2, RoundingMode::HalfUp);
+        } else {
+            $ht = Money::of($invoice->total)->isPositive() ? $amt->multipliedBy($invoice->subtotal)->dividedBy($invoice->total, 2, RoundingMode::HalfUp) : $amt;
+        }
         $tax = $amt->minus($ht);
 
-        return $this->issue('credit_note', null, ['customer_id' => $invoice->customer_id, 'order_id' => $invoice->order_id, 'related_document_id' => $invoice->id, 'reason' => $reason, 'locale' => $invoice->locale], [
+        return $this->issue('credit_note', null, ['customer_id' => $invoice->customer_id, 'order_id' => $invoice->order_id, 'retail_sale_id' => $invoice->retail_sale_id, 'related_document_id' => $invoice->id, 'reason' => $reason, 'locale' => $invoice->locale], [
             'company' => $this->company(), 'customer' => $invoice->snapshot['customer'] ?? [],
             'reference' => 'Facture '.$invoice->number,
             'lines' => [['description' => 'Avoir sur facture '.$invoice->number, 'details' => $reason, 'qty' => 1, 'unit_price' => Money::str($ht, 4), 'total' => Money::str($ht)]],
-            'totals' => ['subtotal' => Money::str($ht), 'discount' => '0.00', 'shipping' => '0.00', 'tax_rate' => (string) $rate, 'tax' => Money::str($tax), 'ht' => Money::str($ht), 'total' => Money::str($amt)],
+            'totals' => ['subtotal' => Money::str($ht), 'discount' => '0.00', 'shipping' => '0.00', 'tax_rate' => $rate, 'tax' => Money::str($tax), 'ht' => Money::str($ht), 'total' => Money::str($amt)],
             'payment_terms' => null, 'notes' => $reason,
+        ]);
+    }
+
+    /** A4 invoice for a store sale (one per sale). Lines shown HT, VAT grouped. */
+    public function retailInvoice(\App\Models\RetailSale $sale, ?\App\Models\Customer $customer = null): Document
+    {
+        $sale->loadMissing('items', 'customer');
+        $customer ??= $sale->customer;
+        $rates = $sale->items->pluck('tax_rate')->map(fn ($r) => (string) $r)->unique()->values();
+        $lines = $sale->items->map(fn ($i) => [
+            'description' => $i->name, 'details' => $i->sku.((float) $i->discount > 0 ? ' · remise '.Money::format($i->discount).' TTC' : '').' · TVA '.rtrim(rtrim((string) $i->tax_rate, '0'), '.').' %',
+            'qty' => rtrim(rtrim((string) $i->quantity, '0'), '.'), 'unit_price' => Money::str(Money::of($i->total_ht)->dividedBy($i->quantity, 4, RoundingMode::HalfUp), 4), 'total' => $i->total_ht,
+        ])->all();
+
+        return $this->issue('invoice', 'invoice:retail:'.$sale->id, ['customer_id' => $customer?->id, 'retail_sale_id' => $sale->id, 'locale' => 'fr'], [
+            'company' => $this->company(),
+            'customer' => $customer ? $this->customerBlock($customer) : ['name' => 'Client comptoir'],
+            'reference' => 'Ticket '.$sale->number.' du '.$sale->created_at->format('d/m/Y'),
+            'lines' => $lines,
+            'totals' => ['subtotal' => $sale->subtotal_ht, 'discount' => '0.00', 'shipping' => '0.00', 'tax_rate' => $rates->count() === 1 ? $rates[0] : '',
+                'tax' => $sale->tax_total, 'ht' => $sale->subtotal_ht, 'total' => $sale->total_ttc, 'paid' => $sale->amount_paid, 'balance' => '0.00'],
+            'payment_terms' => __('Facture acquittée'), 'notes' => $sale->discount_reason ? 'Remise : '.$sale->discount_reason : null,
         ]);
     }
 

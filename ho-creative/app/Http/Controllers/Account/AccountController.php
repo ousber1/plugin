@@ -63,8 +63,10 @@ class AccountController extends Controller
 
     public function invoices(Request $request)
     {
+        $cid = $request->user()->customer_id;
         $docs = Document::whereIn('type', ['invoice', 'credit_note', 'receipt', 'proforma'])
-            ->whereIn('order_id', $this->orders($request)->pluck('id'))->latest('issued_at')->paginate(30);
+            ->where(fn ($q) => $q->whereIn('order_id', $this->orders($request)->pluck('id'))->when($cid, fn ($w) => $w->orWhere(fn ($x) => $x->whereNotNull('retail_sale_id')->where('customer_id', $cid))))
+            ->latest('issued_at')->paginate(30);
 
         return view('account.invoices', compact('docs'));
     }

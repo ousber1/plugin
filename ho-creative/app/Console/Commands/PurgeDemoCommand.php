@@ -35,6 +35,21 @@ class PurgeDemoCommand extends Command
             Models\Material::whereIn('id', $mats)->delete();
             Models\Customer::where('is_demo', true)->whereDoesntHave('orders')->whereDoesntHave('quotes')->each(fn ($c) => $c->delete());
             Models\User::where('email', 'like', '%@demo.hocreative.test')->delete();
+            // store
+            $sales = Models\RetailSale::where('is_demo', true)->pluck('id');
+            Models\Document::whereIn('retail_sale_id', $sales)->delete();
+            Models\RetailStockMovement::whereIn('retail_sale_id', $sales)->delete();
+            $sessions = Models\RetailSale::whereIn('id', $sales)->pluck('cash_session_id')->filter()->unique();
+            Models\RetailSale::whereIn('id', $sales)->delete();
+            Models\CashSession::whereIn('id', $sessions)->whereDoesntHave('sales')->each(fn ($s) => $s->delete());
+            $rp = Models\RetailProduct::where('is_demo', true)->pluck('id');
+            Models\RetailStockMovement::whereIn('retail_product_id', $rp)->delete();
+            Models\PurchaseOrderItem::whereIn('retail_product_id', $rp)->update(['retail_product_id' => null]);
+            Models\RetailSaleItem::whereIn('retail_product_id', $rp)->update(['retail_product_id' => null]);
+            Models\RetailProduct::whereIn('id', $rp)->delete();
+            Models\RetailCategory::whereDoesntHave('products')->delete();
+            Models\SupplierPayment::where('idempotency_key', 'like', 'demo-%')->delete();
+            Models\Supplier::where('is_demo', true)->whereDoesntHave('purchaseOrders')->whereDoesntHave('materials')->whereDoesntHave('retailProducts')->each(fn ($s) => $s->delete());
         });
         $this->info('Données de démonstration transactionnelles supprimées. Les produits/modèles d\'exemple (is_demo) restent : dépubliez-les ou supprimez-les depuis le back-office.');
 

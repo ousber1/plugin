@@ -28,20 +28,22 @@ class PurchaseController extends Controller
         $this->authorize('purchasing.manage');
 
         return view('admin.po.create', ['suppliers' => Supplier::orderBy('name')->get(), 'materials' => Material::where('is_active', true)->orderBy('name')->get(),
-            'jobs' => ProductionJob::whereNotIn('stage', ['delivered', 'cancelled'])->latest()->limit(100)->get()]);
+            'jobs' => ProductionJob::whereNotIn('stage', ['delivered', 'cancelled'])->latest()->limit(100)->get(),
+            'retailProducts' => \App\Models\RetailProduct::where('is_active', true)->orderBy('name')->get(), 'supplierId' => request('supplier')]);
     }
 
     public function store(Request $request, NumberGenerator $numbers, PurchaseService $purchases)
     {
         $this->authorize('purchasing.manage');
         $v = $request->validate(['supplier_id' => 'required|exists:suppliers,id', 'expected_at' => 'nullable|date', 'notes' => 'nullable|string|max:2000',
-            'items' => 'required|array|min:1', 'items.*.material_id' => 'nullable|exists:materials,id', 'items.*.production_job_id' => 'nullable|exists:production_jobs,id',
+            'supplier_reference' => 'nullable|string|max:120',
+            'items' => 'required|array|min:1', 'items.*.material_id' => 'nullable|exists:materials,id', 'items.*.retail_product_id' => 'nullable|exists:retail_products,id', 'items.*.production_job_id' => 'nullable|exists:production_jobs,id',
             'items.*.description' => 'nullable|string|max:190', 'items.*.quantity' => 'required|numeric|min:0.001', 'items.*.unit_cost' => 'required|numeric|min:0']);
         $po = DB::transaction(function () use ($v, $numbers, $purchases) {
-            $po = PurchaseOrder::create(['number' => $numbers->next('purchase_order'), 'supplier_id' => $v['supplier_id'], 'expected_at' => $v['expected_at'] ?? null, 'notes' => $v['notes'] ?? null, 'created_by' => auth()->id()]);
+            $po = PurchaseOrder::create(['number' => $numbers->next('purchase_order'), 'supplier_id' => $v['supplier_id'], 'supplier_reference' => $v['supplier_reference'] ?? null, 'expected_at' => $v['expected_at'] ?? null, 'notes' => $v['notes'] ?? null, 'created_by' => auth()->id()]);
             foreach ($v['items'] as $it) {
-                $desc = $it['description'] ?: (! empty($it['material_id']) ? Material::find($it['material_id'])->name : 'Sous-traitance');
-                $po->items()->create(['material_id' => $it['material_id'] ?? null, 'production_job_id' => $it['production_job_id'] ?? null, 'description' => $desc, 'quantity' => $it['quantity'], 'unit_cost' => $it['unit_cost']]);
+                $desc = ($it['description'] ?? null) ?: (! empty($it['retail_product_id']) ? \App\Models\RetailProduct::find($it['retail_product_id'])->name : (! empty($it['material_id']) ? Material::find($it['material_id'])->name : 'Sous-traitance'));
+                $po->items()->create(['material_id' => $it['material_id'] ?? null, 'retail_product_id' => $it['retail_product_id'] ?? null, 'production_job_id' => $it['production_job_id'] ?? null, 'description' => $desc, 'quantity' => $it['quantity'], 'unit_cost' => $it['unit_cost']]);
             }
             $purchases->recalc($po);
             AuditLogger::log('purchase.created', $po, null, ['total' => $po->fresh()->total]);

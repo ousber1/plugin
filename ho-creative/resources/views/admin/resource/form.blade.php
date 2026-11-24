@@ -38,6 +38,9 @@
           <label for="f-{{ $name }}">{{ $label }}</label>@if($model->{$name})<img src="{{ $model->{$name} }}" alt="" style="max-height:80px;margin-bottom:6px">@endif
           <input type="hidden" name="{{ $name }}_current" value="{{ $model->{$name} }}"><input id="f-{{ $name }}" type="file" name="{{ $name }}_file" accept="image/*">
           @break
+        @case('color')
+          <label for="f-{{ $name }}">{{ $label }}</label><input id="f-{{ $name }}" type="color" name="{{ $name }}" value="{{ $val ?: '#1B1F3B' }}">
+          @break
         @case('date')
           <label for="f-{{ $name }}">{{ $label }}</label><input id="f-{{ $name }}" type="date" name="{{ $name }}" value="{{ $val instanceof \Carbon\CarbonInterface ? $val->format('Y-m-d') : $val }}">
           @break

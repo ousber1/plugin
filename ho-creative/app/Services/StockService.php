@@ -45,7 +45,7 @@ class StockService
                     if ($type === 'receipt' && $q->isPositive()) {
                         // weighted average unit cost
                         $oldValue = Money::max($m->stock_qty, 0)->multipliedBy($m->unit_cost);
-                        $inValue = $q->multipliedBy($extra['unit_cost'] ?? $m->unit_cost);
+                        $inValue = $q->multipliedBy(Money::of($extra['unit_cost'] ?? $m->unit_cost));
                         if ($newStock->isPositive()) {
                             $m->unit_cost = (string) $oldValue->plus($inValue)->dividedBy($newStock, 4, RoundingMode::HalfUp);
                         }

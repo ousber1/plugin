@@ -112,8 +112,14 @@ class ResourceRegistry
                 'display' => ['available' => fn ($m) => $m->available().($m->isLow() ? ' ⚠' : '')],
                 'note' => 'Le stock se modifie uniquement par mouvements (réception, consommation, ajustement) depuis la fiche matière.',
             ],
+            'retail_categories' => [
+                'model' => Models\RetailCategory::class, 'label' => 'Rayons du magasin', 'perm' => 'retail.manage', 'order' => ['sort', 'asc'],
+                'columns' => ['name' => 'Rayon', 'color' => 'Couleur', 'sort' => 'Ordre', 'is_active' => 'Actif'],
+                'fields' => ['name' => ['text', 'Nom', 'required|max:120'], 'color' => ['color', 'Couleur (boutons de caisse)', 'required|regex:/^#[0-9a-fA-F]{6}$/'], 'sort' => ['number', 'Ordre', 'integer|min:0'], 'is_active' => ['checkbox', 'Actif']],
+                'display' => ['is_active' => fn ($m) => $yesno($m->is_active)],
+            ],
             'suppliers' => [
-                'model' => Models\Supplier::class, 'label' => 'Fournisseurs', 'perm' => 'suppliers.manage',
+                'model' => Models\Supplier::class, 'label' => 'Fournisseurs', 'perm' => 'suppliers.manage', 'show' => 'admin.suppliers.show',
                 'columns' => ['name' => 'Nom', 'contact_name' => 'Contact', 'phone' => 'Téléphone', 'city' => 'Ville'],
                 'fields' => [
                     'name' => ['text', 'Nom', 'required|max:190'], 'contact_name' => ['text', 'Contact', 'nullable|max:120'], 'email' => ['text', 'E-mail', 'nullable|email'],

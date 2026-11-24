@@ -52,6 +52,7 @@ class FileController extends Controller
     {
         $u = $request->user();
         $ok = match (true) {
+            $document->retail_sale_id !== null => Access::staffCan($u, ['retail.sell', 'retail.view', 'finance.view']) || ($u && ! $u->is_staff && $u->customer_id && $document->customer_id === $u->customer_id),
             $document->order_id !== null => Access::canViewOrder($u, $document->order) && ($u?->is_staff ? Access::staffCan($u, ['finance.view', 'orders.manage', 'documents.issue', 'delivery.manage']) : true),
             $document->quote_id !== null => Access::canViewQuote($u, $document->quote),
             default => Access::staffCan($u, ['purchasing.manage', 'finance.view']),

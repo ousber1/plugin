@@ -35,4 +35,15 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function supplierPayments()
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
+
+    /** Value of goods actually received (HT). */
+    public function receivedValue(): string
+    {
+        return \App\Support\Money::str(\App\Support\Money::sum($this->items->map(fn ($i) => \App\Support\Money::of($i->quantity_received)->multipliedBy($i->unit_cost))));
+    }
 }

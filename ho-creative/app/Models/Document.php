@@ -56,4 +56,9 @@ class Document extends Model
 
 
     public const TYPES = ['quote', 'proforma', 'invoice', 'credit_note', 'purchase_order', 'delivery_note', 'receipt'];
+
+    public function retailSale()
+    {
+        return $this->belongsTo(RetailSale::class);
+    }
 }

@@ -89,8 +89,71 @@ class DemoSeeder extends Seeder
         foreach ([['cartes-de-visite-standard', 5, 'Qualité impeccable', 'Papier épais et couleurs fidèles, livrées en 3 jours.'], ['bache-pvc-sur-mesure', 4, 'Très bonne bâche', 'Œillets solides, rendu net à distance.'], ['flyers-publicitaires', 5, 'Rapide', 'BAT reçu le jour même, très pro.']] as [$slug, $rating, $title, $body]) {
             Review::create(['product_id' => Product::where('slug', $slug)->value('id'), 'author_name' => 'Client démo', 'rating' => $rating, 'title' => $title, 'body' => $body.' (avis de démonstration)', 'status' => 'approved', 'is_demo' => true]);
         }
+        $this->retail($sup1, $c2);
+
         foreach ([['rent', 'Loyer atelier (démo)', '6000'], ['utilities', 'Électricité (démo)', '1450'], ['maintenance', 'Entretien presse (démo)', '900']] as [$cat, $desc, $amt]) {
             Expense::create(['date' => now()->startOfMonth()->toDateString(), 'category' => $cat, 'description' => $desc, 'amount' => $amt, 'is_demo' => true]);
         }
+    }
+
+    /** Demo store: rayons, articles with barcodes, a closed and an open till session. */
+    protected function retail(Supplier $supplier, Customer $company): void
+    {
+        $retail = app(\App\Services\RetailService::class);
+        $cats = [];
+        foreach ([['Papeterie', '#E4007C'], ['Fournitures de bureau', '#0096D6'], ['Encre & toner', '#16193A'], ['Cadeaux & déco', '#D9A700'], ['Informatique', '#0B875B']] as $i => [$name, $color]) {
+            $cats[$name] = \App\Models\RetailCategory::create(['name' => $name, 'color' => $color, 'sort' => $i]);
+        }
+        $items = [
+            ['Papeterie', 'Ramette papier A4 80 g (500 f.)', 'RAM-A480', '6111000000017', 'ream', '45.00', 31, '29.00', 8],
+            ['Papeterie', 'Cahier 96 pages grands carreaux', 'CAH-96', '6111000000024', 'piece', '8.50', 120, '4.20', 20],
+            ['Papeterie', 'Bloc-notes A5 spiralé', 'BLO-A5', '6111000000031', 'piece', '15.00', 40, '7.50', 10],
+            ['Papeterie', 'Enveloppes C5 (boîte de 50)', 'ENV-C5', '6111000000048', 'pack', '35.00', 18, '19.00', 5],
+            ['Fournitures de bureau', 'Stylo bille bleu', 'STY-BL', '6111000000055', 'piece', '3.00', 300, '1.10', 50],
+            ['Fournitures de bureau', 'Classeur à levier A4', 'CLA-A4', '6111000000062', 'piece', '22.00', 35, '11.00', 10],
+            ['Fournitures de bureau', 'Agrafeuse de bureau', 'AGR-01', '6111000000079', 'piece', '49.00', 12, '24.00', 3],
+            ['Fournitures de bureau', 'Surligneurs (pochette de 4)', 'SUR-4', '6111000000086', 'pack', '28.00', 3, '13.00', 6],
+            ['Encre & toner', 'Cartouche jet d\'encre noire', 'CAR-NR', '6111000000093', 'piece', '120.00', 14, '72.00', 4],
+            ['Encre & toner', 'Toner laser noir', 'TON-NR', '6111000000109', 'piece', '450.00', 6, '290.00', 2],
+            ['Cadeaux & déco', 'Cadre photo 13 × 18', 'CAD-1318', '6111000000116', 'piece', '59.00', 22, '27.00', 5],
+            ['Cadeaux & déco', 'Mug blanc personnalisable', 'MUG-W', '6111000000123', 'piece', '39.00', 48, '14.00', 12],
+            ['Informatique', 'Clé USB 32 Go', 'USB-32', '6111000000130', 'piece', '79.00', 25, '41.00', 6],
+            ['Informatique', 'Souris sans fil', 'SOU-SF', '6111000000147', 'piece', '99.00', 9, '52.00', 3],
+            ['Informatique', 'Câble USB-C 1 m', 'CAB-UC', '6111000000154', 'piece', '45.00', 30, '16.00', 8],
+            ['Papeterie', 'Papier kraft au mètre', 'KRA-M', '6111000000161', 'm', '6.00', 80, '2.10', 15],
+        ];
+        $p = [];
+        foreach ($items as [$cat, $name, $sku, $ean, $unit, $price, $stock, $cost, $low]) {
+            $p[$sku] = \App\Models\RetailProduct::create(['retail_category_id' => $cats[$cat]->id, 'name' => $name, 'sku' => $sku, 'barcode' => $ean, 'unit' => $unit,
+                'price_ttc' => $price, 'tax_rate' => '20.00', 'low_stock_threshold' => $low, 'supplier_id' => $supplier->id, 'is_demo' => true]);
+            $retail->move($p[$sku], 'initial', (string) $stock, 'demo:initial:'.$sku, ['unit_cost' => $cost, 'notes' => 'Stock initial (démo)']);
+        }
+        $owner = \App\Models\User::role('owner')->first();
+        $prev = auth()->user();
+        // sales need an authenticated cashier for permissions/audit; use a throw-away in-memory staff identity if no owner yet
+        $cashier = $owner ?? tap(new \App\Models\User(['name' => 'Démo']), fn ($u) => $u->forceFill(['is_staff' => true]));
+        auth()->setUser($cashier);
+        $yesterday = $retail->openSession('Caisse 1', '500.00', $owner);
+        $yesterday->update(['opened_at' => now()->subDay()->setTime(9, 0)]);
+        $sales = [
+            [[['RAM-A480', 2], ['STY-BL', 10]], [['cash', '200']], null],
+            [[['CAR-NR', 1], ['TON-NR', 1]], [['card_in_store', '570']], $company],
+            [[['MUG-W', 3], ['CAD-1318', 1]], [['cash', '200']], null],
+            [[['USB-32', 2], ['CAB-UC', 1]], [['card_in_store', '100'], ['cash', '110']], null],
+        ];
+        foreach ($sales as $i => [$lines, $pays, $cust]) {
+            $sale = $retail->sell($yesterday, array_map(fn ($l) => ['product_id' => $p[$l[0]]->id, 'quantity' => $l[1]], $lines),
+                array_map(fn ($x) => ['method' => $x[0], 'amount' => $x[1]], $pays), 'demo-sale-'.$i, $cust, null, null, true);
+            $sale->update(['created_at' => now()->subDay()->setTime(10 + $i, 15)]);
+        }
+        $retail->cashMovement($yesterday, 'out', '50.00', 'Achat fournitures ménage (démo)', 'demo-cash-out');
+        $summary = $retail->sessionSummary($yesterday);
+        $retail->closeSession($yesterday, $summary['expected'], 'Clôture démo', $owner);
+        $yesterday->update(['closed_at' => now()->subDay()->setTime(19, 0)]);
+        auth()->setUser($prev ?? new \App\Models\User);
+        if (! $prev) {
+            auth()->forgetUser();
+        }
+        \App\Models\SupplierPayment::create(['supplier_id' => $supplier->id, 'amount' => '1500.00', 'method' => 'bank_transfer', 'reference' => 'VIR-DEMO', 'paid_at' => now()->subDays(3)->toDateString(), 'notes' => 'Règlement démo', 'idempotency_key' => 'demo-sp-1']);
     }
 }

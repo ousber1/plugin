@@ -197,6 +197,32 @@ Route::middleware(['auth', 'staff'])->prefix('admin')->name('admin.')->group(fun
     Route::get('staff/{user}/edit', [Admin\StaffController::class, 'edit'])->name('staff.edit');
     Route::put('staff/{user}', [Admin\StaffController::class, 'update'])->name('staff.update');
 
+    // ---- Physical store (point of sale) ----
+    Route::get('magasin/caisse', [Admin\Retail\PosController::class, 'index'])->name('pos');
+    Route::post('magasin/caisse/ouvrir', [Admin\Retail\PosController::class, 'open'])->name('pos.open');
+    Route::post('magasin/caisse/vente', [Admin\Retail\PosController::class, 'sell'])->name('pos.sell');
+    Route::get('magasin/caisse/clients', [Admin\Retail\PosController::class, 'customers'])->name('pos.customers');
+    Route::post('magasin/caisse/clients', [Admin\Retail\PosController::class, 'quickCustomer'])->name('pos.customers.store');
+    Route::get('magasin/ventes', [Admin\Retail\SaleController::class, 'index'])->name('retail.sales.index');
+    Route::get('magasin/ventes/{sale}', [Admin\Retail\SaleController::class, 'show'])->name('retail.sales.show');
+    Route::get('magasin/ventes/{sale}/ticket', [Admin\Retail\PosController::class, 'ticket'])->name('retail.ticket');
+    Route::post('magasin/ventes/{sale}/retour', [Admin\Retail\SaleController::class, 'refund'])->name('retail.sales.refund');
+    Route::post('magasin/ventes/{sale}/facture', [Admin\Retail\SaleController::class, 'invoice'])->name('retail.sales.invoice');
+    Route::get('magasin/sessions', [Admin\Retail\SessionController::class, 'index'])->name('retail.sessions.index');
+    Route::get('magasin/sessions/{session}', [Admin\Retail\SessionController::class, 'show'])->name('retail.sessions.show');
+    Route::post('magasin/sessions/{session}/mouvement', [Admin\Retail\SessionController::class, 'movement'])->name('retail.sessions.movement');
+    Route::post('magasin/sessions/{session}/cloture', [Admin\Retail\SessionController::class, 'close'])->name('retail.sessions.close');
+    Route::get('magasin/articles', [Admin\Retail\ProductController::class, 'index'])->name('retail.products.index');
+    Route::get('magasin/articles/nouveau', [Admin\Retail\ProductController::class, 'create'])->name('retail.products.create');
+    Route::post('magasin/articles', [Admin\Retail\ProductController::class, 'store'])->name('retail.products.store');
+    Route::get('magasin/articles/{product}', [Admin\Retail\ProductController::class, 'show'])->name('retail.products.show');
+    Route::get('magasin/articles/{product}/modifier', [Admin\Retail\ProductController::class, 'edit'])->name('retail.products.edit');
+    Route::put('magasin/articles/{product}', [Admin\Retail\ProductController::class, 'update'])->name('retail.products.update');
+    Route::post('magasin/articles/{product}/stock', [Admin\Retail\ProductController::class, 'adjust'])->name('retail.products.adjust');
+    Route::get('fournisseurs', [Admin\SupplierController::class, 'index'])->name('suppliers.index');
+    Route::get('fournisseurs/{supplier}', [Admin\SupplierController::class, 'show'])->name('suppliers.show');
+    Route::post('fournisseurs/{supplier}/reglements', [Admin\SupplierController::class, 'payment'])->name('suppliers.payment');
+
     Route::get('settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
     Route::get('audit', [Admin\SettingsController::class, 'audit'])->name('audit.index');

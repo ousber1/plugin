@@ -34,7 +34,11 @@ class AuthController extends Controller
             $request->session()->put('locale', $user->locale);
         }
 
-        return $user->is_staff ? redirect()->intended(route('admin.dashboard')) : redirect()->intended(route('account.dashboard'));
+        if ($user->is_staff) {
+            return redirect()->intended($user->can('dashboard.view') ? route('admin.dashboard') : ($user->can('retail.sell') ? route('admin.pos') : route('admin.dashboard')));
+        }
+
+        return redirect()->intended(route('account.dashboard'));
     }
 
     public function showRegister()

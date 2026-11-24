@@ -86,7 +86,7 @@ class OrderService
 
         return DB::transaction(function () use ($customer, $lines, $meta) {
             foreach ($lines as &$l) {
-                $l['total'] = Money::str(Money::of($l['subtotal'])->minus($l['manual_discount'] ?? 0));
+                $l['total'] = Money::str(Money::of($l['subtotal'])->minus(Money::of($l['manual_discount'] ?? 0)));
                 if (Money::of($l['total'])->isNegative()) {
                     throw new \InvalidArgumentException('Remise de ligne supérieure au montant de la ligne.');
                 }

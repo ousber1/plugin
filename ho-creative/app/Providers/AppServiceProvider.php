@@ -8,6 +8,7 @@ use App\Services\CartService;
 use App\Support\Settings;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
@@ -22,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // @icon('cart') → inline reference to the SVG sprite (public/assets/icons.svg)
+        Blade::directive('icon', fn ($e) => "<?php echo '<svg class=\"ic\" aria-hidden=\"true\" focusable=\"false\"><use href=\"/assets/icons.svg?v=2#'.e($e).'\"/></svg>'; ?>");
+
         // Never send mail without a sender: fall back to the contact e-mail, then no-reply@host.
         if (! config('mail.from.address')) {
             $host = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost';

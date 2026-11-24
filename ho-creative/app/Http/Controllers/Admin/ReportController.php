@@ -11,7 +11,7 @@ class ReportController extends Controller
     protected function guard(string $report): void
     {
         $this->authorize('reports.view');
-        if (in_array($report, ['margins', 'receivables', 'expenses', 'sales_product', 'sales_channel', 'sales_customer'])) {
+        if (in_array($report, ['margins', 'receivables', 'expenses', 'sales_product', 'sales_channel', 'sales_customer', 'retail_daily', 'retail_products', 'retail_payments', 'retail_stock', 'supplier_balances'])) {
             $this->authorize('finance.view');
         }
     }

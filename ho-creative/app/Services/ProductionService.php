@@ -123,7 +123,7 @@ class ProductionService
         if (! empty($data['idempotency_key']) && ($existing = JobCost::where('idempotency_key', $data['idempotency_key'])->first())) {
             return $existing;
         }
-        $total = Money::str(Money::of($data['quantity'] ?? 1)->multipliedBy($data['unit_cost'] ?? 0));
+        $total = Money::str(Money::of($data['quantity'] ?? 1)->multipliedBy(Money::of($data['unit_cost'] ?? 0)));
         $cost = $job->costs()->create([
             'type' => $data['type'], 'is_estimate' => (bool) ($data['is_estimate'] ?? false),
             'description' => $data['description'], 'quantity' => $data['quantity'] ?? 1,
