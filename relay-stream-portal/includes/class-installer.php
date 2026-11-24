@@ -34,6 +34,7 @@ class RSP_Installer {
 		RSP_Settings::seed_defaults();
 		RSP_Jobs::schedule();
 		RSP_Tickets::ensure_private_dir();
+		RSP_Setup::install_pages(); // Dashboard, Login, Sign up, all portal pages and Checkout.
 		update_option( 'rsp_activated_at', time(), false );
 		flush_rewrite_rules();
 	}
@@ -44,6 +45,7 @@ class RSP_Installer {
 	public static function deactivate() {
 		wp_clear_scheduled_hook( 'rsp_process_queue' );
 		wp_clear_scheduled_hook( 'rsp_daily' );
+		RSP_Setup::restore_checkout(); // Give WooCommerce its previous checkout page back.
 	}
 
 	/**
@@ -102,6 +104,23 @@ class RSP_Installer {
 				$st['payment_guides'] = $new['payment_guides'];
 			}
 			update_option( 'rsp_settings', $st, true );
+		}
+		// v6: MegaOTT only — drop TVPlus settings, allow megaott.net, create missing pages incl. Checkout.
+		if ( $current > 0 && $current < 6 ) {
+			$st = (array) get_option( 'rsp_settings', array() );
+			unset( $st['api_key_enc'], $st['api_base_url'], $st['api_provider'] );
+			$hosts = array_filter( array_map( 'trim', explode( ',', isset( $st['api_allowed_hosts'] ) ? (string) $st['api_allowed_hosts'] : '' ) ) );
+			$hosts = array_values( array_diff( $hosts, array( 'tvpluspanel.net' ) ) );
+			if ( ! in_array( 'megaott.net', $hosts, true ) ) {
+				$hosts[] = 'megaott.net';
+			}
+			$st['api_allowed_hosts'] = implode( ',', $hosts );
+			if ( isset( $st['api_docs_url'] ) && false !== strpos( (string) $st['api_docs_url'], 'tvplus' ) ) {
+				$st['api_docs_url'] = 'https://megaott.net/docs/';
+			}
+			update_option( 'rsp_settings', $st, true );
+			RSP_Settings::flush();
+			add_action( 'init', array( 'RSP_Setup', 'install_pages' ), 20 );
 		}
 		// Record applied versions (v4 widened tickets.status to fit "awaiting_customer"; dbDelta alters the column).
 		if ( $current < RSP_DB_VERSION ) {

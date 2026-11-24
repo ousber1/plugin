@@ -229,6 +229,17 @@ class RSP_Accounts {
 	}
 
 	/**
+	 * Whether the account's stored identifiers belong to MegaOTT (or were entered manually).
+	 * Accounts from a previously used panel must never be sent to MegaOTT.
+	 *
+	 * @param object $account Account.
+	 * @return bool
+	 */
+	public static function is_megaott_compatible( $account ) {
+		return $account && in_array( (string) $account->provider, array( 'megaott', 'manual', '' ), true );
+	}
+
+	/**
 	 * Public-safe representation (no credentials).
 	 *
 	 * @param object $a Row.

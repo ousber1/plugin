@@ -54,6 +54,7 @@ class RSP_Settings {
 			'referrals'    => array( __( 'Referrals & Gifts', 'relay-stream-portal' ), '[relay_portal module="referrals"]' ),
 			'redeem'       => array( __( 'Redeem a Gift', 'relay-stream-portal' ), '[relay_portal module="redeem"]' ),
 			'support'      => array( __( 'Support', 'relay-stream-portal' ), '[relay_portal module="support"]' ),
+			'checkout'     => array( __( 'Checkout', 'relay-stream-portal' ), '[relay_portal module="checkout"]' ),
 			'profile'      => array( __( 'Profile', 'relay-stream-portal' ), '[relay_portal module="profile"]' ),
 		);
 	}
@@ -86,6 +87,8 @@ class RSP_Settings {
 			'layout'              => 'sidebar', // sidebar|topbar.
 			'app_mode'            => 1, // Portal pages render full-screen (no theme header/footer).
 			'redirect_after_login'=> 1,
+			'portal_checkout'     => 1, // Use the portal-styled Checkout page as the WooCommerce checkout.
+			'minimal_billing'     => 1, // Only name, email and phone at checkout for streaming plans.
 			'secure_payment_text' => 'You will be redirected to a secure payment page. Your subscription activates automatically once payment is confirmed. No recurring charges — pay once, enjoy for the full duration.',
 			'included_subtitle'   => 'Everything you get with every plan',
 			'payment_guides_title'=> 'How to pay',
@@ -103,7 +106,6 @@ class RSP_Settings {
 			'max_accounts'        => 10,
 			// Provider API.
 			'api_mode'            => 'manual', // manual|live.
-			'api_provider'        => 'tvplus', // tvplus|megaott.
 			'megaott_base_url'    => 'https://megaott.net/api/v1',
 			'megaott_token_enc'   => '',
 			'megaott_forced_country' => 'ALL',
@@ -112,10 +114,8 @@ class RSP_Settings {
 			'megaott_contact'     => '',
 			'megaott_connections' => 1,
 			'megaott_reward_package' => '',
-			'api_base_url'        => 'https://tvpluspanel.net/api/api.php',
-			'api_docs_url'        => 'https://tvpluspanel.ru/api/panel_api.html',
-			'api_key_enc'         => '',
-			'api_allowed_hosts'   => 'tvpluspanel.net,megaott.net',
+			'api_docs_url'        => 'https://megaott.net/docs/',
+			'api_allowed_hosts'   => 'megaott.net',
 			'api_timeout'         => 20,
 			'api_mapping_verified'=> 0,
 			'api_default_type'    => 'm3u',
@@ -241,6 +241,13 @@ class RSP_Settings {
 			self::$cache['email_templates'] = wp_parse_args( self::$cache['email_templates'], self::default_templates() );
 		}
 		return self::$cache;
+	}
+
+	/**
+	 * Drop the per-request cache (after direct option writes).
+	 */
+	public static function flush() {
+		self::$cache = null;
 	}
 
 	/**

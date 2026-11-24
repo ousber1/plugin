@@ -157,6 +157,7 @@ class RSP_Megaott_Provider implements RSP_Provider_Interface {
 		}
 		// Documented client errors (auth, permission, not found, conflict, validation) mean nothing was applied.
 		if ( in_array( $code, array( 400, 401, 403, 404, 409, 422 ), true ) ) {
+			$data['permanent'] = true; // Retrying the same request cannot succeed (auth, permission, validation).
 			return new RSP_Provider_Result( 'failed', $data, $msg, $code );
 		}
 		return new RSP_Provider_Result( $is_write ? 'ambiguous' : 'failed', $data, $msg, $code );
@@ -245,7 +246,7 @@ class RSP_Megaott_Provider implements RSP_Provider_Interface {
 	/** {@inheritdoc} */
 	public function create_account( array $args ) {
 		if ( empty( $args['package'] ) || ! ctype_digit( (string) $args['package'] ) ) {
-			return new RSP_Provider_Result( 'failed', array(), 'Map this plan to a MegaOTT package ID first.' );
+			return new RSP_Provider_Result( 'failed', array( 'permanent' => true ), 'This plan is not mapped to a MegaOTT package ID (Products → Streaming plan → Provider package).' );
 		}
 		$type   = isset( $args['type'] ) && 'mag' === $args['type'] ? 'mag' : 'm3u';
 		$params = array(
@@ -260,7 +261,7 @@ class RSP_Megaott_Provider implements RSP_Provider_Interface {
 		);
 		if ( 'mag' === $type ) {
 			if ( empty( $args['mac'] ) || ! preg_match( '/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i', $args['mac'] ) ) {
-				return new RSP_Provider_Result( 'failed', array(), 'A valid MAC address is required for MAG accounts.' );
+				return new RSP_Provider_Result( 'failed', array( 'permanent' => true ), 'A valid MAC address is required for MAG accounts.' );
 			}
 			$params['mac_address'] = strtoupper( $args['mac'] );
 		} else {
@@ -327,7 +328,7 @@ class RSP_Megaott_Provider implements RSP_Provider_Interface {
 	/** {@inheritdoc} */
 	public function renew_account( array $creds, $months, $type ) {
 		if ( empty( $creds['provider_user_id'] ) || empty( $creds['package'] ) || ! ctype_digit( (string) $creds['package'] ) ) {
-			return new RSP_Provider_Result( 'failed', array(), 'Missing subscription id or package id for extension.' );
+			return new RSP_Provider_Result( 'failed', array( 'permanent' => true ), 'Missing MegaOTT subscription id or package id for the extension.' );
 		}
 		$r = $this->call( 'POST', '/subscriptions/' . (int) $creds['provider_user_id'] . '/extend', array( 'package_id' => (int) $creds['package'], 'paid' => 1 ) );
 		if ( $r->ok() ) {

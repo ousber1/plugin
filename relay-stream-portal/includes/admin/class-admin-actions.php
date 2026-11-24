@@ -81,7 +81,7 @@ class RSP_Admin_Actions {
 				$v['theme_default'] = in_array( self::p( 'theme_default' ), array( 'auto', 'dark', 'light' ), true ) ? self::p( 'theme_default' ) : 'auto';
 				$v['radius']        = max( 0, min( 32, (int) self::p( 'radius' ) ) );
 				$v['language']      = in_array( self::p( 'language' ), array( '', 'en_US', 'ar' ), true ) ? self::p( 'language' ) : '';
-				foreach ( array( 'app_mode', 'redirect_after_login', 'allow_theme_toggle', 'floating_support', 'full_width', 'show_credentials', 'player_enabled', 'registration_open', 'email_verification', 'delete_on_uninstall' ) as $k ) {
+				foreach ( array( 'portal_checkout', 'minimal_billing', 'app_mode', 'redirect_after_login', 'allow_theme_toggle', 'floating_support', 'full_width', 'show_credentials', 'player_enabled', 'registration_open', 'email_verification', 'delete_on_uninstall' ) as $k ) {
 					$v[ $k ] = self::b( $k );
 				}
 				$pos  = isset( $_POST['nav_pos'] ) ? array_map( 'intval', (array) wp_unslash( $_POST['nav_pos'] ) ) : array();
@@ -122,6 +122,9 @@ class RSP_Admin_Actions {
 				RSP_Admin::done( 'error', __( 'Unknown settings group.', 'relay-stream-portal' ) );
 		}
 		RSP_Settings::update( $v );
+		if ( 'branding' === $group ) {
+			$v['portal_checkout'] ? RSP_Setup::install_pages() : RSP_Setup::restore_checkout();
+		}
 		RSP_Audit::log( 'settings_saved', 'settings', $group, '', array( 'keys' => array_keys( $v ) ) );
 		RSP_Admin::done( 'success', __( 'Settings saved.', 'relay-stream-portal' ) );
 	}
@@ -158,11 +161,9 @@ class RSP_Admin_Actions {
 	 */
 	public static function save_api() {
 		$s     = RSP_Settings::all();
-		$url   = esc_url_raw( self::p( 'api_base_url' ), array( 'https' ) );
 		$hosts = implode( ',', array_filter( array_map( static function ( $h ) { return preg_replace( '/[^a-z0-9.-]/', '', strtolower( trim( $h ) ) ); }, explode( ',', self::p( 'api_allowed_hosts' ) ) ) ) );
 		$v     = array(
 			'api_mode'                => 'live' === self::p( 'api_mode' ) ? 'live' : 'manual',
-			'api_provider'            => 'megaott' === self::p( 'api_provider' ) ? 'megaott' : 'tvplus',
 			'megaott_base_url'        => esc_url_raw( self::p( 'megaott_base_url' ), array( 'https' ) ),
 			'megaott_forced_country'  => strtoupper( substr( preg_replace( '/[^A-Za-z]/', '', self::p( 'megaott_forced_country' ) ), 0, 3 ) ) ?: 'ALL',
 			'megaott_connections'     => max( 1, (int) self::p( 'megaott_connections' ) ),
@@ -170,15 +171,13 @@ class RSP_Admin_Actions {
 			'megaott_vpn'             => self::b( 'megaott_vpn' ),
 			'megaott_contact'         => substr( self::p( 'megaott_contact' ), 0, 60 ),
 			'megaott_reward_package'  => preg_replace( '/[^0-9]/', '', self::p( 'megaott_reward_package' ) ),
-			'api_base_url'            => $url,
-			'api_docs_url'            => esc_url_raw( self::p( 'api_docs_url' ) ),
 			'api_allowed_hosts'       => $hosts,
 			'api_timeout'             => max( 5, min( 60, (int) self::p( 'api_timeout' ) ) ),
 			'api_note_prefix'         => substr( preg_replace( '/[^A-Za-z0-9_-]/', '', self::p( 'api_note_prefix' ) ), 0, 16 ),
 			'api_mapping_verified'    => self::b( 'api_mapping_verified' ),
 			'reward_month_conversion' => self::b( 'reward_month_conversion' ),
 		);
-		foreach ( array( $url, $v['megaott_base_url'] ) as $check ) {
+		foreach ( array( $v['megaott_base_url'] ) as $check ) {
 			$host = wp_parse_url( $check, PHP_URL_HOST );
 			if ( $check && ( ! $host || ! in_array( strtolower( $host ), explode( ',', $hosts ), true ) ) ) {
 				RSP_Admin::done( 'error', __( 'Each API URL host must be listed in Allowed API hosts.', 'relay-stream-portal' ) );
@@ -190,29 +189,20 @@ class RSP_Admin_Actions {
 		} elseif ( '' !== $token ) {
 			$v['megaott_token_enc'] = RSP_Crypto::encrypt( $token );
 		}
-		if ( $s['api_provider'] !== $v['api_provider'] ) {
-			$v['api_mapping_verified'] = 0; // Mapping must be re-verified for a new provider.
-		}
-		$key = isset( $_POST['api_key'] ) ? trim( (string) wp_unslash( $_POST['api_key'] ) ) : ''; // phpcs:ignore
-		if ( self::b( 'api_key_clear' ) ) {
-			$v['api_key_enc'] = '';
-		} elseif ( '' !== $key ) {
-			$v['api_key_enc'] = RSP_Crypto::encrypt( $key );
-		}
 		RSP_Settings::update( $v );
 		$changes = array_keys( array_diff_assoc( array_map( 'strval', array_intersect_key( $v, $s ) ), array_map( 'strval', array_intersect_key( $s, $v ) ) ) );
-		RSP_Audit::log( 'api_settings_saved', 'settings', 'api', '', array( 'changed' => array_values( array_diff( $changes, array( 'api_key_enc' ) ) ), 'key_changed' => isset( $v['api_key_enc'] ) || isset( $v['megaott_token_enc'] ), 'live' => RSP_Provider_Factory::is_live() ) );
-		RSP_Admin::done( 'success', RSP_Provider_Factory::is_live() ? __( 'Saved. Live API mode is active.', 'relay-stream-portal' ) : __( 'Saved. Provisioning stays manual until mode is Live, a key is saved and the mapping is verified.', 'relay-stream-portal' ) );
+		RSP_Audit::log( 'api_settings_saved', 'settings', 'api', '', array( 'changed' => array_values( array_diff( $changes, array( 'megaott_token_enc' ) ) ), 'key_changed' => isset( $v['megaott_token_enc'] ), 'live' => RSP_Provider_Factory::is_live() ) );
+		RSP_Admin::done( 'success', RSP_Provider_Factory::is_live() ? __( 'Saved. Live API mode is active.', 'relay-stream-portal' ) : __( 'Saved. Provisioning stays manual until mode is Live, a MegaOTT token is saved and the mapping is verified.', 'relay-stream-portal' ) );
 	}
 
 	/**
-	 * Test connection (read-only reseller_info).
+	 * Test connection (read-only GET /user).
 	 */
 	public static function test_connection() {
 		$r = RSP_Provider_Factory::remote()->test_connection();
 		set_transient( 'rsp_test_result_' . get_current_user_id(), array_merge( $r->to_log(), array( 'username_masked' => isset( $r->data['username'] ) ? $r->data['username'] : '' ) ), 120 );
 		RSP_Audit::log( 'api_test_connection', 'settings', 'api', '', $r->to_log() );
-		RSP_Admin::done( $r->ok() ? 'success' : 'error', $r->ok() ? __( 'Connection OK (reseller_info).', 'relay-stream-portal' ) : __( 'Connection failed: ', 'relay-stream-portal' ) . $r->error );
+		RSP_Admin::done( $r->ok() ? 'success' : 'error', $r->ok() ? __( 'Connection OK (MegaOTT /user).', 'relay-stream-portal' ) : __( 'Connection failed: ', 'relay-stream-portal' ) . $r->error );
 	}
 
 	/**
@@ -350,8 +340,8 @@ class RSP_Admin_Actions {
 	 */
 	public static function account_refresh() {
 		$a = RSP_Accounts::get_by_uuid( self::p( 'uuid' ) );
-		if ( ! $a || ! RSP_Provider_Factory::is_live() ) {
-			RSP_Admin::done( 'error', __( 'Live mode is required.', 'relay-stream-portal' ) );
+		if ( ! $a || ! RSP_Provider_Factory::is_live() || ! RSP_Accounts::is_megaott_compatible( $a ) ) {
+			RSP_Admin::done( 'error', __( 'Live mode is required, and the account must belong to MegaOTT.', 'relay-stream-portal' ) );
 		}
 		$r = RSP_Provider_Factory::get()->lookup_account( RSP_Jobs::provider_creds( $a ), $a->provider_type );
 		RSP_Audit::log( 'account_refreshed', 'account', $a->uuid, '', $r->to_log() );
@@ -369,7 +359,7 @@ class RSP_Admin_Actions {
 	public static function account_suspend() {
 		$a        = RSP_Accounts::get_by_uuid( self::p( 'uuid' ) );
 		$provider = RSP_Provider_Factory::get();
-		if ( ! $a || ! $a->provider_user_id || ! method_exists( $provider, 'set_active' ) ) {
+		if ( ! $a || ! $a->provider_user_id || ! method_exists( $provider, 'set_active' ) || ! RSP_Accounts::is_megaott_compatible( $a ) ) {
 			RSP_Admin::done( 'error', __( 'This provider or account does not support suspension.', 'relay-stream-portal' ) );
 		}
 		$reason = self::reason();

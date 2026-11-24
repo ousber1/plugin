@@ -21,6 +21,7 @@ unset( $rsp_links['profile'], $rsp_links['redeem'] );
 $rsp_logo    = $rsp_s['logo_id'] ? wp_get_attachment_image( (int) $rsp_s['logo_id'], 'medium', false, array( 'class' => 'rsp-logo-img', 'alt' => esc_attr( $rsp_s['brand_name'] ) ) ) : '';
 $rsp_days    = (int) $rsp_s['referral_days'];
 $rsp_support = $rsp_s['support_url'] ? $rsp_s['support_url'] : $rsp_u( 'support', array( 'new' => 1 ) );
+$rsp_active  = 'checkout' === $module ? 'plans' : $module;
 $rsp_icons   = array( 'dashboard' => 'play', 'accounts' => 'accounts', 'apps' => 'grid', 'plans' => 'card', 'transactions' => 'transactions2', 'referrals' => 'referrals', 'support' => 'lifebuoy' );
 ?>
 <div class="rsp-app" data-rsp-app>
@@ -76,7 +77,7 @@ $rsp_icons   = array( 'dashboard' => 'play', 'accounts' => 'accounts', 'apps' =>
 		<aside class="rsp-sidebar" id="rsp-sidebar" aria-label="<?php esc_attr_e( 'Portal', 'relay-stream-portal' ); ?>">
 			<nav class="rsp-side-nav">
 				<?php foreach ( $rsp_links as $rsp_slug => $rsp_label ) : ?>
-					<a href="<?php echo esc_url( $rsp_u( $rsp_slug ) ); ?>" class="rsp-side-link<?php echo $rsp_slug === $module ? ' is-current' : ''; ?>"<?php echo $rsp_slug === $module ? ' aria-current="page"' : ''; ?>>
+					<a href="<?php echo esc_url( $rsp_u( $rsp_slug ) ); ?>" class="rsp-side-link<?php echo $rsp_slug === $rsp_active ? ' is-current' : ''; ?>"<?php echo $rsp_slug === $rsp_active ? ' aria-current="page"' : ''; ?>>
 						<?php RSP_Icons::e( isset( $rsp_icons[ $rsp_slug ] ) ? $rsp_icons[ $rsp_slug ] : $rsp_slug, 19 ); ?><span><?php echo esc_html( RSP_Portal::label( $args, 'nav_' . $rsp_slug, 'dashboard' === $rsp_slug ? __( 'Dashboard', 'relay-stream-portal' ) : $rsp_label ) ); ?></span>
 					</a>
 				<?php endforeach; ?>

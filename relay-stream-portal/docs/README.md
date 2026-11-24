@@ -1,6 +1,6 @@
 # Relay Stream Portal — setup and operations guide
 
-A WordPress plugin with three connected parts: a customer portal (shortcodes + Elementor Free widgets), a management dashboard in `/wp-admin`, and server-side integrations with the documented **TVPlus Panel API** and **MegaOTT API v1** (choose one in API Settings).
+A WordPress plugin with three connected parts: a customer portal (shortcodes + Elementor Free widgets), a management dashboard in `/wp-admin`, and a server-side integration with the **MegaOTT API v1**.
 
 ## Portal look and behaviour
 
@@ -22,11 +22,11 @@ A WordPress plugin with three connected parts: a customer portal (shortcodes + E
    define( 'RSP_ENCRYPTION_KEY', 'base64-of-32-random-bytes' ); // php -r "echo base64_encode(random_bytes(32));"
    ```
    Without it, a key is derived from your WordPress salts. Changing the key later makes stored secrets unreadable.
-3. **Relay Stream → Elementor & Pages**: create or map the portal pages (see `ELEMENTOR-WALKTHROUGH.md`).
+3. Pages are created **automatically on activation**: Portal (dashboard), Sign In, Create Account, Reset Password, My Accounts, Apps & Guides, Plans & Billing, Transactions, Referrals & Gifts, Redeem a Gift, Support, Profile and **Checkout**. The portal Checkout becomes WooCommerce's checkout page (the previous one is restored on deactivation; turn this off in Branding). Re-create or remap pages any time in **Relay Stream → Elementor & Pages**.
 4. **Relay Stream → Plans**: create plan products (or the demo plans 1/3/6/12 months — demo prices are placeholders) and review them.
 5. Enable at least one WooCommerce payment gateway.
 6. **Relay Stream → Branding**: name, logo, colors, layout, app mode, theme, navigation, language, toggles.
-7. **Relay Stream → API Settings & Job Queue**: pick **TVPlus** or **MegaOTT**, save the key/token. Provisioning stays **Manual** until you complete the provider checklist in `API-MAPPING.md`.
+7. **Relay Stream → API Settings & Job Queue**: save your MegaOTT token, **Load packages**, and set the package ID on every plan product. Provisioning stays **Manual** until you complete the checklist in `API-MAPPING.md`.
 8. Make sure WP-Cron runs (or call `wp rsp queue` every minute from a system cron).
 
 ## How fulfillment works

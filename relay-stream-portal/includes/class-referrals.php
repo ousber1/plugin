@@ -5,7 +5,7 @@
  * Flow: invited -> pending (first eligible confirmed payment, review window starts)
  *       -> rewarded (ledger credit, once, keyed by referral id) | reversed | rejected | review.
  * Earned days live in a ledger. Applying them to an account requires provider support:
- * TVPlus only renews whole months, so by default applications go to staff review. When
+ * MegaOTT extends by a whole package period, so by default applications go to staff review. When
  * "month conversion" is enabled, each 30-day block is applied as a confirmed 1-month renewal.
  *
  * @package RelayStreamPortal
@@ -374,8 +374,8 @@ class RSP_Referrals {
 		}
 		try {
 			$balance = self::balance( $user_id );
-			$mega    = 'megaott' === RSP_Provider_Factory::configured_slug();
-			$convert = RSP_Settings::get( 'reward_month_conversion' ) && RSP_Provider_Factory::is_live() && ( ! $mega || '' !== (string) RSP_Settings::get( 'megaott_reward_package' ) );
+			$mega    = true;
+			$convert = RSP_Settings::get( 'reward_month_conversion' ) && RSP_Provider_Factory::is_live() && '' !== (string) RSP_Settings::get( 'megaott_reward_package' );
 			$days    = $convert ? 30 : $balance;
 			if ( $balance < 1 || ( $convert && $balance < 30 ) ) {
 				return new WP_Error( 'rsp_balance', $convert ? __( 'You need at least 30 days to apply a reward.', 'relay-stream-portal' ) : __( 'You have no reward days to apply.', 'relay-stream-portal' ) );

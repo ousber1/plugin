@@ -1444,3 +1444,72 @@ msgstr "%s/شهرياً"
 
 msgid "One-time payment · No auto-renewal"
 msgstr "دفعة واحدة · دون تجديد تلقائي"
+
+msgid "Checkout"
+msgstr "الدفع"
+
+msgid "— Choose a MegaOTT package —"
+msgstr "— اختر باقة MegaOTT —"
+
+msgid "The MegaOTT package defines the real period; keep this equal to it (used for display and monthly price)."
+msgstr "باقة MegaOTT تحدد المدة الفعلية؛ اجعل هذه القيمة مطابقة لها (تُستخدم للعرض والسعر الشهري)."
+
+msgid "Load packages in Relay Stream → API Settings first."
+msgstr "حمّل الباقات أولاً من Relay Stream ← إعدادات API."
+
+msgid "Extends “%s”"
+msgstr "يمدّد “%s”"
+
+msgid "Code shown in your portal after payment"
+msgstr "يظهر الرمز في بوابتك بعد الدفع"
+
+msgid "Choose plan"
+msgstr "اختر الخطة"
+
+msgid "Details & payment"
+msgstr "البيانات والدفع"
+
+msgid "Thank you!"
+msgstr "شكراً لك!"
+
+msgid "Your order was received. Activation starts as soon as the payment is confirmed."
+msgstr "تم استلام طلبك. يبدأ التفعيل فور تأكيد الدفع."
+
+msgid "Complete your purchase securely"
+msgstr "أكمل عملية الشراء بأمان"
+
+msgid "Checkout progress"
+msgstr "مراحل الدفع"
+
+msgid "Your cart is empty"
+msgstr "سلتك فارغة"
+
+msgid "Pick a plan to continue."
+msgstr "اختر خطة للمتابعة."
+
+msgid "What happens next"
+msgstr "ماذا بعد؟"
+
+msgid "The payment provider confirms your payment."
+msgstr "يؤكد مزوّد الدفع عملية الدفع."
+
+msgid "We activate or extend your account automatically."
+msgstr "نقوم بتفعيل حسابك أو تمديده تلقائياً."
+
+msgid "Your player details appear under My Accounts."
+msgstr "تظهر تفاصيل المشغّل في صفحة حساباتي."
+
+msgid "View transactions"
+msgstr "عرض المعاملات"
+
+msgid "The WooCommerce checkout form (billing details, payment methods and the Place order button) appears here, styled like the portal."
+msgstr "يظهر هنا نموذج الدفع من WooCommerce (بيانات الفوترة وطرق الدفع وزر تأكيد الطلب) بتصميم البوابة."
+
+msgid "Place order"
+msgstr "تأكيد الطلب"
+
+msgid "Order summary"
+msgstr "ملخص الطلب"
+
+msgid "Change plan"
+msgstr "تغيير الخطة"

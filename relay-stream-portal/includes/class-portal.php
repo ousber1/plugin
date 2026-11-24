@@ -408,7 +408,7 @@ class RSP_Portal {
 		if ( $v && isset( $mods[ $v ] ) ) {
 			return $v;
 		}
-		return isset( $mods[ $default ] ) || 'redeem' === $default || 'profile' === $default ? $default : 'dashboard';
+		return isset( $mods[ $default ] ) || in_array( $default, array( 'redeem', 'profile', 'checkout' ), true ) ? $default : 'dashboard';
 	}
 
 	/**
@@ -507,6 +507,7 @@ class RSP_Portal {
 			'gifts'                => 'modules/referrals',
 			'redeem'               => 'modules/redeem',
 			'support'              => 'modules/support',
+			'checkout'             => 'modules/checkout',
 			'profile'              => 'modules/profile',
 			'plan_cards'           => 'partials/plan-cards',
 			'subscription_summary' => 'partials/subscription-summary',
@@ -520,7 +521,7 @@ class RSP_Portal {
 		if ( 'gifts' === $module ) {
 			$args['tab'] = 'gifts';
 		}
-		if ( in_array( $module, array( 'plans', 'transactions', 'plan_cards' ), true ) && empty( $vm['billing'] ) ) {
+		if ( in_array( $module, array( 'plans', 'transactions', 'plan_cards', 'checkout' ), true ) && empty( $vm['billing'] ) ) {
 			return '<div class="rsp-empty">' . esc_html__( 'Billing is unavailable because WooCommerce is not active.', 'relay-stream-portal' ) . '</div>';
 		}
 		return self::template( $map[ $module ], array( 'vm' => $vm, 'args' => $args, 'module' => $module ) );

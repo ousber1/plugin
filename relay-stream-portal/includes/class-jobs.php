@@ -327,6 +327,10 @@ class RSP_Jobs {
 	 */
 	private static function retry_or_fail( $job, RSP_Provider_Result $r, $step ) {
 		$attempts = (int) self::get( $job->id )->attempts;
+		if ( ! empty( $r->data['permanent'] ) ) {
+			self::to_review( $job, 'Needs attention: ' . $r->error );
+			return;
+		}
 		if ( $attempts >= self::MAX_ATTEMPTS ) {
 			self::to_review( $job, 'Gave up after ' . $attempts . ' attempts: ' . $r->error );
 			return;
@@ -356,6 +360,10 @@ class RSP_Jobs {
 		$account = RSP_Accounts::get( $job->account_id );
 		if ( ! $account ) {
 			self::to_review( $job, 'Local account record is missing.' );
+			return;
+		}
+		if ( ! RSP_Accounts::is_megaott_compatible( $account ) ) {
+			self::to_review( $job, 'This account was created on a different panel; handle it manually.' );
 			return;
 		}
 		$can_find = method_exists( $provider, 'find_created' );
@@ -392,7 +400,7 @@ class RSP_Jobs {
 				$r = $provider->create_account(
 					array(
 						'months'          => (int) $p['months'],
-						'package'         => isset( $p['package'] ) ? $p['package'] : 'all',
+						'package'         => isset( $p['package'] ) ? $p['package'] : '',
 						'template'        => isset( $p['template'] ) ? $p['template'] : '',
 						'max_connections' => isset( $p['max_connections'] ) ? (int) $p['max_connections'] : 0,
 						'type'            => isset( $p['type'] ) ? $p['type'] : 'm3u',
@@ -465,7 +473,7 @@ class RSP_Jobs {
 		if ( ! empty( $account->provider_user_id ) ) {
 			$c['provider_user_id'] = (string) $account->provider_user_id;
 		}
-		$c['package'] = ! empty( $payload['package'] ) && 'all' !== $payload['package'] ? (string) $payload['package'] : (string) $account->package_id;
+		$c['package'] = ! empty( $payload['package'] ) && ctype_digit( (string) $payload['package'] ) ? (string) $payload['package'] : (string) $account->package_id;
 		return $c;
 	}
 
@@ -480,6 +488,10 @@ class RSP_Jobs {
 		$account = RSP_Accounts::get( $job->account_id );
 		if ( ! $account || ( empty( $account->credentials ) && empty( $account->provider_user_id ) ) ) {
 			self::to_review( $job, 'Account has no stored provider identifiers; renew manually.' );
+			return;
+		}
+		if ( ! RSP_Accounts::is_megaott_compatible( $account ) ) {
+			self::to_review( $job, 'This account was created on a different panel (not MegaOTT); renew it manually.' );
 			return;
 		}
 		if ( (int) $account->user_id !== (int) $job->user_id ) {

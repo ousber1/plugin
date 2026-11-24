@@ -80,7 +80,9 @@ class RSP_App {
 			wp_safe_redirect( RSP_Settings::page_url( 'dashboard' ) );
 			exit;
 		}
-		if ( ! is_user_logged_in() && RSP_Settings::get( 'app_mode' ) && ! in_array( $role, array( 'login', 'register', 'reset' ), true ) ) {
+		// Guests may open an order receipt / pay-for-order link from their email; WooCommerce checks the order key.
+		$receipt = 'checkout' === $role && function_exists( 'is_wc_endpoint_url' ) && ( is_wc_endpoint_url( 'order-received' ) || is_wc_endpoint_url( 'order-pay' ) );
+		if ( ! is_user_logged_in() && RSP_Settings::get( 'app_mode' ) && ! $receipt && ! in_array( $role, array( 'login', 'register', 'reset' ), true ) ) {
 			$pages = (array) get_option( 'rsp_pages', array() );
 			if ( ! empty( $pages['login'] ) ) {
 				wp_safe_redirect( add_query_arg( 'redirect_to', rawurlencode( RSP_Portal::current_url() ), get_permalink( (int) $pages['login'] ) ) );

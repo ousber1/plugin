@@ -1,21 +1,19 @@
-# Test results (v1.1.0)
+# Test results (v1.2.0)
 
-Run on 2026-11-24 in a clean sandbox: **WordPress 7.1.5**, **WooCommerce 11.3.1** (HPOS), **Elementor 4.4.1 (Free)**, PHP 8.3.6, MariaDB 10.11, theme Twenty Twenty-Five, Chromium via Playwright.
+Run on 2026-11-24 in a clean sandbox: **WordPress 7.1.5**, **WooCommerce 11.3.1** (HPOS), **Elementor 4.4.1 (Free)**, PHP 8.3.6, MariaDB 10.11, theme Twenty Twenty-Five, Chromium via Playwright. MegaOTT is the only provider in this version.
 
 ## What was and was not verified
 
 | Area | Verified against | Result |
 |---|---|---|
-| TVPlus adapter, fulfillment, reconciliation | **Fixture** fake panel (`tests/fixtures/class-fake-panel.php`) | Passed |
-| MegaOTT adapter, fulfillment, create reconciliation by username, extend, suspend | **Fixture** fake API (`tests/fixtures/class-fake-megaott.php`) | Passed |
-| Real TVPlus panel | **Not tested** — no key; the sandbox could not resolve `tvpluspanel.net` | **Not verified** |
-| Real MegaOTT API | One read-only call only: `GET /api/v1/user` with an invalid token → `401 {"message":"Unauthenticated."}` (confirms base URL, Bearer auth, error shape). No line was created, extended or suspended | **Not verified beyond auth** |
-| WooCommerce checkout | Real block checkout in Chromium with the offline test gateway; payment confirmed by staff | Passed |
-| HPOS and legacy order storage | Integration + concurrency suites on both (legacy runs from v1.0.0; v1.1.0 runs on HPOS) | Passed |
-| Elementor Free | Editor in Chromium (panel lists 18 widgets, synthetic preview), front-end render, style override | Passed |
-| Full-page app, sign-in redirect, sidebar drawer, Arabic RTL, mobile | Chromium desktop + iPhone 13 profile; screenshots reviewed | Passed |
+| MegaOTT adapter, fulfillment, create reconciliation by username, extend, suspend, permanent-error handling | **Fixture** fake API (`tests/fixtures/class-fake-megaott.php`) | Passed |
+| Real MegaOTT API | One read-only call: `GET /api/v1/user` with an invalid token → `401 {"message":"Unauthenticated."}` (base URL, Bearer auth, error shape). No line was created, extended or suspended | **Not verified beyond auth** |
+| Automatic page creation | Fresh WordPress + WooCommerce, ZIP installed and activated: 13 pages created, portal Checkout set as WooCommerce checkout | Passed |
+| Upgrade 1.1.0 → 1.2.0 (migration v6) | Existing site: Checkout page created and assigned (previous kept for restore), TVPlus settings removed, hosts = megaott.net | Passed |
+| Portal-styled checkout | Real WooCommerce checkout in Chromium (desktop + iPhone 13): order placed with the offline test gateway, in-portal thank-you page | Passed |
+| Elementor Free, full-page app, sign-in redirect, drawer, Arabic RTL, mobile | Chromium; screenshots reviewed | Passed |
 
-Live integration must be verified on your own panel with the checklist in `API-MAPPING.md` before enabling live mode.
+Verify the live MegaOTT integration on your own account with the checklist in `API-MAPPING.md` before enabling live mode.
 
 ## How to run
 
@@ -26,25 +24,18 @@ BASE=http://your-test-site OUT=/tmp/shots node tests/e2e/portal.e2e.js        # 
 ```
 Run these on a disposable test site only (they create users and orders). Clear `_transient_rsp_rl_*` first (rate limits).
 
-## Integration suite — 99 passed, 0 failed
+## Integration suite — 91 passed, 0 failed
 
 | Group | Test | Result |
 |---|---|---|
-| adapter | reseller_info test connection succeeds and masks username | PASS |
-| adapter | redacted log never contains the API key | PASS |
-| adapter | bouquet list parsed (no status field in docs) | PASS |
-| adapter | create parses user_id + username/password from returned URL | PASS |
-| adapter | create sends documented params only | PASS |
-| adapter | renew handles documented "messasge" key and expiry advances | PASS |
-| adapter | durations outside 1/3/6/12 are refused locally | PASS |
 | adapter | non-HTTPS endpoint refused before sending | PASS |
 | adapter | host outside allowlist refused before sending | PASS |
+| adapter | missing token refused before sending | PASS |
 | adapter | write timeout => ambiguous | PASS |
-| adapter | connect failure => failed (not sent) | PASS |
-| adapter | redirect on write => ambiguous, not followed | PASS |
-| adapter | non-JSON on write => ambiguous | PASS |
-| adapter | explicit status false => failed | PASS |
-| adapter | URL secrets redacted in strings | PASS |
+| adapter | 5xx on write => ambiguous | PASS |
+| adapter | read timeout => failed (safe to retry) | PASS |
+| adapter | validation error is permanent (no blind retries) | PASS |
+| adapter | secrets redacted in strings | PASS |
 | crypto | round trip | PASS |
 | crypto | tampered ciphertext rejected | PASS |
 | crypto | mask keeps last 4 | PASS |
@@ -71,13 +62,12 @@ Run these on a disposable test site only (they create users and orders). Clear `
 | live | paid order -> create -> verified by lookup -> active | PASS |
 | live | local expiry equals panel-confirmed expiry | PASS |
 | live | panel note carries stable local id | PASS |
-| live | replayed payment event does not create a second remote account | PASS |
+| live | replayed payment event does not create a second remote line | PASS |
 | live | renewal applies to the selected account only | PASS |
-| live | timeout after success is reconciled (succeeded, not replayed) | PASS |
-| live | timeout without change -> needs review, not replayed automatically | PASS |
+| live | extend lost before applying -> expiry unchanged -> needs review, not replayed | PASS |
 | live | staff retry after reconciliation succeeds | PASS |
-| live | ambiguous create goes to staff review and is not replayed | PASS |
-| live | retrying an ambiguous create requires explicit confirmation | PASS |
+| live | plan without a MegaOTT package goes straight to review (no retries, no remote call) | PASS |
+| live | account from a previous (non-MegaOTT) panel is never sent to MegaOTT | PASS |
 | live | renewal of an account not owned by the payer -> review, account untouched | PASS |
 | live | checkout refuses to renew another customer's account | PASS |
 | refunds | full refund before activation cancels the job and account | PASS |
@@ -176,14 +166,9 @@ Run these on a disposable test site only (they create users and orders). Clear `
 
 | Check | Result |
 |---|---|
-| All 15 admin screens + customer detail + filtered queue load without PHP notices | PASS |
-| API settings: switch provider to MegaOTT, save, test connection (graceful errors) | PASS |
-| Support Agent role: blocked from API settings, can open Tickets | PASS |
-| Jobs CSV export contains no credentials | PASS |
-| Elementor editor: 18 widgets listed; Portal Shell preview shows synthetic data only | PASS |
-| Elementor deactivated: shortcode pages still render (v1.0.0 run) | PASS |
-| WooCommerce deactivated: billing modules show a notice, others work (v1.0.0 run) | PASS |
-| Upgrade 1.0.0 → 1.1.0 by installing the new ZIP over an active 1.0.0 on a second site: db v4→v5, new visual defaults applied, plans and all 10 tables kept, clean log | PASS |
+| Checkout page: summary, restyled WooCommerce form, minimal fields (name/email/phone), place order, thank-you page — desktop and mobile, no JS errors, no horizontal scroll | PASS |
+| All admin screens load without PHP notices; MegaOTT settings save; connection test fails gracefully without a token | PASS (v1.1.0 run; settings form re-checked in 1.2.0) |
+| Elementor editor: 18 widgets, synthetic preview | PASS (v1.1.0 run) |
 | `debug.log` clean (WP_DEBUG on) after all runs | PASS |
 
 ## Bugs found and fixed during testing
@@ -197,3 +182,4 @@ Run these on a disposable test site only (they create users and orders). Clear `
 * Block checkout sets the currency after line items → snapshot falls back to the store currency.
 * v1.1.0: the test suite left a fake MegaOTT token in settings → teardown now clears provider keys.
 * v1.1.0: upgrade routine ran at `plugins_loaded` and translated module names too early → runs on `init`.
+* v1.2.0: WooCommerce block notices and order-item meta needed portal styles at checkout → added.

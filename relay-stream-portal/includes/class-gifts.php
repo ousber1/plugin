@@ -210,7 +210,7 @@ class RSP_Gifts {
 					'provider_type' => isset( $snap['type'] ) ? $snap['type'] : 'm3u',
 					'status'        => 'pending_activation',
 					'plan_label'    => isset( $snap['plan_name'] ) ? $snap['plan_name'] : '',
-					'package_id'    => isset( $snap['package'] ) ? $snap['package'] : 'all',
+					'package_id'    => isset( $snap['package'] ) ? $snap['package'] : '',
 				)
 			);
 		}
