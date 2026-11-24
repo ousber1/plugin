@@ -27,7 +27,7 @@ async function noOverflow( page ) {
 	page.on( 'pageerror', ( e ) => errors.push( e.message ) );
 
 	await page.goto( BASE + '/portal/' );
-	t( 'guest sees sign-in form on portal', await page.locator( 'input[name="pwd"]' ).count() === 1 );
+	t( 'guest opening the portal is sent to the full-page sign-in', /portal-login/.test( page.url() ) && await page.locator( 'input[name="pwd"]' ).count() === 1 );
 
 	await page.goto( BASE + '/portal-register/' );
 	const email = `e2e-${ rand }@example.test`;
@@ -35,11 +35,14 @@ async function noOverflow( page ) {
 	await page.fill( 'input[name="email"]', email );
 	await page.fill( 'input[name="password"]', 'Secret-pass-123' );
 	await Promise.all( [ page.waitForNavigation(), page.click( 'button[type="submit"]' ) ] );
-	t( 'registration signs in and opens the portal', ( await page.textContent( '.rsp-main h1' ) || '' ).includes( 'Dana' ), page.url() );
+	t( 'registration signs in and opens the portal (full-page app, no theme header)', ( await page.textContent( '.rsp-main h1' ) || '' ).includes( 'Dana' ) && await page.locator( '.rsp-is-app .rsp-sidebar' ).count() === 1 && await page.locator( 'header.wp-block-template-part' ).count() === 0, page.url() );
 	await page.screenshot( { path: OUT + '/desktop-dashboard-dark.png', fullPage: true } );
 
 	await page.goto( BASE + '/portal-plans/' );
 	t( 'plans page lists 4 plans', await page.locator( '.rsp-plan' ).count() === 4 );
+	await page.goto( BASE + '/portal-login/' );
+	t( 'signed-in customer opening the login page goes to the dashboard', /\/portal\/$/.test( page.url() ) );
+	await page.goto( BASE + '/portal-plans/' );
 	await page.screenshot( { path: OUT + '/desktop-plans.png', fullPage: true } );
 	await page.fill( 'input[name="nickname"]', 'E2E Lounge' );
 	await Promise.all( [ page.waitForNavigation(), page.locator( '.rsp-plan button[name="plan"]' ).nth( 1 ).click() ] );
@@ -128,6 +131,10 @@ async function noOverflow( page ) {
 	await m.fill( 'input[name="pwd"]', 'Secret-pass-123' );
 	await Promise.all( [ m.waitForNavigation(), m.click( 'button[type="submit"]' ) ] );
 	t( 'login form works on mobile', ( await m.textContent( '.rsp-main h1' ) || '' ).includes( 'Dana' ) );
+	await m.click( '[data-rsp-sidebar-toggle]' );
+	await m.waitForTimeout( 300 );
+	t( 'mobile menu opens as a drawer', await m.evaluate( () => document.querySelector( '[data-rsp-app]' ).classList.contains( 'is-open' ) ) );
+	await m.screenshot( { path: OUT + '/mobile-drawer.png' } );
 	for ( const slug of [ 'portal', 'portal-accounts', 'portal-plans', 'portal-apps', 'portal-transactions', 'portal-referrals', 'portal-support' ] ) {
 		await m.goto( BASE + '/' + slug + '/' );
 		t( `mobile ${ slug }: no horizontal scroll`, await noOverflow( m ) );
@@ -143,7 +150,7 @@ async function noOverflow( page ) {
 	await e.fill( 'input[name="pwd"]', 'Secret-pass-123' );
 	await Promise.all( [ e.waitForNavigation(), e.click( 'button[type="submit"]' ) ] );
 	await e.goto( BASE + '/elementor-portal-test/' );
-	t( 'Elementor page renders Portal Shell + Plan Cards widgets with live data', await e.locator( '.elementor-widget-rsp-portal-shell .rsp-shell' ).count() === 1 && await e.locator( '.elementor-widget-rsp-plan-cards .rsp-plan' ).count() === 4 && ( await e.textContent( '.rsp-nav' ) ).includes( 'My lines' ) );
+	t( 'Elementor page renders Portal Shell + Plan Cards widgets with live data', await e.locator( '.elementor-widget-rsp-portal-shell .rsp-shell' ).count() === 1 && await e.locator( '.elementor-widget-rsp-plan-cards .rsp-plan' ).count() === 4 && ( await e.textContent( '.rsp-side-nav, .rsp-nav' ) ).includes( 'My lines' ) );
 	const accent = await e.evaluate( () => getComputedStyle( document.querySelector( '.elementor-widget-rsp-portal-shell .rsp-root' ) ).getPropertyValue( '--rsp-accent' ).trim() );
 	t( 'Elementor style control overrides branding color for that widget', accent.toLowerCase() === '#e11d48', accent );
 	await e.screenshot( { path: OUT + '/elementor-page.png', fullPage: true } );

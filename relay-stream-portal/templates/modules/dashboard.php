@@ -9,69 +9,89 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$rsp_p      = ! empty( $vm['preview'] );
-$rsp_url    = static function ( $role, $q = array() ) use ( $rsp_p ) {
+$rsp_p   = ! empty( $vm['preview'] );
+$rsp_url = static function ( $role, $q = array() ) use ( $rsp_p ) {
 	return $rsp_p ? '#' : RSP_Settings::page_url( $role, $q );
 };
 $rsp_acc    = $vm['accounts'];
 $rsp_active = array_values( array_filter( $rsp_acc, static function ( $a ) { return 'active' === $a['status']; } ) );
-$rsp_renew  = array_values( array_filter( $rsp_acc, static function ( $a ) { return ! empty( $a['renewable'] ); } ) );
-usort( $rsp_renew, static function ( $a, $b ) { return strcmp( (string) $a['expires_at'], (string) $b['expires_at'] ); } );
-$rsp_status = $rsp_active ? 'active' : ( $rsp_acc ? $rsp_acc[0]['status'] : 'none' );
-$rsp_next   = $rsp_active ? min( array_column( $rsp_active, 'expires_at' ) ) : null;
-$rsp_hello  = str_replace( '{name}', $vm['user']['first'], RSP_Portal::label( $args, 'welcome', RSP_Settings::get( 'text_welcome' ) ) );
+usort( $rsp_active, static function ( $a, $b ) { return strcmp( (string) $a['expires_at'], (string) $b['expires_at'] ); } );
+$rsp_main   = $rsp_active ? $rsp_active[0] : ( $rsp_acc ? $rsp_acc[0] : null );
+$rsp_status = $rsp_main ? $rsp_main['status'] : 'expired';
+$rsp_label  = $rsp_main ? $rsp_main['status_label'] : ( empty( $rsp_acc ) ? __( 'Inactive', 'relay-stream-portal' ) : RSP_Accounts::status_label( 'expired' ) );
+$rsp_hour   = (int) current_time( 'G' );
+$rsp_greet  = $rsp_hour < 12 ? __( 'Good morning', 'relay-stream-portal' ) : ( $rsp_hour < 18 ? __( 'Good afternoon', 'relay-stream-portal' ) : __( 'Good evening', 'relay-stream-portal' ) );
+$rsp_hello  = strtr( RSP_Portal::label( $args, 'welcome', RSP_Settings::get( 'text_welcome' ) ), array( '{greeting}' => $rsp_greet, '{name}' => $vm['user']['first'] ) );
+$rsp_tone   = 'active' === $rsp_status ? 'ok' : ( in_array( $rsp_status, array( 'pending_activation', 'review', 'pending_payment' ), true ) ? 'warn' : 'bad' );
+$rsp_player = ! empty( $vm['player']['enabled'] ) && $rsp_active;
+$rsp_c      = $rsp_main && ! empty( $rsp_main['has_credentials'] ) && in_array( $rsp_main['status'], array( 'active', 'expired' ), true ) && RSP_Settings::get( 'show_credentials' );
 ?>
 <div class="rsp-page">
-	<div class="rsp-page-head">
-		<div><h1><?php echo esc_html( $rsp_hello ); ?></h1><p class="rsp-muted"><?php echo esc_html( RSP_Settings::get( 'text_welcome_sub' ) ); ?></p></div>
-		<?php if ( ! empty( $vm['player']['enabled'] ) && $rsp_active ) : ?>
-			<a class="rsp-btn rsp-btn-primary" href="<?php echo esc_url( $vm['player']['url'] ); ?>" target="_blank" rel="noopener"><?php RSP_Icons::e( 'play' ); ?><?php echo esc_html( $vm['player']['label'] ); ?></a>
-		<?php endif; ?>
-	</div>
+	<div class="rsp-page-head"><div>
+		<h1><?php echo esc_html( $rsp_hello ); ?></h1>
+		<p class="rsp-muted"><?php echo esc_html( RSP_Settings::get( 'text_welcome_sub' ) ); ?></p>
+	</div></div>
 
 	<?php echo RSP_Portal::template( 'partials/announcements', array( 'vm' => $vm ) ); // phpcs:ignore ?>
 
 	<div class="rsp-stats">
-		<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'shield' ); ?></span><div><small><?php esc_html_e( 'Subscription', 'relay-stream-portal' ); ?></small><strong class="rsp-tone-<?php echo esc_attr( 'active' === $rsp_status ? 'ok' : ( 'none' === $rsp_status ? 'muted' : 'warn' ) ); ?>"><?php echo esc_html( 'none' === $rsp_status ? __( 'None yet', 'relay-stream-portal' ) : RSP_Accounts::status_label( $rsp_status ) ); ?></strong></div></div>
-		<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'clock' ); ?></span><div><small><?php esc_html_e( 'Next expiry', 'relay-stream-portal' ); ?></small><strong><?php echo RSP_Portal::date( $rsp_next ); // phpcs:ignore ?></strong></div></div>
-		<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'referrals' ); ?></span><div><small><?php esc_html_e( 'Reward days', 'relay-stream-portal' ); ?></small><strong><?php echo (int) $vm['referral']['stats']['balance']; ?></strong></div></div>
-		<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'transactions' ); ?></span><div><small><?php esc_html_e( 'Orders', 'relay-stream-portal' ); ?></small><strong><?php echo (int) $vm['order_count']; ?></strong></div></div>
+		<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-green"><?php RSP_Icons::e( 'shield' ); ?></span><div><small><?php esc_html_e( 'Subscription', 'relay-stream-portal' ); ?></small><strong class="rsp-tone-<?php echo esc_attr( $rsp_tone ); ?>"><?php echo esc_html( $rsp_label ); ?></strong></div></div>
+		<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'shield' ); ?></span><div><small><?php esc_html_e( 'Expires', 'relay-stream-portal' ); ?></small><strong><?php echo $rsp_main && $rsp_main['expires_at'] ? RSP_Portal::date( $rsp_main['expires_at'] ) : esc_html__( 'N/A', 'relay-stream-portal' ); // phpcs:ignore ?></strong></div></div>
+		<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'referrals' ); ?></span><div><small><?php esc_html_e( 'Referrals', 'relay-stream-portal' ); ?></small><strong><?php echo (int) $vm['referral']['stats']['invited']; ?></strong></div></div>
+		<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-gold"><?php RSP_Icons::e( 'transactions2' ); ?></span><div><small><?php esc_html_e( 'Transactions', 'relay-stream-portal' ); ?></small><strong><?php echo (int) $vm['order_count']; ?></strong></div></div>
 	</div>
 
-	<div class="rsp-grid rsp-grid-2-1">
-		<?php echo RSP_Portal::template( 'partials/subscription-summary', array( 'vm' => $vm, 'args' => array() ) ); // phpcs:ignore ?>
-		<section class="rsp-card">
-			<div class="rsp-card-head"><h2><?php esc_html_e( 'Shortcuts', 'relay-stream-portal' ); ?></h2></div>
-			<div class="rsp-shortcuts">
-				<?php if ( $vm['billing'] ) : ?>
-					<a href="<?php echo esc_url( $rsp_url( 'plans' ) ); ?>"><?php RSP_Icons::e( 'plans' ); ?><span><?php esc_html_e( 'Choose a plan', 'relay-stream-portal' ); ?></span></a>
-					<?php if ( $rsp_renew ) : ?>
-						<a href="<?php echo esc_url( $rsp_url( 'plans', array( 'renew' => $rsp_renew[0]['uuid'] ) ) ); ?>"><?php RSP_Icons::e( 'refresh' ); ?><span><?php
-							/* translators: %s account */
-							echo esc_html( sprintf( __( 'Renew %s', 'relay-stream-portal' ), $rsp_renew[0]['nickname'] ) ); ?></span></a>
-					<?php endif; ?>
+	<div class="rsp-dash-grid">
+		<section class="rsp-card rsp-account-details">
+			<div class="rsp-card-head"><h2><?php esc_html_e( 'Account Details', 'relay-stream-portal' ); ?></h2>
+				<?php echo RSP_Portal::pill( $rsp_main ? $rsp_status : 'expired', $rsp_label ); // phpcs:ignore ?></div>
+			<?php if ( $rsp_main && in_array( $rsp_main['status'], array( 'active', 'pending_activation', 'review' ), true ) ) : ?>
+				<dl class="rsp-detail-list">
+					<div><dt><?php esc_html_e( 'Account', 'relay-stream-portal' ); ?></dt><dd><?php echo esc_html( $rsp_main['nickname'] ); ?></dd></div>
+					<div><dt><?php esc_html_e( 'Plan', 'relay-stream-portal' ); ?></dt><dd><?php echo esc_html( $rsp_main['plan'] ? $rsp_main['plan'] : '—' ); ?></dd></div>
+					<div><dt><?php esc_html_e( 'Activated', 'relay-stream-portal' ); ?></dt><dd><?php echo RSP_Portal::date( $rsp_main['activated_at'] ); // phpcs:ignore ?></dd></div>
+					<div><dt><?php esc_html_e( 'Expires', 'relay-stream-portal' ); ?></dt><dd><?php echo RSP_Portal::date( $rsp_main['expires_at'] ); // phpcs:ignore ?></dd></div>
+					<div><dt><?php esc_html_e( 'Connections', 'relay-stream-portal' ); ?></dt><dd><?php echo null === $rsp_main['max_connections'] ? '—' : (int) $rsp_main['max_connections']; ?></dd></div>
+				</dl>
+				<?php if ( $rsp_c ) : ?>
+					<div class="rsp-cred-grid" data-rsp-creds="<?php echo esc_attr( $rsp_main['uuid'] ); ?>">
+						<?php foreach ( array( 'server' => __( 'Server URL', 'relay-stream-portal' ), 'username' => __( 'Username', 'relay-stream-portal' ), 'password' => __( 'Password', 'relay-stream-portal' ), 'm3u' => __( 'M3U URL', 'relay-stream-portal' ), 'mac' => __( 'MAC', 'relay-stream-portal' ) ) as $rsp_k => $rsp_l ) : ?>
+							<div class="rsp-cred" data-field="<?php echo esc_attr( $rsp_k ); ?>"<?php echo 'mac' === $rsp_k ? ' hidden' : ''; ?>><span class="rsp-cred-label"><?php echo esc_html( $rsp_l ); ?></span><code class="rsp-cred-value">••••••••</code><button type="button" class="rsp-icon-btn rsp-sm" data-rsp-copy-field disabled aria-label="<?php echo esc_attr( sprintf( /* translators: %s field */ __( 'Copy %s', 'relay-stream-portal' ), $rsp_l ) ); ?>"><?php RSP_Icons::e( 'copy', 16 ); ?></button></div>
+						<?php endforeach; ?>
+					</div>
+					<div class="rsp-actions"><button type="button" class="rsp-btn rsp-btn-sm" data-rsp-reveal="<?php echo esc_attr( $rsp_main['uuid'] ); ?>"<?php echo RSP_Portal::inert( $vm ); // phpcs:ignore ?>><?php RSP_Icons::e( 'eye', 16 ); ?><span><?php esc_html_e( 'Show details', 'relay-stream-portal' ); ?></span></button>
+						<a class="rsp-btn rsp-btn-sm" href="<?php echo esc_url( $rsp_url( 'accounts' ) ); ?>"><?php esc_html_e( 'Manage accounts', 'relay-stream-portal' ); ?></a></div>
 				<?php endif; ?>
-				<?php if ( count( $rsp_acc ) > 1 ) : ?>
-					<a href="<?php echo esc_url( $rsp_url( 'accounts' ) ); ?>"><?php RSP_Icons::e( 'accounts' ); ?><span><?php esc_html_e( 'Switch account', 'relay-stream-portal' ); ?></span></a>
-				<?php endif; ?>
-				<a href="<?php echo esc_url( $rsp_url( 'apps' ) ); ?>"><?php RSP_Icons::e( 'download' ); ?><span><?php esc_html_e( 'Download apps', 'relay-stream-portal' ); ?></span></a>
-				<a href="<?php echo esc_url( $rsp_url( 'support', array( 'new' => 1 ) ) ); ?>"><?php RSP_Icons::e( 'support' ); ?><span><?php esc_html_e( 'Open a ticket', 'relay-stream-portal' ); ?></span></a>
-				<?php if ( RSP_Settings::get( 'referral_enabled' ) ) : ?>
-					<a href="<?php echo esc_url( $rsp_url( 'referrals' ) ); ?>"><?php RSP_Icons::e( 'referrals' ); ?><span><?php esc_html_e( 'Refer a friend', 'relay-stream-portal' ); ?></span></a>
-				<?php endif; ?>
-				<?php if ( $vm['billing'] && RSP_Settings::get( 'gift_enabled' ) ) : ?>
-					<a href="<?php echo esc_url( $rsp_url( 'referrals', array( 'tab' => 'gifts' ) ) ); ?>"><?php RSP_Icons::e( 'redeem' ); ?><span><?php esc_html_e( 'Gift a subscription', 'relay-stream-portal' ); ?></span></a>
-				<?php endif; ?>
-			</div>
+			<?php else : ?>
+				<div class="rsp-empty">
+					<p><?php esc_html_e( 'No active subscription', 'relay-stream-portal' ); ?></p>
+					<a class="rsp-btn rsp-btn-primary" href="<?php echo esc_url( $rsp_main && $rsp_main['renewable'] ? $rsp_url( 'plans', array( 'renew' => $rsp_main['uuid'] ) ) : $rsp_url( 'plans' ) ); ?>"><?php echo esc_html( $rsp_main && $rsp_main['renewable'] ? __( 'Renew Now', 'relay-stream-portal' ) : __( 'Subscribe Now', 'relay-stream-portal' ) ); ?></a>
+				</div>
+			<?php endif; ?>
 		</section>
+
+		<div class="rsp-quick">
+			<?php if ( $rsp_player ) : ?>
+				<a class="rsp-quick-card" href="<?php echo esc_url( $vm['player']['url'] ); ?>" target="_blank" rel="noopener"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'play' ); ?></span><span><strong><?php echo esc_html( $vm['player']['label'] ); ?></strong><small><?php esc_html_e( 'Open the web player', 'relay-stream-portal' ); ?></small></span></a>
+			<?php else : ?>
+				<div class="rsp-quick-card is-disabled" aria-disabled="true"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'play' ); ?></span><span><strong><?php echo esc_html( $vm['player']['label'] ? $vm['player']['label'] : __( 'Start Watching', 'relay-stream-portal' ) ); ?></strong><small><?php esc_html_e( 'Web player coming soon', 'relay-stream-portal' ); ?></small></span><span class="rsp-soon"><?php esc_html_e( 'Soon', 'relay-stream-portal' ); ?></span></div>
+			<?php endif; ?>
+			<a class="rsp-quick-card" href="<?php echo esc_url( $rsp_url( 'apps' ) ); ?>"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'grid' ); ?></span><span><strong><?php esc_html_e( 'Download Apps', 'relay-stream-portal' ); ?></strong><small><?php esc_html_e( 'Setup guides', 'relay-stream-portal' ); ?></small></span></a>
+			<a class="rsp-quick-card" href="<?php echo esc_url( $rsp_url( 'support', array( 'new' => 1 ) ) ); ?>"><span class="rsp-stat-icon rsp-c-gold"><?php RSP_Icons::e( 'plus' ); ?></span><span><strong><?php esc_html_e( 'Open Ticket', 'relay-stream-portal' ); ?></strong><small><?php esc_html_e( 'Get support', 'relay-stream-portal' ); ?></small></span></a>
+			<?php if ( RSP_Settings::get( 'referral_enabled' ) ) : ?>
+				<a class="rsp-quick-card" href="<?php echo esc_url( $rsp_url( 'referrals' ) ); ?>"><span class="rsp-stat-icon rsp-c-green"><?php RSP_Icons::e( 'referrals' ); ?></span><span><strong><?php esc_html_e( 'Refer a Friend', 'relay-stream-portal' ); ?></strong><small><?php
+					/* translators: %d days */
+					echo esc_html( sprintf( __( 'Earn %d free days', 'relay-stream-portal' ), (int) RSP_Settings::get( 'referral_days', 30 ) ) ); ?></small></span></a>
+			<?php endif; ?>
+		</div>
 	</div>
 
 	<div class="rsp-grid rsp-grid-2">
 		<?php if ( $vm['billing'] ) : ?>
-			<section class="rsp-card">
-				<div class="rsp-card-head"><h2><?php esc_html_e( 'Recent transactions', 'relay-stream-portal' ); ?></h2><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'transactions' ) ); ?>"><?php esc_html_e( 'View all', 'relay-stream-portal' ); ?></a></div>
+			<section class="rsp-card rsp-recent">
+				<div class="rsp-card-head"><h2><?php esc_html_e( 'Recent Transactions', 'relay-stream-portal' ); ?></h2><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'transactions' ) ); ?>"><?php esc_html_e( 'View All', 'relay-stream-portal' ); ?></a></div>
 				<?php if ( empty( $vm['orders']['rows'] ) ) : ?>
-					<div class="rsp-empty rsp-empty-sm"><?php RSP_Icons::e( 'transactions', 30 ); ?><p><?php esc_html_e( 'No orders yet.', 'relay-stream-portal' ); ?></p></div>
+					<div class="rsp-empty rsp-empty-sm"><?php RSP_Icons::e( 'transactions2', 30 ); ?><p><?php esc_html_e( 'No transactions yet', 'relay-stream-portal' ); ?></p><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'plans' ) ); ?>"><?php esc_html_e( 'Make your first purchase', 'relay-stream-portal' ); ?></a></div>
 				<?php else : ?>
 					<ul class="rsp-mini-list">
 						<?php foreach ( array_slice( $vm['orders']['rows'], 0, 4 ) as $rsp_o ) : ?>
@@ -83,10 +103,10 @@ $rsp_hello  = str_replace( '{name}', $vm['user']['first'], RSP_Portal::label( $a
 				<?php endif; ?>
 			</section>
 		<?php endif; ?>
-		<section class="rsp-card">
-			<div class="rsp-card-head"><h2><?php esc_html_e( 'Recent tickets', 'relay-stream-portal' ); ?></h2><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'support' ) ); ?>"><?php esc_html_e( 'View all', 'relay-stream-portal' ); ?></a></div>
+		<section class="rsp-card rsp-recent">
+			<div class="rsp-card-head"><h2><?php esc_html_e( 'Recent Tickets', 'relay-stream-portal' ); ?></h2><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'support' ) ); ?>"><?php esc_html_e( 'View All', 'relay-stream-portal' ); ?></a></div>
 			<?php if ( empty( $vm['tickets'] ) ) : ?>
-				<div class="rsp-empty rsp-empty-sm"><?php RSP_Icons::e( 'support', 30 ); ?><p><?php esc_html_e( 'No support tickets.', 'relay-stream-portal' ); ?></p></div>
+				<div class="rsp-empty rsp-empty-sm"><?php RSP_Icons::e( 'lifebuoy', 30 ); ?><p><?php esc_html_e( 'No support tickets', 'relay-stream-portal' ); ?></p><a class="rsp-link" href="<?php echo esc_url( $rsp_url( 'support', array( 'new' => 1 ) ) ); ?>"><?php esc_html_e( 'Create a ticket', 'relay-stream-portal' ); ?></a></div>
 			<?php else : ?>
 				<ul class="rsp-mini-list">
 					<?php foreach ( array_slice( $vm['tickets'], 0, 4 ) as $rsp_t ) : ?>

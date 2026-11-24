@@ -17,6 +17,7 @@ if ( ! defined( 'RSP_TESTING' ) ) {
 	define( 'RSP_TESTING', true );
 }
 require_once __DIR__ . '/fixtures/class-fake-panel.php';
+require_once __DIR__ . '/fixtures/class-fake-megaott.php';
 
 $GLOBALS['rsp_results'] = array();
 $GLOBALS['rsp_mail']    = array();
@@ -105,7 +106,7 @@ function rsp_live() {
  */
 function rsp_manual() {
 	RSP_Provider_Factory::$transport = null;
-	RSP_Settings::update( array( 'api_mode' => 'manual', 'api_mapping_verified' => 0, 'api_key_enc' => '' ) );
+	RSP_Settings::update( array( 'api_mode' => 'manual', 'api_mapping_verified' => 0, 'api_key_enc' => '', 'megaott_token_enc' => '', 'api_provider' => 'tvplus' ) );
 }
 
 $plans = RSP_Woocommerce::plans();
@@ -433,6 +434,88 @@ RSP_Settings::update( array( 'language' => 'ar' ) );
 $html = RSP_Portal::render_shell( array( 'module' => 'dashboard' ) );
 rsp_t( 'i18n', 'Arabic portal renders right-to-left', false !== strpos( $html, 'dir="rtl"' ) );
 RSP_Settings::update( array( 'language' => '' ) );
+
+
+/* ================= MegaOTT adapter + live flow (fixture) ================= */
+$mo = new RSP_Fake_Megaott();
+$mp = new RSP_Megaott_Provider( 'https://megaott.net/api/v1', $mo->token, array( 'megaott.net' ), 20, array( 'whatsapp_telegram' => '+100' ), $mo->transport() );
+$r  = $mp->test_connection();
+rsp_t( 'megaott', 'GET /user connection test with Bearer token, username masked', $r->ok() && '120.5' === $r->data['credits'] && false === strpos( wp_json_encode( $r->data ), 'reseller_demo' ) && 'Bearer ' . $mo->token === $mo->calls[0]['auth'] );
+rsp_t( 'megaott', 'token never appears in redacted logs', false === strpos( wp_json_encode( $r->to_log() ), $mo->token ) );
+$r = $mp->list_packages();
+rsp_t( 'megaott', 'paginated /packages fully read with period metadata', $r->ok() && 3 === $r->data['count'] && 'hour' === $r->data['meta']['9']['period_type'] );
+$bad = new RSP_Megaott_Provider( 'https://megaott.net/api/v1', 'wrong', array( 'megaott.net' ), 20, array(), $mo->transport() );
+rsp_t( 'megaott', '401 is a definitive failure', 'failed' === $bad->test_connection()->outcome );
+rsp_t( 'megaott', '422 on create (bad package) => failed, not ambiguous', 'failed' === $mp->create_account( array( 'months' => 1, 'package' => '77', 'username' => 'zz1' ) )->outcome );
+rsp_t( 'megaott', 'unmapped package refused locally', 'failed' === $mp->create_account( array( 'months' => 1, 'package' => 'all', 'username' => 'x' ) )->outcome );
+
+$mo                              = new RSP_Fake_Megaott();
+RSP_Provider_Factory::$transport = $mo->transport();
+RSP_Settings::update( array( 'api_provider' => 'megaott', 'api_mode' => 'live', 'api_mapping_verified' => 1, 'megaott_token_enc' => RSP_Crypto::encrypt( $mo->token ), 'megaott_base_url' => 'https://megaott.net/api/v1', 'api_allowed_hosts' => 'tvpluspanel.net,megaott.net', 'megaott_connections' => 2 ) );
+$mplan = wc_get_product( $plan1 );
+$mplan->update_meta_data( '_rsp_package', '4' );
+$mplan->save();
+$mplan3 = wc_get_product( $plan3 );
+$mplan3->update_meta_data( '_rsp_package', '5' );
+$mplan3->save();
+$mu = rsp_user( 'mega' );
+wp_set_current_user( $mu );
+$m1 = rsp_order( $mu, $plan1, 'new', array( 'rsp_nickname' => 'Mega TV' ) );
+$m1->payment_complete( 'M-1' );
+RSP_Jobs::process_queue();
+$mj  = RSP_Jobs::for_order( $m1->get_id() )[0];
+$mac = RSP_Accounts::get( $mj->account_id );
+$mc  = RSP_Accounts::credentials( $mac );
+$sub = $mo->subs[ (int) $mac->provider_user_id ];
+rsp_t( 'megaott', 'paid order -> POST /subscriptions -> verified by GET -> active', 'succeeded' === $mj->state && 'active' === $mac->status && 1 === $mo->creates() );
+rsp_t( 'megaott', 'username chosen by the portal; password, server and M3U stored encrypted', $mc['username'] === $sub['username'] && 'PW' . $sub['id'] . 'X' === $mc['password'] && 0 === strpos( $mc['url'], 'http://line.mega.example.test/get.php' ) && false === strpos( $mac->credentials, $mc['password'] ) );
+rsp_t( 'megaott', 'expiry and connection limit taken from the panel', substr( $mac->expires_at, 0, 10 ) === substr( $sub['expiring_at'], 0, 10 ) && 2 === (int) $mac->max_connections && 'rsp-' . $mac->uuid === $sub['note'] );
+
+$m2       = rsp_order( $mu, $plan1, 'new' );
+$mo->next = array( 'timeout_after_apply' );
+$m2->payment_complete( 'M-2' );
+RSP_Jobs::process_queue();
+$mj2 = RSP_Jobs::get( RSP_Jobs::for_order( $m2->get_id() )[0]->id );
+rsp_t( 'megaott', 'create timed out after applying -> scheduled for reconciliation (not review, not resent)', 'pending' === $mj2->state && 'reconcile_create' === $mj2->step && 2 === $mo->creates() );
+RSP_Jobs::update( $mj2->id, array( 'next_attempt_at' => RSP_Installer::now() ) );
+RSP_Jobs::process_queue();
+$mj2 = RSP_Jobs::get( $mj2->id );
+rsp_t( 'megaott', 'reconciled via by-username: adopted the existing line, no duplicate create', 'succeeded' === $mj2->state && 2 === $mo->creates() && 2 === count( $mo->subs ) );
+
+$m3       = rsp_order( $mu, $plan1, 'new' );
+$mo->next = array( 'timeout_before_apply' );
+$m3->payment_complete( 'M-3' );
+RSP_Jobs::process_queue();
+$mj3 = RSP_Jobs::for_order( $m3->get_id() )[0];
+RSP_Jobs::update( $mj3->id, array( 'next_attempt_at' => RSP_Installer::now() ) );
+RSP_Jobs::process_queue();
+RSP_Jobs::update( $mj3->id, array( 'next_attempt_at' => RSP_Installer::now() ) );
+RSP_Jobs::process_queue();
+$mj3 = RSP_Jobs::get( $mj3->id );
+rsp_t( 'megaott', 'create lost before applying -> by-username 404 -> safely re-created once', 'succeeded' === $mj3->state && 3 === count( $mo->subs ) );
+
+$before = $sub['expiring_at'];
+$m4     = rsp_order( $mu, $plan3, 'renew', array( 'rsp_account' => $mac->uuid ) );
+$m4->payment_complete( 'M-4' );
+RSP_Jobs::process_queue();
+$mj4  = RSP_Jobs::for_order( $m4->get_id() )[0];
+$ext  = array_values( array_filter( $mo->calls, static function ( $c ) { return 'POST /subscriptions/{id}/extend' === $c['route']; } ) );
+rsp_t( 'megaott', 'renewal uses /extend with the purchased plan package on the right subscription', 'succeeded' === $mj4->state && 1 === count( $ext ) && '5' === (string) $ext[0]['body']['package_id'] && RSP_Accounts::get( $mac->id )->expires_at > $mac->expires_at );
+$m5       = rsp_order( $mu, $plan1, 'renew', array( 'rsp_account' => $mac->uuid ) );
+$mo->next = array( null, 'timeout_after_apply' );
+$m5->payment_complete( 'M-5' );
+RSP_Jobs::process_queue();
+$mj5 = RSP_Jobs::for_order( $m5->get_id() )[0];
+$res = json_decode( $mj5->result, true );
+rsp_t( 'megaott', 'extend timeout after success reconciled by expiry comparison', 'succeeded' === $mj5->state && 'reconcile' === $res['reconciled'] );
+$prov = RSP_Provider_Factory::get();
+rsp_t( 'megaott', 'deactivate / activate supported', $prov->set_active( $mac->provider_user_id, false )->ok() && false === $mo->subs[ (int) $mac->provider_user_id ]['active'] && $prov->set_active( $mac->provider_user_id, true )->ok() );
+RSP_Settings::update( array( 'api_provider' => 'tvplus' ) );
+$mplan->update_meta_data( '_rsp_package', 'all' );
+$mplan->save();
+$mplan3->update_meta_data( '_rsp_package', 'all' );
+$mplan3->save();
+rsp_manual();
 
 /* ================= Summary ================= */
 $pass = count( array_filter( $GLOBALS['rsp_results'], static function ( $r ) { return $r['ok']; } ) );

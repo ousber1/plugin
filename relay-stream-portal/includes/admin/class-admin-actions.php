@@ -71,7 +71,8 @@ class RSP_Admin_Actions {
 				$v['support_url']   = esc_url_raw( self::p( 'support_url' ) );
 				$v['player_url']    = RSP_Guides::is_public_url( esc_url_raw( self::p( 'player_url' ) ) ) ? esc_url_raw( self::p( 'player_url' ) ) : '';
 				$v['logo_id']       = (int) self::p( 'logo_id' );
-				foreach ( array( 'color_accent', 'color_accent_2', 'color_dark_bg', 'color_dark_surface', 'color_light_bg', 'color_light_surface' ) as $k ) {
+				$v['layout'] = 'topbar' === self::p( 'layout' ) ? 'topbar' : 'sidebar';
+				foreach ( array( 'color_gold', 'color_accent', 'color_accent_2', 'color_dark_bg', 'color_dark_surface', 'color_light_bg', 'color_light_surface' ) as $k ) {
 					$c = sanitize_hex_color( self::p( $k ) );
 					if ( $c ) {
 						$v[ $k ] = $c;
@@ -80,7 +81,7 @@ class RSP_Admin_Actions {
 				$v['theme_default'] = in_array( self::p( 'theme_default' ), array( 'auto', 'dark', 'light' ), true ) ? self::p( 'theme_default' ) : 'auto';
 				$v['radius']        = max( 0, min( 32, (int) self::p( 'radius' ) ) );
 				$v['language']      = in_array( self::p( 'language' ), array( '', 'en_US', 'ar' ), true ) ? self::p( 'language' ) : '';
-				foreach ( array( 'allow_theme_toggle', 'floating_support', 'full_width', 'show_credentials', 'player_enabled', 'registration_open', 'email_verification', 'delete_on_uninstall' ) as $k ) {
+				foreach ( array( 'app_mode', 'redirect_after_login', 'allow_theme_toggle', 'floating_support', 'full_width', 'show_credentials', 'player_enabled', 'registration_open', 'email_verification', 'delete_on_uninstall' ) as $k ) {
 					$v[ $k ] = self::b( $k );
 				}
 				$pos  = isset( $_POST['nav_pos'] ) ? array_map( 'intval', (array) wp_unslash( $_POST['nav_pos'] ) ) : array();
@@ -132,7 +133,7 @@ class RSP_Admin_Actions {
 		$guides = array();
 		foreach ( (array) ( isset( $_POST['payment_guides'] ) ? wp_unslash( $_POST['payment_guides'] ) : array() ) as $g ) { // phpcs:ignore
 			if ( ! empty( $g['title'] ) ) {
-				$guides[] = array( 'title' => sanitize_text_field( $g['title'] ), 'url' => esc_url_raw( $g['url'] ), 'text' => sanitize_text_field( $g['text'] ) );
+				$guides[] = array( 'title' => sanitize_text_field( $g['title'] ), 'icon' => mb_substr( sanitize_text_field( isset( $g['icon'] ) ? $g['icon'] : '' ), 0, 4 ), 'url' => esc_url_raw( $g['url'] ), 'text' => sanitize_text_field( $g['text'] ) );
 			}
 		}
 		RSP_Settings::update(
@@ -140,6 +141,9 @@ class RSP_Admin_Actions {
 				'included_features'  => sanitize_textarea_field( wp_unslash( isset( $_POST['included_features'] ) ? $_POST['included_features'] : '' ) ), // phpcs:ignore
 				'refund_policy_text' => sanitize_textarea_field( wp_unslash( isset( $_POST['refund_policy_text'] ) ? $_POST['refund_policy_text'] : '' ) ), // phpcs:ignore
 				'payment_guides'     => $guides,
+				'secure_payment_text' => sanitize_textarea_field( wp_unslash( isset( $_POST['secure_payment_text'] ) ? $_POST['secure_payment_text'] : '' ) ), // phpcs:ignore
+				'included_subtitle'  => sanitize_text_field( wp_unslash( isset( $_POST['included_subtitle'] ) ? $_POST['included_subtitle'] : '' ) ), // phpcs:ignore
+				'payment_guides_title' => sanitize_text_field( wp_unslash( isset( $_POST['payment_guides_title'] ) ? $_POST['payment_guides_title'] : '' ) ), // phpcs:ignore
 				'hide_stale_unpaid'  => self::b( 'hide_stale_unpaid' ),
 				'stale_unpaid_hours' => max( 1, (int) self::p( 'stale_unpaid_hours' ) ),
 				'max_accounts'       => max( 1, (int) self::p( 'max_accounts' ) ),
@@ -158,6 +162,14 @@ class RSP_Admin_Actions {
 		$hosts = implode( ',', array_filter( array_map( static function ( $h ) { return preg_replace( '/[^a-z0-9.-]/', '', strtolower( trim( $h ) ) ); }, explode( ',', self::p( 'api_allowed_hosts' ) ) ) ) );
 		$v     = array(
 			'api_mode'                => 'live' === self::p( 'api_mode' ) ? 'live' : 'manual',
+			'api_provider'            => 'megaott' === self::p( 'api_provider' ) ? 'megaott' : 'tvplus',
+			'megaott_base_url'        => esc_url_raw( self::p( 'megaott_base_url' ), array( 'https' ) ),
+			'megaott_forced_country'  => strtoupper( substr( preg_replace( '/[^A-Za-z]/', '', self::p( 'megaott_forced_country' ) ), 0, 3 ) ) ?: 'ALL',
+			'megaott_connections'     => max( 1, (int) self::p( 'megaott_connections' ) ),
+			'megaott_adult'           => self::b( 'megaott_adult' ),
+			'megaott_vpn'             => self::b( 'megaott_vpn' ),
+			'megaott_contact'         => substr( self::p( 'megaott_contact' ), 0, 60 ),
+			'megaott_reward_package'  => preg_replace( '/[^0-9]/', '', self::p( 'megaott_reward_package' ) ),
 			'api_base_url'            => $url,
 			'api_docs_url'            => esc_url_raw( self::p( 'api_docs_url' ) ),
 			'api_allowed_hosts'       => $hosts,
@@ -166,9 +178,20 @@ class RSP_Admin_Actions {
 			'api_mapping_verified'    => self::b( 'api_mapping_verified' ),
 			'reward_month_conversion' => self::b( 'reward_month_conversion' ),
 		);
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-		if ( $url && ( ! $host || ! in_array( strtolower( $host ), explode( ',', $hosts ), true ) ) ) {
-			RSP_Admin::done( 'error', __( 'The API URL host must be listed in Allowed API hosts.', 'relay-stream-portal' ) );
+		foreach ( array( $url, $v['megaott_base_url'] ) as $check ) {
+			$host = wp_parse_url( $check, PHP_URL_HOST );
+			if ( $check && ( ! $host || ! in_array( strtolower( $host ), explode( ',', $hosts ), true ) ) ) {
+				RSP_Admin::done( 'error', __( 'Each API URL host must be listed in Allowed API hosts.', 'relay-stream-portal' ) );
+			}
+		}
+		$token = isset( $_POST['megaott_token'] ) ? trim( (string) wp_unslash( $_POST['megaott_token'] ) ) : ''; // phpcs:ignore
+		if ( self::b( 'megaott_token_clear' ) ) {
+			$v['megaott_token_enc'] = '';
+		} elseif ( '' !== $token ) {
+			$v['megaott_token_enc'] = RSP_Crypto::encrypt( $token );
+		}
+		if ( $s['api_provider'] !== $v['api_provider'] ) {
+			$v['api_mapping_verified'] = 0; // Mapping must be re-verified for a new provider.
 		}
 		$key = isset( $_POST['api_key'] ) ? trim( (string) wp_unslash( $_POST['api_key'] ) ) : ''; // phpcs:ignore
 		if ( self::b( 'api_key_clear' ) ) {
@@ -178,7 +201,7 @@ class RSP_Admin_Actions {
 		}
 		RSP_Settings::update( $v );
 		$changes = array_keys( array_diff_assoc( array_map( 'strval', array_intersect_key( $v, $s ) ), array_map( 'strval', array_intersect_key( $s, $v ) ) ) );
-		RSP_Audit::log( 'api_settings_saved', 'settings', 'api', '', array( 'changed' => array_values( array_diff( $changes, array( 'api_key_enc' ) ) ), 'key_changed' => isset( $v['api_key_enc'] ), 'live' => RSP_Provider_Factory::is_live() ) );
+		RSP_Audit::log( 'api_settings_saved', 'settings', 'api', '', array( 'changed' => array_values( array_diff( $changes, array( 'api_key_enc' ) ) ), 'key_changed' => isset( $v['api_key_enc'] ) || isset( $v['megaott_token_enc'] ), 'live' => RSP_Provider_Factory::is_live() ) );
 		RSP_Admin::done( 'success', RSP_Provider_Factory::is_live() ? __( 'Saved. Live API mode is active.', 'relay-stream-portal' ) : __( 'Saved. Provisioning stays manual until mode is Live, a key is saved and the mapping is verified.', 'relay-stream-portal' ) );
 	}
 
@@ -186,7 +209,7 @@ class RSP_Admin_Actions {
 	 * Test connection (read-only reseller_info).
 	 */
 	public static function test_connection() {
-		$r = RSP_Provider_Factory::tvplus()->test_connection();
+		$r = RSP_Provider_Factory::remote()->test_connection();
 		set_transient( 'rsp_test_result_' . get_current_user_id(), array_merge( $r->to_log(), array( 'username_masked' => isset( $r->data['username'] ) ? $r->data['username'] : '' ) ), 120 );
 		RSP_Audit::log( 'api_test_connection', 'settings', 'api', '', $r->to_log() );
 		RSP_Admin::done( $r->ok() ? 'success' : 'error', $r->ok() ? __( 'Connection OK (reseller_info).', 'relay-stream-portal' ) : __( 'Connection failed: ', 'relay-stream-portal' ) . $r->error );
@@ -196,9 +219,10 @@ class RSP_Admin_Actions {
 	 * Load packages (bouquet).
 	 */
 	public static function load_packages() {
-		$r = RSP_Provider_Factory::tvplus()->list_packages();
+		$r = RSP_Provider_Factory::remote()->list_packages();
 		if ( $r->ok() ) {
 			update_option( 'rsp_packages_cache', $r->data['packages'], false );
+			update_option( 'rsp_packages_meta', isset( $r->data['meta'] ) ? $r->data['meta'] : array(), false );
 		}
 		RSP_Audit::log( 'api_load_packages', 'settings', 'api', '', $r->to_log() );
 		RSP_Admin::done( $r->ok() ? 'success' : 'error', $r->ok() ? sprintf( /* translators: %d */ __( 'Loaded %d packages.', 'relay-stream-portal' ), count( $r->data['packages'] ) ) : $r->error );
@@ -329,7 +353,7 @@ class RSP_Admin_Actions {
 		if ( ! $a || ! RSP_Provider_Factory::is_live() ) {
 			RSP_Admin::done( 'error', __( 'Live mode is required.', 'relay-stream-portal' ) );
 		}
-		$r = RSP_Provider_Factory::get()->lookup_account( RSP_Accounts::credentials( $a ), $a->provider_type );
+		$r = RSP_Provider_Factory::get()->lookup_account( RSP_Jobs::provider_creds( $a ), $a->provider_type );
 		RSP_Audit::log( 'account_refreshed', 'account', $a->uuid, '', $r->to_log() );
 		if ( ! $r->ok() ) {
 			RSP_Admin::done( 'error', $r->error );
@@ -337,6 +361,26 @@ class RSP_Admin_Actions {
 		$exp = $r->data['expire'] . ' 23:59:59';
 		RSP_Accounts::update( $a->id, array( 'expires_at' => $exp, 'status' => strtotime( $exp . ' UTC' ) < time() ? 'expired' : ( '0' === $r->data['enabled'] ? 'suspended' : 'active' ) ) );
 		RSP_Admin::done( 'success', sprintf( /* translators: %s date */ __( 'Panel reports expiry %s.', 'relay-stream-portal' ), $r->data['expire'] ) );
+	}
+
+	/**
+	 * Suspend / re-activate in the panel (providers that document it).
+	 */
+	public static function account_suspend() {
+		$a        = RSP_Accounts::get_by_uuid( self::p( 'uuid' ) );
+		$provider = RSP_Provider_Factory::get();
+		if ( ! $a || ! $a->provider_user_id || ! method_exists( $provider, 'set_active' ) ) {
+			RSP_Admin::done( 'error', __( 'This provider or account does not support suspension.', 'relay-stream-portal' ) );
+		}
+		$reason = self::reason();
+		$active = 'activate' === self::p( 'op' );
+		$r      = $provider->set_active( $a->provider_user_id, $active );
+		RSP_Audit::log( $active ? 'account_reactivated' : 'account_suspended', 'account', $a->uuid, $reason, $r->to_log() );
+		if ( ! $r->ok() ) {
+			RSP_Admin::done( 'error', $r->error );
+		}
+		RSP_Accounts::update( $a->id, array( 'status' => $active ? ( $a->expires_at && strtotime( $a->expires_at . ' UTC' ) < time() ? 'expired' : 'active' ) : 'suspended' ) );
+		RSP_Admin::done( 'success', $active ? __( 'Account re-activated in the panel.', 'relay-stream-portal' ) : __( 'Account suspended in the panel.', 'relay-stream-portal' ) );
 	}
 
 	/**

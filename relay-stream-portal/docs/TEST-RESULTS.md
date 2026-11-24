@@ -1,30 +1,32 @@
-# Test results
+# Test results (v1.1.0)
 
-Run on 2026-11-24 in a clean sandbox: **WordPress 7.1.5**, **WooCommerce 11.3.1**, **Elementor 4.4.1 (Free)**, PHP 8.3.6, MariaDB 10.11, theme Twenty Twenty-Five, Chromium via Playwright.
+Run on 2026-11-24 in a clean sandbox: **WordPress 7.1.5**, **WooCommerce 11.3.1** (HPOS), **Elementor 4.4.1 (Free)**, PHP 8.3.6, MariaDB 10.11, theme Twenty Twenty-Five, Chromium via Playwright.
 
 ## What was and was not verified
 
 | Area | Verified against | Result |
 |---|---|---|
-| TVPlus adapter, live fulfillment, reconciliation | **Fixture** fake panel built from the documented response shapes (`tests/fixtures/class-fake-panel.php`) | Passed |
-| Real TVPlus panel | **Not tested.** No API key was available and the sandbox cannot resolve `tvpluspanel.net`. The *Test connection* button was exercised and failed safely before sending (“A valid URL was not provided” — DNS) | **Not verified** |
-| WooCommerce checkout | Real block checkout in Chromium with the offline “cheque” test gateway; payment confirmed by setting the order to Processing | Passed |
-| HPOS and legacy order storage | Full integration + concurrency suites run on both | Passed on both |
-| Elementor Free | Editor loaded in Chromium; widget panel; editor preview; front-end render; style override | Passed |
-| Arabic / RTL, mobile | Chromium (iPhone 13 profile), screenshots reviewed | Passed |
+| TVPlus adapter, fulfillment, reconciliation | **Fixture** fake panel (`tests/fixtures/class-fake-panel.php`) | Passed |
+| MegaOTT adapter, fulfillment, create reconciliation by username, extend, suspend | **Fixture** fake API (`tests/fixtures/class-fake-megaott.php`) | Passed |
+| Real TVPlus panel | **Not tested** — no key; the sandbox could not resolve `tvpluspanel.net` | **Not verified** |
+| Real MegaOTT API | One read-only call only: `GET /api/v1/user` with an invalid token → `401 {"message":"Unauthenticated."}` (confirms base URL, Bearer auth, error shape). No line was created, extended or suspended | **Not verified beyond auth** |
+| WooCommerce checkout | Real block checkout in Chromium with the offline test gateway; payment confirmed by staff | Passed |
+| HPOS and legacy order storage | Integration + concurrency suites on both (legacy runs from v1.0.0; v1.1.0 runs on HPOS) | Passed |
+| Elementor Free | Editor in Chromium (panel lists 18 widgets, synthetic preview), front-end render, style override | Passed |
+| Full-page app, sign-in redirect, sidebar drawer, Arabic RTL, mobile | Chromium desktop + iPhone 13 profile; screenshots reviewed | Passed |
 
-Live integration must still be verified on your panel with the checklist in `API-MAPPING.md` before enabling live mode.
+Live integration must be verified on your own panel with the checklist in `API-MAPPING.md` before enabling live mode.
 
 ## How to run
 
 ```
-wp eval-file wp-content/plugins/relay-stream-portal/tests/run-tests.php        # integration (fixture panel)
+wp eval-file wp-content/plugins/relay-stream-portal/tests/run-tests.php        # integration (fixtures)
 WP="wp --path=/path/to/wp" tests/concurrency/run.sh                           # multi-process races
 BASE=http://your-test-site OUT=/tmp/shots node tests/e2e/portal.e2e.js        # browser (Playwright)
 ```
-Run these on a disposable test site only (they create users and orders).
+Run these on a disposable test site only (they create users and orders). Clear `_transient_rsp_rl_*` first (rate limits).
 
-## Integration suite — 84 passed, 0 failed (also re-run with HPOS enabled: 84/84)
+## Integration suite — 99 passed, 0 failed
 
 | Group | Test | Result |
 |---|---|---|
@@ -112,8 +114,23 @@ Run these on a disposable test site only (they create users and orders).
 | elementor | Portal Shell widget renders (editor preview) | PASS |
 | elementor | Elementor page JSON holds no customer data | PASS |
 | i18n | Arabic portal renders right-to-left | PASS |
+| megaott | GET /user connection test with Bearer token, username masked | PASS |
+| megaott | token never appears in redacted logs | PASS |
+| megaott | paginated /packages fully read with period metadata | PASS |
+| megaott | 401 is a definitive failure | PASS |
+| megaott | 422 on create (bad package) => failed, not ambiguous | PASS |
+| megaott | unmapped package refused locally | PASS |
+| megaott | paid order -> POST /subscriptions -> verified by GET -> active | PASS |
+| megaott | username chosen by the portal; password, server and M3U stored encrypted | PASS |
+| megaott | expiry and connection limit taken from the panel | PASS |
+| megaott | create timed out after applying -> scheduled for reconciliation (not review, not resent) | PASS |
+| megaott | reconciled via by-username: adopted the existing line, no duplicate create | PASS |
+| megaott | create lost before applying -> by-username 404 -> safely re-created once | PASS |
+| megaott | renewal uses /extend with the purchased plan package on the right subscription | PASS |
+| megaott | extend timeout after success reconciled by expiry comparison | PASS |
+| megaott | deactivate / activate supported | PASS |
 
-## Concurrency (8 parallel PHP processes each, legacy storage and HPOS)
+## Concurrency (8 parallel PHP processes each)
 
 | Test | Result |
 |---|---|
@@ -121,13 +138,14 @@ Run these on a disposable test site only (they create users and orders).
 | 8 concurrent payment events for one order → 1 job, 1 account | PASS |
 | 8 concurrent reward runs → one 30-day ledger credit | PASS |
 
-## Browser end-to-end — 27 passed, 0 failed
+## Browser end-to-end — 29 passed, 0 failed
 
 | Test | Result |
 |---|---|
-| guest sees sign-in form on portal | PASS |
-| registration signs in and opens the portal | PASS |
+| guest opening the portal is sent to the full-page sign-in | PASS |
+| registration signs in and opens the portal (full-page app, no theme header) | PASS |
 | plans page lists 4 plans | PASS |
+| signed-in customer opening the login page goes to the dashboard | PASS |
 | Select plan hands off to WooCommerce checkout | PASS |
 | order placed with test gateway (thank-you page) | PASS |
 | thank-you page did not activate: account shows awaiting payment | PASS |
@@ -143,6 +161,7 @@ Run these on a disposable test site only (they create users and orders).
 | REST accounts for a new customer is empty | PASS |
 | anonymous REST denied | PASS |
 | login form works on mobile | PASS |
+| mobile menu opens as a drawer | PASS |
 | mobile portal: no horizontal scroll | PASS |
 | mobile portal-accounts: no horizontal scroll | PASS |
 | mobile portal-plans: no horizontal scroll | PASS |
@@ -157,16 +176,15 @@ Run these on a disposable test site only (they create users and orders).
 
 | Check | Result |
 |---|---|
-| All 15 admin screens + customer detail + filtered queue load as administrator without PHP notices | PASS |
+| All 15 admin screens + customer detail + filtered queue load without PHP notices | PASS |
+| API settings: switch provider to MegaOTT, save, test connection (graceful errors) | PASS |
 | Support Agent role: blocked from API settings, can open Tickets | PASS |
 | Jobs CSV export contains no credentials | PASS |
-| Elementor editor: 18 widgets listed under “Relay Stream Portal”; Portal Shell preview shows synthetic data only | PASS |
-| Elementor deactivated: shortcode pages still render | PASS |
-| WooCommerce deactivated: billing modules show a notice, other modules work, no errors | PASS |
-| Paying a browser-placed order (staff marks Processing) creates exactly one job | PASS |
-| Plugin activated on a clean install; versioned migration v3→v4 altered a column in place | PASS |
+| Elementor editor: 18 widgets listed; Portal Shell preview shows synthetic data only | PASS |
+| Elementor deactivated: shortcode pages still render (v1.0.0 run) | PASS |
+| WooCommerce deactivated: billing modules show a notice, others work (v1.0.0 run) | PASS |
+| Upgrade 1.0.0 → 1.1.0 by installing the new ZIP over an active 1.0.0 on a second site: db v4→v5, new visual defaults applied, plans and all 10 tables kept, clean log | PASS |
 | `debug.log` clean (WP_DEBUG on) after all runs | PASS |
-| Built `relay-stream-portal.zip` installed via `wp plugin install` on a second, fresh WordPress database; activated, 10 tables, pages created, demo plans; data kept after deactivation | PASS |
 
 ## Bugs found and fixed during testing
 
@@ -177,3 +195,5 @@ Run these on a disposable test site only (they create users and orders).
 * Orders filter used `meta_query`, unsupported on legacy order storage → mapped via the documented CPT query filter; HPOS uses `meta_query`.
 * Pre-send DNS/URL validation errors were classified as ambiguous → now “not sent”.
 * Block checkout sets the currency after line items → snapshot falls back to the store currency.
+* v1.1.0: the test suite left a fake MegaOTT token in settings → teardown now clears provider keys.
+* v1.1.0: upgrade routine ran at `plugins_loaded` and translated module names too early → runs on `init`.

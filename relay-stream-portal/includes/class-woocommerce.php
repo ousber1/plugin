@@ -117,6 +117,8 @@ class RSP_Woocommerce {
 			'name'         => $product->get_name(),
 			'months'       => $months,
 			'package'      => (string) $get( '_rsp_package', 'all' ),
+			'template'     => (string) $get( '_rsp_template', '' ),
+			'connections'  => (int) $get( '_rsp_connections', 0 ),
 			'type'         => 'mag' === $get( '_rsp_type', 'm3u' ) ? 'mag' : 'm3u',
 			'featured'     => 'yes' === $get( '_rsp_featured', 'no' ),
 			'badge'        => (string) $get( '_rsp_badge', '' ),
@@ -343,6 +345,8 @@ class RSP_Woocommerce {
 			'plan_name'    => $plan['name'],
 			'months'       => $plan['months'],
 			'package'      => $plan['package'],
+			'template'     => $plan['template'],
+			'connections'  => $plan['connections'],
 			'type'         => $plan['type'],
 			'unit_price'   => $plan['price'],
 			'currency'     => $order->get_currency() ? $order->get_currency() : get_woocommerce_currency(),
@@ -512,8 +516,10 @@ class RSP_Woocommerce {
 		echo '<div class="options_group">';
 		woocommerce_wp_checkbox( array( 'id' => '_rsp_is_plan', 'label' => __( 'Portal plan', 'relay-stream-portal' ), 'description' => __( 'Sell this product as a streaming plan in the customer portal.', 'relay-stream-portal' ), 'value' => $product_object->get_meta( '_rsp_is_plan' ) ) );
 		woocommerce_wp_checkbox( array( 'id' => '_rsp_available', 'label' => __( 'Available', 'relay-stream-portal' ), 'value' => $product_object->get_meta( '_rsp_available' ) ? $product_object->get_meta( '_rsp_available' ) : 'yes', 'cbvalue' => 'yes' ) );
-		woocommerce_wp_select( array( 'id' => '_rsp_months', 'label' => __( 'Duration (months)', 'relay-stream-portal' ), 'options' => array( '1' => '1', '3' => '3', '6' => '6', '12' => '12' ), 'value' => $product_object->get_meta( '_rsp_months' ), 'desc_tip' => true, 'description' => __( 'The provider API supports 1, 3, 6 or 12 months.', 'relay-stream-portal' ) ) );
+		woocommerce_wp_select( array( 'id' => '_rsp_months', 'label' => __( 'Duration (months)', 'relay-stream-portal' ), 'options' => array( '1' => '1', '3' => '3', '6' => '6', '12' => '12' ), 'value' => $product_object->get_meta( '_rsp_months' ), 'desc_tip' => true, 'description' => __( 'TVPlus supports 1, 3, 6 or 12 months. For MegaOTT the package defines the period; keep this equal to it.', 'relay-stream-portal' ) ) );
 		woocommerce_wp_select( array( 'id' => '_rsp_package', 'label' => __( 'Provider package', 'relay-stream-portal' ), 'options' => self::package_options() + ( $product_object->get_meta( '_rsp_package' ) ? array( $product_object->get_meta( '_rsp_package' ) => $product_object->get_meta( '_rsp_package' ) ) : array() ), 'value' => $product_object->get_meta( '_rsp_package' ) ? $product_object->get_meta( '_rsp_package' ) : 'all' ) );
+		woocommerce_wp_text_input( array( 'id' => '_rsp_template', 'label' => __( 'Bouquet template ID (MegaOTT, optional)', 'relay-stream-portal' ), 'value' => $product_object->get_meta( '_rsp_template' ), 'desc_tip' => true, 'description' => __( 'Must be a template valid for the package.', 'relay-stream-portal' ) ) );
+		woocommerce_wp_text_input( array( 'id' => '_rsp_connections', 'label' => __( 'Connections (MegaOTT)', 'relay-stream-portal' ), 'type' => 'number', 'value' => $product_object->get_meta( '_rsp_connections' ), 'desc_tip' => true, 'description' => __( 'Simultaneous connections for new lines (0 = provider default). Bounded by the package maximum.', 'relay-stream-portal' ) ) );
 		woocommerce_wp_select( array( 'id' => '_rsp_type', 'label' => __( 'Account type', 'relay-stream-portal' ), 'options' => array( 'm3u' => 'M3U / Xtream', 'mag' => 'MAG (MAC address)' ), 'value' => $product_object->get_meta( '_rsp_type' ) ) );
 		echo '</div><div class="options_group">';
 		woocommerce_wp_checkbox( array( 'id' => '_rsp_featured', 'label' => __( 'Featured', 'relay-stream-portal' ), 'value' => $product_object->get_meta( '_rsp_featured' ) ) );
@@ -542,6 +548,8 @@ class RSP_Woocommerce {
 		$months = isset( $_POST['_rsp_months'] ) ? (int) $_POST['_rsp_months'] : 1;
 		$product->update_meta_data( '_rsp_months', in_array( $months, array( 1, 3, 6, 12 ), true ) ? $months : 1 );
 		$product->update_meta_data( '_rsp_package', isset( $_POST['_rsp_package'] ) ? substr( sanitize_text_field( wp_unslash( $_POST['_rsp_package'] ) ), 0, 32 ) : 'all' );
+		$product->update_meta_data( '_rsp_template', isset( $_POST['_rsp_template'] ) ? preg_replace( '/[^0-9]/', '', wp_unslash( $_POST['_rsp_template'] ) ) : '' );
+		$product->update_meta_data( '_rsp_connections', isset( $_POST['_rsp_connections'] ) ? max( 0, (int) $_POST['_rsp_connections'] ) : 0 );
 		$product->update_meta_data( '_rsp_type', isset( $_POST['_rsp_type'] ) && 'mag' === $_POST['_rsp_type'] ? 'mag' : 'm3u' );
 		$product->update_meta_data( '_rsp_badge', isset( $_POST['_rsp_badge'] ) ? sanitize_text_field( wp_unslash( $_POST['_rsp_badge'] ) ) : '' );
 		$product->update_meta_data( '_rsp_order', isset( $_POST['_rsp_order'] ) ? (int) $_POST['_rsp_order'] : 0 );

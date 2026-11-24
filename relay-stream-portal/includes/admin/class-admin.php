@@ -187,6 +187,7 @@ class RSP_Admin {
 			'account_refresh'    => 'rsp_manage_provisioning',
 			'account_renew'      => 'rsp_manage_provisioning',
 			'account_reveal'     => 'rsp_view_credentials',
+			'account_suspend'    => 'rsp_manage_provisioning',
 			'plans_save'         => 'rsp_manage_billing',
 			'demo_plans'         => 'rsp_manage_billing',
 			'referral_action'    => 'rsp_manage_billing',

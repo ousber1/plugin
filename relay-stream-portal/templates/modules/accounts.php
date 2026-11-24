@@ -22,13 +22,15 @@ $rsp_state_text = array(
 );
 ?>
 <div class="rsp-page">
-	<div class="rsp-page-head">
-		<div><h1><?php echo esc_html( RSP_Portal::label( $args, 'title', __( 'My Accounts', 'relay-stream-portal' ) ) ); ?></h1>
-			<p class="rsp-muted"><?php esc_html_e( 'Each streaming account has its own expiry and player details. Your portal sign-in stays the same.', 'relay-stream-portal' ); ?></p></div>
-		<?php if ( $vm['billing'] ) : ?>
-			<a class="rsp-btn rsp-btn-primary" href="<?php echo esc_url( $rsp_p ? '#' : RSP_Settings::page_url( 'plans', array( 'purpose' => 'new' ) ) ); ?>"><?php RSP_Icons::e( 'plus' ); ?><?php esc_html_e( 'Add another account', 'relay-stream-portal' ); ?></a>
-		<?php endif; ?>
-	</div>
+	<div class="rsp-page-head"><div>
+		<h1><?php echo esc_html( RSP_Portal::label( $args, 'title', __( 'My Accounts', 'relay-stream-portal' ) ) ); ?></h1>
+		<p class="rsp-muted"><?php
+			/* translators: %d count */
+			echo esc_html( sprintf( _n( '%d streaming account', '%d streaming accounts', count( $vm['accounts'] ), 'relay-stream-portal' ), count( $vm['accounts'] ) ) ); ?></p>
+	</div></div>
+	<?php if ( $vm['billing'] ) : ?>
+		<a class="rsp-dashed-bar" href="<?php echo esc_url( $rsp_p ? '#' : RSP_Settings::page_url( 'plans', array( 'purpose' => 'new' ) ) ); ?>"><?php RSP_Icons::e( 'plus', 18 ); ?><?php esc_html_e( 'Add another account', 'relay-stream-portal' ); ?></a>
+	<?php endif; ?>
 
 	<?php foreach ( $vm['pending_orders'] as $rsp_po ) : ?>
 		<div class="rsp-card rsp-account is-pending">
@@ -42,10 +44,10 @@ $rsp_state_text = array(
 	<?php endforeach; ?>
 
 	<?php if ( empty( $vm['accounts'] ) && empty( $vm['pending_orders'] ) ) : ?>
-		<div class="rsp-card rsp-empty">
-			<?php RSP_Icons::e( 'tv', 40 ); ?>
+		<div class="rsp-card rsp-empty rsp-empty-lg">
+			<span class="rsp-empty-icon"><?php RSP_Icons::e( 'globe', 26 ); ?></span>
 			<h3><?php esc_html_e( 'No streaming accounts yet', 'relay-stream-portal' ); ?></h3>
-			<p class="rsp-muted"><?php esc_html_e( 'Pick a plan to create your first account, or redeem a gift code.', 'relay-stream-portal' ); ?></p>
+			<p class="rsp-muted"><?php esc_html_e( 'Subscribe to a plan to get started', 'relay-stream-portal' ); ?></p>
 			<div class="rsp-actions">
 				<?php if ( $vm['billing'] ) : ?><a class="rsp-btn rsp-btn-primary" href="<?php echo esc_url( $rsp_p ? '#' : RSP_Settings::page_url( 'plans' ) ); ?>"><?php esc_html_e( 'Choose a plan', 'relay-stream-portal' ); ?></a><?php endif; ?>
 				<a class="rsp-btn" href="<?php echo esc_url( $rsp_p ? '#' : RSP_Settings::page_url( 'redeem' ) ); ?>"><?php esc_html_e( 'Redeem a gift', 'relay-stream-portal' ); ?></a>

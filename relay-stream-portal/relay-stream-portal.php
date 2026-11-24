@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Relay Stream Portal
  * Plugin URI:        https://example.com/relay-stream-portal
- * Description:       Customer portal, management dashboard and provider integration for authorized streaming subscriptions. Works with WooCommerce for billing and Elementor Free (or shortcodes) for page building.
- * Version:           1.0.0
+ * Description:       Customer portal, management dashboard and TVPlus / MegaOTT provider integration for authorized streaming subscriptions. Works with WooCommerce for billing and Elementor Free (or shortcodes) for page building.
+ * Version:           1.1.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Relay Stream Portal contributors
@@ -20,8 +20,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'RSP_VERSION', '1.0.0' );
-define( 'RSP_DB_VERSION', 4 );
+define( 'RSP_VERSION', '1.1.0' );
+define( 'RSP_DB_VERSION', 5 );
 define( 'RSP_FILE', __FILE__ );
 define( 'RSP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RSP_URL', plugin_dir_url( __FILE__ ) );

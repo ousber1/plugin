@@ -349,12 +349,17 @@ class RSP_Admin_Pages {
 		}
 		echo '</div><div class="rsp-panel"><h2>' . esc_html__( 'Provider actions', 'relay-stream-portal' ) . '</h2>';
 		$caps = RSP_Provider_Factory::get()->capabilities();
-		if ( RSP_Provider_Factory::is_live() && ! empty( $caps['lookup']['supported'] ) && $c ) {
+		if ( RSP_Provider_Factory::is_live() && ! empty( $caps['lookup']['supported'] ) && ( $c || $a->provider_user_id ) ) {
 			echo RSP_Admin::button( 'account_refresh', array( 'uuid' => $a->uuid ), __( 'Refresh status from panel', 'relay-stream-portal' ) ); // phpcs:ignore
+		}
+		if ( RSP_Provider_Factory::is_live() && ! empty( $caps['suspend']['supported'] ) && $a->provider_user_id && method_exists( RSP_Provider_Factory::get(), 'set_active' ) ) {
+			echo ' ' . ( 'suspended' === $a->status
+				? RSP_Admin::button( 'account_suspend', array( 'uuid' => $a->uuid, 'op' => 'activate' ), __( 'Re-activate in panel', 'relay-stream-portal' ), 'button', true )
+				: RSP_Admin::button( 'account_suspend', array( 'uuid' => $a->uuid, 'op' => 'deactivate' ), __( 'Suspend in panel', 'relay-stream-portal' ), 'button rsp-danger', true ) ); // phpcs:ignore
 		}
 		echo RSP_Admin::form( 'account_renew', 'class="rsp-row-form"' ) . '<input type="hidden" name="uuid" value="' . esc_attr( $a->uuid ) . '">'; // phpcs:ignore
 		echo '<label>' . esc_html__( 'Queue renewal', 'relay-stream-portal' ) . ' <select name="months"><option>1</option><option>3</option><option>6</option><option>12</option></select> ' . esc_html__( 'months', 'relay-stream-portal' ) . '</label> <input type="text" name="reason" required placeholder="' . esc_attr__( 'Reason', 'relay-stream-portal' ) . '"> <button class="button">' . esc_html__( 'Queue', 'relay-stream-portal' ) . '</button></form>';
-		echo '<p class="description">' . esc_html__( 'Suspend/delete are not documented by the provider API. Use the status field to record a suspension done in the panel.', 'relay-stream-portal' ) . '</p>';
+		echo '<p class="description">' . esc_html( ! empty( $caps['suspend']['supported'] ) && 'manual' !== RSP_Provider_Factory::get()->slug() ? __( 'Suspend and re-activate are sent to the panel and audited.', 'relay-stream-portal' ) : __( 'This provider documents no suspend/delete. Use the status field to record a suspension done in the panel.', 'relay-stream-portal' ) ) . '</p>';
 		echo '<h3>' . esc_html__( 'Operations', 'relay-stream-portal' ) . '</h3>';
 		$jobs = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . RSP_Installer::table( 'jobs' ) . ' WHERE account_id = %d ORDER BY id DESC LIMIT 20', $a->id ) ); // phpcs:ignore
 		self::jobs_table( $jobs );
@@ -408,11 +413,15 @@ class RSP_Admin_Pages {
 		echo '<h2>' . esc_html__( 'Billing page content', 'relay-stream-portal' ) . '</h2>' . RSP_Admin::form( 'save_billing' ); // phpcs:ignore
 		echo '<table class="form-table"><tr><th>' . esc_html__( 'What’s included (one per line)', 'relay-stream-portal' ) . '</th><td><textarea name="included_features" rows="5" class="large-text">' . esc_textarea( $s['included_features'] ) . '</textarea></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Refund policy note', 'relay-stream-portal' ) . '</th><td><textarea name="refund_policy_text" rows="3" class="large-text">' . esc_textarea( $s['refund_policy_text'] ) . '</textarea></td></tr>';
-		echo '<tr><th>' . esc_html__( 'Payment guides', 'relay-stream-portal' ) . '</th><td><div class="rsp-repeater" data-rsp-repeater>';
+		echo '<tr><th>' . esc_html__( 'Secure payment text', 'relay-stream-portal' ) . '</th><td><textarea name="secure_payment_text" rows="3" class="large-text">' . esc_textarea( $s['secure_payment_text'] ) . '</textarea></td></tr>';
+		echo '<tr><th>' . esc_html__( 'What’s included subtitle', 'relay-stream-portal' ) . '</th><td><input type="text" class="large-text" name="included_subtitle" value="' . esc_attr( $s['included_subtitle'] ) . '"></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Payment guides heading', 'relay-stream-portal' ) . '</th><td><input type="text" class="regular-text" name="payment_guides_title" value="' . esc_attr( $s['payment_guides_title'] ) . '"></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Payment guides', 'relay-stream-portal' ) . '</th><td><p class="description">' . esc_html__( 'Icon: an emoji or 1–2 letters.', 'relay-stream-portal' ) . '</p><div class="rsp-repeater" data-rsp-repeater>';
 		$guides = (array) $s['payment_guides'];
-		$guides[] = array( 'title' => '', 'url' => '', 'text' => '' );
+		$guides[] = array( 'title' => '', 'icon' => '', 'url' => '', 'text' => '' );
 		foreach ( array_values( $guides ) as $i => $g ) {
-			echo '<div class="rsp-rep-row"><input type="text" name="payment_guides[' . (int) $i . '][title]" placeholder="' . esc_attr__( 'Title', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['title'] ) . '"> <input type="url" name="payment_guides[' . (int) $i . '][url]" placeholder="https://" value="' . esc_attr( $g['url'] ) . '"> <input type="text" class="regular-text" name="payment_guides[' . (int) $i . '][text]" placeholder="' . esc_attr__( 'Short text', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['text'] ) . '"></div>';
+			$g = wp_parse_args( $g, array( 'title' => '', 'icon' => '', 'url' => '', 'text' => '' ) );
+			echo '<div class="rsp-rep-row"><input type="text" class="small-text" name="payment_guides[' . (int) $i . '][icon]" placeholder="' . esc_attr__( 'Icon', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['icon'] ) . '"> <input type="text" name="payment_guides[' . (int) $i . '][title]" placeholder="' . esc_attr__( 'Title', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['title'] ) . '"> <input type="url" name="payment_guides[' . (int) $i . '][url]" placeholder="https://" value="' . esc_attr( $g['url'] ) . '"> <input type="text" class="regular-text" name="payment_guides[' . (int) $i . '][text]" placeholder="' . esc_attr__( 'Short text', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['text'] ) . '"></div>';
 		}
 		echo '</div><p class="description">' . esc_html__( 'Empty rows are ignored. Only link to official, legitimate payment guides.', 'relay-stream-portal' ) . '</p></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Hide stale unpaid orders', 'relay-stream-portal' ) . '</th><td><label><input type="checkbox" name="hide_stale_unpaid" value="1"' . checked( $s['hide_stale_unpaid'], 1, false ) . '> ' . esc_html__( 'Hide pending/failed orders older than', 'relay-stream-portal' ) . '</label> <input type="number" class="small-text" name="stale_unpaid_hours" value="' . (int) $s['stale_unpaid_hours'] . '"> ' . esc_html__( 'hours by default in Transactions (customers can toggle).', 'relay-stream-portal' ) . '</td></tr>';
@@ -550,13 +559,20 @@ class RSP_Admin_Pages {
 		}
 		self::head( __( 'API Settings & Job Queue', 'relay-stream-portal' ) );
 		$s     = RSP_Settings::all();
-		$caps  = RSP_Provider_Factory::tvplus()->capabilities();
+		$caps  = RSP_Provider_Factory::remote()->capabilities();
 		$can_s = current_user_can( 'rsp_manage_settings' );
 
-		echo '<div class="rsp-columns"><div class="rsp-panel"><h2>' . esc_html__( 'Provider connection (TVPlus Panel API)', 'relay-stream-portal' ) . '</h2>';
+		echo '<div class="rsp-columns"><div class="rsp-panel"><h2>' . esc_html__( 'Provider connection', 'relay-stream-portal' ) . '</h2>';
 		if ( $can_s ) {
 			echo RSP_Admin::form( 'save_api' ) . '<table class="form-table rsp-compact">'; // phpcs:ignore
 			echo '<tr><th>' . esc_html__( 'Mode', 'relay-stream-portal' ) . '</th><td><select name="api_mode"><option value="manual"' . selected( $s['api_mode'], 'manual', false ) . '>' . esc_html__( 'Manual provisioning', 'relay-stream-portal' ) . '</option><option value="live"' . selected( $s['api_mode'], 'live', false ) . '>' . esc_html__( 'Live API', 'relay-stream-portal' ) . '</option></select><p class="description">' . esc_html__( 'Live mode is only used when the mapping is verified and an API key is saved.', 'relay-stream-portal' ) . '</p></td></tr>';
+			echo '<tr><th>' . esc_html__( 'Provider panel', 'relay-stream-portal' ) . '</th><td><select name="api_provider"><option value="tvplus"' . selected( $s['api_provider'], 'tvplus', false ) . '>TVPlus Panel API</option><option value="megaott"' . selected( $s['api_provider'], 'megaott', false ) . '>MegaOTT API (v1)</option></select><p class="description">' . esc_html__( 'Changing provider requires re-verifying the mapping. Existing accounts keep their stored identifiers.', 'relay-stream-portal' ) . '</p></td></tr>';
+			echo '<tr class="rsp-sec-megaott"><th colspan="2"><h3 style="margin:0">MegaOTT</h3></th></tr>';
+			echo '<tr><th>' . esc_html__( 'MegaOTT API base URL', 'relay-stream-portal' ) . '</th><td><input type="url" name="megaott_base_url" class="regular-text code" value="' . esc_attr( $s['megaott_base_url'] ) . '"><p class="description">https://megaott.net/api/v1</p></td></tr>';
+			echo '<tr><th>' . esc_html__( 'MegaOTT API token', 'relay-stream-portal' ) . '</th><td><input type="password" name="megaott_token" class="regular-text" autocomplete="new-password" placeholder="' . esc_attr( $s['megaott_token_enc'] ? RSP_Crypto::mask( RSP_Crypto::decrypt( $s['megaott_token_enc'] ) ) : __( 'Not set', 'relay-stream-portal' ) ) . '"> <label><input type="checkbox" name="megaott_token_clear" value="1"> ' . esc_html__( 'Remove token', 'relay-stream-portal' ) . '</label><p class="description">' . esc_html__( 'Bearer token from Account Settings » API Keys. Abilities needed: user_read, package_read, template_read, subscription_read, subscription_create, subscription_extend, subscription_activate, subscription_deactivate.', 'relay-stream-portal' ) . '</p></td></tr>';
+			echo '<tr><th>' . esc_html__( 'New line defaults', 'relay-stream-portal' ) . '</th><td><label>' . esc_html__( 'Forced country', 'relay-stream-portal' ) . ' <input type="text" class="small-text" name="megaott_forced_country" value="' . esc_attr( $s['megaott_forced_country'] ) . '"></label> <label>' . esc_html__( 'Connections', 'relay-stream-portal' ) . ' <input type="number" min="1" class="small-text" name="megaott_connections" value="' . (int) $s['megaott_connections'] . '"></label> <label><input type="checkbox" name="megaott_adult" value="1"' . checked( $s['megaott_adult'], 1, false ) . '> ' . esc_html__( 'Adult', 'relay-stream-portal' ) . '</label> <label><input type="checkbox" name="megaott_vpn" value="1"' . checked( $s['megaott_vpn'], 1, false ) . '> VPN</label><br><label>' . esc_html__( 'WhatsApp/Telegram shown on expiry', 'relay-stream-portal' ) . ' <input type="text" name="megaott_contact" value="' . esc_attr( $s['megaott_contact'] ) . '"></label></td></tr>';
+			echo '<tr><th>' . esc_html__( 'Reward package ID (1 month)', 'relay-stream-portal' ) . '</th><td><input type="text" class="small-text" name="megaott_reward_package" value="' . esc_attr( $s['megaott_reward_package'] ) . '"><p class="description">' . esc_html__( 'Used with “Reward month conversion” to extend by one month.', 'relay-stream-portal' ) . '</p></td></tr>';
+			echo '<tr><th colspan="2"><h3 style="margin:0">TVPlus</h3></th></tr>';
 			echo '<tr><th>' . esc_html__( 'API endpoint URL', 'relay-stream-portal' ) . '</th><td><input type="url" name="api_base_url" class="regular-text code" value="' . esc_attr( $s['api_base_url'] ) . '"><p class="description">' . esc_html__( 'HTTPS only. The documentation lists https://tvpluspanel.net/api/api.php.', 'relay-stream-portal' ) . '</p></td></tr>';
 			echo '<tr><th>' . esc_html__( 'Documentation URL (reference only)', 'relay-stream-portal' ) . '</th><td><input type="url" name="api_docs_url" class="regular-text code" value="' . esc_attr( $s['api_docs_url'] ) . '"></td></tr>';
 			echo '<tr><th>' . esc_html__( 'Allowed API hosts', 'relay-stream-portal' ) . '</th><td><input type="text" name="api_allowed_hosts" class="regular-text code" value="' . esc_attr( $s['api_allowed_hosts'] ) . '"><p class="description">' . esc_html__( 'Comma separated. Requests to any other host are refused; redirects are never followed.', 'relay-stream-portal' ) . '</p></td></tr>';
@@ -778,17 +794,18 @@ class RSP_Admin_Pages {
 		echo RSP_Admin::form( 'guides_save' ); // phpcs:ignore
 		echo '<h2>' . esc_html__( 'Release banner', 'relay-stream-portal' ) . '</h2><table class="form-table rsp-compact">';
 		echo '<tr><th>' . esc_html__( 'Show banner', 'relay-stream-portal' ) . '</th><td><input type="checkbox" name="g[release][enabled]" value="1"' . checked( $r['enabled'], 1, false ) . '></td></tr>';
-		foreach ( array( 'version' => __( 'Version', 'relay-stream-portal' ), 'title' => __( 'Title', 'relay-stream-portal' ), 'compat' => __( 'Compatibility', 'relay-stream-portal' ), 'qr_url' => __( 'QR / install page URL (public)', 'relay-stream-portal' ) ) as $k => $l ) {
+		$r = wp_parse_args( $r, array( 'description' => '', 'availability' => '' ) );
+		foreach ( array( 'version' => __( 'Version', 'relay-stream-portal' ), 'title' => __( 'Title', 'relay-stream-portal' ), 'subtitle' => __( 'Subtitle (under the title)', 'relay-stream-portal' ), 'compat' => __( 'Compatibility', 'relay-stream-portal' ), 'availability' => __( 'Availability line (**bold** allowed)', 'relay-stream-portal' ), 'qr_url' => __( 'QR / install page URL (public)', 'relay-stream-portal' ) ) as $k => $l ) {
 			echo '<tr><th>' . esc_html( $l ) . '</th><td><input type="text" class="large-text" name="g[release][' . esc_attr( $k ) . ']" value="' . esc_attr( $r[ $k ] ) . '"></td></tr>';
 		}
-		echo '<tr><th>' . esc_html__( 'Subtitle', 'relay-stream-portal' ) . '</th><td><textarea class="large-text" rows="2" name="g[release][subtitle]">' . esc_textarea( $r['subtitle'] ) . '</textarea></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Description', 'relay-stream-portal' ) . '</th><td><textarea class="large-text" rows="2" name="g[release][description]">' . esc_textarea( $r['description'] ) . '</textarea></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Stats', 'relay-stream-portal' ) . '</th><td>';
 		$stats   = array_values( (array) $r['stats'] );
 		$stats[] = array( 'label' => '', 'value' => '' );
 		foreach ( $stats as $i => $s ) {
 			echo '<p><input type="text" name="g[release][stats][' . (int) $i . '][label]" placeholder="' . esc_attr__( 'Label', 'relay-stream-portal' ) . '" value="' . esc_attr( $s['label'] ) . '"> <input type="text" name="g[release][stats][' . (int) $i . '][value]" placeholder="' . esc_attr__( 'Value', 'relay-stream-portal' ) . '" value="' . esc_attr( $s['value'] ) . '"></p>';
 		}
-		echo '</td></tr><tr><th>' . esc_html__( 'App sign-in note', 'relay-stream-portal' ) . '</th><td><textarea class="large-text" rows="2" name="g[login_note]">' . esc_textarea( $g['login_note'] ) . '</textarea></td></tr></table>';
+		echo '</td></tr><tr><th>' . esc_html__( 'App login box', 'relay-stream-portal' ) . '</th><td><input type="text" class="regular-text" name="g[login_title]" placeholder="' . esc_attr__( 'Title', 'relay-stream-portal' ) . '" value="' . esc_attr( $g['login_title'] ) . '"><textarea class="large-text" rows="2" name="g[login_note]" placeholder="' . esc_attr__( 'Main text (**bold** allowed)', 'relay-stream-portal' ) . '">' . esc_textarea( $g['login_note'] ) . '</textarea><textarea class="large-text" rows="2" name="g[login_small]" placeholder="' . esc_attr__( 'Small print', 'relay-stream-portal' ) . '">' . esc_textarea( $g['login_small'] ) . '</textarea></td></tr></table>';
 
 		echo '<h2>' . esc_html__( 'Devices', 'relay-stream-portal' ) . '</h2><p class="description">' . esc_html__( 'Clear a device label to remove it. Use the blank card to add a device.', 'relay-stream-portal' ) . '</p><div class="rsp-device-editor">';
 		$devices   = array_values( $g['devices'] );
@@ -806,18 +823,23 @@ class RSP_Admin_Pages {
 				echo '<option' . selected( $d['icon'], $ic, false ) . '>' . esc_html( $ic ) . '</option>';
 			}
 			echo '</select></label> <label>' . esc_html__( 'Version', 'relay-stream-portal' ) . ' <input type="text" class="small-text" name="' . esc_attr( $n ) . '[version]" value="' . esc_attr( $d['version'] ) . '"></label></p>';
+			echo '<p><label>' . esc_html__( 'Subtitle', 'relay-stream-portal' ) . ' <input type="text" class="regular-text" name="' . esc_attr( $n ) . '[subtitle]" value="' . esc_attr( isset( $d['subtitle'] ) ? $d['subtitle'] : '' ) . '"></label> <label>' . esc_html__( 'Full download URL (shown with copy)', 'relay-stream-portal' ) . ' <input type="url" class="regular-text" name="' . esc_attr( $n ) . '[full_url]" value="' . esc_attr( isset( $d['full_url'] ) ? $d['full_url'] : '' ) . '"></label></p>';
 			echo '<p><label>' . esc_html__( 'Official download URL', 'relay-stream-portal' ) . ' <input type="url" class="regular-text" name="' . esc_attr( $n ) . '[download_url]" value="' . esc_attr( $d['download_url'] ) . '"></label> <label>' . esc_html__( 'Store URL', 'relay-stream-portal' ) . ' <input type="url" class="regular-text" name="' . esc_attr( $n ) . '[store_url]" value="' . esc_attr( $d['store_url'] ) . '"></label></p>';
 			echo '<p><label>' . esc_html__( 'Downloader code', 'relay-stream-portal' ) . ' <input type="text" name="' . esc_attr( $n ) . '[download_code]" value="' . esc_attr( $d['download_code'] ) . '"></label> <label><input type="checkbox" name="' . esc_attr( $n ) . '[show_qr]" value="1"' . checked( $d['show_qr'], 1, false ) . '> ' . esc_html__( 'Show QR for the download/store URL', 'relay-stream-portal' ) . '</label></p>';
-			echo '<p><label>' . esc_html__( 'Setup steps (one per line)', 'relay-stream-portal' ) . '<br><textarea class="large-text" rows="4" name="' . esc_attr( $n ) . '[steps_text]">' . esc_textarea( implode( "\n", (array) $d['steps'] ) ) . '</textarea></label></p>';
+			echo '<p><label>' . esc_html__( 'Setup steps (one per line, **bold** allowed)', 'relay-stream-portal' ) . '<br><textarea class="large-text" rows="4" name="' . esc_attr( $n ) . '[steps_text]">' . esc_textarea( implode( "\n", (array) $d['steps'] ) ) . '</textarea></label></p>';
 			echo '<p><label>' . esc_html__( 'Previous releases (version|URL per line)', 'relay-stream-portal' ) . '<br><textarea class="large-text" rows="2" name="' . esc_attr( $n ) . '[previous_text]">' . esc_textarea( implode( "\n", $prev ) ) . '</textarea></label></p></fieldset>';
 		}
 		echo '</div><h2>' . esc_html__( 'What’s new', 'relay-stream-portal' ) . '</h2>';
 		$wn   = array_values( $g['whats_new'] );
-		$wn[] = array( 'title' => '', 'text' => '' );
+		$wn[] = array( 'title' => '', 'text' => '', 'icon' => 'sparkle' );
 		foreach ( $wn as $i => $w ) {
-			echo '<p><input type="text" name="g[whats_new][' . (int) $i . '][title]" placeholder="' . esc_attr__( 'Title', 'relay-stream-portal' ) . '" value="' . esc_attr( $w['title'] ) . '"> <input type="text" class="large-text" style="max-width:600px" name="g[whats_new][' . (int) $i . '][text]" placeholder="' . esc_attr__( 'Description', 'relay-stream-portal' ) . '" value="' . esc_attr( $w['text'] ) . '"></p>';
+			echo '<p><input type="text" name="g[whats_new][' . (int) $i . '][title]" placeholder="' . esc_attr__( 'Title', 'relay-stream-portal' ) . '" value="' . esc_attr( $w['title'] ) . '"> <select name="g[whats_new][' . (int) $i . '][icon]">';
+			foreach ( array( 'sparkle', 'mic', 'bolt', 'shield', 'clock', 'star', 'play' ) as $ic ) {
+				echo '<option' . selected( isset( $w['icon'] ) ? $w['icon'] : 'sparkle', $ic, false ) . '>' . esc_html( $ic ) . '</option>';
+			}
+			echo '</select> <input type="text" class="large-text" style="max-width:600px" name="g[whats_new][' . (int) $i . '][text]" placeholder="' . esc_attr__( 'Description', 'relay-stream-portal' ) . '" value="' . esc_attr( $w['text'] ) . '"></p>';
 		}
-		echo '<h2>' . esc_html__( 'Third-party players', 'relay-stream-portal' ) . '</h2><p><textarea class="large-text" rows="2" name="g[third_party_note]">' . esc_textarea( $g['third_party_note'] ) . '</textarea></p>';
+		echo '<h2>' . esc_html__( 'Third-party players', 'relay-stream-portal' ) . '</h2><p><textarea class="large-text" rows="2" name="g[third_party_intro]" placeholder="' . esc_attr__( 'Intro', 'relay-stream-portal' ) . '">' . esc_textarea( $g['third_party_intro'] ) . '</textarea></p><p><textarea class="large-text" rows="2" name="g[third_party_note]" placeholder="' . esc_attr__( 'Warning box (**bold** allowed)', 'relay-stream-portal' ) . '">' . esc_textarea( $g['third_party_note'] ) . '</textarea></p>';
 		$tp   = array_values( $g['third_party'] );
 		$tp[] = array( 'name' => '', 'status' => 'soon', 'url' => '', 'text' => '' );
 		foreach ( $tp as $i => $t ) {
@@ -1070,7 +1092,8 @@ class RSP_Admin_Pages {
 		}
 		$logo = $s['logo_id'] ? wp_get_attachment_image_url( (int) $s['logo_id'], 'medium' ) : '';
 		echo '<tr><th>' . esc_html__( 'Logo', 'relay-stream-portal' ) . '</th><td><input type="hidden" name="logo_id" value="' . (int) $s['logo_id'] . '" data-rsp-media-id><img src="' . esc_url( $logo ) . '" style="max-height:48px;' . ( $logo ? '' : 'display:none' ) . '" data-rsp-media-preview alt=""> <button type="button" class="button" data-rsp-media>' . esc_html__( 'Choose logo', 'relay-stream-portal' ) . '</button> <button type="button" class="button-link" data-rsp-media-clear>' . esc_html__( 'Remove', 'relay-stream-portal' ) . '</button></td></tr>';
-		$colors = array( 'color_accent' => __( 'Accent', 'relay-stream-portal' ), 'color_accent_2' => __( 'Secondary accent', 'relay-stream-portal' ), 'color_dark_bg' => __( 'Dark background', 'relay-stream-portal' ), 'color_dark_surface' => __( 'Dark cards', 'relay-stream-portal' ), 'color_light_bg' => __( 'Light background', 'relay-stream-portal' ), 'color_light_surface' => __( 'Light cards', 'relay-stream-portal' ) );
+		echo '<tr><th>' . esc_html__( 'Portal layout', 'relay-stream-portal' ) . '</th><td><select name="layout"><option value="sidebar"' . selected( $s['layout'], 'sidebar', false ) . '>' . esc_html__( 'Left sidebar (app style)', 'relay-stream-portal' ) . '</option><option value="topbar"' . selected( $s['layout'], 'topbar', false ) . '>' . esc_html__( 'Top navigation', 'relay-stream-portal' ) . '</option></select></td></tr>';
+		$colors = array( 'color_gold' => __( 'Promo / gold', 'relay-stream-portal' ), 'color_accent' => __( 'Accent', 'relay-stream-portal' ), 'color_accent_2' => __( 'Secondary accent', 'relay-stream-portal' ), 'color_dark_bg' => __( 'Dark background', 'relay-stream-portal' ), 'color_dark_surface' => __( 'Dark cards', 'relay-stream-portal' ), 'color_light_bg' => __( 'Light background', 'relay-stream-portal' ), 'color_light_surface' => __( 'Light cards', 'relay-stream-portal' ) );
 		echo '<tr><th>' . esc_html__( 'Colors', 'relay-stream-portal' ) . '</th><td class="rsp-color-grid">';
 		foreach ( $colors as $k => $l ) {
 			echo '<label><input type="color" name="' . esc_attr( $k ) . '" value="' . esc_attr( $s[ $k ] ) . '"> ' . esc_html( $l ) . '</label>';
@@ -1093,7 +1116,7 @@ class RSP_Admin_Pages {
 		}
 		echo '</table></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Portal language', 'relay-stream-portal' ) . '</th><td><select name="language"><option value="">' . esc_html__( 'Customer profile / site language', 'relay-stream-portal' ) . '</option><option value="en_US"' . selected( $s['language'], 'en_US', false ) . '>English</option><option value="ar"' . selected( $s['language'], 'ar', false ) . '>العربية (RTL)</option></select></td></tr>';
-		$checks = array( 'floating_support' => __( 'Show floating support button', 'relay-stream-portal' ), 'full_width' => __( 'Full-width layout on portal pages', 'relay-stream-portal' ), 'show_credentials' => __( 'Let customers reveal player details', 'relay-stream-portal' ), 'player_enabled' => __( 'Enable “Start Watching” (requires an authorized player URL)', 'relay-stream-portal' ), 'registration_open' => __( 'Allow registration', 'relay-stream-portal' ), 'email_verification' => __( 'Require email verification for new registrations', 'relay-stream-portal' ), 'delete_on_uninstall' => __( 'Delete all plugin data when the plugin is deleted', 'relay-stream-portal' ) );
+		$checks = array( 'app_mode' => __( 'Full-page app: portal pages hide the theme header/footer', 'relay-stream-portal' ), 'redirect_after_login' => __( 'Send customers to the portal after sign-in / registration', 'relay-stream-portal' ), 'floating_support' => __( 'Show floating support button', 'relay-stream-portal' ), 'full_width' => __( 'Full-width layout on portal pages', 'relay-stream-portal' ), 'show_credentials' => __( 'Let customers reveal player details', 'relay-stream-portal' ), 'player_enabled' => __( 'Enable “Start Watching” (requires an authorized player URL)', 'relay-stream-portal' ), 'registration_open' => __( 'Allow registration', 'relay-stream-portal' ), 'email_verification' => __( 'Require email verification for new registrations', 'relay-stream-portal' ), 'delete_on_uninstall' => __( 'Delete all plugin data when the plugin is deleted', 'relay-stream-portal' ) );
 		foreach ( $checks as $k => $l ) {
 			echo '<tr><th>' . esc_html( $l ) . '</th><td><input type="checkbox" name="' . esc_attr( $k ) . '" value="1"' . checked( $s[ $k ], 1, false ) . '></td></tr>';
 		}

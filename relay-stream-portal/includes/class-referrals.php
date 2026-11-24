@@ -374,7 +374,8 @@ class RSP_Referrals {
 		}
 		try {
 			$balance = self::balance( $user_id );
-			$convert = RSP_Settings::get( 'reward_month_conversion' ) && RSP_Provider_Factory::is_live();
+			$mega    = 'megaott' === RSP_Provider_Factory::configured_slug();
+			$convert = RSP_Settings::get( 'reward_month_conversion' ) && RSP_Provider_Factory::is_live() && ( ! $mega || '' !== (string) RSP_Settings::get( 'megaott_reward_package' ) );
 			$days    = $convert ? 30 : $balance;
 			if ( $balance < 1 || ( $convert && $balance < 30 ) ) {
 				return new WP_Error( 'rsp_balance', $convert ? __( 'You need at least 30 days to apply a reward.', 'relay-stream-portal' ) : __( 'You have no reward days to apply.', 'relay-stream-portal' ) );
@@ -387,7 +388,7 @@ class RSP_Referrals {
 				array(
 					'account_id' => (int) $acc->id,
 					'user_id'    => $user_id,
-					'payload'    => array( 'months' => 1, 'days' => $days, 'ledger_id' => $ledger, 'type' => $acc->provider_type ),
+					'payload'    => array( 'months' => 1, 'days' => $days, 'ledger_id' => $ledger, 'type' => $acc->provider_type, 'package' => $mega ? (string) RSP_Settings::get( 'megaott_reward_package' ) : '' ),
 				)
 			);
 			if ( $job && ! $convert && 'needs_review' !== $job->state ) {

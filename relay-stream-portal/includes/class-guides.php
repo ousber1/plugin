@@ -20,7 +20,7 @@ class RSP_Guides {
 	 * @return array
 	 */
 	public static function icons() {
-		return array( 'tv', 'android', 'apple', 'windows', 'phone', 'tablet', 'monitor', 'box' );
+		return array( 'flame', 'tv', 'android', 'apple', 'windows', 'phone', 'tablet', 'monitor', 'box' );
 	}
 
 	/**
@@ -34,32 +34,38 @@ class RSP_Guides {
 				'enabled'  => 1,
 				'version'  => '2.3.0',
 				'title'    => 'Relay Player 2.3',
-				'subtitle' => 'A calmer home screen, faster channel switching and offline-friendly start-up.',
+				'subtitle' => 'Streaming, made simple',
+				'description' => 'A refreshed player with a calmer home screen, faster channel switching and a start-up that no longer waits for the network.',
+				'availability' => 'Available on **Fire TV**, **Android TV**, **Android phones**, **macOS** and **Windows**. iPhone, iPad and Apple TV use a compatible third-party player.',
 				'compat'   => 'Android TV 9+, Fire OS 7+, Android 9+, macOS 12+, Windows 10+',
 				'qr_url'   => '',
 				'stats'    => array(
 					array( 'label' => 'Platforms', 'value' => '6' ),
-					array( 'label' => 'Updates', 'value' => 'In-app' ),
-					array( 'label' => 'Sign-in', 'value' => 'Portal email' ),
+					array( 'label' => 'Devices', 'value' => 'All' ),
+					array( 'label' => 'Updates', 'value' => 'Automatic' ),
 				),
 			),
-			'login_note'  => 'Sign in to Relay Player with the email and password you use for this portal. The player details shown under My Accounts are only for third-party apps.',
+			'login_title' => 'App login',
+			'login_note'  => 'Use the **email + password you use on this portal** — no separate credentials needed.',
+			'login_small' => 'The player details shown under My Accounts are only for third-party players. See “Use a different player” below.',
 			'devices'     => array(
 				array(
 					'id'            => 'firetv',
 					'label'         => 'Fire TV / Android TV',
-					'icon'          => 'tv',
+					'icon'          => 'flame',
 					'version'       => '2.3.0',
+					'subtitle'      => 'Install via a downloader app · v2.3.0',
+					'full_url'      => '',
 					'download_url'  => '',
 					'store_url'     => '',
 					'download_code' => '',
 					'show_qr'       => 0,
 					'previous'      => array( array( 'version' => '2.2.4', 'url' => '' ) ),
 					'steps'         => array(
-						'Allow installs from your downloader app: Settings → My Fire TV → Developer options (Android TV: Settings → Apps → Security).',
-						'Install a downloader app from your device\'s official app store.',
-						'Open the downloader and enter the download code or address shown on this page.',
-						'Install Relay Player and sign in with your portal email and password.',
+						'Allow **apps from unknown sources** for your downloader app: Fire TV **Settings → My Fire TV → Developer options**; Android TV **Settings → Apps → Security**.',
+						'Install a **downloader app** from your device\'s official app store.',
+						'Open the downloader and enter the download code shown here.',
+						'When the download finishes, tap **Install**. Future updates happen inside the app.',
 					),
 				),
 				array(
@@ -112,10 +118,10 @@ class RSP_Guides {
 				),
 			),
 			'whats_new'   => array(
-				array( 'title' => 'Calmer home screen', 'text' => 'Rows load progressively and remember where you left off.' ),
-				array( 'title' => 'Faster zapping', 'text' => 'Channel changes reuse open connections when the source allows it.' ),
-				array( 'title' => 'Starts offline', 'text' => 'The last guide is cached so the app opens instantly.' ),
-				array( 'title' => 'Safer storage', 'text' => 'Sign-in tokens are kept in the device keystore.' ),
+				array( 'title' => 'Calmer home screen', 'text' => 'Rows load progressively and remember where you left off.', 'icon' => 'sparkle' ),
+				array( 'title' => 'Faster zapping', 'text' => 'Channel changes reuse open connections when the source allows it.', 'icon' => 'bolt' ),
+				array( 'title' => 'Starts offline', 'text' => 'The last guide is cached so the app opens instantly.', 'icon' => 'clock' ),
+				array( 'title' => 'Safer storage', 'text' => 'Sign-in tokens are kept in the device keystore.', 'icon' => 'shield' ),
 			),
 			'third_party' => array(
 				array( 'name' => 'Xtream-compatible players', 'status' => 'soon', 'url' => '', 'text' => 'Use server, username and password.' ),
@@ -123,7 +129,8 @@ class RSP_Guides {
 				array( 'name' => 'MAG / STB portals', 'status' => 'soon', 'url' => '', 'text' => 'Use the portal address and your device MAC.' ),
 				array( 'name' => 'Media-center add-ons', 'status' => 'soon', 'url' => '', 'text' => 'Use the M3U address in a playlist add-on.' ),
 			),
-			'third_party_note' => 'Third-party players use the server, username, password or M3U address from My Accounts — never your portal email and password.',
+			'third_party_intro' => 'Prefer a third-party app? Setup guides are on the way. Our app is the recommended way — these still work with your subscription.',
+			'third_party_note' => '**These apps use your player details** — the server, username, password or M3U address shown under My Accounts. Never enter your portal email and password there.',
 		);
 	}
 
@@ -140,6 +147,9 @@ class RSP_Guides {
 			array(
 				'release'          => array(),
 				'login_note'       => '',
+				'login_title'      => '',
+				'login_small'      => '',
+				'third_party_intro' => '',
 				'devices'          => array(),
 				'whats_new'        => array(),
 				'third_party'      => array(),
@@ -187,12 +197,17 @@ class RSP_Guides {
 				'enabled'  => empty( $r['enabled'] ) ? 0 : 1,
 				'version'  => sanitize_text_field( isset( $r['version'] ) ? $r['version'] : '' ),
 				'title'    => sanitize_text_field( isset( $r['title'] ) ? $r['title'] : '' ),
-				'subtitle' => sanitize_textarea_field( isset( $r['subtitle'] ) ? $r['subtitle'] : '' ),
+				'subtitle' => sanitize_text_field( isset( $r['subtitle'] ) ? $r['subtitle'] : '' ),
+				'description' => sanitize_textarea_field( isset( $r['description'] ) ? $r['description'] : '' ),
+				'availability' => sanitize_text_field( isset( $r['availability'] ) ? $r['availability'] : '' ),
 				'compat'   => sanitize_text_field( isset( $r['compat'] ) ? $r['compat'] : '' ),
 				'qr_url'   => $url( isset( $r['qr_url'] ) ? $r['qr_url'] : '' ),
 				'stats'    => array(),
 			),
 			'login_note'       => sanitize_textarea_field( isset( $in['login_note'] ) ? $in['login_note'] : '' ),
+			'login_title'      => sanitize_text_field( isset( $in['login_title'] ) ? $in['login_title'] : '' ),
+			'login_small'      => sanitize_textarea_field( isset( $in['login_small'] ) ? $in['login_small'] : '' ),
+			'third_party_intro' => sanitize_textarea_field( isset( $in['third_party_intro'] ) ? $in['third_party_intro'] : '' ),
 			'third_party_note' => sanitize_textarea_field( isset( $in['third_party_note'] ) ? $in['third_party_note'] : '' ),
 			'devices'          => array(),
 			'whats_new'        => array(),
@@ -219,6 +234,8 @@ class RSP_Guides {
 				'label'         => sanitize_text_field( $d['label'] ),
 				'icon'          => in_array( isset( $d['icon'] ) ? $d['icon'] : '', self::icons(), true ) ? $d['icon'] : 'box',
 				'version'       => sanitize_text_field( isset( $d['version'] ) ? $d['version'] : '' ),
+				'subtitle'      => sanitize_text_field( isset( $d['subtitle'] ) ? $d['subtitle'] : '' ),
+				'full_url'      => $url( isset( $d['full_url'] ) ? $d['full_url'] : '' ),
 				'download_url'  => $url( isset( $d['download_url'] ) ? $d['download_url'] : '' ),
 				'store_url'     => $url( isset( $d['store_url'] ) ? $d['store_url'] : '' ),
 				'download_code' => preg_replace( '/[^A-Za-z0-9]/', '', isset( $d['download_code'] ) ? (string) $d['download_code'] : '' ),
@@ -229,7 +246,7 @@ class RSP_Guides {
 		}
 		foreach ( isset( $in['whats_new'] ) ? (array) $in['whats_new'] : array() as $w ) {
 			if ( ! empty( $w['title'] ) ) {
-				$out['whats_new'][] = array( 'title' => sanitize_text_field( $w['title'] ), 'text' => sanitize_text_field( isset( $w['text'] ) ? $w['text'] : '' ) );
+				$out['whats_new'][] = array( 'title' => sanitize_text_field( $w['title'] ), 'text' => sanitize_text_field( isset( $w['text'] ) ? $w['text'] : '' ), 'icon' => in_array( isset( $w['icon'] ) ? $w['icon'] : '', array( 'sparkle', 'mic', 'bolt', 'shield', 'clock', 'star', 'play' ), true ) ? $w['icon'] : 'sparkle' );
 			}
 		}
 		foreach ( isset( $in['third_party'] ) ? (array) $in['third_party'] : array() as $t ) {

@@ -48,10 +48,10 @@ class RSP_Preview {
 			),
 			'order_count'   => 3,
 			'plans'         => array(
-				array( 'id' => 1, 'name' => 'Relay Monthly', 'months' => 1, 'price_html' => $fmt( 13 ), 'monthly_html' => $fmt( 13 ), 'savings' => 0, 'featured' => false, 'badge' => '', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
-				array( 'id' => 2, 'name' => 'Relay Quarter', 'months' => 3, 'price_html' => $fmt( 36 ), 'monthly_html' => $fmt( 12 ), 'savings' => 8, 'featured' => false, 'badge' => '', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
-				array( 'id' => 3, 'name' => 'Relay Half-Year', 'months' => 6, 'price_html' => $fmt( 66 ), 'monthly_html' => $fmt( 11 ), 'savings' => 15, 'featured' => true, 'badge' => 'Popular', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
-				array( 'id' => 4, 'name' => 'Relay Annual', 'months' => 12, 'price_html' => $fmt( 120 ), 'monthly_html' => $fmt( 10 ), 'savings' => 23, 'featured' => false, 'badge' => 'Best value', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
+				array( 'id' => 1, 'name' => 'Relay Monthly', 'price' => 13, 'monthly' => 13, 'months' => 1, 'price_html' => $fmt( 13 ), 'monthly_html' => $fmt( 13 ), 'savings' => 0, 'featured' => false, 'badge' => '', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
+				array( 'id' => 2, 'name' => 'Relay Quarter', 'price' => 36, 'monthly' => 12, 'months' => 3, 'price_html' => $fmt( 36 ), 'monthly_html' => $fmt( 12 ), 'savings' => 8, 'featured' => false, 'badge' => '', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
+				array( 'id' => 3, 'name' => 'Relay Half-Year', 'price' => 66, 'monthly' => 11, 'months' => 6, 'price_html' => $fmt( 66 ), 'monthly_html' => $fmt( 11 ), 'savings' => 15, 'featured' => true, 'badge' => 'Popular', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
+				array( 'id' => 4, 'name' => 'Relay Annual', 'price' => 120, 'monthly' => 10, 'months' => 12, 'price_html' => $fmt( 120 ), 'monthly_html' => $fmt( 10 ), 'savings' => 23, 'featured' => false, 'badge' => 'Best value', 'features' => array( 'Full authorized catalog', 'Every supported device' ), 'giftable' => true ),
 			),
 			'gateways'      => array( 'card' => 'Credit / debit card', 'btc' => 'Bitcoin & Lightning' ),
 			'referral'      => array(

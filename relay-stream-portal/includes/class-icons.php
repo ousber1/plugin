@@ -19,6 +19,19 @@ class RSP_Icons {
 	 */
 	private static function paths() {
 		return array(
+			'grid'         => '<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/>',
+			'card'         => '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 14.5h3"/>',
+			'chevron'      => '<path d="m7 10 5 5 5-5"/>',
+			'heart'        => '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10C19.5 15.4 12 20 12 20z"/>',
+			'chat'         => '<rect x="3.5" y="4" width="17" height="13" rx="2.5"/><path d="M8 20.5l3-3.5M8 9h8M8 12.5h5"/>',
+			'globe'        => '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5z"/>',
+			'sparkle'      => '<path d="M12 3.5l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+			'mic'          => '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3"/>',
+			'bolt'         => '<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>',
+			'flame'        => '<path d="M12 21c3.6 0 6-2.5 6-6 0-4.3-4-6.2-4.5-10.5C10 7 8.5 9.5 9 12.5c-1.5-.5-2.2-1.8-2.5-3C5.2 11 6 13 6 15c0 3.5 2.4 6 6 6z"/>',
+			'transactions2'=> '<rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M12 7v10M14.5 9h-3.3a1.7 1.7 0 0 0 0 3.4h1.6a1.7 1.7 0 0 1 0 3.4H9.5"/>',
+			'lifebuoy'     => '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="m6 6 3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5"/>',
+			'award'        => '<circle cx="12" cy="9" r="5"/><path d="M9 13.2 8 21l4-2 4 2-1-7.8"/>',
 			'dashboard'    => '<rect x="3.5" y="3.5" width="7" height="9" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.5"/>',
 			'accounts'     => '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.2 14.8c1.7.7 2.9 2.3 3.3 5.2"/>',
 			'apps'         => '<rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M10 18.5h4"/><path d="M12 6.5v6m0 0-2.5-2.5M12 12.5l2.5-2.5"/>',

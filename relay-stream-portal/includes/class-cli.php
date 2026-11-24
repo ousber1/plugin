@@ -49,7 +49,7 @@ class RSP_Cli {
 	 * Run the read-only reseller_info check and print a redacted result.
 	 */
 	public static function test_connection() {
-		$r = RSP_Provider_Factory::tvplus()->test_connection();
+		$r = RSP_Provider_Factory::remote()->test_connection();
 		WP_CLI::line( wp_json_encode( $r->to_log(), JSON_PRETTY_PRINT ) );
 		$r->ok() ? WP_CLI::success( 'Connected.' ) : WP_CLI::error( $r->error, false );
 	}

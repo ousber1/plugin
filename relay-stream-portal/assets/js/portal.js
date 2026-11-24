@@ -237,19 +237,65 @@
 		}, 15000 );
 	}
 
+	function initSidebar() {
+		document.querySelectorAll( '[data-rsp-app]' ).forEach( function ( app ) {
+			if ( app.dataset.bound ) { return; }
+			app.dataset.bound = '1';
+			var btn = app.querySelector( '[data-rsp-sidebar-toggle]' );
+			var scrim = app.querySelector( '[data-rsp-sidebar-close]' );
+			var mobile = function () { return window.matchMedia( '(max-width: 960px)' ).matches; };
+			var close = function () { app.classList.remove( 'is-open' ); if ( scrim ) { scrim.hidden = true; } if ( btn ) { btn.setAttribute( 'aria-expanded', 'false' ); } };
+			if ( 'collapsed' === store( 'rsp-sidebar' ) && ! mobile() ) { app.classList.add( 'is-collapsed' ); }
+			if ( btn ) {
+				btn.addEventListener( 'click', function () {
+					if ( mobile() ) {
+						var open = ! app.classList.contains( 'is-open' );
+						app.classList.toggle( 'is-open', open );
+						if ( scrim ) { scrim.hidden = ! open; }
+						btn.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+					} else {
+						var c = app.classList.toggle( 'is-collapsed' );
+						store( 'rsp-sidebar', c ? 'collapsed' : 'open' );
+					}
+				} );
+			}
+			if ( scrim ) { scrim.addEventListener( 'click', close ); }
+			document.addEventListener( 'keydown', function ( e ) { if ( 'Escape' === e.key ) { close(); } } );
+		} );
+	}
+
+	function initTargetBox() {
+		document.querySelectorAll( '[data-rsp-target-box]' ).forEach( function ( box ) {
+			if ( box.dataset.bound ) { return; }
+			box.dataset.bound = '1';
+			var form = box.closest( 'form' );
+			box.querySelectorAll( 'input[name="target"]' ).forEach( function ( r ) {
+				r.addEventListener( 'change', function () {
+					box.querySelector( '[data-rsp-target-title]' ).textContent = r.dataset.title;
+					box.querySelector( '[data-rsp-target-sub]' ).textContent = r.dataset.sub;
+					var icon = r.parentNode.querySelector( '.rsp-icon' );
+					var slot = box.querySelector( '[data-rsp-target-icon]' );
+					if ( icon && slot ) { slot.innerHTML = icon.outerHTML; }
+					form.querySelectorAll( '[data-rsp-new-only]' ).forEach( function ( el ) { el.hidden = 'new' !== r.value; } );
+					box.open = false;
+				} );
+			} );
+		} );
+	}
+
 	function ready( fn ) {
 		if ( 'loading' !== document.readyState ) { fn(); } else { document.addEventListener( 'DOMContentLoaded', fn ); }
 	}
 
 	ready( function () {
-		initTheme(); initPopovers(); initCopy(); initReveal(); initDismiss(); initTabs(); initTargetToggle(); initPoll();
+		initTheme(); initPopovers(); initCopy(); initReveal(); initDismiss(); initTabs(); initTargetToggle(); initSidebar(); initTargetBox(); initPoll();
 		renderQr( document );
 	} );
 
 	// Elementor editor re-renders widgets dynamically.
 	window.addEventListener( 'elementor/frontend/init', function () {
 		if ( window.elementorFrontend && window.elementorFrontend.hooks ) {
-			window.elementorFrontend.hooks.addAction( 'frontend/element_ready/global', function () { initTabs(); initTargetToggle(); renderQr( document ); } );
+			window.elementorFrontend.hooks.addAction( 'frontend/element_ready/global', function () { initTabs(); initTargetToggle(); initSidebar(); initTargetBox(); renderQr( document ); } );
 		}
 	} );
 }() );

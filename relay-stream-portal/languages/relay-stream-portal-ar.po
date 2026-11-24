@@ -1189,3 +1189,258 @@ msgstr[5] "%d يوم متبقٍ"
 
 msgid "Next expiry: %s · plans never renew automatically"
 msgstr "الانتهاء التالي: %s · الخطط لا تتجدد تلقائياً"
+
+msgid "Referral code"
+msgstr "رمز الإحالة"
+
+msgid "Server URL"
+msgstr "رابط الخادم"
+
+msgid "M3U URL"
+msgstr "رابط M3U"
+
+msgid "Account"
+msgstr "الحساب"
+
+msgid "Plan"
+msgstr "الخطة"
+
+msgid "Downloader code"
+msgstr "رمز التنزيل"
+
+msgid "Coming soon"
+msgstr "قريباً"
+
+msgid "TVPlus supports 1, 3, 6 or 12 months. For MegaOTT the package defines the period; keep this equal to it."
+msgstr "يدعم TVPlus مدة 1 أو 3 أو 6 أو 12 شهراً. في MegaOTT تحدد الباقة المدة؛ اجعل هذه القيمة مطابقة لها."
+
+msgid "Bouquet template ID (MegaOTT, optional)"
+msgstr "معرّف قالب الباقات (MegaOTT، اختياري)"
+
+msgid "Must be a template valid for the package."
+msgstr "يجب أن يكون قالباً صالحاً لهذه الباقة."
+
+msgid "Connections (MegaOTT)"
+msgstr "عدد الاتصالات (MegaOTT)"
+
+msgid "Simultaneous connections for new lines (0 = provider default). Bounded by the package maximum."
+msgstr "عدد الاتصالات المتزامنة للخطوط الجديدة (0 = الافتراضي لدى المزوّد). بحد أقصى ما تسمح به الباقة."
+
+msgid "%d streaming account"
+msgid_plural "%d streaming accounts"
+msgstr[0] "%d حساب بث"
+msgstr[1] "حساب بث واحد"
+msgstr[2] "حسابا بث"
+msgstr[3] "%d حسابات بث"
+msgstr[4] "%d حساب بث"
+msgstr[5] "%d حساب بث"
+
+msgid "Subscribe to a plan to get started"
+msgstr "اشترك في خطة للبدء"
+
+msgid "v%s · Now available"
+msgstr "v%s · متاح الآن"
+
+msgid "Scan with your phone to grab the install link"
+msgstr "امسح بهاتفك للحصول على رابط التثبيت"
+
+msgid "App login"
+msgstr "تسجيل الدخول إلى التطبيق"
+
+msgid "Auto-updates inside the app · v%s"
+msgstr "تحديثات تلقائية داخل التطبيق · v%s"
+
+msgid "in v%s"
+msgstr "في v%s"
+
+msgid "Use a different player"
+msgstr "استخدم مشغّلاً آخر"
+
+msgid "My Accounts → player details"
+msgstr "حساباتي ← تفاصيل المشغّل"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Good morning"
+msgstr "صباح الخير"
+
+msgid "Good afternoon"
+msgstr "مساء الخير"
+
+msgid "Good evening"
+msgstr "مساء الخير"
+
+msgid "N/A"
+msgstr "غير متاح"
+
+msgid "Account Details"
+msgstr "تفاصيل الحساب"
+
+msgid "Manage accounts"
+msgstr "إدارة الحسابات"
+
+msgid "No active subscription"
+msgstr "لا يوجد اشتراك نشط"
+
+msgid "Renew Now"
+msgstr "جدّد الآن"
+
+msgid "Subscribe Now"
+msgstr "اشترك الآن"
+
+msgid "Open the web player"
+msgstr "افتح المشغّل على الويب"
+
+msgid "Start Watching"
+msgstr "ابدأ المشاهدة"
+
+msgid "Web player coming soon"
+msgstr "مشغّل الويب قريباً"
+
+msgid "Soon"
+msgstr "قريباً"
+
+msgid "Download Apps"
+msgstr "تنزيل التطبيقات"
+
+msgid "Setup guides"
+msgstr "أدلة الإعداد"
+
+msgid "Open Ticket"
+msgstr "فتح تذكرة"
+
+msgid "Get support"
+msgstr "احصل على الدعم"
+
+msgid "Refer a Friend"
+msgstr "أحِل صديقاً"
+
+msgid "Earn %d free days"
+msgstr "اربح %d يوماً مجاناً"
+
+msgid "Recent Transactions"
+msgstr "المعاملات الأخيرة"
+
+msgid "View All"
+msgstr "عرض الكل"
+
+msgid "No transactions yet"
+msgstr "لا توجد معاملات بعد"
+
+msgid "Recent Tickets"
+msgstr "التذاكر الأخيرة"
+
+msgid "No support tickets"
+msgstr "لا توجد تذاكر دعم"
+
+msgid "Create a ticket"
+msgstr "إنشاء تذكرة"
+
+msgid "First-time streaming setup"
+msgstr "إعداد البث لأول مرة"
+
+msgid "Renew “%s”"
+msgstr "تجديد “%s”"
+
+msgid "%1$s · expires %2$s"
+msgstr "%1$s · ينتهي %2$s"
+
+msgid "Choose a plan that works for you"
+msgstr "اختر الخطة المناسبة لك"
+
+msgid "Change"
+msgstr "تغيير"
+
+msgid "Promo code"
+msgstr "رمز الخصم"
+
+msgid "What’s Included with Every Plan"
+msgstr "ما المضمّن في كل خطة"
+
+msgid "Secure Payment"
+msgstr "دفع آمن"
+
+msgid "Your account activates only after the payment provider confirms the payment — not when you return from the payment page. Only pay through this portal’s checkout."
+msgstr "يُفعّل حسابك فقط بعد أن يؤكد مزوّد الدفع العملية — وليس عند عودتك من صفحة الدفع. ادفع فقط عبر صفحة الدفع في هذه البوابة."
+
+msgid "guide"
+msgstr "الدليل"
+
+msgid "Gift a Friend"
+msgstr "أهدِ صديقاً"
+
+msgid "Earn %s for each friend who subscribes!"
+msgstr "اربح %s عن كل صديق يشترك!"
+
+msgid "Your referral link"
+msgstr "رابط الإحالة الخاص بك"
+
+msgid "Total Invited"
+msgstr "إجمالي المدعوين"
+
+msgid "Days Earned"
+msgstr "الأيام المكتسبة"
+
+msgid "Your Referrals"
+msgstr "إحالاتك"
+
+msgid "No referrals yet. Share your code to get started!"
+msgstr "لا توجد إحالات بعد. شارك رمزك للبدء!"
+
+msgid "Toggle menu"
+msgstr "تبديل القائمة"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Get %s Days"
+msgstr "احصل على %s يوماً"
+
+msgid "%d FREE"
+msgstr "%d مجاناً"
+
+msgid "for every referred friend"
+msgstr "لكل صديق تُحيله"
+
+msgid "Gift a Subscription"
+msgstr "إهداء اشتراك"
+
+msgid "Buy for someone special"
+msgstr "اشترِه لشخص مميز"
+
+msgid "Or full URL"
+msgstr "أو الرابط الكامل"
+
+msgid "Copy URL"
+msgstr "نسخ الرابط"
+
+msgid "Download installer"
+msgstr "تنزيل المثبّت"
+
+msgid "Need the previous version?"
+msgstr "تحتاج الإصدار السابق؟"
+
+msgid "Subscribe"
+msgstr "اشترك"
+
+msgid "Most Popular"
+msgstr "الأكثر شيوعاً"
+
+msgid "%d Month"
+msgid_plural "%d Months"
+msgstr[0] "%d شهر"
+msgstr[1] "شهر واحد"
+msgstr[2] "شهران"
+msgstr[3] "%d أشهر"
+msgstr[4] "%d شهراً"
+msgstr[5] "%d شهر"
+
+msgid "Save %1$d%% — %2$s/mo"
+msgstr "وفّر %1$d%% — %2$s/شهرياً"
+
+msgid "%s/mo"
+msgstr "%s/شهرياً"
+
+msgid "One-time payment · No auto-renewal"
+msgstr "دفعة واحدة · دون تجديد تلقائي"

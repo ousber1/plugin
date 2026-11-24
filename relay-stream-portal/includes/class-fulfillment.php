@@ -149,6 +149,8 @@ class RSP_Fulfillment {
 			$payload = array(
 				'months'     => (int) $snap['months'],
 				'package'    => (string) $snap['package'],
+				'template'   => isset( $snap['template'] ) ? (string) $snap['template'] : '',
+				'max_connections' => isset( $snap['connections'] ) ? (int) $snap['connections'] : 0,
 				'type'       => (string) $snap['type'],
 				'plan_label' => (string) $snap['plan_name'],
 				'order_id'   => $order->get_id(),

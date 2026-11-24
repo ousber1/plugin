@@ -81,6 +81,28 @@ class RSP_Installer {
 				dbDelta( $sql );
 			}
 		}
+		// v5: new visual defaults — replace previous defaults only where the admin never changed them.
+		if ( $current > 0 && $current < 5 ) {
+			$st  = (array) get_option( 'rsp_settings', array() );
+			$old = array(
+				'text_welcome'     => 'Welcome back, {name}',
+				'text_welcome_sub' => 'Everything about your streaming accounts in one place.',
+				'color_accent'     => '#14b8a6',
+				'color_accent_2'   => '#a78bfa',
+				'color_dark_bg'    => '#0b1016',
+				'color_dark_surface' => '#121a23',
+			);
+			$new = RSP_Settings::defaults();
+			foreach ( $old as $k => $v ) {
+				if ( isset( $st[ $k ] ) && $st[ $k ] === $v ) {
+					$st[ $k ] = $new[ $k ];
+				}
+			}
+			if ( isset( $st['payment_guides'][0]['title'] ) && 'Paying by card' === $st['payment_guides'][0]['title'] ) {
+				$st['payment_guides'] = $new['payment_guides'];
+			}
+			update_option( 'rsp_settings', $st, true );
+		}
 		// Record applied versions (v4 widened tickets.status to fit "awaiting_customer"; dbDelta alters the column).
 		if ( $current < RSP_DB_VERSION ) {
 			$log = (array) get_option( 'rsp_db_migrations', array() );

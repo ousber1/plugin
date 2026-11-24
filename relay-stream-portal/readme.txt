@@ -4,11 +4,11 @@ Tags: woocommerce, elementor, subscriptions, customer portal, iptv
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Customer portal, management dashboard and TVPlus Panel API integration for authorized streaming subscriptions.
+Customer portal, management dashboard and TVPlus / MegaOTT API integrations for authorized streaming subscriptions.
 
 == Description ==
 
@@ -34,6 +34,12 @@ Documentation: docs/README.md, docs/API-MAPPING.md, docs/ELEMENTOR-WALKTHROUGH.m
 assets/vendor/qrcode-generator.js — qrcode-generator 1.4.4, (c) Kazuhiko Arase, MIT License.
 
 == Changelog ==
+
+= 1.1.0 =
+* Full-page app layout with left sidebar, redesigned dashboard, plans, accounts, apps and referrals screens.
+* Customers land on the portal after sign-in/registration.
+* MegaOTT API v1 provider (create, extend, lookup, reconcile by username, suspend/resume).
+* 81 more Arabic strings.
 
 = 1.0.0 =
 * Initial release.

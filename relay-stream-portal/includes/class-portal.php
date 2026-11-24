@@ -20,6 +20,8 @@ class RSP_Portal {
 	private static $rendered = false;
 	/** @var int Instance counter for unique ids. */
 	private static $instance = 0;
+	/** @var bool Whether a full shell (with its own chat button) rendered. */
+	private static $shell = false;
 	/** @var array|null Cached view model per request. */
 	private static $vm = null;
 
@@ -89,14 +91,15 @@ class RSP_Portal {
 			return $v ? $v : $d;
 		};
 		return sprintf(
-			'.rsp-root{--rsp-accent:%1$s;--rsp-accent-2:%2$s;--rsp-radius:%3$dpx}.rsp-root[data-rsp-theme=dark]{--rsp-bg:%4$s;--rsp-surface:%5$s}.rsp-root[data-rsp-theme=light]{--rsp-bg:%6$s;--rsp-surface:%7$s}',
+			'body.rsp-app-body{background:%4$s}.rsp-root{--rsp-accent:%1$s;--rsp-accent-2:%2$s;--rsp-radius:%3$dpx;--rsp-gold:%8$s}.rsp-root[data-rsp-theme=dark]{--rsp-bg:%4$s;--rsp-surface:%5$s}.rsp-root[data-rsp-theme=light]{--rsp-bg:%6$s;--rsp-surface:%7$s}',
 			$hex( $s['color_accent'], '#14b8a6' ),
 			$hex( $s['color_accent_2'], '#a78bfa' ),
 			max( 0, min( 32, (int) $s['radius'] ) ),
 			$hex( $s['color_dark_bg'], '#0b1016' ),
 			$hex( $s['color_dark_surface'], '#121a23' ),
 			$hex( $s['color_light_bg'], '#f5f7f8' ),
-			$hex( $s['color_light_surface'], '#ffffff' )
+			$hex( $s['color_light_surface'], '#ffffff' ),
+			$hex( isset( $s['color_gold'] ) ? $s['color_gold'] : '', '#e7b85b' )
 		);
 	}
 
@@ -417,18 +420,25 @@ class RSP_Portal {
 	public static function render_shell( array $args = array() ) {
 		self::enqueue();
 		self::$rendered = true;
+		self::$shell    = true;
 		$module         = self::requested_module( isset( $args['module'] ) ? $args['module'] : 'dashboard' );
 		$preview        = self::is_preview();
 		if ( ! $preview && ! is_user_logged_in() ) {
 			return self::root_open( $args, 'rsp-shell rsp-guest' ) . self::render_auth( 'login', $args, false ) . '</div>';
 		}
-		$vm   = self::view_model( self::transaction_args( $module ) );
-		$html = self::root_open( $args, 'rsp-shell' );
-		$html .= self::template( 'partials/header', array( 'vm' => $vm, 'module' => $module, 'args' => $args ) );
-		$html .= '<main class="rsp-main" id="rsp-main-' . (int) self::$instance . '" tabindex="-1">';
-		$html .= self::flash_html();
-		$html .= self::module_html( $module, $vm, $args );
-		$html .= '</main></div>';
+		$vm = self::view_model( self::transaction_args( $module ) );
+		if ( 'topbar' === RSP_Settings::get( 'layout' ) ) {
+			$html  = self::root_open( $args, 'rsp-shell rsp-layout-topbar' );
+			$html .= self::template( 'partials/header', array( 'vm' => $vm, 'module' => $module, 'args' => $args ) );
+			$html .= '<main class="rsp-main" id="rsp-main-' . (int) self::$instance . '" tabindex="-1">';
+			$html .= self::flash_html() . self::module_html( $module, $vm, $args );
+			$html .= '</main></div>';
+			return $html;
+		}
+		$content = self::flash_html() . self::module_html( $module, $vm, $args );
+		$html    = self::root_open( $args, 'rsp-shell rsp-layout-sidebar' . ( RSP_Settings::get( 'app_mode' ) && '' !== RSP_App::page_role() ? ' rsp-is-app' : '' ) );
+		$html   .= self::template( 'partials/app-shell', array( 'vm' => $vm, 'module' => $module, 'args' => $args, 'content' => $content ) );
+		$html   .= '</div>';
 		return $html;
 	}
 
@@ -553,7 +563,7 @@ class RSP_Portal {
 	 * Floating support button on portal pages.
 	 */
 	public static function floating_support() {
-		if ( ! self::$rendered || ! RSP_Settings::get( 'floating_support' ) || ! is_user_logged_in() ) {
+		if ( ! self::$rendered || ! RSP_Settings::get( 'floating_support' ) || ! is_user_logged_in() || ( 'sidebar' === RSP_Settings::get( 'layout' ) && self::$shell ) ) {
 			return;
 		}
 		echo self::template( 'partials/floating-support', array() ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -570,6 +580,35 @@ class RSP_Portal {
 			return '—';
 		}
 		return esc_html( date_i18n( get_option( 'date_format' ), strtotime( $utc . ' UTC' ) ) );
+	}
+
+	/**
+	 * Price split into symbol, whole and decimals ("$" "24" ".99") using WooCommerce currency settings.
+	 *
+	 * @param float $amount Amount.
+	 * @return string HTML.
+	 */
+	public static function price_html( $amount ) {
+		$dec    = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2;
+		$dsep   = function_exists( 'wc_get_price_decimal_separator' ) ? wc_get_price_decimal_separator() : '.';
+		$tsep   = function_exists( 'wc_get_price_thousand_separator' ) ? wc_get_price_thousand_separator() : ',';
+		$sym    = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '$';
+		$pos    = get_option( 'woocommerce_currency_pos', 'left' );
+		$whole  = number_format( floor( (float) $amount ), 0, '', $tsep );
+		$cents  = $dec > 0 ? $dsep . substr( number_format( (float) $amount, $dec, '.', '' ), -$dec ) : '';
+		$symbol = '<span class="rsp-price-sym">' . esc_html( $sym ) . '</span>';
+		$body   = '<span class="rsp-price-whole">' . esc_html( $whole ) . '</span><span class="rsp-price-cents">' . esc_html( $cents ) . '</span>';
+		return '<span class="rsp-price" dir="ltr">' . ( in_array( $pos, array( 'right', 'right_space' ), true ) ? $body . $symbol : $symbol . $body ) . '</span>';
+	}
+
+	/**
+	 * Light inline markup for admin-authored guide text: **bold** only, everything else escaped.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	public static function rich( $text ) {
+		return preg_replace( '/\*\*(.+?)\*\*/u', '<strong>$1</strong>', esc_html( (string) $text ) );
 	}
 
 	/**

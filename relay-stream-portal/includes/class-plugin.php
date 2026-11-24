@@ -41,7 +41,7 @@ final class RSP_Plugin {
 	 * Register hooks.
 	 */
 	private function boot() {
-		RSP_Installer::maybe_upgrade();
+		add_action( 'init', array( 'RSP_Installer', 'maybe_upgrade' ), 0 );
 
 		RSP_I18n::init();
 		add_action( 'init', array( $this, 'load_textdomain' ), 1 );
@@ -49,6 +49,7 @@ final class RSP_Plugin {
 		RSP_Jobs::init();
 		RSP_Auth::init();
 		RSP_Portal::init();
+		RSP_App::init();
 		RSP_Shortcodes::init();
 		RSP_Rest::init();
 		RSP_Forms::init();

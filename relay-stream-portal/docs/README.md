@@ -1,6 +1,12 @@
 # Relay Stream Portal — setup and operations guide
 
-A WordPress plugin with three connected parts: a customer portal (shortcodes + Elementor Free widgets), a management dashboard in `/wp-admin`, and a server-side integration with the documented TVPlus Panel API. Use it only for streaming services you are authorized to distribute.
+A WordPress plugin with three connected parts: a customer portal (shortcodes + Elementor Free widgets), a management dashboard in `/wp-admin`, and server-side integrations with the documented **TVPlus Panel API** and **MegaOTT API v1** (choose one in API Settings).
+
+## Portal look and behaviour
+
+* **Full-page app (default):** portal pages render without the theme header/footer — a left sidebar (Dashboard, My Accounts, Apps & Guides, Plans & Billing, Transactions, Referrals & Gifts, Support), a top bar (theme toggle, notifications, account menu), promo cards for referrals and gifts, and a floating support button. On phones the sidebar becomes a drawer.
+* **After sign-in or registration** (portal forms, `wp-login.php`, WooCommerce My Account) customers land on the portal dashboard. Signed-in customers opening the login page go to the dashboard; guests opening a portal page are sent to sign in and back.
+* Switch to the older top-navigation layout, or turn app mode off to embed the portal inside your theme, in **Branding**. Brand name, logo, colors (accent, gold promo color, dark/light backgrounds), texts and navigation are all configurable. Use it only for streaming services you are authorized to distribute.
 
 ## Requirements
 
@@ -19,8 +25,8 @@ A WordPress plugin with three connected parts: a customer portal (shortcodes + E
 3. **Relay Stream → Elementor & Pages**: create or map the portal pages (see `ELEMENTOR-WALKTHROUGH.md`).
 4. **Relay Stream → Plans**: create plan products (or the demo plans 1/3/6/12 months — demo prices are placeholders) and review them.
 5. Enable at least one WooCommerce payment gateway.
-6. **Relay Stream → Branding**: name, logo, colors, theme, navigation, language, toggles.
-7. **Relay Stream → API Settings & Job Queue**: stays in **Manual provisioning** until you complete the checklist in `API-MAPPING.md`.
+6. **Relay Stream → Branding**: name, logo, colors, layout, app mode, theme, navigation, language, toggles.
+7. **Relay Stream → API Settings & Job Queue**: pick **TVPlus** or **MegaOTT**, save the key/token. Provisioning stays **Manual** until you complete the provider checklist in `API-MAPPING.md`.
 8. Make sure WP-Cron runs (or call `wp rsp queue` every minute from a system cron).
 
 ## How fulfillment works

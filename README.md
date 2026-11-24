@@ -1,6 +1,6 @@
 # Relay Stream Portal
 
-WordPress plugin: customer portal + `/wp-admin` management dashboard + TVPlus Panel API integration for authorized streaming subscriptions. WooCommerce billing, Elementor Free widgets (or shortcodes), English/Arabic (RTL).
+WordPress plugin: full-page customer portal + `/wp-admin` management dashboard + TVPlus and MegaOTT API integrations for authorized streaming subscriptions. WooCommerce billing, Elementor Free widgets (or shortcodes), English/Arabic (RTL).
 
 * Plugin source: [`relay-stream-portal/`](relay-stream-portal/)
 * Installable ZIP: [`dist/relay-stream-portal.zip`](dist/relay-stream-portal.zip) (rebuild with `relay-stream-portal/bin/build-zip.sh`)

@@ -24,7 +24,7 @@ $rsp_gifts_on = $vm['billing'] && RSP_Settings::get( 'gift_enabled' );
 	<div class="rsp-tabs" role="tablist">
 		<a role="tab" class="rsp-tab<?php echo 'referrals' === $rsp_tab ? ' is-current' : ''; ?>" aria-selected="<?php echo 'referrals' === $rsp_tab ? 'true' : 'false'; ?>" href="<?php echo esc_url( $rsp_p ? '#' : add_query_arg( 'tab', 'referrals' ) ); ?>"><?php RSP_Icons::e( 'referrals', 18 ); ?><?php esc_html_e( 'Referrals', 'relay-stream-portal' ); ?></a>
 		<?php if ( $rsp_gifts_on ) : ?>
-			<a role="tab" class="rsp-tab<?php echo 'gifts' === $rsp_tab ? ' is-current' : ''; ?>" aria-selected="<?php echo 'gifts' === $rsp_tab ? 'true' : 'false'; ?>" href="<?php echo esc_url( $rsp_p ? '#' : add_query_arg( 'tab', 'gifts' ) ); ?>"><?php RSP_Icons::e( 'redeem', 18 ); ?><?php esc_html_e( 'Gift a plan', 'relay-stream-portal' ); ?></a>
+			<a role="tab" class="rsp-tab<?php echo 'gifts' === $rsp_tab ? ' is-current' : ''; ?>" aria-selected="<?php echo 'gifts' === $rsp_tab ? 'true' : 'false'; ?>" href="<?php echo esc_url( $rsp_p ? '#' : add_query_arg( 'tab', 'gifts' ) ); ?>"><?php RSP_Icons::e( 'heart', 18 ); ?><?php esc_html_e( 'Gift a Friend', 'relay-stream-portal' ); ?></a>
 		<?php endif; ?>
 	</div>
 
@@ -33,10 +33,10 @@ $rsp_gifts_on = $vm['billing'] && RSP_Settings::get( 'gift_enabled' );
 			<div class="rsp-card rsp-empty"><p><?php esc_html_e( 'The referral program is currently paused.', 'relay-stream-portal' ); ?></p></div>
 		<?php else : ?>
 			<div class="rsp-hero-card">
-				<div class="rsp-hero-icon"><?php RSP_Icons::e( 'referrals', 28 ); ?></div>
+				<div class="rsp-hero-icon"><?php RSP_Icons::e( 'referrals', 24 ); ?></div>
 				<div><h2><?php
-					/* translators: %d days */
-					printf( esc_html__( 'Get %s for every friend who subscribes', 'relay-stream-portal' ), '<mark>' . esc_html( sprintf( _n( '%d free day', '%d free days', $rsp_days, 'relay-stream-portal' ), $rsp_days ) ) . '</mark>' ); ?></h2>
+					/* translators: %s: highlighted "30 free days" */
+					printf( esc_html__( 'Earn %s for each friend who subscribes!', 'relay-stream-portal' ), '<mark>' . esc_html( sprintf( _n( '%d free day', '%d free days', $rsp_days, 'relay-stream-portal' ), $rsp_days ) ) . '</mark>' ); ?></h2>
 					<p class="rsp-muted"><?php
 						/* translators: %d days */
 						echo esc_html( sprintf( __( 'Share your link. After your friend’s first confirmed payment and a %d-day review period, the days are added to your reward balance. You choose which account to apply them to.', 'relay-stream-portal' ), (int) RSP_Settings::get( 'referral_review_days', 7 ) ) ); ?></p></div>
@@ -44,16 +44,16 @@ $rsp_gifts_on = $vm['billing'] && RSP_Settings::get( 'gift_enabled' );
 
 			<div class="rsp-grid rsp-grid-2">
 				<div class="rsp-card"><span class="rsp-eyebrow"><?php esc_html_e( 'Your referral code', 'relay-stream-portal' ); ?></span>
-					<div class="rsp-copy-row"><code class="rsp-code-big"><?php echo esc_html( $rsp_ref['code'] ); ?></code><button type="button" class="rsp-btn rsp-btn-sm" data-rsp-copy="<?php echo esc_attr( $rsp_ref['code'] ); ?>"><?php RSP_Icons::e( 'copy', 16 ); ?><span><?php esc_html_e( 'Copy', 'relay-stream-portal' ); ?></span></button></div></div>
-				<div class="rsp-card"><span class="rsp-eyebrow"><?php esc_html_e( 'Your share link', 'relay-stream-portal' ); ?></span>
+					<div class="rsp-copy-row"><code class="rsp-code-big rsp-code-spaced"><?php echo esc_html( $rsp_ref['code'] ); ?></code><button type="button" class="rsp-btn rsp-btn-sm" data-rsp-copy="<?php echo esc_attr( $rsp_ref['code'] ); ?>"><?php RSP_Icons::e( 'copy', 16 ); ?><span><?php esc_html_e( 'Copy', 'relay-stream-portal' ); ?></span></button></div></div>
+				<div class="rsp-card"><span class="rsp-eyebrow"><?php esc_html_e( 'Your referral link', 'relay-stream-portal' ); ?></span>
 					<div class="rsp-copy-row"><input class="rsp-copy-input" type="text" readonly value="<?php echo esc_attr( $rsp_ref['link'] ); ?>" aria-label="<?php esc_attr_e( 'Share link', 'relay-stream-portal' ); ?>"><button type="button" class="rsp-btn rsp-btn-sm" data-rsp-copy="<?php echo esc_attr( $rsp_ref['link'] ); ?>"><?php RSP_Icons::e( 'link', 16 ); ?><span><?php esc_html_e( 'Copy', 'relay-stream-portal' ); ?></span></button></div></div>
 			</div>
 
 			<div class="rsp-stats">
-				<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'accounts' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['invited']; ?></strong><small><?php esc_html_e( 'Total invited', 'relay-stream-portal' ); ?></small></div></div>
-				<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'check' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['converted']; ?></strong><small><?php esc_html_e( 'Converted', 'relay-stream-portal' ); ?></small></div></div>
-				<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'clock' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['pending']; ?></strong><small><?php esc_html_e( 'Pending', 'relay-stream-portal' ); ?></small></div></div>
-				<div class="rsp-stat"><span class="rsp-stat-icon"><?php RSP_Icons::e( 'referrals' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['earned']; ?></strong><small><?php esc_html_e( 'Days earned', 'relay-stream-portal' ); ?></small></div></div>
+				<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-blue"><?php RSP_Icons::e( 'accounts' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['invited']; ?></strong><small><?php esc_html_e( 'Total Invited', 'relay-stream-portal' ); ?></small></div></div>
+				<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-green"><?php RSP_Icons::e( 'award' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['converted']; ?></strong><small><?php esc_html_e( 'Converted', 'relay-stream-portal' ); ?></small></div></div>
+				<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-gold"><?php RSP_Icons::e( 'clock' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['pending']; ?></strong><small><?php esc_html_e( 'Pending', 'relay-stream-portal' ); ?></small></div></div>
+				<div class="rsp-stat"><span class="rsp-stat-icon rsp-c-gold"><?php RSP_Icons::e( 'referrals' ); ?></span><div><strong><?php echo (int) $rsp_ref['stats']['earned']; ?></strong><small><?php esc_html_e( 'Days Earned', 'relay-stream-portal' ); ?></small></div></div>
 			</div>
 
 			<?php if ( (int) $rsp_ref['stats']['balance'] > 0 ) : ?>
@@ -64,9 +64,9 @@ $rsp_gifts_on = $vm['billing'] && RSP_Settings::get( 'gift_enabled' );
 			<?php endif; ?>
 
 			<section class="rsp-card">
-				<div class="rsp-card-head"><h2><?php esc_html_e( 'Your referrals', 'relay-stream-portal' ); ?></h2></div>
+				<div class="rsp-card-head"><h2><?php esc_html_e( 'Your Referrals', 'relay-stream-portal' ); ?></h2></div>
 				<?php if ( empty( $rsp_ref['history'] ) ) : ?>
-					<div class="rsp-empty rsp-empty-sm"><?php RSP_Icons::e( 'accounts', 30 ); ?><p><?php esc_html_e( 'No referrals yet. Share your code to get started.', 'relay-stream-portal' ); ?></p></div>
+					<div class="rsp-empty rsp-empty-lg"><?php RSP_Icons::e( 'accounts', 38 ); ?><p><?php esc_html_e( 'No referrals yet. Share your code to get started!', 'relay-stream-portal' ); ?></p></div>
 				<?php else : ?>
 					<ul class="rsp-mini-list">
 						<?php foreach ( $rsp_ref['history'] as $rsp_h ) : ?>

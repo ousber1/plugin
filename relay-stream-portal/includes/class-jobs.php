@@ -259,7 +259,10 @@ class RSP_Jobs {
 		$cut  = gmdate( 'Y-m-d H:i:s', time() - self::STALE_AFTER );
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::t() . " WHERE state = 'working' AND locked_at < %s", $cut ) ); // phpcs:ignore
 		foreach ( (array) $rows as $job ) {
-			if ( 'send' === $job->step && 'create' === $job->type ) {
+			$pl = self::payload( $job );
+			if ( 'send' === $job->step && 'create' === $job->type && ! empty( $pl['username'] ) && method_exists( RSP_Provider_Factory::get(), 'find_created' ) ) {
+				self::update( $job->id, array( 'state' => 'pending', 'step' => 'reconcile_create', 'locked_by' => null, 'locked_at' => null ) );
+			} elseif ( 'send' === $job->step && 'create' === $job->type ) {
 				self::to_review( $job, 'Worker stopped while creating the remote account. Check the panel before retrying.' );
 			} elseif ( 'send' === $job->step ) {
 				self::update( $job->id, array( 'state' => 'pending', 'step' => 'reconcile', 'locked_by' => null, 'locked_at' => null ) );
@@ -355,35 +358,64 @@ class RSP_Jobs {
 			self::to_review( $job, 'Local account record is missing.' );
 			return;
 		}
+		$can_find = method_exists( $provider, 'find_created' );
+
+		// A previous attempt may have been applied remotely: look up the identifier we chose before sending.
+		if ( 'reconcile_create' === $job->step ) {
+			$f = $can_find ? $provider->find_created( array( 'username' => isset( $p['username'] ) ? $p['username'] : '', 'type' => $account->provider_type ) ) : new RSP_Provider_Result( 'ambiguous', array(), 'Provider has no create lookup.' );
+			self::update( $job->id, array( 'result' => wp_json_encode( $f->to_log() ) ) );
+			if ( $f->ok() ) {
+				self::adopt_created( $job, $account, $provider, $f );
+				$job->step = 'verify';
+			} elseif ( ! empty( $f->data['not_found'] ) ) {
+				RSP_Audit::log( 'create_reconciled_absent', 'job', $job->id, '', array(), 0 );
+				self::update( $job->id, array( 'step' => 'start' ) );
+				$job->step = 'start';
+			} else {
+				self::to_review( $job, 'Could not confirm whether the panel created this account: ' . $f->error );
+				return;
+			}
+		}
 
 		if ( 'start' === $job->step ) {
-			// Guard: if credentials already exist, the remote account was created earlier. Never create twice.
+			// Guard: if identifiers already exist, the remote account was created earlier. Never create twice.
 			if ( ! empty( $account->credentials ) || ! empty( $account->provider_user_id ) ) {
 				self::update( $job->id, array( 'step' => 'verify' ) );
 				$job->step = 'verify';
 			} else {
+				// Choose the username up front and persist it, so a lost response can be reconciled.
+				if ( $can_find && 'mag' !== ( isset( $p['type'] ) ? $p['type'] : 'm3u' ) && empty( $p['username'] ) ) {
+					$p['username'] = RSP_Megaott_Provider::generate_username();
+					self::update( $job->id, array( 'payload' => wp_json_encode( $p ) ) );
+				}
 				self::update( $job->id, array( 'step' => 'send' ) );
 				$r = $provider->create_account(
 					array(
-						'months'  => (int) $p['months'],
-						'package' => isset( $p['package'] ) ? $p['package'] : 'all',
-						'type'    => isset( $p['type'] ) ? $p['type'] : 'm3u',
-						'note'    => RSP_Settings::get( 'api_note_prefix', 'rsp' ) . '-' . $account->uuid,
-						'mac'     => isset( $p['mac'] ) ? $p['mac'] : '',
+						'months'          => (int) $p['months'],
+						'package'         => isset( $p['package'] ) ? $p['package'] : 'all',
+						'template'        => isset( $p['template'] ) ? $p['template'] : '',
+						'max_connections' => isset( $p['max_connections'] ) ? (int) $p['max_connections'] : 0,
+						'type'            => isset( $p['type'] ) ? $p['type'] : 'm3u',
+						'note'            => RSP_Settings::get( 'api_note_prefix', 'rsp' ) . '-' . $account->uuid,
+						'mac'             => isset( $p['mac'] ) ? $p['mac'] : '',
+						'username'        => isset( $p['username'] ) ? $p['username'] : '',
 					)
 				);
 				self::update( $job->id, array( 'result' => wp_json_encode( $r->to_log() ) ) );
 				if ( $r->ok() ) {
-					RSP_Accounts::set_credentials( $account->id, $r->data['credentials'] );
-					RSP_Accounts::update( $account->id, array( 'provider' => $provider->slug(), 'provider_user_id' => $r->data['user_id'] ) );
-					self::update( $job->id, array( 'step' => 'verify' ) );
+					self::adopt_created( $job, $account, $provider, $r );
 					$job->step = 'verify';
 				} elseif ( 'ambiguous' === $r->outcome ) {
+					RSP_Audit::log( 'job_ambiguous', 'job', $job->id, '', $r->to_log(), 0 );
 					if ( ! empty( $r->data['user_id'] ) ) {
 						RSP_Accounts::update( $account->id, array( 'provider_user_id' => (string) $r->data['user_id'] ) );
 					}
+					if ( $can_find && ! empty( $p['username'] ) ) {
+						// Reconcile on the next run (gives the panel a moment to settle).
+						self::update( $job->id, array( 'state' => 'pending', 'step' => 'reconcile_create', 'next_attempt_at' => gmdate( 'Y-m-d H:i:s', time() + 30 ), 'locked_by' => null, 'locked_at' => null, 'last_error' => substr( $r->error, 0, 500 ) ) );
+						return;
+					}
 					self::to_review( $job, 'The panel may have created this account (' . $r->error . '). The API has no lookup without credentials, so confirm in the panel and complete manually.' );
-					RSP_Audit::log( 'job_ambiguous', 'job', $job->id, '', $r->to_log(), 0 );
 					return;
 				} else {
 					self::retry_or_fail( $job, $r, 'start' );
@@ -394,13 +426,47 @@ class RSP_Jobs {
 
 		if ( 'verify' === $job->step ) {
 			$account = RSP_Accounts::get( $job->account_id );
-			$lookup  = $provider->lookup_account( RSP_Accounts::credentials( $account ), $account->provider_type );
+			$lookup  = $provider->lookup_account( self::provider_creds( $account, $p ), $account->provider_type );
 			if ( ! $lookup->ok() ) {
 				self::retry_or_fail( $job, $lookup, 'verify' );
 				return;
 			}
 			self::complete( $job, $account, $lookup->data['expire'], array( 'reconciled' => 'verified' ) );
 		}
+	}
+
+	/**
+	 * Store identifiers returned by a create (or found by reconciliation).
+	 *
+	 * @param object                 $job Job.
+	 * @param object                 $account Account.
+	 * @param RSP_Provider_Interface $provider Provider.
+	 * @param RSP_Provider_Result    $r Result.
+	 */
+	private static function adopt_created( $job, $account, $provider, RSP_Provider_Result $r ) {
+		RSP_Accounts::set_credentials( $account->id, $r->data['credentials'] );
+		$upd = array( 'provider' => $provider->slug(), 'provider_user_id' => (string) $r->data['user_id'] );
+		if ( isset( $r->data['max_connections'] ) && null !== $r->data['max_connections'] ) {
+			$upd['max_connections'] = (int) $r->data['max_connections'];
+		}
+		RSP_Accounts::update( $account->id, $upd );
+		self::update( $job->id, array( 'step' => 'verify' ) );
+	}
+
+	/**
+	 * Decrypted credentials plus the provider identifiers adapters may need.
+	 *
+	 * @param object $account Account.
+	 * @param array  $payload Job payload.
+	 * @return array
+	 */
+	public static function provider_creds( $account, array $payload = array() ) {
+		$c = RSP_Accounts::credentials( $account );
+		if ( ! empty( $account->provider_user_id ) ) {
+			$c['provider_user_id'] = (string) $account->provider_user_id;
+		}
+		$c['package'] = ! empty( $payload['package'] ) && 'all' !== $payload['package'] ? (string) $payload['package'] : (string) $account->package_id;
+		return $c;
 	}
 
 	/**
@@ -412,7 +478,7 @@ class RSP_Jobs {
 	private static function run_renew( $job, RSP_Provider_Interface $provider ) {
 		$p       = self::payload( $job );
 		$account = RSP_Accounts::get( $job->account_id );
-		if ( ! $account || empty( $account->credentials ) ) {
+		if ( ! $account || ( empty( $account->credentials ) && empty( $account->provider_user_id ) ) ) {
 			self::to_review( $job, 'Account has no stored provider identifiers; renew manually.' );
 			return;
 		}
@@ -420,7 +486,7 @@ class RSP_Jobs {
 			self::to_review( $job, 'Ownership changed since purchase; staff must confirm the target account.' );
 			return;
 		}
-		$creds = RSP_Accounts::credentials( $account );
+		$creds = self::provider_creds( $account, $p );
 		$type  = $account->provider_type;
 
 		if ( 'start' === $job->step ) {
@@ -521,6 +587,11 @@ class RSP_Jobs {
 			return new WP_Error( 'rsp_manual', __( 'Live mode is off. Complete this job manually.', 'relay-stream-portal' ) );
 		}
 		$step = $job->step;
+		$pl = self::payload( $job );
+		if ( 'create' === $job->type && in_array( $step, array( 'send', 'reconcile_create' ), true ) && ! empty( $pl['username'] ) && method_exists( RSP_Provider_Factory::get(), 'find_created' ) ) {
+			$step                  = 'reconcile_create';
+			$confirmed_not_created = true; // The adapter verifies by lookup before any new create.
+		}
 		if ( 'create' === $job->type && in_array( $step, array( 'send', 'start' ), true ) ) {
 			$acc = RSP_Accounts::get( $job->account_id );
 			if ( $acc && empty( $acc->credentials ) && 'send' === $step && ! $confirmed_not_created ) {
@@ -555,8 +626,8 @@ class RSP_Jobs {
 			return new WP_Error( 'rsp_reconcile', __( 'Reconciliation needs live mode and a linked account.', 'relay-stream-portal' ) );
 		}
 		$acc   = RSP_Accounts::get( $job->account_id );
-		$creds = RSP_Accounts::credentials( $acc );
-		if ( ! $creds ) {
+		$creds = self::provider_creds( $acc, self::payload( $job ) );
+		if ( empty( $creds['username'] ) && empty( $creds['mac'] ) && empty( $creds['provider_user_id'] ) ) {
 			return new WP_Error( 'rsp_reconcile', __( 'No stored provider identifiers to look up.', 'relay-stream-portal' ) );
 		}
 		$r = RSP_Provider_Factory::get()->lookup_account( $creds, $acc->provider_type );
