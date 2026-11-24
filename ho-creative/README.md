@@ -30,6 +30,17 @@ Services clés (`app/Services`) : `OrderService` (chemin unique de création de 
 * **Dates** : fuseau `Africa/Casablanca`, jours ouvrés, heure limite, jours fériés, délai produit + délai de zone ; l'estimation signale si elle dépend du BAT.
 * **Paiement en ligne** : adaptateur CMI (3D Pay Hosting, hash ver3) – à valider avec la documentation et l'environnement de test CMI avant activation. Seul le rappel serveur signé confirme un paiement ; le retour navigateur est informatif.
 
+
+## Module Magasin (point de vente physique)
+Système complet intégré au même back-office, même base de données, mêmes clients et fournisseurs :
+* **Caisse (POS)** – *Admin → Ouvrir la caisse* : écran tactile, recherche ou **douchette code-barres**, rayons colorés, remises (rôle autorisé + motif), client facultatif ou création rapide, paiement **espèces / carte / chèque / virement**, paiements mixtes, calcul du rendu monnaie, ticket 80 mm imprimable. Une vente rejouée (double clic, coupure réseau) n'est jamais enregistrée deux fois.
+* **Sessions de caisse** : ouverture avec fond de caisse, entrées/sorties d'espèces, clôture avec comptage, **écart** calculé et rapport Z imprimable. Plusieurs caisses possibles (*Paramètres → Magasin*).
+* **Articles & stock** : référence, code-barres, rayon, prix TTC, TVA par article, coût moyen pondéré, seuil d'alerte, photo, journal de tous les mouvements (achat, vente, retour, inventaire, perte).
+* **Ventes, retours et factures** : historique filtrable, retour partiel ou total avec remise en stock et remboursement, **facture A4** au nom du client (une seule par ticket), **avoir** avec la TVA exacte de l'article retourné.
+* **Fournisseurs** : fiche avec bons de commande, réceptions partielles (entrée automatique en stock magasin au coût d'achat), règlements fournisseurs et **reste à payer**.
+* **Rapports** : ventes par jour, par article (marge), encaissements par moyen, valorisation du stock, soldes fournisseurs (export CSV).
+* **Rôle Caissier** : accès à la caisse uniquement (pas de chiffres financiers ni de paramètres).
+
 ## Rôles
 | Rôle | Accès principal |
 |---|---|
@@ -39,6 +50,7 @@ Services clés (`app/Services`) : `OrderService` (chemin unique de création de 
 | Production | Kanban, travaux, consommation matière |
 | Stock | Matières, fournisseurs, achats |
 | Expédition (`dispatch`) | Livraisons, retraits |
+| Caissier (`cashier`) | Caisse du magasin, ouverture/clôture, clients |
 | Comptabilité (`accounting`) | Finances, paiements, remboursements, dépenses, rapports |
 
 CA, marges, dépenses et paramètres sont réservés à `finance.view` / `settings.manage`.
@@ -56,7 +68,7 @@ cp .env.example .env   # DB_CONNECTION=sqlite ou mysql, APP_ENV=local, APP_DEBUG
 php artisan key:generate
 php artisan hocreative:install --demo      # migrations + rôles + catalogue + compte propriétaire
 php artisan serve
-php artisan test                            # 28 tests, SQLite en mémoire
+php artisan test                            # 34 tests, SQLite en mémoire
 DB_CONNECTION=mysql DB_DATABASE=hoc_test DB_USERNAME=… DB_PASSWORD=… php artisan test   # contre MySQL/MariaDB
 ```
 Paiement de test : *Paramètres → Prestataire en ligne = Test* (inactif quand `APP_ENV=production`).

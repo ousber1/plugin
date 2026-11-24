@@ -49,6 +49,9 @@ class PurgeDemoCommand extends Command
             Models\RetailProduct::whereIn('id', $rp)->delete();
             Models\RetailCategory::whereDoesntHave('products')->delete();
             Models\SupplierPayment::where('idempotency_key', 'like', 'demo-%')->delete();
+            $demoSuppliers = Models\Supplier::where('is_demo', true)->pluck('id');
+            Models\SupplierPayment::whereIn('supplier_id', $demoSuppliers)->delete();
+            Models\PurchaseOrder::whereIn('supplier_id', $demoSuppliers)->get()->each(fn ($po) => $po->delete());
             Models\Supplier::where('is_demo', true)->whereDoesntHave('purchaseOrders')->whereDoesntHave('materials')->whereDoesntHave('retailProducts')->each(fn ($s) => $s->delete());
         });
         $this->info('Données de démonstration transactionnelles supprimées. Les produits/modèles d\'exemple (is_demo) restent : dépubliez-les ou supprimez-les depuis le back-office.');

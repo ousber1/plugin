@@ -29,6 +29,13 @@ C'est terminé : la boutique est en ligne et le back-office est sur **https://ho
 
 > Si une page « HO CREATIVE – configuration de l'hébergement » apparaît à la place, elle indique exactement quoi corriger (version PHP, extension manquante, dossier non inscriptible).
 
+## Démarrer le magasin
+1. *Admin → Magasin → Rayons* : créez vos rayons (couleur des boutons de caisse).
+2. *Articles & stock → Nouvel article* : désignation, prix TTC, TVA, code-barres, stock initial.
+3. *Équipe & rôles* : créez vos caissiers (rôle **Caissier**).
+4. *Ouvrir la caisse* : saisissez le fond de caisse, vendez, puis clôturez en fin de journée.
+Une douchette code-barres USB fonctionne comme un clavier : aucun pilote ni réglage.
+
 ## Tâche Cron (recommandée)
 cPanel → **Tâches Cron** → réglage commun « **Une fois par minute** » → commande :
 ```

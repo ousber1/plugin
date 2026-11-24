@@ -154,6 +154,12 @@ class DemoSeeder extends Seeder
         if (! $prev) {
             auth()->forgetUser();
         }
-        \App\Models\SupplierPayment::create(['supplier_id' => $supplier->id, 'amount' => '1500.00', 'method' => 'bank_transfer', 'reference' => 'VIR-DEMO', 'paid_at' => now()->subDays(3)->toDateString(), 'notes' => 'Règlement démo', 'idempotency_key' => 'demo-sp-1']);
+        // a received purchase order of goods, partly paid
+        $po = \App\Models\PurchaseOrder::create(['number' => app(\App\Services\NumberGenerator::class)->next('purchase_order'), 'supplier_id' => $supplier->id, 'status' => 'sent', 'supplier_reference' => 'FAC-DEMO-104', 'notes' => 'Réassort démo']);
+        $po->items()->create(['retail_product_id' => $p['RAM-A480']->id, 'description' => $p['RAM-A480']->name, 'quantity' => 40, 'unit_cost' => '29.00']);
+        $po->items()->create(['retail_product_id' => $p['CAR-NR']->id, 'description' => $p['CAR-NR']->name, 'quantity' => 10, 'unit_cost' => '72.00']);
+        app(\App\Services\PurchaseService::class)->recalc($po);
+        app(\App\Services\PurchaseService::class)->receive($po->fresh('items'), $po->items->mapWithKeys(fn ($i) => [$i->id => $i->quantity])->all(), 'demo-receipt');
+        \App\Models\SupplierPayment::create(['purchase_order_id' => $po->id, 'supplier_id' => $supplier->id, 'amount' => '1500.00', 'method' => 'bank_transfer', 'reference' => 'VIR-DEMO', 'paid_at' => now()->subDays(3)->toDateString(), 'notes' => 'Règlement démo', 'idempotency_key' => 'demo-sp-1']);
     }
 }

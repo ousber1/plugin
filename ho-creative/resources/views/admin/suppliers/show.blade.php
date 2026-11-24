@@ -6,7 +6,11 @@
 <div class="kpis">
   <div class="kpi k-ink"><div class="k-ic">@icon('box')</div><div><div class="v">{{ money($balance['received']) }}</div><div class="l">Marchandises reçues HT</div></div></div>
   <div class="kpi k-ok"><div class="k-ic">@icon('wallet')</div><div><div class="v">{{ money($balance['paid']) }}</div><div class="l">Déjà réglé</div></div></div>
-  <div class="kpi {{ (float) $balance['due'] > 0 ? 'alert-kpi' : 'k-ok' }}"><div class="k-ic">@icon('alert')</div><div><div class="v">{{ money($balance['due']) }}</div><div class="l">Reste à payer</div></div></div>
+  @if((float) $balance['due'] >= 0)
+    <div class="kpi {{ (float) $balance['due'] > 0 ? 'alert-kpi' : 'k-ok' }}"><div class="k-ic">@icon('alert')</div><div><div class="v">{{ money($balance['due']) }}</div><div class="l">Reste à payer</div></div></div>
+  @else
+    <div class="kpi k-ok"><div class="k-ic">@icon('check')</div><div><div class="v">{{ money(abs((float) $balance['due'])) }}</div><div class="l">Avance versée (à déduire des prochaines livraisons)</div></div></div>
+  @endif
 </div>
 <div class="split">
   <div>
@@ -32,7 +36,7 @@
     </form>
     @endcan
     <div class="card"><div class="card-head"><h3>Historique des règlements</h3></div>
-      @forelse($supplier->payments->sortByDesc('paid_at') as $p)<div class="flex between small" style="padding:6px 0;border-bottom:1px solid var(--line-2)"><span>{{ d($p->paid_at) }} · {{ __('payment.'.$p->method) }} {{ $p->reference }} <span class="muted">({{ $p->user?->name }})</span></span><b>{{ money($p->amount) }}</b></div>@empty<p class="muted small">Aucun règlement.</p>@endforelse
+      @forelse($supplier->payments->sortByDesc('paid_at') as $p)<div class="flex between small" style="padding:6px 0;border-bottom:1px solid var(--line-2)"><span>{{ d($p->paid_at) }} · {{ __('payment.'.$p->method) }} {{ $p->reference }} @if($p->user)<span class="muted">({{ $p->user->name }})</span>@endif</span><b>{{ money($p->amount) }}</b></div>@empty<p class="muted small">Aucun règlement.</p>@endforelse
       @if($supplier->notes)<p class="small" style="margin-top:10px">{{ $supplier->notes }}</p>@endif
     </div>
   </div>
