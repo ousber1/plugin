@@ -1,0 +1,1191 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Relay Stream Portal 1.0.0\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"X-Domain: relay-stream-portal\n"
+
+msgid "Saved."
+msgstr "تم الحفظ."
+
+msgid "Account not found."
+msgstr "الحساب غير موجود."
+
+msgid "Invalid request."
+msgstr "طلب غير صالح."
+
+msgid "Reply sent."
+msgstr "تم إرسال الرد."
+
+msgid "Reward days"
+msgstr "أيام المكافأة"
+
+msgid "Create account"
+msgstr "إنشاء حساب"
+
+msgid "Orders"
+msgstr "الطلبات"
+
+msgid "Order"
+msgstr "الطلب"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Payment"
+msgstr "الدفع"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Nickname"
+msgstr "الاسم المستعار"
+
+msgid "Username"
+msgstr "اسم المستخدم"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Expires"
+msgstr "ينتهي"
+
+msgid "All accounts"
+msgstr "كل الحسابات"
+
+msgid "Details"
+msgstr "التفاصيل"
+
+msgid "Available"
+msgstr "متاح"
+
+msgid "Display order"
+msgstr "ترتيب العرض"
+
+msgid "Featured"
+msgstr "مميز"
+
+msgid "Payment guides"
+msgstr "أدلة الدفع"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Actions"
+msgstr "إجراءات"
+
+msgid "Referrals"
+msgstr "الإحالات"
+
+msgid "Friend"
+msgstr "صديق"
+
+msgid "Apps & Guides"
+msgstr "التطبيقات والأدلة"
+
+msgid "What’s new"
+msgstr "ما الجديد"
+
+msgid "Ticket not found."
+msgstr "التذكرة غير موجودة."
+
+msgid "All tickets"
+msgstr "كل التذاكر"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Notifications"
+msgstr "الإشعارات"
+
+msgid "Overview"
+msgstr "نظرة عامة"
+
+msgid "Filter"
+msgstr "تصفية"
+
+msgid "Awaiting payment"
+msgstr "بانتظار الدفع"
+
+msgid "Activating"
+msgstr "جارٍ التفعيل"
+
+msgid "Expired"
+msgstr "منتهي"
+
+msgid "Suspended"
+msgstr "موقوف"
+
+msgid "Under review"
+msgstr "قيد المراجعة"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Account %d"
+msgstr "الحساب %d"
+
+msgid "Please confirm your email address first. Check your inbox for the link."
+msgstr "يرجى تأكيد بريدك الإلكتروني أولاً. تحقق من صندوق الوارد للعثور على الرابط."
+
+msgid "Too many attempts. Please wait a few minutes."
+msgstr "محاولات كثيرة. يرجى الانتظار بضع دقائق."
+
+msgid "The email/username or password is incorrect."
+msgstr "البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة."
+
+msgid "Registration is currently closed."
+msgstr "التسجيل مغلق حالياً."
+
+msgid "Too many attempts. Please try again later."
+msgstr "محاولات كثيرة. يرجى المحاولة لاحقاً."
+
+msgid "Enter a valid email address."
+msgstr "أدخل بريداً إلكترونياً صالحاً."
+
+msgid "An account with this email already exists. Try signing in or resetting your password."
+msgstr "يوجد حساب بهذا البريد الإلكتروني. جرّب تسجيل الدخول أو إعادة تعيين كلمة المرور."
+
+msgid "Use at least 8 characters for your password."
+msgstr "استخدم 8 أحرف على الأقل لكلمة المرور."
+
+msgid "We could not create your account. Please try again."
+msgstr "تعذر إنشاء حسابك. يرجى المحاولة مرة أخرى."
+
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr "رابط إعادة التعيين غير صالح أو منتهي. اطلب رابطاً جديداً."
+
+msgid "Enter your current password to change your email or password."
+msgstr "أدخل كلمة المرور الحالية لتغيير بريدك الإلكتروني أو كلمة المرور."
+
+msgid "That email address cannot be used."
+msgstr "لا يمكن استخدام هذا البريد الإلكتروني."
+
+msgid "Could not save your profile."
+msgstr "تعذر حفظ ملفك الشخصي."
+
+msgid "Email confirmed. You can sign in now."
+msgstr "تم تأكيد البريد الإلكتروني. يمكنك تسجيل الدخول الآن."
+
+msgid "That confirmation link is invalid or expired."
+msgstr "رابط التأكيد غير صالح أو منتهي."
+
+msgid "Account created. Check your inbox to confirm your email address."
+msgstr "تم إنشاء الحساب. تحقق من بريدك لتأكيد عنوانك."
+
+msgid "If an account exists for that address, a reset link is on its way."
+msgstr "إذا كان هناك حساب بهذا العنوان، فرابط إعادة التعيين في طريقه إليك."
+
+msgid "Password updated. Sign in with your new password."
+msgstr "تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة."
+
+msgid "You have signed out."
+msgstr "لقد سجّلت الخروج."
+
+msgid "Your session expired. Please try again."
+msgstr "انتهت جلستك. يرجى المحاولة مرة أخرى."
+
+msgid "Profile saved."
+msgstr "تم حفظ الملف الشخصي."
+
+msgid "Billing is not available right now."
+msgstr "الفوترة غير متاحة حالياً."
+
+msgid "That promo code is not valid."
+msgstr "رمز الخصم غير صالح."
+
+msgid "Promo code saved. It will be applied at checkout."
+msgstr "تم حفظ رمز الخصم وسيُطبّق عند الدفع."
+
+msgid "Referral code applied. Thanks for joining through a friend!"
+msgstr "تم تطبيق رمز الإحالة. شكراً لانضمامك عبر صديق!"
+
+msgid "Reward queued. Your account will be extended once the provider confirms it."
+msgstr "تمت جدولة المكافأة. سيُمدّد حسابك بعد تأكيد المزوّد."
+
+msgid "Request received. Our team will apply your reward days and confirm the new expiry."
+msgstr "تم استلام الطلب. سيضيف فريقنا أيام المكافأة ويؤكد تاريخ الانتهاء الجديد."
+
+msgid "Gift redeemed! Track activation under My Accounts."
+msgstr "تم استرداد الهدية! تابع التفعيل من صفحة حساباتي."
+
+msgid "Too many tickets. Please try again later."
+msgstr "تذاكر كثيرة. يرجى المحاولة لاحقاً."
+
+msgid "Ticket created. We will reply here and by email."
+msgstr "تم إنشاء التذكرة. سنرد هنا وعبر البريد الإلكتروني."
+
+msgid "Too many messages. Please try again later."
+msgstr "رسائل كثيرة. يرجى المحاولة لاحقاً."
+
+msgid "Account renamed."
+msgstr "تمت إعادة تسمية الحساب."
+
+msgid "Gift not found."
+msgstr "الهدية غير موجودة."
+
+msgid "Gift sent."
+msgstr "تم إرسال الهدية."
+
+msgid "Could not send the gift. Check the address."
+msgstr "تعذر إرسال الهدية. تحقق من العنوان."
+
+msgid "Not applicable"
+msgstr "غير منطبق"
+
+msgid "Queued"
+msgstr "في قائمة الانتظار"
+
+msgid "Activated"
+msgstr "مُفعّل"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Gift code issued"
+msgstr "تم إصدار رمز الهدية"
+
+msgid "Relay Stream Portal: provisioning queued after confirmed payment."
+msgstr "Relay Stream Portal: تمت جدولة التفعيل بعد تأكيد الدفع."
+
+msgid "Partial refund issued; decide whether to adjust the account."
+msgstr "صدر استرداد جزئي؛ قرّر ما إذا كان يلزم تعديل الحساب."
+
+msgid "Relay Stream Portal: partial refund flagged for staff review. No automatic change was made."
+msgstr "Relay Stream Portal: تم تحويل الاسترداد الجزئي لمراجعة الفريق. لم يُجرَ أي تغيير تلقائي."
+
+msgid "Your gift code is ready"
+msgstr "رمز هديتك جاهز"
+
+msgid "Copy it from Referrals & Gifts or send it by email."
+msgstr "انسخه من الإحالات والهدايا أو أرسله بالبريد الإلكتروني."
+
+msgid "That code is not valid."
+msgstr "هذا الرمز غير صالح."
+
+msgid "That code is not valid, already used, or expired."
+msgstr "هذا الرمز غير صالح أو مستخدم أو منتهي."
+
+msgid "Choose an active or expired account without pending operations."
+msgstr "اختر حساباً نشطاً أو منتهياً دون عمليات معلّقة."
+
+msgid "This gift cannot be applied to that account type."
+msgstr "لا يمكن تطبيق هذه الهدية على هذا النوع من الحسابات."
+
+msgid "You reached the maximum number of accounts."
+msgstr "لقد بلغت الحد الأقصى لعدد الحسابات."
+
+msgid "Your gift was redeemed"
+msgstr "تم استرداد هديتك"
+
+msgid "The recipient redeemed the gift code you purchased."
+msgstr "استرد المستلم رمز الهدية الذي اشتريته."
+
+msgid "Ready to redeem"
+msgstr "جاهزة للاسترداد"
+
+msgid "Redeemed"
+msgstr "مستردّة"
+
+msgid "Revoked"
+msgstr "ملغاة"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Working"
+msgstr "قيد التنفيذ"
+
+msgid "Succeeded"
+msgstr "نجح"
+
+msgid "Needs review"
+msgstr "يحتاج مراجعة"
+
+msgid "Manual mode: enter the account details to complete activation."
+msgstr "الوضع اليدوي: أدخل تفاصيل الحساب لإكمال التفعيل."
+
+msgid "Only failed or review jobs can be retried."
+msgstr "يمكن إعادة محاولة المهام الفاشلة أو قيد المراجعة فقط."
+
+msgid "Live mode is off. Complete this job manually."
+msgstr "الوضع المباشر متوقف. أكمل هذه المهمة يدوياً."
+
+msgid "Confirm in the panel that no account was created before retrying a create."
+msgstr "تأكد في اللوحة من عدم إنشاء أي حساب قبل إعادة محاولة الإنشاء."
+
+msgid "Reconciliation needs live mode and a linked account."
+msgstr "تتطلب المطابقة الوضع المباشر وحساباً مرتبطاً."
+
+msgid "No stored provider identifiers to look up."
+msgstr "لا توجد معرّفات مزوّد مخزنة للبحث."
+
+msgid "Expiry is still %s; the renewal was not applied. You may retry."
+msgstr "لا يزال تاريخ الانتهاء %s؛ لم يُطبّق التجديد. يمكنك إعادة المحاولة."
+
+msgid "Job not found or already completed."
+msgstr "المهمة غير موجودة أو مكتملة بالفعل."
+
+msgid "Enter the confirmed expiry date (YYYY-MM-DD)."
+msgstr "أدخل تاريخ الانتهاء المؤكد (YYYY-MM-DD)."
+
+msgid "A reason is required for manual completion."
+msgstr "يلزم ذكر سبب للإكمال اليدوي."
+
+msgid "Linked account not found."
+msgstr "الحساب المرتبط غير موجود."
+
+msgid "Your account is active"
+msgstr "حسابك نشط"
+
+msgid "Your account was extended"
+msgstr "تم تمديد حسابك"
+
+msgid "%1$s is active until %2$s."
+msgstr "%1$s نشط حتى %2$s."
+
+msgid "Expires in %d day"
+msgid_plural "Expires in %d days"
+msgstr[0] "ينتهي اليوم"
+msgstr[1] "ينتهي خلال يوم واحد"
+msgstr[2] "ينتهي خلال يومين"
+msgstr[3] "ينتهي خلال %d أيام"
+msgstr[4] "ينتهي خلال %d يوماً"
+msgstr[5] "ينتهي خلال %d يوم"
+
+msgid "%1$s expires on %2$s. Plans never renew automatically."
+msgstr "%1$s ينتهي في %2$s. الخطط لا تتجدد تلقائياً."
+
+msgid "Copied"
+msgstr "تم النسخ"
+
+msgid "Copy"
+msgstr "نسخ"
+
+msgid "Show"
+msgstr "إظهار"
+
+msgid "Hide"
+msgstr "إخفاء"
+
+msgid "Something went wrong. Please try again."
+msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+
+msgid "Switch to light theme"
+msgstr "التبديل إلى المظهر الفاتح"
+
+msgid "Switch to dark theme"
+msgstr "التبديل إلى المظهر الداكن"
+
+msgid "Our team is checking this activation and will update it shortly."
+msgstr "يتحقق فريقنا من هذا التفعيل وسيحدّثه قريباً."
+
+msgid "Billing is unavailable because WooCommerce is not active."
+msgstr "الفوترة غير متاحة لأن WooCommerce غير مفعّل."
+
+msgid "You are signed in as %s."
+msgstr "أنت مسجّل الدخول باسم %s."
+
+msgid "Open your portal"
+msgstr "افتح بوابتك"
+
+msgid "Referrals are not active."
+msgstr "برنامج الإحالة غير نشط."
+
+msgid "That referral code was not found."
+msgstr "رمز الإحالة غير موجود."
+
+msgid "You cannot use your own referral code."
+msgstr "لا يمكنك استخدام رمز الإحالة الخاص بك."
+
+msgid "Referral codes can only be used before your first purchase."
+msgstr "لا يمكن استخدام رموز الإحالة إلا قبل أول عملية شراء."
+
+msgid "A referral is already linked to your account."
+msgstr "هناك إحالة مرتبطة بحسابك بالفعل."
+
+msgid "You earned free days"
+msgstr "لقد ربحت أياماً مجانية"
+
+msgid "%d days were added to your reward balance."
+msgstr "تمت إضافة %d يوماً إلى رصيد مكافآتك."
+
+msgid "Signed up"
+msgstr "سجّل"
+
+msgid "Paid — in review period"
+msgstr "دفع — ضمن فترة المراجعة"
+
+msgid "Reward earned"
+msgstr "تم كسب المكافأة"
+
+msgid "Not eligible"
+msgstr "غير مؤهل"
+
+msgid "Please try again in a moment."
+msgstr "يرجى المحاولة بعد لحظة."
+
+msgid "You need at least 30 days to apply a reward."
+msgstr "تحتاج إلى 30 يوماً على الأقل لتطبيق مكافأة."
+
+msgid "You have no reward days to apply."
+msgstr "ليس لديك أيام مكافأة لتطبيقها."
+
+msgid "Please sign in."
+msgstr "يرجى تسجيل الدخول."
+
+msgid "Player details are not available here. Contact support."
+msgstr "تفاصيل المشغّل غير متاحة هنا. تواصل مع الدعم."
+
+msgid "Too many requests. Please wait a few minutes."
+msgstr "طلبات كثيرة. يرجى الانتظار بضع دقائق."
+
+msgid "Player details appear once the account is active."
+msgstr "تظهر تفاصيل المشغّل بعد تفعيل الحساب."
+
+msgid "My Accounts"
+msgstr "حساباتي"
+
+msgid "Plans & Billing"
+msgstr "الخطط والفوترة"
+
+msgid "Transactions"
+msgstr "المعاملات"
+
+msgid "Referrals & Gifts"
+msgstr "الإحالات والهدايا"
+
+msgid "Redeem a Gift"
+msgstr "استرداد هدية"
+
+msgid "Support"
+msgstr "الدعم"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Sign In"
+msgstr "تسجيل الدخول"
+
+msgid "Create Account"
+msgstr "إنشاء حساب"
+
+msgid "Reset Password"
+msgstr "إعادة تعيين كلمة المرور"
+
+msgid "Portal"
+msgstr "البوابة"
+
+msgid "General"
+msgstr "عام"
+
+msgid "Open"
+msgstr "مفتوحة"
+
+msgid "Awaiting your reply"
+msgstr "بانتظار ردك"
+
+msgid "Awaiting support"
+msgstr "بانتظار الدعم"
+
+msgid "Resolved"
+msgstr "تم الحل"
+
+msgid "Closed"
+msgstr "مغلقة"
+
+msgid "Please add a subject and a message."
+msgstr "يرجى إضافة موضوع ورسالة."
+
+msgid "Message cannot be empty."
+msgstr "لا يمكن أن تكون الرسالة فارغة."
+
+msgid "New reply on ticket #%d"
+msgstr "رد جديد على التذكرة #%d"
+
+msgid "Attach up to 3 files."
+msgstr "أرفق حتى 3 ملفات."
+
+msgid "Upload failed."
+msgstr "فشل الرفع."
+
+msgid "A file is too large."
+msgstr "أحد الملفات كبير جداً."
+
+msgid "That file type is not allowed."
+msgstr "نوع الملف غير مسموح."
+
+msgid "Link expired. Reload the ticket and try again."
+msgstr "انتهت صلاحية الرابط. أعد تحميل التذكرة وحاول مجدداً."
+
+msgid "File not found."
+msgstr "الملف غير موجود."
+
+msgid "Please sign in first."
+msgstr "يرجى تسجيل الدخول أولاً."
+
+msgid "That plan is not available."
+msgstr "هذه الخطة غير متاحة."
+
+msgid "That account cannot be renewed right now."
+msgstr "لا يمكن تجديد هذا الحساب حالياً."
+
+msgid "This account already has an operation in progress."
+msgstr "هناك عملية قيد التنفيذ على هذا الحساب بالفعل."
+
+msgid "Gifts are not available for this plan."
+msgstr "الهدايا غير متاحة لهذه الخطة."
+
+msgid "Enter a valid recipient email or leave it empty."
+msgstr "أدخل بريداً صالحاً للمستلم أو اتركه فارغاً."
+
+msgid "Could not start checkout. Please try again."
+msgstr "تعذر بدء الدفع. يرجى المحاولة مرة أخرى."
+
+msgid "Choose this plan from your customer portal."
+msgstr "اختر هذه الخطة من بوابة العملاء."
+
+msgid "Please sign in to purchase a streaming plan."
+msgstr "يرجى تسجيل الدخول لشراء خطة بث."
+
+msgid "The account selected for renewal is no longer available and was removed from your cart."
+msgstr "الحساب المحدد للتجديد لم يعد متاحاً وأُزيل من سلتك."
+
+msgid "Renews"
+msgstr "يجدّد"
+
+msgid "Gift"
+msgstr "هدية"
+
+msgid "Code shown in your portal"
+msgstr "يظهر الرمز في بوابتك"
+
+msgid "New account"
+msgstr "حساب جديد"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "Renewal"
+msgstr "التجديد"
+
+msgid "One-time payment, no auto-renewal"
+msgstr "دفعة واحدة، دون تجديد تلقائي"
+
+msgid "Portal purpose"
+msgstr "غرض البوابة"
+
+msgid "Streaming plan"
+msgstr "خطة بث"
+
+msgid "All channels (all)"
+msgstr "كل القنوات (all)"
+
+msgid "Portal plan"
+msgstr "خطة البوابة"
+
+msgid "Sell this product as a streaming plan in the customer portal."
+msgstr "بيع هذا المنتج كخطة بث في بوابة العملاء."
+
+msgid "Duration (months)"
+msgstr "المدة (بالأشهر)"
+
+msgid "The provider API supports 1, 3, 6 or 12 months."
+msgstr "تدعم واجهة المزوّد 1 أو 3 أو 6 أو 12 شهراً."
+
+msgid "Provider package"
+msgstr "باقة المزوّد"
+
+msgid "Account type"
+msgstr "نوع الحساب"
+
+msgid "Badge text"
+msgstr "نص الشارة"
+
+msgid "Best value"
+msgstr "أفضل قيمة"
+
+msgid "Savings baseline (per month)"
+msgstr "أساس التوفير (شهرياً)"
+
+msgid "Savings are shown only when this is set and higher than the monthly equivalent."
+msgstr "يُعرض التوفير فقط عند ضبط هذه القيمة وكونها أعلى من المكافئ الشهري."
+
+msgid "Features (one per line)"
+msgstr "الميزات (واحدة في كل سطر)"
+
+msgid "Can be gifted"
+msgstr "يمكن إهداؤها"
+
+msgid "Plan duration (months)"
+msgstr "مدة الخطة (بالأشهر)"
+
+msgid "Inherit"
+msgstr "وراثة"
+
+msgid "Contact support"
+msgstr "تواصل مع الدعم"
+
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+msgid "Email or username"
+msgstr "البريد الإلكتروني أو اسم المستخدم"
+
+msgid "Keep me signed in"
+msgstr "إبقائي مسجّلاً"
+
+msgid "Forgot password?"
+msgstr "نسيت كلمة المرور؟"
+
+msgid "New here?"
+msgstr "جديد هنا؟"
+
+msgid "Create an account"
+msgstr "أنشئ حساباً"
+
+msgid "Create your account"
+msgstr "أنشئ حسابك"
+
+msgid "First name"
+msgstr "الاسم الأول"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Password (at least 8 characters)"
+msgstr "كلمة المرور (8 أحرف على الأقل)"
+
+msgid "Referral code (optional)"
+msgstr "رمز الإحالة (اختياري)"
+
+msgid "Already registered?"
+msgstr "مسجّل بالفعل؟"
+
+msgid "Choose a new password"
+msgstr "اختر كلمة مرور جديدة"
+
+msgid "New password (at least 8 characters)"
+msgstr "كلمة المرور الجديدة (8 أحرف على الأقل)"
+
+msgid "Save password"
+msgstr "حفظ كلمة المرور"
+
+msgid "Reset your password"
+msgstr "إعادة تعيين كلمة المرور"
+
+msgid "Enter your email and we will send you a link to choose a new password."
+msgstr "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاختيار كلمة مرور جديدة."
+
+msgid "Send reset link"
+msgstr "إرسال رابط إعادة التعيين"
+
+msgid "Back to sign in"
+msgstr "العودة إلى تسجيل الدخول"
+
+msgid "We are waiting for your payment to be confirmed."
+msgstr "نحن بانتظار تأكيد دفعتك."
+
+msgid "Payment confirmed. We are activating this account — this page updates automatically."
+msgstr "تم تأكيد الدفع. نقوم بتفعيل هذا الحساب — تتحدث هذه الصفحة تلقائياً."
+
+msgid "Our team is checking this activation and will update it shortly. No action is needed from you."
+msgstr "يتحقق فريقنا من هذا التفعيل وسيحدّثه قريباً. لا يلزمك أي إجراء."
+
+msgid "This account has expired. Renew it to keep watching — your settings stay the same."
+msgstr "انتهت صلاحية هذا الحساب. جدّده لمواصلة المشاهدة — تبقى إعداداتك كما هي."
+
+msgid "This account is suspended. Contact support for details."
+msgstr "هذا الحساب موقوف. تواصل مع الدعم لمعرفة التفاصيل."
+
+msgid "Each streaming account has its own expiry and player details. Your portal sign-in stays the same."
+msgstr "لكل حساب بث تاريخ انتهاء وتفاصيل مشغّل خاصة به. يبقى تسجيل دخولك إلى البوابة كما هو."
+
+msgid "Add another account"
+msgstr "إضافة حساب آخر"
+
+msgid "Order #%s"
+msgstr "الطلب #%s"
+
+msgid "Complete payment"
+msgstr "إكمال الدفع"
+
+msgid "No streaming accounts yet"
+msgstr "لا توجد حسابات بث بعد"
+
+msgid "Pick a plan to create your first account, or redeem a gift code."
+msgstr "اختر خطة لإنشاء حسابك الأول، أو استرد رمز هدية."
+
+msgid "Choose a plan"
+msgstr "اختر خطة"
+
+msgid "Redeem a gift"
+msgstr "استرداد هدية"
+
+msgid "Plan pending"
+msgstr "الخطة قيد الانتظار"
+
+msgid "Connections"
+msgstr "الاتصالات"
+
+msgid "Remaining"
+msgstr "المتبقي"
+
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] "%d يوم"
+msgstr[1] "يوم واحد"
+msgstr[2] "يومان"
+msgstr[3] "%d أيام"
+msgstr[4] "%d يوماً"
+msgstr[5] "%d يوم"
+
+msgid "An update to this account is in progress (%s)."
+msgstr "هناك تحديث جارٍ على هذا الحساب (%s)."
+
+msgid "Player details for third-party apps"
+msgstr "تفاصيل المشغّل لتطبيقات الطرف الثالث"
+
+msgid "These are not your portal sign-in. Keep them private."
+msgstr "هذه ليست بيانات دخولك إلى البوابة. احفظها بسرية."
+
+msgid "Server"
+msgstr "الخادم"
+
+msgid "M3U address"
+msgstr "عنوان M3U"
+
+msgid "MAC"
+msgstr "MAC"
+
+msgid "Copy %s"
+msgstr "نسخ %s"
+
+msgid "Show details"
+msgstr "إظهار التفاصيل"
+
+msgid "Renew this account"
+msgstr "تجديد هذا الحساب"
+
+msgid "Apply %d reward days"
+msgstr "تطبيق %d يوماً من المكافأة"
+
+msgid "Rename"
+msgstr "إعادة تسمية"
+
+msgid "Version %s available"
+msgstr "الإصدار %s متاح"
+
+msgid "Compatible with: %s"
+msgstr "متوافق مع: %s"
+
+msgid "QR code for the install page"
+msgstr "رمز QR لصفحة التثبيت"
+
+msgid "Scan with your phone to open the install page"
+msgstr "امسح بهاتفك لفتح صفحة التثبيت"
+
+msgid "Signing in to the app"
+msgstr "تسجيل الدخول إلى التطبيق"
+
+msgid "Pick your device"
+msgstr "اختر جهازك"
+
+msgid "Using another player"
+msgstr "استخدام مشغّل آخر"
+
+msgid "Setup guide"
+msgstr "دليل الإعداد"
+
+msgid "Guide coming soon"
+msgstr "الدليل قريباً"
+
+msgid "Subscription"
+msgstr "الاشتراك"
+
+msgid "None yet"
+msgstr "لا يوجد بعد"
+
+msgid "Next expiry"
+msgstr "الانتهاء التالي"
+
+msgid "Shortcuts"
+msgstr "اختصارات"
+
+msgid "Renew %s"
+msgstr "تجديد %s"
+
+msgid "Switch account"
+msgstr "تبديل الحساب"
+
+msgid "Download apps"
+msgstr "تنزيل التطبيقات"
+
+msgid "Open a ticket"
+msgstr "فتح تذكرة"
+
+msgid "Refer a friend"
+msgstr "أحِل صديقاً"
+
+msgid "Gift a subscription"
+msgstr "إهداء اشتراك"
+
+msgid "Recent transactions"
+msgstr "المعاملات الأخيرة"
+
+msgid "View all"
+msgstr "عرض الكل"
+
+msgid "No orders yet."
+msgstr "لا توجد طلبات بعد."
+
+msgid "Recent tickets"
+msgstr "التذاكر الأخيرة"
+
+msgid "No support tickets."
+msgstr "لا توجد تذاكر دعم."
+
+msgid "Pay once, watch for the whole term. Nothing renews automatically."
+msgstr "ادفع مرة واحدة وشاهد طوال المدة. لا شيء يتجدد تلقائياً."
+
+msgid "This purchase is for"
+msgstr "هذا الشراء لـ"
+
+msgid "A new streaming account"
+msgstr "حساب بث جديد"
+
+msgid "Renew “%1$s” (expires %2$s)"
+msgstr "تجديد “%1$s” (ينتهي %2$s)"
+
+msgid "Nickname for the new account (optional)"
+msgstr "اسم مستعار للحساب الجديد (اختياري)"
+
+msgid "Renewals extend the exact account you choose. The new term is added after the panel confirms it."
+msgstr "تمدّد التجديدات الحساب الذي تختاره بالضبط. تُضاف المدة الجديدة بعد تأكيد اللوحة."
+
+msgid "Have a promo code?"
+msgstr "لديك رمز خصم؟"
+
+msgid "Apply"
+msgstr "تطبيق"
+
+msgid "Were you referred by someone?"
+msgstr "هل أحالك أحد؟"
+
+msgid "Add code"
+msgstr "إضافة الرمز"
+
+msgid "What’s included with every plan"
+msgstr "ما المضمّن في كل خطة"
+
+msgid "Available at checkout:"
+msgstr "متاح عند الدفع:"
+
+msgid "No payment methods are enabled yet."
+msgstr "لم تُفعّل أي طرق دفع بعد."
+
+msgid "Your account activates only after the payment is confirmed by the payment provider — not when you return from the payment page. Only pay through this portal’s checkout."
+msgstr "يُفعّل حسابك فقط بعد أن يؤكد مزوّد الدفع العملية — وليس عند عودتك من صفحة الدفع. ادفع فقط عبر صفحة الدفع في هذه البوابة."
+
+msgid "Open guide"
+msgstr "فتح الدليل"
+
+msgid "This is your portal sign-in. It is separate from the player details of your streaming accounts."
+msgstr "هذا هو تسجيل دخولك إلى البوابة، وهو منفصل عن تفاصيل المشغّل لحسابات البث."
+
+msgid "Last name"
+msgstr "اسم العائلة"
+
+msgid "Display name"
+msgstr "الاسم المعروض"
+
+msgid "Change password"
+msgstr "تغيير كلمة المرور"
+
+msgid "New password"
+msgstr "كلمة المرور الجديدة"
+
+msgid "Current password (required to change email or password)"
+msgstr "كلمة المرور الحالية (مطلوبة لتغيير البريد أو كلمة المرور)"
+
+msgid "Email me about activations, expiry reminders and ticket replies"
+msgstr "راسلني بشأن التفعيل وتذكيرات الانتهاء وردود التذاكر"
+
+msgid "Save profile"
+msgstr "حفظ الملف الشخصي"
+
+msgid "Enter the 12-character code you received. Each code works once."
+msgstr "أدخل الرمز المكوّن من 12 حرفاً الذي استلمته. يعمل كل رمز مرة واحدة."
+
+msgid "Gift code"
+msgstr "رمز الهدية"
+
+msgid "Apply it to"
+msgstr "تطبيقها على"
+
+msgid "Extend “%s”"
+msgstr "تمديد “%s”"
+
+msgid "Redeem"
+msgstr "استرداد"
+
+msgid "After redeeming, the activation status appears under My Accounts."
+msgstr "بعد الاسترداد، تظهر حالة التفعيل في حساباتي."
+
+msgid "Invite friends, gift a plan and collect free days."
+msgstr "ادعُ أصدقاءك، أهدِ خطة واجمع أياماً مجانية."
+
+msgid "Gift a plan"
+msgstr "إهداء خطة"
+
+msgid "The referral program is currently paused."
+msgstr "برنامج الإحالة متوقف حالياً."
+
+msgid "Get %s for every friend who subscribes"
+msgstr "احصل على %s مقابل كل صديق يشترك"
+
+msgid "%d free day"
+msgid_plural "%d free days"
+msgstr[0] "%d يوم مجاني"
+msgstr[1] "يوم مجاني واحد"
+msgstr[2] "يومان مجانيان"
+msgstr[3] "%d أيام مجانية"
+msgstr[4] "%d يوماً مجانياً"
+msgstr[5] "%d يوم مجاني"
+
+msgid "Share your link. After your friend’s first confirmed payment and a %d-day review period, the days are added to your reward balance. You choose which account to apply them to."
+msgstr "شارك رابطك. بعد أول دفعة مؤكدة لصديقك وفترة مراجعة مدتها %d يوماً، تُضاف الأيام إلى رصيد مكافآتك. أنت تختار الحساب الذي تُطبّق عليه."
+
+msgid "Your referral code"
+msgstr "رمز الإحالة الخاص بك"
+
+msgid "Your share link"
+msgstr "رابط المشاركة الخاص بك"
+
+msgid "Share link"
+msgstr "رابط المشاركة"
+
+msgid "Total invited"
+msgstr "إجمالي المدعوين"
+
+msgid "Converted"
+msgstr "تحوّلوا"
+
+msgid "Days earned"
+msgstr "الأيام المكتسبة"
+
+msgid "You have %d reward days to use"
+msgstr "لديك %d يوماً من المكافآت لاستخدامها"
+
+msgid "Apply them from My Accounts on the account you want to extend."
+msgstr "طبّقها من حساباتي على الحساب الذي تريد تمديده."
+
+msgid "Go to My Accounts"
+msgstr "الانتقال إلى حساباتي"
+
+msgid "Your referrals"
+msgstr "إحالاتك"
+
+msgid "No referrals yet. Share your code to get started."
+msgstr "لا توجد إحالات بعد. شارك رمزك للبدء."
+
+msgid "Buy a gift subscription"
+msgstr "شراء اشتراك هدية"
+
+msgid "After payment you receive a single-use code valid for %d days. The recipient redeems it for a new account or to extend one of theirs."
+msgstr "بعد الدفع تحصل على رمز للاستخدام مرة واحدة صالح لمدة %d يوماً. يستخدمه المستلم لحساب جديد أو لتمديد أحد حساباته."
+
+msgid "Recipient email (optional — we email the code after payment)"
+msgstr "بريد المستلم (اختياري — نرسل الرمز بعد الدفع)"
+
+msgid "Gifts you bought"
+msgstr "الهدايا التي اشتريتها"
+
+msgid "Redeem a code"
+msgstr "استرداد رمز"
+
+msgid "No gifts yet."
+msgstr "لا توجد هدايا بعد."
+
+msgid "Expires %s"
+msgstr "ينتهي %s"
+
+msgid "friend@example.com"
+msgstr "friend@example.com"
+
+msgid "Recipient email"
+msgstr "بريد المستلم"
+
+msgid "Send by email"
+msgstr "إرسال بالبريد"
+
+msgid "Code ending in %s"
+msgstr "رمز ينتهي بـ %s"
+
+msgid "Private tickets between you and our team. We reply here and by email."
+msgstr "تذاكر خاصة بينك وبين فريقنا. نرد هنا وعبر البريد الإلكتروني."
+
+msgid "New ticket"
+msgstr "تذكرة جديدة"
+
+msgid "You"
+msgstr "أنت"
+
+msgid "Your reply"
+msgstr "ردك"
+
+msgid "Attachments (up to 3 · %1$s · max %2$d MB each)"
+msgstr "مرفقات (حتى 3 · %1$s · بحد أقصى %2$d ميغابايت لكل ملف)"
+
+msgid "Send reply"
+msgstr "إرسال الرد"
+
+msgid "Subject"
+msgstr "الموضوع"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "Related account (optional)"
+msgstr "الحساب المرتبط (اختياري)"
+
+msgid "None"
+msgstr "لا شيء"
+
+msgid "Related order (optional)"
+msgstr "الطلب المرتبط (اختياري)"
+
+msgid "How can we help?"
+msgstr "كيف يمكننا المساعدة؟"
+
+msgid "Never share passwords in tickets. Our team can see your account status already."
+msgstr "لا تشارك كلمات المرور في التذاكر. يمكن لفريقنا رؤية حالة حسابك بالفعل."
+
+msgid "Create ticket"
+msgstr "إنشاء تذكرة"
+
+msgid "Your tickets"
+msgstr "تذاكرك"
+
+msgid "Payment status and activation status are tracked separately, so you can see paid orders that are still activating."
+msgstr "تُتابَع حالة الدفع وحالة التفعيل بشكل منفصل، لترى الطلبات المدفوعة التي ما زالت قيد التفعيل."
+
+msgid "All statuses"
+msgstr "كل الحالات"
+
+msgid "Hide expired unpaid payment requests"
+msgstr "إخفاء طلبات الدفع غير المدفوعة المنتهية"
+
+msgid "No transactions match."
+msgstr "لا توجد معاملات مطابقة."
+
+msgid "Make your first purchase"
+msgstr "قم بأول عملية شراء"
+
+msgid "Method"
+msgstr "الطريقة"
+
+msgid "Activation"
+msgstr "التفعيل"
+
+msgid "Pay"
+msgstr "ادفع"
+
+msgid "Pagination"
+msgstr "ترقيم الصفحات"
+
+msgid "Dismiss"
+msgstr "إخفاء"
+
+msgid "Choose your device"
+msgstr "اختر جهازك"
+
+msgid "Version %s"
+msgstr "الإصدار %s"
+
+msgid "Download code"
+msgstr "رمز التنزيل"
+
+msgid "Copy download code"
+msgstr "نسخ رمز التنزيل"
+
+msgid "Download"
+msgstr "تنزيل"
+
+msgid "Open in app store"
+msgstr "فتح في متجر التطبيقات"
+
+msgid "Download link coming soon."
+msgstr "رابط التنزيل قريباً."
+
+msgid "QR code for the download link"
+msgstr "رمز QR لرابط التنزيل"
+
+msgid "Scan to open the download page"
+msgstr "امسح لفتح صفحة التنزيل"
+
+msgid "Previous versions"
+msgstr "الإصدارات السابقة"
+
+msgid "Toggle color theme"
+msgstr "تبديل مظهر الألوان"
+
+msgid "Mark all read"
+msgstr "تعليم الكل كمقروء"
+
+msgid "You are all caught up."
+msgstr "لا جديد لديك."
+
+msgid "Sign out"
+msgstr "تسجيل الخروج"
+
+msgid "Gift this plan"
+msgstr "أهدِ هذه الخطة"
+
+msgid "Select"
+msgstr "اختيار"
+
+msgid "No plans are available right now."
+msgstr "لا توجد خطط متاحة حالياً."
+
+msgid "%d month"
+msgid_plural "%d months"
+msgstr[0] "%d شهر"
+msgstr[1] "شهر واحد"
+msgstr[2] "شهران"
+msgstr[3] "%d أشهر"
+msgstr[4] "%d شهراً"
+msgstr[5] "%d شهر"
+
+msgid "%s per month"
+msgstr "%s شهرياً"
+
+msgid "Save %d%%"
+msgstr "وفّر %d%%"
+
+msgid "One-time payment · no auto-renewal"
+msgstr "دفعة واحدة · دون تجديد تلقائي"
+
+msgid "Your subscription"
+msgstr "اشتراكك"
+
+msgid "You have no streaming accounts yet."
+msgstr "ليس لديك حسابات بث بعد."
+
+msgid "%d day left"
+msgid_plural "%d days left"
+msgstr[0] "%d يوم متبقٍ"
+msgstr[1] "يوم واحد متبقٍ"
+msgstr[2] "يومان متبقيان"
+msgstr[3] "%d أيام متبقية"
+msgstr[4] "%d يوماً متبقياً"
+msgstr[5] "%d يوم متبقٍ"
+
+msgid "Next expiry: %s · plans never renew automatically"
+msgstr "الانتهاء التالي: %s · الخطط لا تتجدد تلقائياً"

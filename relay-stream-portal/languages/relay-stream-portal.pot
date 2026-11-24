@@ -1,0 +1,3565 @@
+# Copyright (C) 2026 Relay Stream Portal contributors
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Relay Stream Portal 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/relay-stream-portal\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-24T11:38:28+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: relay-stream-portal\n"
+
+#. Plugin Name of the plugin
+#: relay-stream-portal.php
+#: includes/admin/class-admin-pages.php:59
+#: includes/admin/class-admin.php:61
+#: includes/elementor/class-elementor.php:34
+msgid "Relay Stream Portal"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: relay-stream-portal.php
+msgid "https://example.com/relay-stream-portal"
+msgstr ""
+
+#. Description of the plugin
+#: relay-stream-portal.php
+msgid "Customer portal, management dashboard and provider integration for authorized streaming subscriptions. Works with WooCommerce for billing and Elementor Free (or shortcodes) for page building."
+msgstr ""
+
+#. Author of the plugin
+#: relay-stream-portal.php
+msgid "Relay Stream Portal contributors"
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:52
+msgid "Please enter a reason. It is stored in the audit log."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:121
+msgid "Unknown settings group."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:125
+msgid "Settings saved."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:149
+#: includes/class-forms.php:90
+msgid "Saved."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:171
+msgid "The API URL host must be listed in Allowed API hosts."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:182
+msgid "Saved. Live API mode is active."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:182
+msgid "Saved. Provisioning stays manual until mode is Live, a key is saved and the mapping is verified."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:192
+msgid "Connection OK (reseller_info)."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:192
+msgid "Connection failed: "
+msgstr ""
+
+#. translators: %d
+#: includes/admin/class-admin-actions.php:204
+#, php-format
+msgid "Loaded %d packages."
+msgstr ""
+
+#. translators: %d
+#: includes/admin/class-admin-actions.php:212
+#, php-format
+msgid "Processed %d job(s)."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:224
+msgid "Job retried. Check its new state below."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:232
+msgid "Reconciled: the panel confirmed the new expiry."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:247
+msgid "Job completed and the customer was notified."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:255
+msgid "Job cancelled."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:264
+#: includes/admin/class-admin-actions.php:366
+#: includes/admin/class-admin-pages.php:314
+#: includes/class-forms.php:349
+#: includes/class-rest.php:125
+msgid "Account not found."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:301
+msgid "Account saved."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:310
+#: includes/admin/class-admin-pages.php:159
+msgid "Customer not found."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:321
+msgid "Account created and activated."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:330
+msgid "Live mode is required."
+msgstr ""
+
+#. translators: %s date
+#: includes/admin/class-admin-actions.php:339
+#, php-format
+msgid "Panel reports expiry %s."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:349
+#: includes/class-woocommerce.php:184
+msgid "Invalid request."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:353
+msgid "This account already has an open operation."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:357
+msgid "Renewal queued."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:371
+msgid "Credentials shown below for this page load only."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:389
+msgid "Plans saved."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:397
+msgid "WooCommerce is required."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:400
+msgid "Demo plans created. Review prices before going live."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:414
+msgid "Referral not found."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:425
+msgid "Referral updated."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:435
+msgid "Enter a non-zero number of days."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:440
+msgid "Ledger adjusted."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:460
+msgid "Gift updated."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:470
+msgid "Guides saved. URLs that were not public http(s) links or contained credentials were removed."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:479
+msgid "Internal note added."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:479
+#: includes/class-forms.php:342
+msgid "Reply sent."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:487
+msgid "Ticket updated."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:512
+msgid "Announcements saved."
+msgstr ""
+
+#. translators: %d
+#: includes/admin/class-admin-actions.php:520
+#, php-format
+msgid "Created %d page(s)."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:536
+msgid "Page mapping saved."
+msgstr ""
+
+#: includes/admin/class-admin-actions.php:551
+msgid "Order marked as reviewed."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:25
+#: includes/admin/class-admin-pages.php:558
+msgid "Live API"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:25
+#: includes/admin/class-admin-pages.php:558
+msgid "Manual provisioning"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:63
+msgid "Customers with accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:64
+msgid "Active accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:65
+msgid "Expiring in 7 days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:66
+msgid "Awaiting activation"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:67
+msgid "Jobs needing review"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:68
+msgid "Failed jobs"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:69
+msgid "Open tickets"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:70
+msgid "Referrals in review period"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:71
+msgid "Unredeemed gifts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:79
+msgid "Setup checklist"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:82
+msgid "Portal pages created or mapped"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:83
+msgid "WooCommerce active (billing)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:84
+msgid "At least one plan available"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:85
+msgid "A payment gateway enabled"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:86
+msgid "Provider API key saved"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:87
+msgid "API mapping verified against your panel"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:88
+msgid "Dedicated encryption key in wp-config.php (recommended)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:89
+msgid "Elementor active (optional — shortcodes work without it)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:94
+msgid "Recent activity"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:99
+#: includes/admin/class-admin-pages.php:1120
+msgid "System"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:101
+#: includes/admin/class-admin-pages.php:1122
+msgid "When"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:101
+#: includes/admin/class-admin-pages.php:1122
+msgid "Actor"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:101
+#: includes/admin/class-admin-pages.php:1122
+msgid "Action"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:118
+#: includes/admin/class-admin.php:26
+msgid "Customers"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:118
+msgid "WordPress users who own streaming accounts, purchased plans or contacted support."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:139
+msgid "active"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:145
+#: includes/admin/class-admin-pages.php:465
+#: includes/admin/class-admin-pages.php:865
+msgid "Customer"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:145
+msgid "Accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:145
+#: templates/modules/dashboard.php:37
+msgid "Reward days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:145
+msgid "Referral code"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:145
+msgid "Registered"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:162
+msgid "All customers"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:162
+msgid "WordPress profile"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:164
+msgid "Streaming accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:167
+msgid "Add a manually provisioned account"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:170
+#: templates/auth/register.php:32
+msgid "Create account"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:174
+#: templates/modules/dashboard.php:38
+msgid "Orders"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:181
+#: includes/admin/class-admin-pages.php:465
+#: includes/admin/class-admin-pages.php:537
+#: includes/admin/class-admin-pages.php:708
+#: templates/modules/transactions.php:45
+#: templates/modules/transactions.php:56
+msgid "Order"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:181
+#: includes/admin/class-admin-pages.php:190
+#: templates/modules/transactions.php:46
+#: templates/modules/transactions.php:57
+msgid "Date"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:181
+msgid "Total"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:181
+#: includes/admin/class-admin-pages.php:465
+#: templates/modules/plans.php:81
+#: templates/modules/transactions.php:49
+#: templates/modules/transactions.php:60
+msgid "Payment"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:181
+#: includes/admin/class-admin-pages.php:465
+msgid "Provisioning"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:184
+msgid "Reward ledger"
+msgstr ""
+
+#. translators: %d days
+#: includes/admin/class-admin-pages.php:184
+#, php-format
+msgid "balance %d days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:190
+#: includes/admin/class-admin-pages.php:708
+msgid "Days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:190
+#: includes/admin/class-admin-pages.php:193
+#: includes/admin/class-admin-pages.php:356
+#: includes/admin/class-admin-pages.php:1122
+msgid "Reason"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:190
+msgid "Note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:193
+msgid "Adjust days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:193
+msgid "Apply adjustment"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:196
+#: includes/admin/class-admin-pages.php:841
+#: includes/admin/class-admin.php:34
+msgid "Tickets"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:201
+#: includes/admin/class-admin-pages.php:865
+msgid "Ticket"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:201
+#: includes/admin/class-admin-pages.php:253
+#: includes/admin/class-admin-pages.php:322
+#: includes/admin/class-admin-pages.php:708
+#: includes/admin/class-admin-pages.php:763
+#: includes/admin/class-admin-pages.php:865
+#: includes/admin/class-admin-pages.php:941
+#: templates/modules/transactions.php:27
+msgid "Status"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:201
+#: includes/admin/class-admin-pages.php:537
+#: includes/admin/class-admin-pages.php:865
+msgid "Updated"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:215
+#: includes/admin/class-admin-pages.php:321
+#: templates/modules/accounts.php:131
+#: templates/modules/plans.php:49
+msgid "Nickname"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:216
+#: includes/admin/class-admin-pages.php:327
+msgid "Plan label"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:217
+msgid "Type"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:220
+#: includes/admin/class-admin-pages.php:330
+msgid "Provider user ID"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:221
+msgid "Server URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:222
+#: templates/modules/accounts.php:97
+msgid "Username"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:223
+#: templates/auth/login.php:24
+#: templates/modules/accounts.php:97
+msgid "Password"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:224
+msgid "M3U URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:225
+msgid "MAC address"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:226
+#: includes/admin/class-admin-pages.php:329
+msgid "Max connections"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:231
+msgid "Confirmed expiry"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:232
+#: includes/admin/class-admin-pages.php:336
+msgid "Reason (audit log)"
+msgstr ""
+
+#. translators: 1: type 2: state
+#: includes/admin/class-admin-pages.php:248
+#, php-format
+msgid "Job: %1$s (%2$s)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:253
+#: includes/admin/class-admin-pages.php:537
+msgid "Account"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:253
+msgid "Owner"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:253
+msgid "Plan / provider"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:253
+#: includes/admin/class-admin-pages.php:763
+#: templates/modules/accounts.php:74
+msgid "Expires"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:266
+#: includes/admin/class-admin.php:27
+msgid "Streaming Accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:317
+#: templates/partials/subscription-summary.php:23
+msgid "All accounts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:317
+msgid "Owner:"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:319
+#: includes/admin/class-admin-pages.php:537
+#: templates/modules/transactions.php:64
+msgid "Details"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:328
+msgid "Expiry (YYYY-MM-DD)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:329
+msgid "The provider API does not document device limits; record them here if known."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:331
+msgid "Credentials"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:335
+msgid "Leave blank to keep the stored value. Stored values are encrypted and shown masked."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:337
+msgid "Save account"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:339
+msgid "Reveal credentials (audited)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:350
+msgid "Provider actions"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:353
+msgid "Refresh status from panel"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:356
+msgid "Queue renewal"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:356
+msgid "months"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:356
+msgid "Queue"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:357
+msgid "Suspend/delete are not documented by the provider API. Use the status field to record a suspension done in the panel."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:358
+msgid "Operations"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:371
+#: includes/admin/class-admin.php:28
+msgid "Plans"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:371
+msgid "Plans are WooCommerce products with the “Streaming plan” tab enabled. Orders keep an immutable snapshot of the plan and package at purchase time, so editing a plan never changes past orders."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:373
+msgid "Activate WooCommerce to manage plans."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:377
+msgid "Add plan product"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:378
+msgid "Create demo plans (1/3/6/12 months)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:385
+msgid "demo"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:389
+#: includes/class-woocommerce.php:475
+msgid "Available"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+#: includes/admin/class-admin-pages.php:763
+msgid "Plan"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+msgid "Price"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+msgid "Months"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+msgid "Package / type"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+msgid "Availability"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+#: includes/class-woocommerce.php:482
+msgid "Display order"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+#: includes/class-woocommerce.php:480
+msgid "Featured"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:394
+msgid "No plan products yet."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:396
+msgid "Save plan display settings"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:408
+msgid "Billing page content"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:409
+msgid "What’s included (one per line)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:410
+msgid "Refund policy note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:411
+#: templates/modules/plans.php:94
+msgid "Payment guides"
+msgstr ""
+
+#. translators: %s label key
+#: includes/admin/class-admin-pages.php:415
+#: includes/admin/class-admin-pages.php:780
+#: includes/admin/class-admin-pages.php:817
+#: includes/admin/class-admin-pages.php:970
+#: includes/elementor/widgets.php:154
+msgid "Title"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:415
+msgid "Short text"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:417
+msgid "Empty rows are ignored. Only link to official, legitimate payment guides."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:418
+msgid "Hide stale unpaid orders"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:418
+msgid "Hide pending/failed orders older than"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:418
+msgid "hours by default in Transactions (customers can toggle)."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:419
+msgid "Max accounts per customer"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:420
+#: includes/admin/class-admin-pages.php:724
+#: includes/admin/class-admin-pages.php:873
+#: templates/modules/accounts.php:133
+msgid "Save"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:429
+#: includes/admin/class-admin.php:29
+msgid "Orders & Transactions"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:429
+msgid "Payment status (WooCommerce) and provisioning status (this plugin) are tracked separately. Paid orders awaiting activation appear as Queued or Under review."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:439
+msgid "Flagged for review"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:462
+msgid "Mark reviewed"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:465
+msgid "Plan snapshot"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:465
+#: templates/modules/transactions.php:47
+#: templates/modules/transactions.php:58
+msgid "Amount"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:516
+msgid "Retry"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:518
+msgid "Reconcile"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:521
+msgid "Complete manually"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:524
+msgid "Cancel"
+msgstr ""
+
+#. translators: 1: step 2: attempts
+#: includes/admin/class-admin-pages.php:529
+#, php-format
+msgid "step %1$s · %2$d attempts"
+msgstr ""
+
+#. translators: %s date
+#: includes/admin/class-admin-pages.php:532
+#, php-format
+msgid "Confirmed expiry %s"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:537
+msgid "Job"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:537
+msgid "State"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:537
+#: includes/admin/class-admin-pages.php:708
+#: includes/admin/class-admin-pages.php:763
+#: templates/modules/transactions.php:51
+msgid "Actions"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:537
+msgid "No operations."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:550
+#: includes/admin/class-admin.php:30
+msgid "API Settings & Job Queue"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:555
+msgid "Provider connection (TVPlus Panel API)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:558
+msgid "Mode"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:558
+msgid "Live mode is only used when the mapping is verified and an API key is saved."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:559
+msgid "API endpoint URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:559
+msgid "HTTPS only. The documentation lists https://tvpluspanel.net/api/api.php."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:560
+msgid "Documentation URL (reference only)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:561
+msgid "Allowed API hosts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:561
+msgid "Comma separated. Requests to any other host are refused; redirects are never followed."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:562
+msgid "API key"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:562
+msgid "Not set"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:562
+msgid "Remove key"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:562
+msgid "Stored encrypted. Leave blank to keep the current key."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:563
+msgid "Timeout (seconds)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:564
+msgid "Panel note prefix"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:564
+msgid "Sent as the documented “note” on create so staff can find accounts in the panel."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:565
+msgid "Mapping verified"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:565
+msgid "I confirmed the operations below against my real panel (test connection, packages, one create + lookup on a test line)."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:566
+msgid "Reward month conversion"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:566
+msgid "Apply 30 reward days as a confirmed 1-month renewal (the API cannot add arbitrary days). Otherwise reward days go to staff review."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:567
+msgid "Save API settings"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:569
+msgid "Test connection"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:569
+msgid "Load packages from panel"
+msgstr ""
+
+#. translators: %d count
+#: includes/admin/class-admin-pages.php:577
+#, php-format
+msgid "%d packages cached for the product “Provider package” field."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:579
+msgid "Capabilities (from the documented API)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:584
+msgid "Operation"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:584
+msgid "Supported"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:584
+msgid "Mapping / note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:585
+msgid "See docs/API-MAPPING.md in the plugin folder for endpoints, parameters and responses."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:587
+msgid "Operations queue"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:588
+msgid "Run queue now"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:635
+msgid "Job not found."
+msgstr ""
+
+#. translators: %d job
+#: includes/admin/class-admin-pages.php:640
+#, php-format
+msgid "Complete job #%d manually"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:641
+msgid "Back to queue"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:642
+msgid "Operation:"
+msgstr ""
+
+#. translators: %d months
+#: includes/admin/class-admin-pages.php:642
+#, php-format
+msgid "%d months"
+msgstr ""
+
+#. translators: %d days
+#: includes/admin/class-admin-pages.php:642
+#, php-format
+msgid "%d reward days"
+msgstr ""
+
+#. translators: %d days
+#: includes/admin/class-admin-pages.php:642
+msgid "package"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:644
+msgid "Account:"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:644
+msgid "current expiry"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:646
+msgid "Perform the operation in the provider panel first, then record the confirmed details. For renewals, leave credential fields blank to keep the stored ones."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:649
+msgid "Mark as completed"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:660
+#: includes/admin/class-admin.php:31
+#: templates/modules/referrals.php:25
+msgid "Referrals"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:663
+msgid "Referral rules"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:664
+msgid "Enabled"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:665
+msgid "Reward (days)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:666
+msgid "Review period (days)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:666
+msgid "Days after the friend’s first confirmed payment before the reward is credited. Refunds inside this window cancel the reward."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:667
+msgid "Minimum order total"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:668
+msgid "Link cookie lifetime (days)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:669
+msgid "After a refund of a rewarded order"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:670
+msgid "Remove the days if still unused, otherwise review"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:670
+msgid "Always send to staff review"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:670
+msgid "Keep the reward"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:673
+msgid "Save rules"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:675
+msgid "Reversed"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:675
+msgid "Rejected"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:690
+msgid "Credit now"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:693
+msgid "Reject"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:696
+msgid "Keep reward"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:701
+msgid "eligible"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:708
+msgid "Referrer"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:708
+#: includes/class-referrals.php:331
+msgid "Friend"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:708
+msgid "Created"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:720
+#: includes/admin/class-admin.php:32
+msgid "Gifts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:720
+msgid "Gift codes are never shown here — only the last four characters. Purchasers see full codes in their portal."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:724
+msgid "Gift purchases enabled"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:724
+msgid "Codes expire after"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:724
+msgid "days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:747
+msgid "Revoke"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:748
+msgid "Extend 30 days"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:751
+msgid "Mark resolved"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:763
+msgid "Code"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:763
+msgid "Purchaser"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:763
+msgid "Redeemed by"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:774
+#: includes/admin/class-admin.php:33
+#: includes/class-settings.php:29
+#: includes/class-settings.php:51
+#: templates/modules/apps.php:22
+#: templates/modules/apps.php:36
+msgid "Apps & Guides"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:774
+msgid "Only link to official, approved installers and store pages. QR codes are generated from these public URLs only — never from account credentials."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:778
+msgid "Release banner"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:779
+msgid "Show banner"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:780
+#: includes/admin/class-admin-pages.php:807
+msgid "Version"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:780
+msgid "Compatibility"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:780
+msgid "QR / install page URL (public)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:783
+msgid "Subtitle"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:784
+msgid "Stats"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:788
+#: includes/admin/class-admin-pages.php:803
+msgid "Label"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:788
+msgid "Value"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:790
+msgid "App sign-in note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:792
+msgid "Devices"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:792
+msgid "Clear a device label to remove it. Use the blank card to add a device."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:802
+msgid "New device"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:803
+msgid "Icon"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:808
+msgid "Official download URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:808
+msgid "Store URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:809
+msgid "Downloader code"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:809
+msgid "Show QR for the download/store URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:810
+msgid "Setup steps (one per line)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:811
+msgid "Previous releases (version|URL per line)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:813
+#: templates/modules/apps.php:47
+msgid "What’s new"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:817
+#: includes/admin/class-admin-pages.php:1052
+msgid "Description"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:819
+msgid "Third-party players"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:823
+msgid "Name"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:823
+msgid "Coming soon"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:823
+msgid "Guide ready"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:823
+msgid "Short note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:825
+msgid "Save guides"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:846
+msgid "Awaiting customer"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:847
+msgid "Assigned to me"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:847
+msgid "Unassigned"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:865
+msgid "Assigned"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:869
+msgid "Support settings"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:870
+msgid "Categories (slug|Label per line)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:871
+msgid "Attachment types"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:872
+msgid "Max attachment size (MB)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:917
+#: includes/class-forms.php:339
+#: includes/class-tickets.php:206
+msgid "Ticket not found."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:920
+#: templates/modules/support.php:63
+msgid "All tickets"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:933
+msgid "Internal note"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:940
+msgid "Internal note (not visible to the customer)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:940
+msgid "Send"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:945
+msgid "Priority"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:949
+msgid "Assigned to"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:953
+msgid "Update"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:963
+#: includes/admin/class-admin.php:35
+#: includes/elementor/class-elementor.php:59
+msgid "Announcements"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:963
+msgid "Shown on the portal overview and in the Announcements widget. Leave a title empty to delete a row."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:974
+#: includes/class-accounts.php:27
+msgid "Active"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:974
+msgid "Dismissible"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:976
+msgid "Starts"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:976
+msgid "Ends"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:978
+msgid "Save announcements"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:988
+#: includes/admin/class-admin.php:36
+#: templates/partials/header.php:34
+#: templates/partials/header.php:39
+msgid "Notifications"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:988
+msgid "Placeholders: {name} {site} {link} {account} {expiry} {days} {ticket} {subject} {sender} {plan} {code}. Emails never include player credentials."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:991
+msgid "Email notifications"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:991
+msgid "Send emails in addition to in-portal notifications (customers can opt out in their profile)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:992
+msgid "Expiry reminders (days before)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:992
+msgid "Comma separated, sent by the daily job."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Ticket reply"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Activation / extension"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Expiry reminder"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Gift code (to recipient)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Referral reward"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:993
+msgid "Email verification"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1000
+msgid "Save notifications"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1010
+#: includes/admin/class-admin.php:37
+msgid "Elementor & Pages"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1012
+msgid "Step 1 — Create or map portal pages"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1013
+msgid "Create missing pages with the matching shortcode, or map an existing page (for example one you designed in Elementor)."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1014
+msgid "One portal page (navigation via ?rsp_view=…) + auth pages"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1014
+msgid "A separate page for every module"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1014
+msgid "Open new pages with Elementor (adds the matching widget instead of a shortcode)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1014
+msgid "Create missing pages"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1022
+msgid "— Not set —"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1024
+msgid "View"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1024
+msgid "Edit with Elementor"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1027
+msgid "Portal page"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1027
+msgid "WordPress page"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1027
+#: includes/admin/class-admin-pages.php:1052
+msgid "Shortcode"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1028
+msgid "Save page mapping"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1030
+msgid "Step 2 — Design with Elementor Free (optional)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1032
+msgid "Open a mapped page with “Edit with Elementor”."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1033
+msgid "Search the widget panel for “Relay” or open the “Relay Stream Portal” category."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1034
+msgid "Drag “Portal Shell” onto a full-width section for the complete portal, or drop individual module widgets into your own layout."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1035
+msgid "Use Content → labels, Layout → width/theme, and Style → colors, typography, radius and spacing. Leave a control empty to inherit the Branding settings."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1036
+msgid "The editor shows sample data only. Publish and open the page while signed in as a customer to see live data."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1037
+msgid "Prefer shortcodes? Elementor’s free Shortcode widget accepts every shortcode below; the output is identical."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1042
+msgid "Page → widget / shortcode reference"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1052
+msgid "Elementor widget"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1053
+msgid "Shortcode attributes: title=\"…\" (heading), label=\"…\" (button), class=\"…\", tab=\"gifts\" (referrals), device=\"firetv\" (device guides), module=\"…\" (portal shell)."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1063
+#: includes/admin/class-admin.php:38
+msgid "Branding"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1063
+msgid "These values are the defaults for every portal page, shortcode and Elementor widget. Elementor Style controls override them per widget."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Brand name"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Tagline"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Welcome heading ({name})"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Welcome subtitle"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Support email"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "External support URL (optional)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Floating button label"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Authorized web player URL"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1066
+msgid "Player button label"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1071
+msgid "Logo"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1071
+msgid "Choose logo"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1071
+msgid "Remove"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+#: includes/elementor/widgets.php:195
+msgid "Accent"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+#: includes/elementor/widgets.php:196
+msgid "Secondary accent"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+msgid "Dark background"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+msgid "Dark cards"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+msgid "Light background"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1072
+msgid "Light cards"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1073
+#: includes/elementor/widgets.php:193
+msgid "Colors"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1078
+msgid "Default theme"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1079
+#: includes/elementor/widgets.php:188
+msgid "Follow device"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1079
+#: includes/elementor/widgets.php:188
+msgid "Dark"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1079
+#: includes/elementor/widgets.php:188
+msgid "Light"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1082
+msgid "Let customers switch theme"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1083
+msgid "Corner radius (px)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1084
+msgid "Navigation order & visibility"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1091
+msgid "Visible"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1094
+msgid "Portal language"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1094
+msgid "Customer profile / site language"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Show floating support button"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Full-width layout on portal pages"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Let customers reveal player details"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Enable “Start Watching” (requires an authorized player URL)"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Allow registration"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Require email verification for new registrations"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1095
+msgid "Delete all plugin data when the plugin is deleted"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1099
+msgid "Save branding"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1110
+#: includes/admin/class-admin.php:39
+msgid "Audit Log"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1110
+msgid "Sensitive actions with actor, time, target and reason. Secrets are never recorded."
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1122
+msgid "Target"
+msgstr ""
+
+#: includes/admin/class-admin-pages.php:1122
+msgid "Context"
+msgstr ""
+
+#: includes/admin/class-admin.php:25
+#: includes/class-settings.php:27
+msgid "Overview"
+msgstr ""
+
+#: includes/admin/class-admin.php:61
+msgid "Relay Stream"
+msgstr ""
+
+#: includes/admin/class-admin.php:84
+msgid "Setup"
+msgstr ""
+
+#: includes/admin/class-admin.php:116
+msgid "WooCommerce is not active: plans, checkout, gifts and transactions are disabled. Accounts, guides and support still work."
+msgstr ""
+
+#: includes/admin/class-admin.php:119
+msgid "Secrets are encrypted with a key derived from your WordPress salts. For a dedicated key, add <code>define( 'RSP_ENCRYPTION_KEY', '…base64 of 32 random bytes…' );</code> to wp-config.php <strong>before</strong> saving the API key (changing the key later makes stored secrets unreadable)."
+msgstr ""
+
+#: includes/admin/class-admin.php:213
+msgid "Unknown action."
+msgstr ""
+
+#: includes/admin/class-admin.php:217
+msgid "You do not have permission to do that."
+msgstr ""
+
+#: includes/admin/class-admin.php:236
+msgid "Nothing found."
+msgstr ""
+
+#. translators: %d items
+#: includes/admin/class-admin.php:259
+#, php-format
+msgid "%d item"
+msgid_plural "%d items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin/class-admin.php:293
+msgid "All"
+msgstr ""
+
+#: includes/admin/class-admin.php:299
+msgid "Search…"
+msgstr ""
+
+#: includes/admin/class-admin.php:300
+#: templates/modules/transactions.php:35
+msgid "Filter"
+msgstr ""
+
+#: includes/admin/class-admin.php:304
+msgid "Export CSV"
+msgstr ""
+
+#: includes/class-accounts.php:25
+#: includes/class-fulfillment.php:51
+msgid "Awaiting payment"
+msgstr ""
+
+#: includes/class-accounts.php:26
+#: includes/class-fulfillment.php:53
+msgid "Activating"
+msgstr ""
+
+#: includes/class-accounts.php:28
+#: includes/class-gifts.php:279
+msgid "Expired"
+msgstr ""
+
+#: includes/class-accounts.php:29
+msgid "Suspended"
+msgstr ""
+
+#: includes/class-accounts.php:30
+#: includes/class-fulfillment.php:56
+#: includes/class-gifts.php:281
+#: includes/class-referrals.php:353
+msgid "Under review"
+msgstr ""
+
+#: includes/class-accounts.php:31
+#: includes/class-fulfillment.php:58
+msgid "Cancelled"
+msgstr ""
+
+#. translators: %d: account number
+#: includes/class-accounts.php:70
+#, php-format
+msgid "Account %d"
+msgstr ""
+
+#: includes/class-auth.php:51
+msgid "Please confirm your email address first. Check your inbox for the link."
+msgstr ""
+
+#: includes/class-auth.php:67
+#: includes/class-forms.php:236
+#: includes/class-forms.php:269
+msgid "Too many attempts. Please wait a few minutes."
+msgstr ""
+
+#: includes/class-auth.php:80
+msgid "The email/username or password is incorrect."
+msgstr ""
+
+#: includes/class-auth.php:93
+#: templates/auth/register.php:19
+msgid "Registration is currently closed."
+msgstr ""
+
+#: includes/class-auth.php:96
+#: includes/class-auth.php:201
+#: includes/class-forms.php:286
+#: includes/class-forms.php:302
+#: includes/class-forms.php:357
+msgid "Too many attempts. Please try again later."
+msgstr ""
+
+#: includes/class-auth.php:102
+msgid "Enter a valid email address."
+msgstr ""
+
+#: includes/class-auth.php:105
+msgid "An account with this email already exists. Try signing in or resetting your password."
+msgstr ""
+
+#: includes/class-auth.php:108
+#: includes/class-auth.php:224
+#: includes/class-auth.php:259
+msgid "Use at least 8 characters for your password."
+msgstr ""
+
+#: includes/class-auth.php:128
+msgid "We could not create your account. Please try again."
+msgstr ""
+
+#: includes/class-auth.php:221
+msgid "This reset link is invalid or has expired. Request a new one."
+msgstr ""
+
+#: includes/class-auth.php:249
+msgid "Enter your current password to change your email or password."
+msgstr ""
+
+#: includes/class-auth.php:253
+msgid "That email address cannot be used."
+msgstr ""
+
+#: includes/class-auth.php:266
+msgid "Could not save your profile."
+msgstr ""
+
+#: includes/class-export.php:32
+msgid "Unknown export."
+msgstr ""
+
+#: includes/class-export.php:36
+msgid "You do not have permission to export this data."
+msgstr ""
+
+#: includes/class-forms.php:84
+msgid "Email confirmed. You can sign in now."
+msgstr ""
+
+#: includes/class-forms.php:85
+msgid "That confirmation link is invalid or expired."
+msgstr ""
+
+#: includes/class-forms.php:86
+msgid "Account created. Check your inbox to confirm your email address."
+msgstr ""
+
+#: includes/class-forms.php:87
+msgid "If an account exists for that address, a reset link is on its way."
+msgstr ""
+
+#: includes/class-forms.php:88
+msgid "Password updated. Sign in with your new password."
+msgstr ""
+
+#: includes/class-forms.php:89
+msgid "You have signed out."
+msgstr ""
+
+#: includes/class-forms.php:91
+msgid "Your session expired. Please try again."
+msgstr ""
+
+#: includes/class-forms.php:228
+msgid "Profile saved."
+msgstr ""
+
+#: includes/class-forms.php:233
+#: includes/class-forms.php:265
+msgid "Billing is not available right now."
+msgstr ""
+
+#: includes/class-forms.php:273
+msgid "That promo code is not valid."
+msgstr ""
+
+#: includes/class-forms.php:281
+msgid "Promo code saved. It will be applied at checkout."
+msgstr ""
+
+#: includes/class-forms.php:289
+msgid "Referral code applied. Thanks for joining through a friend!"
+msgstr ""
+
+#: includes/class-forms.php:297
+msgid "Reward queued. Your account will be extended once the provider confirms it."
+msgstr ""
+
+#: includes/class-forms.php:297
+msgid "Request received. Our team will apply your reward days and confirm the new expiry."
+msgstr ""
+
+#: includes/class-forms.php:308
+msgid "Gift redeemed! Track activation under My Accounts."
+msgstr ""
+
+#: includes/class-forms.php:313
+msgid "Too many tickets. Please try again later."
+msgstr ""
+
+#: includes/class-forms.php:329
+msgid "Ticket created. We will reply here and by email."
+msgstr ""
+
+#: includes/class-forms.php:334
+msgid "Too many messages. Please try again later."
+msgstr ""
+
+#: includes/class-forms.php:352
+msgid "Account renamed."
+msgstr ""
+
+#: includes/class-forms.php:361
+msgid "Gift not found."
+msgstr ""
+
+#: includes/class-forms.php:363
+msgid "Gift sent."
+msgstr ""
+
+#: includes/class-forms.php:363
+msgid "Could not send the gift. Check the address."
+msgstr ""
+
+#: includes/class-fulfillment.php:50
+msgid "Not applicable"
+msgstr ""
+
+#: includes/class-fulfillment.php:52
+msgid "Queued"
+msgstr ""
+
+#: includes/class-fulfillment.php:54
+#: templates/modules/accounts.php:73
+msgid "Activated"
+msgstr ""
+
+#: includes/class-fulfillment.php:55
+#: includes/class-jobs.php:80
+msgid "Failed"
+msgstr ""
+
+#: includes/class-fulfillment.php:57
+msgid "Gift code issued"
+msgstr ""
+
+#: includes/class-fulfillment.php:203
+msgid "Relay Stream Portal: provisioning queued after confirmed payment."
+msgstr ""
+
+#: includes/class-fulfillment.php:253
+msgid "Partial refund issued; decide whether to adjust the account."
+msgstr ""
+
+#: includes/class-fulfillment.php:255
+msgid "Relay Stream Portal: partial refund flagged for staff review. No automatic change was made."
+msgstr ""
+
+#: includes/class-gifts.php:91
+msgid "Your gift code is ready"
+msgstr ""
+
+#: includes/class-gifts.php:91
+msgid "Copy it from Referrals & Gifts or send it by email."
+msgstr ""
+
+#: includes/class-gifts.php:178
+msgid "That code is not valid."
+msgstr ""
+
+#: includes/class-gifts.php:182
+#: includes/class-gifts.php:202
+msgid "That code is not valid, already used, or expired."
+msgstr ""
+
+#: includes/class-gifts.php:190
+#: includes/class-referrals.php:369
+msgid "Choose an active or expired account without pending operations."
+msgstr ""
+
+#: includes/class-gifts.php:193
+msgid "This gift cannot be applied to that account type."
+msgstr ""
+
+#: includes/class-gifts.php:196
+#: includes/class-woocommerce.php:171
+msgid "You reached the maximum number of accounts."
+msgstr ""
+
+#: includes/class-gifts.php:236
+msgid "Your gift was redeemed"
+msgstr ""
+
+#: includes/class-gifts.php:236
+msgid "The recipient redeemed the gift code you purchased."
+msgstr ""
+
+#: includes/class-gifts.php:277
+msgid "Ready to redeem"
+msgstr ""
+
+#: includes/class-gifts.php:278
+msgid "Redeemed"
+msgstr ""
+
+#: includes/class-gifts.php:280
+msgid "Revoked"
+msgstr ""
+
+#: includes/class-jobs.php:77
+#: templates/modules/referrals.php:55
+msgid "Pending"
+msgstr ""
+
+#: includes/class-jobs.php:78
+msgid "Working"
+msgstr ""
+
+#: includes/class-jobs.php:79
+msgid "Succeeded"
+msgstr ""
+
+#: includes/class-jobs.php:81
+msgid "Needs review"
+msgstr ""
+
+#: includes/class-jobs.php:121
+#: includes/class-jobs.php:300
+msgid "Manual mode: enter the account details to complete activation."
+msgstr ""
+
+#: includes/class-jobs.php:518
+msgid "Only failed or review jobs can be retried."
+msgstr ""
+
+#: includes/class-jobs.php:521
+msgid "Live mode is off. Complete this job manually."
+msgstr ""
+
+#: includes/class-jobs.php:527
+msgid "Confirm in the panel that no account was created before retrying a create."
+msgstr ""
+
+#: includes/class-jobs.php:555
+msgid "Reconciliation needs live mode and a linked account."
+msgstr ""
+
+#: includes/class-jobs.php:560
+msgid "No stored provider identifiers to look up."
+msgstr ""
+
+#. translators: %s: date
+#: includes/class-jobs.php:573
+#, php-format
+msgid "Expiry is still %s; the renewal was not applied. You may retry."
+msgstr ""
+
+#: includes/class-jobs.php:587
+msgid "Job not found or already completed."
+msgstr ""
+
+#: includes/class-jobs.php:590
+msgid "Enter the confirmed expiry date (YYYY-MM-DD)."
+msgstr ""
+
+#: includes/class-jobs.php:593
+msgid "A reason is required for manual completion."
+msgstr ""
+
+#: includes/class-jobs.php:597
+msgid "Linked account not found."
+msgstr ""
+
+#: includes/class-notifications.php:137
+msgid "Your account is active"
+msgstr ""
+
+#: includes/class-notifications.php:137
+msgid "Your account was extended"
+msgstr ""
+
+#. translators: 1: account name 2: date
+#: includes/class-notifications.php:139
+#, php-format
+msgid "%1$s is active until %2$s."
+msgstr ""
+
+#. translators: %d days
+#: includes/class-notifications.php:163
+#, php-format
+msgid "Expires in %d day"
+msgid_plural "Expires in %d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: account 2: date
+#: includes/class-notifications.php:165
+#, php-format
+msgid "%1$s expires on %2$s. Plans never renew automatically."
+msgstr ""
+
+#: includes/class-portal.php:52
+msgid "Copied"
+msgstr ""
+
+#: includes/class-portal.php:53
+#: templates/modules/referrals.php:47
+#: templates/modules/referrals.php:49
+#: templates/modules/referrals.php:108
+msgid "Copy"
+msgstr ""
+
+#: includes/class-portal.php:54
+msgid "Show"
+msgstr ""
+
+#: includes/class-portal.php:55
+msgid "Hide"
+msgstr ""
+
+#: includes/class-portal.php:56
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: includes/class-portal.php:57
+msgid "Switch to light theme"
+msgstr ""
+
+#: includes/class-portal.php:58
+msgid "Switch to dark theme"
+msgstr ""
+
+#: includes/class-portal.php:232
+msgid "Our team is checking this activation and will update it shortly."
+msgstr ""
+
+#: includes/class-portal.php:514
+msgid "Billing is unavailable because WooCommerce is not active."
+msgstr ""
+
+#. translators: %s name
+#: includes/class-portal.php:531
+#, php-format
+msgid "You are signed in as %s."
+msgstr ""
+
+#. translators: %s name
+#: includes/class-portal.php:531
+msgid "Open your portal"
+msgstr ""
+
+#: includes/class-referrals.php:132
+msgid "Referrals are not active."
+msgstr ""
+
+#: includes/class-referrals.php:136
+msgid "That referral code was not found."
+msgstr ""
+
+#: includes/class-referrals.php:139
+#: includes/class-referrals.php:144
+msgid "You cannot use your own referral code."
+msgstr ""
+
+#: includes/class-referrals.php:147
+msgid "Referral codes can only be used before your first purchase."
+msgstr ""
+
+#: includes/class-referrals.php:152
+msgid "A referral is already linked to your account."
+msgstr ""
+
+#: includes/class-referrals.php:251
+msgid "You earned free days"
+msgstr ""
+
+#. translators: %d days
+#: includes/class-referrals.php:251
+#, php-format
+msgid "%d days were added to your reward balance."
+msgstr ""
+
+#: includes/class-referrals.php:348
+msgid "Signed up"
+msgstr ""
+
+#: includes/class-referrals.php:349
+msgid "Paid — in review period"
+msgstr ""
+
+#: includes/class-referrals.php:350
+msgid "Reward earned"
+msgstr ""
+
+#: includes/class-referrals.php:351
+#: includes/class-referrals.php:352
+msgid "Not eligible"
+msgstr ""
+
+#: includes/class-referrals.php:373
+msgid "Please try again in a moment."
+msgstr ""
+
+#: includes/class-referrals.php:380
+msgid "You need at least 30 days to apply a reward."
+msgstr ""
+
+#: includes/class-referrals.php:380
+msgid "You have no reward days to apply."
+msgstr ""
+
+#: includes/class-rest.php:33
+msgid "Please sign in."
+msgstr ""
+
+#: includes/class-rest.php:118
+msgid "Player details are not available here. Contact support."
+msgstr ""
+
+#: includes/class-rest.php:121
+msgid "Too many requests. Please wait a few minutes."
+msgstr ""
+
+#: includes/class-rest.php:128
+msgid "Player details appear once the account is active."
+msgstr ""
+
+#: includes/class-settings.php:28
+#: includes/class-settings.php:50
+#: templates/modules/accounts.php:26
+msgid "My Accounts"
+msgstr ""
+
+#: includes/class-settings.php:30
+#: includes/class-settings.php:52
+#: templates/modules/plans.php:32
+msgid "Plans & Billing"
+msgstr ""
+
+#: includes/class-settings.php:31
+#: includes/class-settings.php:53
+#: templates/modules/transactions.php:22
+msgid "Transactions"
+msgstr ""
+
+#: includes/class-settings.php:32
+#: includes/class-settings.php:54
+#: templates/modules/referrals.php:21
+msgid "Referrals & Gifts"
+msgstr ""
+
+#: includes/class-settings.php:33
+#: includes/class-settings.php:55
+msgid "Redeem a Gift"
+msgstr ""
+
+#: includes/class-settings.php:34
+#: includes/class-settings.php:56
+#: templates/modules/support.php:27
+#: templates/modules/support.php:44
+msgid "Support"
+msgstr ""
+
+#: includes/class-settings.php:35
+#: includes/class-settings.php:57
+#: templates/modules/profile.php:22
+#: templates/partials/header.php:61
+msgid "Profile"
+msgstr ""
+
+#: includes/class-settings.php:46
+msgid "Sign In"
+msgstr ""
+
+#: includes/class-settings.php:47
+msgid "Create Account"
+msgstr ""
+
+#: includes/class-settings.php:48
+msgid "Reset Password"
+msgstr ""
+
+#: includes/class-settings.php:49
+#: templates/partials/header.php:67
+msgid "Portal"
+msgstr ""
+
+#: includes/class-settings.php:289
+msgid "General"
+msgstr ""
+
+#: includes/class-shortcodes.php:22
+msgid "Full portal with header and navigation. Attribute module=\"dashboard|accounts|apps|plans|transactions|referrals|redeem|support|profile\"."
+msgstr ""
+
+#: includes/class-shortcodes.php:23
+msgid "Overview module only."
+msgstr ""
+
+#: includes/class-shortcodes.php:24
+msgid "My Accounts module."
+msgstr ""
+
+#: includes/class-shortcodes.php:25
+msgid "Apps & Guides module."
+msgstr ""
+
+#: includes/class-shortcodes.php:26
+msgid "Plans & Billing module."
+msgstr ""
+
+#: includes/class-shortcodes.php:27
+msgid "Transactions module."
+msgstr ""
+
+#: includes/class-shortcodes.php:28
+msgid "Referrals & Gifts module."
+msgstr ""
+
+#: includes/class-shortcodes.php:29
+msgid "Referrals & Gifts module opened on the Gifts tab."
+msgstr ""
+
+#: includes/class-shortcodes.php:30
+msgid "Gift redemption form."
+msgstr ""
+
+#: includes/class-shortcodes.php:31
+msgid "Support tickets module."
+msgstr ""
+
+#: includes/class-shortcodes.php:32
+msgid "Profile editing."
+msgstr ""
+
+#: includes/class-shortcodes.php:33
+msgid "Sign-in form."
+msgstr ""
+
+#: includes/class-shortcodes.php:34
+msgid "Registration form."
+msgstr ""
+
+#: includes/class-shortcodes.php:35
+msgid "Forgot / reset password form."
+msgstr ""
+
+#: includes/class-shortcodes.php:36
+msgid "Plan cards only."
+msgstr ""
+
+#: includes/class-shortcodes.php:37
+msgid "Subscription and expiry summary."
+msgstr ""
+
+#: includes/class-shortcodes.php:38
+msgid "Active announcements."
+msgstr ""
+
+#: includes/class-shortcodes.php:39
+msgid "Device tabs with setup guides."
+msgstr ""
+
+#: includes/class-shortcodes.php:40
+msgid "Support call-to-action button."
+msgstr ""
+
+#: includes/class-tickets.php:42
+msgid "Open"
+msgstr ""
+
+#: includes/class-tickets.php:43
+msgid "Awaiting your reply"
+msgstr ""
+
+#: includes/class-tickets.php:44
+msgid "Awaiting support"
+msgstr ""
+
+#: includes/class-tickets.php:45
+msgid "Resolved"
+msgstr ""
+
+#: includes/class-tickets.php:46
+msgid "Closed"
+msgstr ""
+
+#: includes/class-tickets.php:97
+msgid "Please add a subject and a message."
+msgstr ""
+
+#: includes/class-tickets.php:212
+msgid "Message cannot be empty."
+msgstr ""
+
+#. translators: %d ticket id
+#: includes/class-tickets.php:231
+#, php-format
+msgid "New reply on ticket #%d"
+msgstr ""
+
+#: includes/class-tickets.php:262
+msgid "Attach up to 3 files."
+msgstr ""
+
+#: includes/class-tickets.php:268
+msgid "Upload failed."
+msgstr ""
+
+#: includes/class-tickets.php:271
+msgid "A file is too large."
+msgstr ""
+
+#: includes/class-tickets.php:276
+msgid "That file type is not allowed."
+msgstr ""
+
+#: includes/class-tickets.php:354
+msgid "Link expired. Reload the ticket and try again."
+msgstr ""
+
+#: includes/class-tickets.php:358
+#: includes/class-tickets.php:362
+msgid "File not found."
+msgstr ""
+
+#: includes/class-woocommerce.php:148
+msgid "Please sign in first."
+msgstr ""
+
+#: includes/class-woocommerce.php:152
+#: includes/class-woocommerce.php:156
+msgid "That plan is not available."
+msgstr ""
+
+#: includes/class-woocommerce.php:162
+msgid "That account cannot be renewed right now."
+msgstr ""
+
+#: includes/class-woocommerce.php:166
+msgid "This account already has an operation in progress."
+msgstr ""
+
+#: includes/class-woocommerce.php:176
+msgid "Gifts are not available for this plan."
+msgstr ""
+
+#: includes/class-woocommerce.php:180
+msgid "Enter a valid recipient email or leave it empty."
+msgstr ""
+
+#: includes/class-woocommerce.php:201
+msgid "Could not start checkout. Please try again."
+msgstr ""
+
+#: includes/class-woocommerce.php:222
+msgid "Choose this plan from your customer portal."
+msgstr ""
+
+#: includes/class-woocommerce.php:243
+msgid "Please sign in to purchase a streaming plan."
+msgstr ""
+
+#: includes/class-woocommerce.php:250
+msgid "The account selected for renewal is no longer available and was removed from your cart."
+msgstr ""
+
+#: includes/class-woocommerce.php:269
+msgid "Renews"
+msgstr ""
+
+#: includes/class-woocommerce.php:271
+msgid "Gift"
+msgstr ""
+
+#: includes/class-woocommerce.php:271
+msgid "Code shown in your portal"
+msgstr ""
+
+#: includes/class-woocommerce.php:273
+msgid "New account"
+msgstr ""
+
+#: includes/class-woocommerce.php:273
+msgid "Yes"
+msgstr ""
+
+#: includes/class-woocommerce.php:275
+msgid "Renewal"
+msgstr ""
+
+#: includes/class-woocommerce.php:275
+msgid "One-time payment, no auto-renewal"
+msgstr ""
+
+#: includes/class-woocommerce.php:351
+msgid "Portal purpose"
+msgstr ""
+
+#: includes/class-woocommerce.php:449
+msgid "Streaming plan"
+msgstr ""
+
+#: includes/class-woocommerce.php:464
+msgid "All channels (all)"
+msgstr ""
+
+#: includes/class-woocommerce.php:474
+msgid "Portal plan"
+msgstr ""
+
+#: includes/class-woocommerce.php:474
+msgid "Sell this product as a streaming plan in the customer portal."
+msgstr ""
+
+#: includes/class-woocommerce.php:476
+msgid "Duration (months)"
+msgstr ""
+
+#: includes/class-woocommerce.php:476
+msgid "The provider API supports 1, 3, 6 or 12 months."
+msgstr ""
+
+#: includes/class-woocommerce.php:477
+#: includes/class-woocommerce.php:524
+msgid "Provider package"
+msgstr ""
+
+#: includes/class-woocommerce.php:478
+msgid "Account type"
+msgstr ""
+
+#: includes/class-woocommerce.php:481
+msgid "Badge text"
+msgstr ""
+
+#: includes/class-woocommerce.php:481
+msgid "Best value"
+msgstr ""
+
+#: includes/class-woocommerce.php:483
+msgid "Savings baseline (per month)"
+msgstr ""
+
+#: includes/class-woocommerce.php:483
+msgid "Savings are shown only when this is set and higher than the monthly equivalent."
+msgstr ""
+
+#: includes/class-woocommerce.php:484
+msgid "Features (one per line)"
+msgstr ""
+
+#: includes/class-woocommerce.php:485
+msgid "Can be gifted"
+msgstr ""
+
+#: includes/class-woocommerce.php:523
+msgid "Plan duration (months)"
+msgstr ""
+
+#: includes/class-woocommerce.php:523
+#: includes/class-woocommerce.php:524
+msgid "Inherit"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:44
+msgid "Portal Shell"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:45
+msgid "Portal: Overview"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:46
+msgid "Portal: My Accounts"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:47
+msgid "Portal: Apps & Guides"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:48
+msgid "Portal: Plans & Billing"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:49
+msgid "Portal: Transactions"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:50
+msgid "Portal: Referrals & Gifts"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:51
+msgid "Portal: Gift Redemption"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:52
+msgid "Portal: Support"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:53
+msgid "Portal: Profile"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:54
+msgid "Portal: Login"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:55
+msgid "Portal: Register"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:56
+msgid "Portal: Forgot / Reset Password"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:57
+msgid "Plan Cards"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:58
+msgid "Subscription Summary"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:60
+msgid "Device Guides"
+msgstr ""
+
+#: includes/elementor/class-elementor.php:61
+msgid "Support Button"
+msgstr ""
+
+#: includes/elementor/widgets.php:102
+#: templates/partials/support-button.php:13
+msgid "Contact support"
+msgstr ""
+
+#: includes/elementor/widgets.php:120
+msgid "Content"
+msgstr ""
+
+#: includes/elementor/widgets.php:126
+msgid "The editor shows sample data. Visitors see their own data after signing in. Plans, prices and accounts come from WordPress/WooCommerce settings."
+msgstr ""
+
+#: includes/elementor/widgets.php:136
+msgid "Default module"
+msgstr ""
+
+#. translators: %s module
+#: includes/elementor/widgets.php:143
+#, php-format
+msgid "Menu label: %s"
+msgstr ""
+
+#: includes/elementor/widgets.php:147
+msgid "Only this device ID (optional)"
+msgstr ""
+
+#. translators: %s label key
+#: includes/elementor/widgets.php:154
+msgid "Welcome text ({name} = first name)"
+msgstr ""
+
+#. translators: %s label key
+#: includes/elementor/widgets.php:154
+msgid "Button label"
+msgstr ""
+
+#: includes/elementor/widgets.php:156
+msgid "Default"
+msgstr ""
+
+#: includes/elementor/widgets.php:162
+msgid "Layout"
+msgstr ""
+
+#: includes/elementor/widgets.php:166
+msgid "Stretch to full browser width"
+msgstr ""
+
+#: includes/elementor/widgets.php:175
+msgid "Content max width"
+msgstr ""
+
+#: includes/elementor/widgets.php:185
+msgid "Color theme"
+msgstr ""
+
+#: includes/elementor/widgets.php:188
+msgid "Use portal setting"
+msgstr ""
+
+#: includes/elementor/widgets.php:197
+msgid "Background"
+msgstr ""
+
+#: includes/elementor/widgets.php:198
+msgid "Card background"
+msgstr ""
+
+#: includes/elementor/widgets.php:199
+msgid "Input / inset background"
+msgstr ""
+
+#: includes/elementor/widgets.php:200
+msgid "Text"
+msgstr ""
+
+#: includes/elementor/widgets.php:201
+msgid "Secondary text"
+msgstr ""
+
+#: includes/elementor/widgets.php:202
+msgid "Borders"
+msgstr ""
+
+#: includes/elementor/widgets.php:216
+msgid "Typography & spacing"
+msgstr ""
+
+#: includes/elementor/widgets.php:217
+msgid "Body"
+msgstr ""
+
+#: includes/elementor/widgets.php:218
+msgid "Headings"
+msgstr ""
+
+#: includes/elementor/widgets.php:222
+msgid "Corner radius"
+msgstr ""
+
+#: includes/elementor/widgets.php:231
+msgid "Spacing between blocks"
+msgstr ""
+
+#: includes/elementor/widgets.php:240
+msgid "Inner padding"
+msgstr ""
+
+#: templates/auth/login.php:20
+#: templates/auth/login.php:29
+#: templates/auth/register.php:33
+msgid "Sign in"
+msgstr ""
+
+#: templates/auth/login.php:23
+#: templates/auth/reset.php:31
+msgid "Email or username"
+msgstr ""
+
+#: templates/auth/login.php:26
+msgid "Keep me signed in"
+msgstr ""
+
+#: templates/auth/login.php:27
+msgid "Forgot password?"
+msgstr ""
+
+#: templates/auth/login.php:31
+msgid "New here?"
+msgstr ""
+
+#: templates/auth/login.php:31
+msgid "Create an account"
+msgstr ""
+
+#: templates/auth/register.php:23
+msgid "Create your account"
+msgstr ""
+
+#: templates/auth/register.php:26
+#: templates/modules/profile.php:27
+msgid "First name"
+msgstr ""
+
+#: templates/auth/register.php:27
+#: templates/modules/profile.php:30
+msgid "Email"
+msgstr ""
+
+#: templates/auth/register.php:28
+msgid "Password (at least 8 characters)"
+msgstr ""
+
+#: templates/auth/register.php:30
+msgid "Referral code (optional)"
+msgstr ""
+
+#: templates/auth/register.php:33
+msgid "Already registered?"
+msgstr ""
+
+#: templates/auth/reset.php:21
+msgid "Choose a new password"
+msgstr ""
+
+#: templates/auth/reset.php:25
+msgid "New password (at least 8 characters)"
+msgstr ""
+
+#: templates/auth/reset.php:26
+msgid "Save password"
+msgstr ""
+
+#: templates/auth/reset.php:28
+msgid "Reset your password"
+msgstr ""
+
+#: templates/auth/reset.php:29
+msgid "Enter your email and we will send you a link to choose a new password."
+msgstr ""
+
+#: templates/auth/reset.php:32
+msgid "Send reset link"
+msgstr ""
+
+#: templates/auth/reset.php:34
+msgid "Back to sign in"
+msgstr ""
+
+#: templates/modules/accounts.php:17
+msgid "We are waiting for your payment to be confirmed."
+msgstr ""
+
+#: templates/modules/accounts.php:18
+msgid "Payment confirmed. We are activating this account — this page updates automatically."
+msgstr ""
+
+#: templates/modules/accounts.php:19
+msgid "Our team is checking this activation and will update it shortly. No action is needed from you."
+msgstr ""
+
+#: templates/modules/accounts.php:20
+msgid "This account has expired. Renew it to keep watching — your settings stay the same."
+msgstr ""
+
+#: templates/modules/accounts.php:21
+msgid "This account is suspended. Contact support for details."
+msgstr ""
+
+#: templates/modules/accounts.php:27
+msgid "Each streaming account has its own expiry and player details. Your portal sign-in stays the same."
+msgstr ""
+
+#: templates/modules/accounts.php:29
+msgid "Add another account"
+msgstr ""
+
+#. translators: %s order number
+#: templates/modules/accounts.php:37
+#, php-format
+msgid "Order #%s"
+msgstr ""
+
+#: templates/modules/accounts.php:40
+msgid "Complete payment"
+msgstr ""
+
+#: templates/modules/accounts.php:47
+msgid "No streaming accounts yet"
+msgstr ""
+
+#: templates/modules/accounts.php:48
+msgid "Pick a plan to create your first account, or redeem a gift code."
+msgstr ""
+
+#: templates/modules/accounts.php:50
+#: templates/modules/dashboard.php:47
+#: templates/partials/subscription-summary.php:28
+msgid "Choose a plan"
+msgstr ""
+
+#: templates/modules/accounts.php:51
+#: templates/modules/redeem.php:16
+msgid "Redeem a gift"
+msgstr ""
+
+#: templates/modules/accounts.php:67
+msgid "Plan pending"
+msgstr ""
+
+#: templates/modules/accounts.php:75
+msgid "Connections"
+msgstr ""
+
+#: templates/modules/accounts.php:77
+msgid "Remaining"
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/accounts.php:79
+#, php-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s state
+#: templates/modules/accounts.php:88
+#, php-format
+msgid "An update to this account is in progress (%s)."
+msgstr ""
+
+#: templates/modules/accounts.php:93
+msgid "Player details for third-party apps"
+msgstr ""
+
+#: templates/modules/accounts.php:94
+msgid "These are not your portal sign-in. Keep them private."
+msgstr ""
+
+#: templates/modules/accounts.php:97
+msgid "Server"
+msgstr ""
+
+#: templates/modules/accounts.php:97
+msgid "M3U address"
+msgstr ""
+
+#: templates/modules/accounts.php:97
+msgid "MAC"
+msgstr ""
+
+#. translators: %s field
+#: templates/modules/accounts.php:102
+#, php-format
+msgid "Copy %s"
+msgstr ""
+
+#: templates/modules/accounts.php:106
+msgid "Show details"
+msgstr ""
+
+#: templates/modules/accounts.php:112
+msgid "Renew this account"
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/accounts.php:123
+#, php-format
+msgid "Apply %d reward days"
+msgstr ""
+
+#: templates/modules/accounts.php:127
+msgid "Rename"
+msgstr ""
+
+#. translators: %s version
+#: templates/modules/apps.php:21
+#, php-format
+msgid "Version %s available"
+msgstr ""
+
+#. translators: %s compatibility
+#: templates/modules/apps.php:29
+#, php-format
+msgid "Compatible with: %s"
+msgstr ""
+
+#: templates/modules/apps.php:32
+msgid "QR code for the install page"
+msgstr ""
+
+#: templates/modules/apps.php:32
+msgid "Scan with your phone to open the install page"
+msgstr ""
+
+#: templates/modules/apps.php:40
+msgid "Signing in to the app"
+msgstr ""
+
+#: templates/modules/apps.php:43
+msgid "Pick your device"
+msgstr ""
+
+#: templates/modules/apps.php:56
+msgid "Using another player"
+msgstr ""
+
+#: templates/modules/apps.php:65
+msgid "Setup guide"
+msgstr ""
+
+#: templates/modules/apps.php:67
+msgid "Guide coming soon"
+msgstr ""
+
+#: templates/modules/dashboard.php:35
+msgid "Subscription"
+msgstr ""
+
+#: templates/modules/dashboard.php:35
+msgid "None yet"
+msgstr ""
+
+#: templates/modules/dashboard.php:36
+msgid "Next expiry"
+msgstr ""
+
+#: templates/modules/dashboard.php:44
+msgid "Shortcuts"
+msgstr ""
+
+#. translators: %s account
+#: templates/modules/dashboard.php:51
+#, php-format
+msgid "Renew %s"
+msgstr ""
+
+#: templates/modules/dashboard.php:55
+msgid "Switch account"
+msgstr ""
+
+#: templates/modules/dashboard.php:57
+msgid "Download apps"
+msgstr ""
+
+#: templates/modules/dashboard.php:58
+msgid "Open a ticket"
+msgstr ""
+
+#: templates/modules/dashboard.php:60
+msgid "Refer a friend"
+msgstr ""
+
+#: templates/modules/dashboard.php:63
+msgid "Gift a subscription"
+msgstr ""
+
+#: templates/modules/dashboard.php:72
+msgid "Recent transactions"
+msgstr ""
+
+#: templates/modules/dashboard.php:72
+#: templates/modules/dashboard.php:87
+msgid "View all"
+msgstr ""
+
+#: templates/modules/dashboard.php:74
+msgid "No orders yet."
+msgstr ""
+
+#: templates/modules/dashboard.php:87
+msgid "Recent tickets"
+msgstr ""
+
+#: templates/modules/dashboard.php:89
+msgid "No support tickets."
+msgstr ""
+
+#: templates/modules/plans.php:33
+msgid "Pay once, watch for the whole term. Nothing renews automatically."
+msgstr ""
+
+#: templates/modules/plans.php:39
+msgid "This purchase is for"
+msgstr ""
+
+#: templates/modules/plans.php:42
+#: templates/modules/redeem.php:24
+msgid "A new streaming account"
+msgstr ""
+
+#. translators: 1: account 2: date
+#: templates/modules/plans.php:46
+#, php-format
+msgid "Renew “%1$s” (expires %2$s)"
+msgstr ""
+
+#: templates/modules/plans.php:49
+#: templates/modules/redeem.php:31
+msgid "Nickname for the new account (optional)"
+msgstr ""
+
+#: templates/modules/plans.php:51
+msgid "Renewals extend the exact account you choose. The new term is added after the panel confirms it."
+msgstr ""
+
+#: templates/modules/plans.php:59
+msgid "Have a promo code?"
+msgstr ""
+
+#: templates/modules/plans.php:60
+msgid "Apply"
+msgstr ""
+
+#: templates/modules/plans.php:65
+msgid "Were you referred by someone?"
+msgstr ""
+
+#: templates/modules/plans.php:66
+msgid "Add code"
+msgstr ""
+
+#: templates/modules/plans.php:72
+msgid "What’s included with every plan"
+msgstr ""
+
+#: templates/modules/plans.php:83
+msgid "Available at checkout:"
+msgstr ""
+
+#: templates/modules/plans.php:86
+msgid "No payment methods are enabled yet."
+msgstr ""
+
+#: templates/modules/plans.php:88
+msgid "Your account activates only after the payment is confirmed by the payment provider — not when you return from the payment page. Only pay through this portal’s checkout."
+msgstr ""
+
+#: templates/modules/plans.php:100
+msgid "Open guide"
+msgstr ""
+
+#: templates/modules/profile.php:23
+msgid "This is your portal sign-in. It is separate from the player details of your streaming accounts."
+msgstr ""
+
+#: templates/modules/profile.php:28
+msgid "Last name"
+msgstr ""
+
+#: templates/modules/profile.php:29
+msgid "Display name"
+msgstr ""
+
+#: templates/modules/profile.php:32
+msgid "Change password"
+msgstr ""
+
+#: templates/modules/profile.php:34
+msgid "New password"
+msgstr ""
+
+#: templates/modules/profile.php:35
+msgid "Current password (required to change email or password)"
+msgstr ""
+
+#: templates/modules/profile.php:38
+msgid "Email me about activations, expiry reminders and ticket replies"
+msgstr ""
+
+#: templates/modules/profile.php:39
+msgid "Save profile"
+msgstr ""
+
+#: templates/modules/redeem.php:17
+msgid "Enter the 12-character code you received. Each code works once."
+msgstr ""
+
+#: templates/modules/redeem.php:20
+msgid "Gift code"
+msgstr ""
+
+#: templates/modules/redeem.php:22
+msgid "Apply it to"
+msgstr ""
+
+#. translators: %s account
+#: templates/modules/redeem.php:28
+#, php-format
+msgid "Extend “%s”"
+msgstr ""
+
+#: templates/modules/redeem.php:32
+msgid "Redeem"
+msgstr ""
+
+#: templates/modules/redeem.php:33
+msgid "After redeeming, the activation status appears under My Accounts."
+msgstr ""
+
+#: templates/modules/referrals.php:22
+msgid "Invite friends, gift a plan and collect free days."
+msgstr ""
+
+#: templates/modules/referrals.php:27
+msgid "Gift a plan"
+msgstr ""
+
+#: templates/modules/referrals.php:33
+msgid "The referral program is currently paused."
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/referrals.php:39
+#, php-format
+msgid "Get %s for every friend who subscribes"
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/referrals.php:39
+#, php-format
+msgid "%d free day"
+msgid_plural "%d free days"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d days
+#: templates/modules/referrals.php:42
+#, php-format
+msgid "Share your link. After your friend’s first confirmed payment and a %d-day review period, the days are added to your reward balance. You choose which account to apply them to."
+msgstr ""
+
+#: templates/modules/referrals.php:46
+msgid "Your referral code"
+msgstr ""
+
+#: templates/modules/referrals.php:48
+msgid "Your share link"
+msgstr ""
+
+#: templates/modules/referrals.php:49
+msgid "Share link"
+msgstr ""
+
+#: templates/modules/referrals.php:53
+msgid "Total invited"
+msgstr ""
+
+#: templates/modules/referrals.php:54
+msgid "Converted"
+msgstr ""
+
+#: templates/modules/referrals.php:56
+msgid "Days earned"
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/referrals.php:62
+#, php-format
+msgid "You have %d reward days to use"
+msgstr ""
+
+#: templates/modules/referrals.php:63
+msgid "Apply them from My Accounts on the account you want to extend."
+msgstr ""
+
+#: templates/modules/referrals.php:63
+msgid "Go to My Accounts"
+msgstr ""
+
+#: templates/modules/referrals.php:67
+msgid "Your referrals"
+msgstr ""
+
+#: templates/modules/referrals.php:69
+msgid "No referrals yet. Share your code to get started."
+msgstr ""
+
+#: templates/modules/referrals.php:83
+msgid "Buy a gift subscription"
+msgstr ""
+
+#. translators: %d days
+#: templates/modules/referrals.php:86
+#, php-format
+msgid "After payment you receive a single-use code valid for %d days. The recipient redeems it for a new account or to extend one of theirs."
+msgstr ""
+
+#: templates/modules/referrals.php:90
+msgid "Recipient email (optional — we email the code after payment)"
+msgstr ""
+
+#: templates/modules/referrals.php:95
+msgid "Gifts you bought"
+msgstr ""
+
+#: templates/modules/referrals.php:95
+msgid "Redeem a code"
+msgstr ""
+
+#: templates/modules/referrals.php:97
+msgid "No gifts yet."
+msgstr ""
+
+#. translators: %s date
+#: templates/modules/referrals.php:106
+#, php-format
+msgid "Expires %s"
+msgstr ""
+
+#: templates/modules/referrals.php:112
+msgid "friend@example.com"
+msgstr ""
+
+#: templates/modules/referrals.php:112
+msgid "Recipient email"
+msgstr ""
+
+#: templates/modules/referrals.php:113
+msgid "Send by email"
+msgstr ""
+
+#. translators: %s last 4
+#: templates/modules/referrals.php:118
+#, php-format
+msgid "Code ending in %s"
+msgstr ""
+
+#: templates/modules/support.php:28
+msgid "Private tickets between you and our team. We reply here and by email."
+msgstr ""
+
+#: templates/modules/support.php:29
+msgid "New ticket"
+msgstr ""
+
+#: templates/modules/support.php:44
+msgid "You"
+msgstr ""
+
+#: templates/modules/support.php:56
+msgid "Your reply"
+msgstr ""
+
+#. translators: 1: types 2: MB
+#: templates/modules/support.php:59
+#: templates/modules/support.php:82
+#, php-format
+msgid "Attachments (up to 3 · %1$s · max %2$d MB each)"
+msgstr ""
+
+#: templates/modules/support.php:60
+msgid "Send reply"
+msgstr ""
+
+#: templates/modules/support.php:69
+msgid "Subject"
+msgstr ""
+
+#: templates/modules/support.php:70
+msgid "Category"
+msgstr ""
+
+#: templates/modules/support.php:72
+msgid "Related account (optional)"
+msgstr ""
+
+#: templates/modules/support.php:72
+#: templates/modules/support.php:75
+msgid "None"
+msgstr ""
+
+#: templates/modules/support.php:75
+msgid "Related order (optional)"
+msgstr ""
+
+#: templates/modules/support.php:78
+msgid "How can we help?"
+msgstr ""
+
+#: templates/modules/support.php:79
+msgid "Never share passwords in tickets. Our team can see your account status already."
+msgstr ""
+
+#: templates/modules/support.php:83
+msgid "Create ticket"
+msgstr ""
+
+#: templates/modules/support.php:89
+msgid "Your tickets"
+msgstr ""
+
+#: templates/modules/transactions.php:23
+msgid "Payment status and activation status are tracked separately, so you can see paid orders that are still activating."
+msgstr ""
+
+#: templates/modules/transactions.php:29
+msgid "All statuses"
+msgstr ""
+
+#: templates/modules/transactions.php:34
+msgid "Hide expired unpaid payment requests"
+msgstr ""
+
+#: templates/modules/transactions.php:39
+msgid "No transactions match."
+msgstr ""
+
+#: templates/modules/transactions.php:40
+msgid "Make your first purchase"
+msgstr ""
+
+#: templates/modules/transactions.php:48
+#: templates/modules/transactions.php:59
+msgid "Method"
+msgstr ""
+
+#: templates/modules/transactions.php:50
+#: templates/modules/transactions.php:61
+msgid "Activation"
+msgstr ""
+
+#: templates/modules/transactions.php:63
+msgid "Pay"
+msgstr ""
+
+#: templates/modules/transactions.php:72
+msgid "Pagination"
+msgstr ""
+
+#: templates/partials/announcements.php:18
+msgid "Dismiss"
+msgstr ""
+
+#: templates/partials/device-guides.php:25
+msgid "Choose your device"
+msgstr ""
+
+#. translators: %s version
+#: templates/partials/device-guides.php:39
+#, php-format
+msgid "Version %s"
+msgstr ""
+
+#: templates/partials/device-guides.php:41
+msgid "Download code"
+msgstr ""
+
+#: templates/partials/device-guides.php:42
+msgid "Copy download code"
+msgstr ""
+
+#: templates/partials/device-guides.php:45
+#: templates/partials/device-guides.php:54
+msgid "Download"
+msgstr ""
+
+#: templates/partials/device-guides.php:46
+msgid "Open in app store"
+msgstr ""
+
+#: templates/partials/device-guides.php:47
+msgid "Download link coming soon."
+msgstr ""
+
+#: templates/partials/device-guides.php:50
+msgid "QR code for the download link"
+msgstr ""
+
+#: templates/partials/device-guides.php:50
+msgid "Scan to open the download page"
+msgstr ""
+
+#: templates/partials/device-guides.php:53
+msgid "Previous versions"
+msgstr ""
+
+#: templates/partials/header.php:31
+msgid "Toggle color theme"
+msgstr ""
+
+#: templates/partials/header.php:40
+msgid "Mark all read"
+msgstr ""
+
+#: templates/partials/header.php:43
+msgid "You are all caught up."
+msgstr ""
+
+#: templates/partials/header.php:62
+msgid "Sign out"
+msgstr ""
+
+#: templates/partials/plan-cards.php:18
+msgid "Gift this plan"
+msgstr ""
+
+#: templates/partials/plan-cards.php:18
+msgid "Select"
+msgstr ""
+
+#: templates/partials/plan-cards.php:20
+msgid "No plans are available right now."
+msgstr ""
+
+#. translators: %d months
+#: templates/partials/plan-cards.php:32
+#, php-format
+msgid "%d month"
+msgid_plural "%d months"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s price
+#: templates/partials/plan-cards.php:37
+#, php-format
+msgid "%s per month"
+msgstr ""
+
+#. translators: %d percent
+#: templates/partials/plan-cards.php:40
+#, php-format
+msgid "Save %d%%"
+msgstr ""
+
+#: templates/partials/plan-cards.php:51
+msgid "One-time payment · no auto-renewal"
+msgstr ""
+
+#: templates/partials/subscription-summary.php:22
+msgid "Your subscription"
+msgstr ""
+
+#: templates/partials/subscription-summary.php:27
+msgid "You have no streaming accounts yet."
+msgstr ""
+
+#. translators: %d days
+#: templates/partials/subscription-summary.php:36
+#, php-format
+msgid "%d day left"
+msgid_plural "%d days left"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s date
+#: templates/partials/subscription-summary.php:40
+#, php-format
+msgid "Next expiry: %s · plans never renew automatically"
+msgstr ""

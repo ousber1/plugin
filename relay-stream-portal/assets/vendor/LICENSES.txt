@@ -1,0 +1,1 @@
+qrcode-generator 1.4.4 — Copyright (c) 2009 Kazuhiko Arase — MIT License (https://www.opensource.org/licenses/mit-license.php). Bundled unmodified from the npm package.
