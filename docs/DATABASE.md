@@ -34,6 +34,8 @@ Sources : [`database/schema.sql`](../database/schema.sql) (structure) et [`datab
 - **Paiement mixte** : plusieurs lignes `payments` partageant le même `payment_group` ; ventilation sur factures via `payment_allocations` ; avance non affectée dans `unallocated_amount`.
 - **Caisse** : une seule session ouverte par caisse, garantie par l'index unique `(cash_register_id, open_flag)` (open_flag = 1 si ouverte, NULL si clôturée). Montants de `cash_movements` signés.
 - **Stock** : un article est un produit **ou** une matière (`product_id` / `material_id`). Quantités signées dans `stock_movements` (+ entrée / − sortie), `balance_after` pour l'historique, `unit_cost` pour la valorisation (coût moyen pondéré).
+- **Stock (règles d'écriture)** : toute modification passe par `App\Services\StockService::move()` (verrou de ligne, refus du stock négatif, CMUP, alerte). Un inventaire applique l'écart *compté − théorique à l'ouverture*, pas une valeur absolue.
+- **Compte client** (`App\Services\CustomerService`) : débit = factures validées + tickets non facturés + remboursements ; crédit = paiements + avoirs ; solde = débit − crédit.
 - **Coûts** : chaque ligne de document conserve `unit_cost` au moment de la vente → calcul du bénéfice réel, même si les coûts évoluent.
 - **Machines** : coût horaire, électricité, maintenance par heure et amortissement linéaire estimé (`purchase_cost`, `salvage_value`, `useful_life_years`).
 - **Calculateur** : aucune valeur de consommation n'est imposée ; les 51 paramètres sont créés à **0** et saisis par l'administrateur.

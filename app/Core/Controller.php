@@ -54,4 +54,28 @@ abstract class Controller
             exit;
         }
     }
+
+    /** Message d'erreur + valeurs saisies conservées, puis redirection. */
+    protected function fail(string $message, string $route, array $query = []): never
+    {
+        Session::flash('danger', $message);
+        Session::flashInput($_POST);
+        $this->redirect($route, $query);
+    }
+
+    /** Ligne existante (non supprimée) ou redirection avec message. */
+    protected function findOrFail(string $table, int $id, string $redirectRoute, string $label = 'Élément'): array
+    {
+        Database::assertIdentifier($table);
+        $hasSoftDelete = (bool) $this->db->fetchColumn(
+            'SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+            [$table, 'deleted_at']
+        );
+        $row = $this->db->fetch("SELECT * FROM `{$table}` WHERE id = ?" . ($hasSoftDelete ? ' AND deleted_at IS NULL' : ''), [$id]);
+        if (!$row) {
+            Session::flash('danger', $label . ' introuvable.');
+            $this->redirect($redirectRoute);
+        }
+        return $row;
+    }
 }

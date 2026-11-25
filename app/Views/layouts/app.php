@@ -13,6 +13,18 @@ $menu = [
     ['section' => 'Général'],
     ['route' => '', 'icon' => 'bi-grid-1x2', 'label' => 'Tableau de bord', 'perm' => 'dashboard.view'],
     ['route' => 'notifications', 'icon' => 'bi-bell', 'label' => 'Notifications', 'perm' => null, 'match' => 'notifications'],
+    ['section' => 'Commercial'],
+    ['route' => 'customers', 'icon' => 'bi-people', 'label' => 'Clients', 'perm' => 'customers.view', 'match' => 'customers'],
+    ['route' => 'suppliers', 'icon' => 'bi-truck', 'label' => 'Fournisseurs', 'perm' => 'suppliers.view', 'match' => 'suppliers'],
+    ['section' => 'Catalogue'],
+    ['route' => 'products', 'icon' => 'bi-box', 'label' => 'Produits & services', 'perm' => 'products.view', 'match' => 'products'],
+    ['route' => 'categories', 'icon' => 'bi-tags', 'label' => 'Catégories', 'perm' => 'products.view', 'match' => 'categories'],
+    ['route' => 'packs', 'icon' => 'bi-boxes', 'label' => 'Packs', 'perm' => 'packs.view', 'match' => 'packs'],
+    ['section' => 'Stock'],
+    ['route' => 'stock', 'icon' => 'bi-box-seam', 'label' => 'État du stock', 'perm' => 'stock.view', 'match' => 'stock', 'exclude' => ['stock/movements', 'stock/inventories']],
+    ['route' => 'materials', 'icon' => 'bi-layers', 'label' => 'Matières premières', 'perm' => 'stock.view', 'match' => 'materials'],
+    ['route' => 'stock/movements', 'icon' => 'bi-arrow-left-right', 'label' => 'Mouvements', 'perm' => 'stock.view', 'match' => 'stock/movements'],
+    ['route' => 'stock/inventories', 'icon' => 'bi-clipboard-check', 'label' => 'Inventaires', 'perm' => 'stock.view', 'match' => 'stock/inventories'],
     ['section' => 'Administration'],
     ['route' => 'users', 'icon' => 'bi-people', 'label' => 'Utilisateurs', 'perm' => 'users.view', 'match' => 'users'],
     ['route' => 'roles', 'icon' => 'bi-shield-check', 'label' => 'Rôles & permissions', 'perm' => 'users.view', 'match' => 'roles'],
@@ -37,6 +49,11 @@ $visible = array_values(array_filter($visible, static function ($item, $i) use (
 
 $isActive = static function (array $item) use ($current): bool {
     if (isset($item['match'])) {
+        foreach ($item['exclude'] ?? [] as $ex) {
+            if ($current === $ex || str_starts_with($current, $ex . '/')) {
+                return false;
+            }
+        }
         return $current === $item['match'] || str_starts_with($current, $item['match'] . '/');
     }
     return $current === $item['route'];
@@ -94,6 +111,12 @@ $breadcrumbs ??= ($current !== '' && ($title ?? '') !== '') ? [[$title, null]] :
           <?php endforeach; ?>
         </ol>
       </nav>
+      <form class="hoc-search ms-md-3" method="get" action="<?= e(url('search')) ?>" role="search" id="hocSearch" data-url="<?= e(url('search')) ?>">
+        <?= route_field('search') ?>
+        <i class="bi bi-search"></i>
+        <input class="form-control form-control-sm" type="search" name="q" placeholder="Rechercher… (Ctrl+K)" autocomplete="off" aria-label="Recherche globale" id="hocSearchInput">
+        <div class="hoc-search-results shadow d-none" id="hocSearchResults"></div>
+      </form>
       <div class="ms-auto d-flex align-items-center gap-1">
         <button class="btn btn-link hoc-icon-btn" id="hocTheme" type="button" aria-label="Basculer le thème clair / sombre" data-url="<?= e(url('profile/theme')) ?>">
           <i class="bi bi-moon-stars"></i>

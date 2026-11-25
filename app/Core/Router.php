@@ -5,8 +5,8 @@ namespace App\Core;
 
 /**
  * Routeur minimaliste compatible hébergement mutualisé.
- * - Motifs : "customers", "customers/{id}", "customers/{id}/edit"
- *   ({id} = entier, {slug} = [a-z0-9-_]).
+ * - Motifs : "customers", "customers/{id}", "customers/{id}/files/{id2}"
+ *   ({id}, {id2} = entiers, {slug} = [a-z0-9-_]).
  * - Middlewares : "auth", "guest", "can:permission.code".
  * - Toute requête POST est soumise à la vérification CSRF.
  */
@@ -29,8 +29,8 @@ final class Router
         $pattern = trim($pattern, '/');
         // preg_quote échappe les accolades : on remplace les jetons sur la version échappée
         $regex = str_replace(
-            ['\{id\}', '\{slug\}'],
-            ['(?P<id>\d+)', '(?P<slug>[a-z0-9_\-]+)'],
+            ['\{id\}', '\{id2\}', '\{slug\}'],
+            ['(?P<id>\d+)', '(?P<id2>\d+)', '(?P<slug>[a-z0-9_\-]+)'],
             preg_quote($pattern, '#')
         );
         $this->routes[] = [

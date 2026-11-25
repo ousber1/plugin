@@ -6,7 +6,7 @@
   </div>
 </div>
 <div class="card">
-  <form class="card-body hoc-filters border-bottom" method="get" action="<?= e(url('logs')) ?>">
+  <form class="card-body hoc-filters border-bottom" method="get" action="<?= e(url('logs')) ?>"><?= route_field('logs') ?>
     <div class="flex-grow-1"><label class="form-label small mb-1" for="q">Recherche</label>
       <input class="form-control" id="q" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="Description ou adresse IP"></div>
     <div><label class="form-label small mb-1" for="user">Utilisateur</label>

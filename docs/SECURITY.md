@@ -13,6 +13,9 @@
 | Fichiers sensibles | `.htaccess` racine + `.htaccess` dans `app/ config/ database/ storage/ docs/` ; extensions `.sql .log .lock .env .bak…` refusées | `.htaccess` |
 | Fichiers envoyés | Contrôle MIME réel (`finfo`), liste blanche, taille max., nom aléatoire. Images publiques (logo, cachet, signature) ré-encodées par GD dans `assets/uploads` où PHP est désactivé ; fichiers privés dans `storage/uploads`, servis par contrôleur authentifié | `Uploader.php`, `assets/uploads/.htaccess` |
 | Mot de passe oublié | Jeton 256 bits, seule l'empreinte SHA-256 est stockée, validité 60 min, usage unique, réponse identique que le compte existe ou non, 3 demandes/heure/compte et 10/heure/IP | `PasswordResetController.php` |
+| Fichiers clients | Stockés dans `storage/uploads/customers/{id}` (hors web), nom aléatoire, servis par `CustomerController::downloadFile` après vérification de la permission, en-têtes `nosniff` + CSP stricte | `CustomerController.php` |
+| Coûts confidentiels | Prix d'achat, coûts et marges masqués (écrans, exports CSV, réponses JSON) sans la permission `products.view_cost` | contrôleurs catalogue / stock |
+| Export CSV | Neutralisation de l'injection de formules Excel (`=`, `+`, `-`, `@`) | `Csv.php` |
 | Secrets en base | Mot de passe SMTP chiffré AES-256-GCM avec la clé applicative | `Crypto.php` |
 | Révocation des droits | Version globale des permissions : toute modification d'un rôle ou d'un utilisateur s'applique à la requête suivante de chaque session ; un compte désactivé est déconnecté immédiatement | `Auth::permissions()` |
 | Sauvegardes (Phase 8) | `storage/backups` interdit au web, téléchargement réservé à `backups.manage`, somme SHA-256 | à venir |

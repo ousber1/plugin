@@ -264,13 +264,6 @@ final class UserController extends Controller
         }
     }
 
-    private function fail(string $message, string $route): never
-    {
-        Session::flash('danger', $message);
-        Session::flashInput($_POST);
-        $this->redirect($route);
-    }
-
     private function find(int $id): array
     {
         $user = $this->db->fetch(

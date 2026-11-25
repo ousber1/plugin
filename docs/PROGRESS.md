@@ -29,8 +29,22 @@ Légende : ✅ terminé et testé · 🟡 base posée (schéma prêt, interface 
 - ✅ Journal d'activité consultable (filtres, détail avant/après)
 - ⏭ Recherche globale : livrée en Phase 3 avec les clients, produits et documents à rechercher
 
-## Phase 3 — Gestion commerciale 🟡
-- 🟡 Clients (CRM) · Fournisseurs · Catégories · Produits & services · Listes de prix · Packs · Matières · Stock
+## Phase 3 — Gestion commerciale ✅
+- ✅ Clients (CRM) : 8 types, ICE/IF/RC/CIN, recherche, filtres, tri, fiche à onglets (devis, factures, ventes,
+  paiements, commandes, avoirs, fichiers, fidélité, prix négociés), solde et crédit autorisé, relevé de compte
+  imprimable, WhatsApp, groupes de clients, import / export CSV
+- ✅ Fournisseurs : fiche, dettes, historique d'achats, prix des matières par fournisseur, export CSV
+- ✅ Catégories (sous-catégories, couleur, icône, ordre)
+- ✅ Produits & services : 7 types, prix détail / pro / gros / contrat, prix minimum, coût et marge, TVA,
+  code-barres, image, nomenclature matières, stock initial, bouton rapide POS, duplication, import / export CSV
+- ✅ Packs : composants, valeur et coût calculés, remise, marge, période de disponibilité, visuel
+- ✅ Matières premières : 16 types, laize/longueur, coût moyen pondéré, comparaison des fournisseurs, machines associées
+- ✅ Stock : état et valorisation, alertes stock faible (notification), entrées / sorties / pertes / ajustements tracés,
+  journal des mouvements filtrable et exportable, inventaires physiques avec validation des écarts
+- ✅ Recherche globale (Ctrl+K) : clients, catalogue, packs, matières, fournisseurs, documents par numéro
+- ⏭ Commandes, factures, paiements et retours fournisseurs : saisie en Phase 7 (les fiches les affichent déjà)
+- ⏭ Transferts entre emplacements : un seul emplacement pour l'instant (le schéma est prêt)
+- ⏭ Bon de sortie et relevé en PDF : Phase 5 (le relevé est déjà imprimable / enregistrable en PDF par le navigateur)
 
 ## Phase 4 — POS 🟡
 - 🟡 Interface POS · Panier · Remises · Taxes · Paiements mixtes/partiels/crédit · Caisse · Tickets 58/80 mm

@@ -139,3 +139,65 @@ function whatsapp_link(?string $phone, string $message = ''): string
     }
     return 'https://wa.me/' . $digits . ($message !== '' ? '?text=' . rawurlencode($message) : '');
 }
+
+/**
+ * Libellés et couleurs des statuts de documents (partagés par tous les modules).
+ * @return array<string, array{0: string, 1: string}> statut => [libellé, couleur Bootstrap]
+ */
+function status_map(string $domain): array
+{
+    return match ($domain) {
+        'quotation' => ['draft' => ['Brouillon', 'secondary'], 'sent' => ['Envoyé', 'info'], 'pending' => ['En attente', 'warning'],
+            'accepted' => ['Accepté', 'success'], 'refused' => ['Refusé', 'danger'], 'expired' => ['Expiré', 'dark'], 'converted' => ['Converti', 'primary']],
+        'invoice' => ['draft' => ['Brouillon', 'secondary'], 'validated' => ['Validée', 'info'], 'paid' => ['Payée', 'success'],
+            'partial' => ['Partiellement payée', 'warning'], 'unpaid' => ['Impayée', 'danger'], 'overdue' => ['En retard', 'danger'], 'cancelled' => ['Annulée', 'dark']],
+        'sale' => ['draft' => ['Brouillon', 'secondary'], 'suspended' => ['En attente', 'warning'], 'completed' => ['Terminée', 'success'],
+            'cancelled' => ['Annulée', 'dark'], 'refunded' => ['Remboursée', 'danger'], 'partially_refunded' => ['Remb. partiel', 'warning']],
+        'production' => ['order' => ['Commande', 'secondary'], 'design' => ['Design', 'info'], 'design_validation' => ['Validation design', 'info'],
+            'production' => ['Production', 'primary'], 'finishing' => ['Finition', 'primary'], 'quality_control' => ['Contrôle qualité', 'warning'],
+            'ready' => ['Prêt', 'success'], 'delivery' => ['Livraison', 'success'], 'completed' => ['Terminé', 'dark'], 'cancelled' => ['Annulé', 'danger']],
+        'credit_note' => ['draft' => ['Brouillon', 'secondary'], 'validated' => ['Validé', 'info'], 'applied' => ['Imputé', 'success'],
+            'refunded' => ['Remboursé', 'success'], 'cancelled' => ['Annulé', 'dark']],
+        'payment' => ['valid' => ['Valide', 'success'], 'cancelled' => ['Annulé', 'dark']],
+        'inventory' => ['draft' => ['Brouillon', 'secondary'], 'validated' => ['Validé', 'success'], 'cancelled' => ['Annulé', 'dark']],
+        default => [],
+    };
+}
+
+/** Badge HTML d'un statut (libellé + couleur, jamais la couleur seule). */
+function status_badge(string $domain, ?string $status): string
+{
+    [$label, $color] = status_map($domain)[(string) $status] ?? [(string) $status, 'secondary'];
+    $text = in_array($color, ['warning', 'info', 'light'], true) ? ' text-dark' : '';
+    return '<span class="badge text-bg-' . e($color) . $text . '">' . e($label) . '</span>';
+}
+
+/** Lien de tri pour les en-têtes de tableaux (conserve les filtres). */
+function sort_link(string $label, string $key, array $f): string
+{
+    $query = $_GET;
+    unset($query['route'], $query['page']);
+    $active = ($f['sort'] ?? '') === $key;
+    $query['sort'] = $key;
+    $query['dir'] = $active && ($f['dir'] ?? 'ASC') === 'ASC' ? 'desc' : 'asc';
+    $icon = $active ? (($f['dir'] ?? 'ASC') === 'ASC' ? ' <i class="bi bi-caret-up-fill"></i>' : ' <i class="bi bi-caret-down-fill"></i>') : '';
+    return '<a class="text-reset text-decoration-none" href="' . e(url(\App\Core\Request::route(), $query)) . '">' . e($label) . $icon . '</a>';
+}
+
+/** Chaîne de requête des filtres courants (pour les liens d'export). */
+function current_query(array $extra = []): array
+{
+    $q = $_GET;
+    unset($q['route'], $q['page']);
+    return array_merge($q, $extra);
+}
+
+/**
+ * Champ caché « route » pour les formulaires GET : en mode index.php?route=…,
+ * le navigateur remplace la chaîne de requête de l'attribut action par les champs
+ * du formulaire ; la route doit donc être transmise comme champ.
+ */
+function route_field(string $route): string
+{
+    return pretty_urls_active() ? '' : '<input type="hidden" name="route" value="' . e(trim($route, '/')) . '">';
+}

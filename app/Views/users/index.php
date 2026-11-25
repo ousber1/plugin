@@ -10,7 +10,7 @@
 </div>
 
 <div class="card">
-  <form class="card-body hoc-filters border-bottom" method="get" action="<?= e(url('users')) ?>">
+  <form class="card-body hoc-filters border-bottom" method="get" action="<?= e(url('users')) ?>"><?= route_field('users') ?>
     <div class="flex-grow-1"><input class="form-control" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="Rechercher : nom, identifiant, e-mail, téléphone…" aria-label="Rechercher"></div>
     <select class="form-select w-auto" name="role" aria-label="Rôle">
       <option value="0">Tous les rôles</option>
