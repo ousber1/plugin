@@ -44,10 +44,43 @@ $hasPass = !empty($s['database']['pass']);
   <div class="col-12">
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="pretty_urls" name="pretty_urls" value="1" <?= $val('database', 'pretty_urls', true) ? 'checked' : '' ?>>
-      <label class="form-check-label" for="pretty_urls">Adresses simplifiées (mod_rewrite Apache — activé sur la plupart des hébergements cPanel)</label>
+      <label class="form-check-label" for="pretty_urls">Adresses simplifiées (…/login) lorsque le serveur le permet</label>
     </div>
+    <div class="form-text">Le logiciel vérifie lui-même que la réécriture d'URL fonctionne ; sinon il utilise des adresses en <code>index.php?route=…</code>, qui fonctionnent partout.</div>
+  </div>
+  <div class="col-12" id="hostChecks">
+    <div class="small text-body-secondary"><span class="spinner-border spinner-border-sm"></span> Vérification de l'hébergement…</div>
   </div>
 </div>
+<script>
+  /* Vérifie depuis le navigateur : réécriture d'URL et protection des dossiers privés (.htaccess) */
+  (function () {
+    var box = document.getElementById('hostChecks'), input = document.getElementById('app_url');
+    var row = function (ok, warn, text) {
+      var icon = ok ? 'check-circle-fill text-success' : (warn ? 'exclamation-triangle-fill text-warning' : 'x-circle-fill text-danger');
+      return '<div class="d-flex gap-2 small mb-1"><i class="bi bi-' + icon + '"></i><span>' + text + '</span></div>';
+    };
+    var run = function () {
+      var base = input.value.replace(/\/+$/, '');
+      var get = function (u) {
+        return fetch(base + u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).catch(function () { return ''; });
+      };
+      Promise.all([get('/__hoc-rewrite-test'), get('/storage/hoc-probe.txt')]).then(function (res) {
+        var rewrite = res[0].indexOf('HOC-REWRITE-OK') === 0, exposed = res[1].indexOf('HOC-PRIVATE-PROBE') === 0;
+        box.innerHTML = '<div class="border rounded-3 p-3">'
+          + row(rewrite, true, rewrite ? 'Réécriture d\'URL active : adresses simplifiées disponibles.'
+                                       : 'Réécriture d\'URL non détectée : le logiciel utilisera des adresses en <code>index.php?route=…</code> (aucun impact fonctionnel).')
+          + row(!exposed, false, !exposed ? 'Dossiers privés protégés (.htaccess appliqué).'
+                                          : '<strong>Dossiers privés accessibles depuis Internet</strong> : le fichier <code>.htaccess</code> n\'est pas appliqué. '
+                                            + 'Vérifiez qu\'il a bien été envoyé à la racine (fichier caché) ou demandez à votre hébergeur d\'activer « AllowOverride ». '
+                                            + 'Vous pouvez poursuivre, mais corrigez ce point avant d\'utiliser le logiciel avec des données réelles.')
+          + '</div>';
+      });
+    };
+    run();
+    input.addEventListener('change', run);
+  })();
+</script>
 
 <div class="d-flex justify-content-between mt-4">
   <a href="index.php?step=1" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour</a>

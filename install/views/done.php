@@ -28,7 +28,7 @@ if (!preg_match('#^https?://#', $appUrl)) { $appUrl = '../'; }
         <li>Vérifiez que <code><?= $e($appUrl) ?>/config/config.php</code> renvoie une erreur 403.</li>
       </ul>
     </div>
-    <a href="<?= $e($appUrl) ?>/login" class="btn btn-dark btn-lg mt-2"><i class="bi bi-box-arrow-in-right me-1"></i> Se connecter</a>
+    <a href="<?= $e($appUrl) ?>/index.php?route=login" class="btn btn-dark btn-lg mt-2"><i class="bi bi-box-arrow-in-right me-1"></i> Se connecter</a>
   </div></div>
 </div></div>
 </body>

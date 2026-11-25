@@ -17,12 +17,24 @@ function e(mixed $value): string
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/**
+ * true si les adresses simplifiées (/login) sont activées ET que le serveur
+ * applique réellement la réécriture (vérifié par la sonde /__hoc-rewrite-test).
+ * Tant que ce n'est pas prouvé, les liens utilisent index.php?route=… qui
+ * fonctionne sur tout hébergement : l'application ne renvoie jamais vers une 404.
+ */
+function pretty_urls_active(): bool
+{
+    static $active = null;
+    return $active ??= (bool) Config::get('app.pretty_urls', true) && is_file(BASE_PATH . '/storage/cache/rewrite.ok');
+}
+
 /** URL interne de l'application. url('customers', ['page' => 2]) */
 function url(string $route = '', array $query = []): string
 {
     $base = rtrim((string) Config::get('app.url', ''), '/');
     $route = trim($route, '/');
-    if (Config::get('app.pretty_urls', true)) {
+    if (pretty_urls_active()) {
         $u = $base . '/' . $route;
         return $query ? $u . '?' . http_build_query($query) : $u;
     }

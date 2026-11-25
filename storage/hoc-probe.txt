@@ -1,0 +1,2 @@
+HOC-PRIVATE-PROBE
+Ce fichier sert a verifier que le dossier storage/ est bien protege. Il ne doit JAMAIS etre lisible depuis un navigateur.

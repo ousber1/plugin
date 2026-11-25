@@ -40,8 +40,20 @@ final class Request
     public static function route(): string
     {
         $route = $_GET['route'] ?? '';
+        if (!is_string($route)) {
+            return '__invalid__';
+        }
         if ($route === '' && !empty($_SERVER['PATH_INFO'])) {
             $route = (string) $_SERVER['PATH_INFO'];
+        }
+        if ($route === '') {
+            // Réécriture sans paramètre (ex. Nginx try_files /index.php) : route déduite de l'URL
+            $path = rawurldecode((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH));
+            $base = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+            if ($base !== '' && str_starts_with($path, $base . '/')) {
+                $path = substr($path, strlen($base));
+            }
+            $route = preg_replace('#^/index\.php#', '', $path) ?? '';
         }
         $route = trim((string) $route, '/');
         // Seuls caractères autorisés dans une route

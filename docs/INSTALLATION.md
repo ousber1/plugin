@@ -7,7 +7,7 @@
 - PHP **8.2+** avec les extensions `pdo_mysql`, `mbstring`, `json`, `openssl`, `fileinfo`
   (recommandées : `gd`, `zip`, `intl`, `curl`)
 - MySQL **5.7+** ou MariaDB **10.3+**
-- Apache avec `mod_rewrite` (standard sur cPanel). Sans mod_rewrite : décochez « Adresses simplifiées » à l'installation.
+- Apache ou LiteSpeed avec prise en charge de `.htaccess` (standard sur cPanel). La réécriture d'URL est facultative : elle est détectée automatiquement.
 
 ## Installation sur cPanel
 
@@ -54,3 +54,37 @@ location / { try_files $uri $uri/ /index.php?route=$uri&$args; }
 
 Supprimez `storage/installed.lock` et `config/config.php`, videz la base, puis rouvrez `/install/`.
 **Attention : toutes les données seront perdues** — faites une sauvegarde avant.
+
+## Dépannage
+
+### « 404 Not Found — The resource requested could not be found on this server! » après l'installation
+
+Ce message vient du **serveur web**, pas du logiciel : l'adresse simplifiée (ex. `…/login`) n'a pas été
+transmise à `index.php` parce que le serveur n'applique pas le fichier `.htaccess`.
+
+Depuis la version corrigée, le logiciel **détecte automatiquement** si la réécriture d'URL fonctionne et
+utilise sinon des adresses `index.php?route=…`, valables partout. Ouvrez simplement :
+
+```
+https://votre-domaine.ma/erp/index.php?route=login
+```
+
+Corrigez ensuite la cause, car sans `.htaccess` **les dossiers privés (`config/`, `storage/`) ne sont plus protégés**
+(un bandeau rouge l'indique aux administrateurs) :
+
+1. **Fichier `.htaccess` absent** — c'est un fichier caché que beaucoup de logiciels FTP n'envoient pas.
+   Dans cPanel › Gestionnaire de fichiers › *Paramètres* › cochez **Afficher les fichiers cachés (dotfiles)**,
+   puis vérifiez la présence de `.htaccess` à la racine de l'application et dans `app/ config/ database/ storage/ docs/ install/ assets/uploads/`.
+   Le plus sûr : envoyer le ZIP puis utiliser *Extraire* dans le gestionnaire de fichiers.
+2. **`.htaccess` ignoré par l'hébergeur** (AllowOverride désactivé) — demandez au support d'activer la prise en charge
+   de `.htaccess` et de `mod_rewrite` pour votre compte.
+3. **Serveur Nginx** — appliquez la configuration de la section « Serveur Nginx » ci-dessus.
+
+Une fois la réécriture fonctionnelle, les adresses simplifiées s'activent d'elles-mêmes à la visite suivante.
+Pour forcer les adresses `index.php?route=…`, mettez `'pretty_urls' => false` dans `config/config.php`.
+Si vous changez d'hébergement, supprimez `storage/cache/rewrite.ok` pour relancer la détection.
+
+### Mettre à jour une installation existante
+
+Remplacez tous les fichiers **sauf** `config/config.php` et le dossier `storage/` (qui contient `installed.lock`
+et vos données), puis supprimez le dossier `install/`. Aucune réinstallation n'est nécessaire.
