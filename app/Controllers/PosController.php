@@ -223,7 +223,9 @@ final class PosController extends Controller
             $items[] = [
                 'type' => $type, 'product_id' => $r['product_id'] ? (int) $r['product_id'] : null, 'pack_id' => $r['pack_id'] ? (int) $r['pack_id'] : null,
                 'name' => $type === 'product' ? $r['product_name'] : ($type === 'pack' ? $r['pack_name'] : $r['description']),
-                'code' => $r['product_code'] ?? $r['pack_code'] ?? '', 'description' => $r['description'],
+                'code' => $r['product_code'] ?? $r['pack_code'] ?? '',
+                // Seuls les articles libres gardent leur désignation ; les autres reprennent celle du catalogue
+                'description' => $type === 'custom' ? $r['description'] : null,
                 'quantity' => (float) $r['quantity'], 'width' => $r['width'] !== null ? (float) $r['width'] : null, 'height' => $r['height'] !== null ? (float) $r['height'] : null,
                 'unit_price' => (float) $r['unit_price'], 'catalog_price' => (float) $r['original_price'], 'discount_percent' => (float) $r['discount_percent'],
                 'tax_rate' => (float) $r['tax_rate'], 'unit' => $r['symbol'] ?? 'u', 'unit_id' => $r['unit_id'] ? (int) $r['unit_id'] : null,

@@ -29,6 +29,13 @@ use App\Controllers\SaleController;
 use App\Controllers\SearchController;
 use App\Controllers\StockController;
 use App\Controllers\SupplierController;
+use App\Controllers\CreditNoteController;
+use App\Controllers\DocumentController;
+use App\Controllers\InvoiceController;
+use App\Controllers\PaymentController;
+use App\Controllers\PublicDocumentController;
+use App\Controllers\QuotationController;
+use App\Controllers\SalesOrderController;
 
 // --- Authentification ---------------------------------------------------
 $router->get('login',  [AuthController::class, 'showLogin'], ['guest']);
@@ -207,3 +214,73 @@ $router->post('cash/movements',      [CashController::class, 'movement'], ['auth
 $router->post('cash/close',          [CashController::class, 'close'],    ['auth', 'can:cash.close']);
 $router->get('cash/sessions',        [CashController::class, 'sessions'], ['auth', 'can:cash.view']);
 $router->get('cash/sessions/{id}',   [CashController::class, 'show'],     ['auth', 'can:cash.view']);
+
+/* ======================================================================
+   Phase 5 — Devis, factures, avoirs, encaissements, documents PDF
+   ====================================================================== */
+
+// --- Outils communs des documents --------------------------------------
+$router->get('documents/catalog',               [DocumentController::class, 'catalog'], ['auth']);
+$router->post('documents/prices',               [DocumentController::class, 'prices'],  ['auth']);
+$router->post('documents/compute',              [DocumentController::class, 'compute'], ['auth']);
+$router->get('documents/{slug}/{id}/pdf',       [DocumentController::class, 'pdf'],     ['auth']);
+$router->get('documents/{slug}/{id}/preview',   [DocumentController::class, 'preview'], ['auth']);
+$router->post('documents/{slug}/{id}/email',    [DocumentController::class, 'email'],   ['auth']);
+$router->post('documents/{slug}/{id}/whatsapp', [DocumentController::class, 'whatsapp'],['auth']);
+$router->post('documents/{slug}/{id}/revoke',   [DocumentController::class, 'revoke'],  ['auth']);
+
+// --- Consultation publique (lien sécurisé envoyé au client) -------------
+$router->get('d/{slug}',         [PublicDocumentController::class, 'show']);
+$router->get('d/{slug}/html',    [PublicDocumentController::class, 'html']);
+$router->get('d/{slug}/pdf',     [PublicDocumentController::class, 'pdf']);
+$router->post('d/{slug}/accept', [PublicDocumentController::class, 'accept']);
+
+// --- Devis --------------------------------------------------------------
+$router->get('quotations',                       [QuotationController::class, 'index'],     ['auth', 'can:quotations.view']);
+$router->get('quotations/create',                [QuotationController::class, 'create'],    ['auth', 'can:quotations.create']);
+$router->post('quotations',                      [QuotationController::class, 'store'],     ['auth', 'can:quotations.create']);
+$router->get('quotations/{id}',                  [QuotationController::class, 'show'],      ['auth', 'can:quotations.view']);
+$router->get('quotations/{id}/edit',             [QuotationController::class, 'edit'],      ['auth', 'can:quotations.edit']);
+$router->post('quotations/{id}',                 [QuotationController::class, 'update'],    ['auth', 'can:quotations.edit']);
+$router->post('quotations/{id}/status',          [QuotationController::class, 'status'],    ['auth', 'can:quotations.edit']);
+$router->post('quotations/{id}/duplicate',       [QuotationController::class, 'duplicate'], ['auth', 'can:quotations.create']);
+$router->post('quotations/{id}/delete',          [QuotationController::class, 'delete'],    ['auth', 'can:quotations.delete']);
+$router->post('quotations/{id}/convert/{slug}',  [QuotationController::class, 'convert'],   ['auth', 'can:quotations.view']);
+
+// --- Bons de commande ---------------------------------------------------
+$router->get('sales-orders',               [SalesOrderController::class, 'index'],   ['auth', 'can:quotations.view']);
+$router->get('sales-orders/{id}',          [SalesOrderController::class, 'show'],    ['auth', 'can:quotations.view']);
+$router->post('sales-orders/{id}/status',  [SalesOrderController::class, 'status'],  ['auth', 'can:quotations.convert']);
+$router->post('sales-orders/{id}/invoice', [SalesOrderController::class, 'invoice'], ['auth', 'can:invoices.create']);
+
+// --- Factures -----------------------------------------------------------
+$router->get('invoices',                    [InvoiceController::class, 'index'],    ['auth', 'can:invoices.view']);
+$router->get('invoices/export',             [InvoiceController::class, 'export'],   ['auth', 'can:invoices.view']);
+$router->get('invoices/create',             [InvoiceController::class, 'create'],   ['auth', 'can:invoices.create']);
+$router->post('invoices',                   [InvoiceController::class, 'store'],    ['auth', 'can:invoices.create']);
+$router->get('invoices/{id}',               [InvoiceController::class, 'show'],     ['auth', 'can:invoices.view']);
+$router->get('invoices/{id}/edit',          [InvoiceController::class, 'edit'],     ['auth', 'can:invoices.edit']);
+$router->post('invoices/{id}',              [InvoiceController::class, 'update'],   ['auth', 'can:invoices.edit']);
+$router->post('invoices/{id}/validate',     [InvoiceController::class, 'validate'], ['auth', 'can:invoices.validate']);
+$router->post('invoices/{id}/delete',       [InvoiceController::class, 'delete'],   ['auth', 'can:invoices.edit']);
+$router->post('invoices/{id}/cancel',       [InvoiceController::class, 'cancel'],   ['auth', 'can:invoices.cancel']);
+$router->post('invoices/{id}/remind',       [InvoiceController::class, 'remind'],   ['auth', 'can:invoices.view']);
+$router->post('sales/{id}/invoice',         [InvoiceController::class, 'fromSale'], ['auth', 'can:invoices.create']);
+$router->post('sales/{id}/customer',        [SaleController::class, 'changeCustomer'], ['auth', 'can:invoices.create']);
+
+// --- Avoirs -------------------------------------------------------------
+$router->get('credit-notes',                [CreditNoteController::class, 'index'],  ['auth', 'can:invoices.view']);
+$router->get('credit-notes/{id}',           [CreditNoteController::class, 'show'],   ['auth', 'can:invoices.view']);
+$router->get('invoices/{id}/credit-note',   [CreditNoteController::class, 'create'], ['auth', 'can:invoices.credit_note']);
+$router->post('invoices/{id}/credit-note',  [CreditNoteController::class, 'store'],  ['auth', 'can:invoices.credit_note']);
+$router->post('credit-notes/{id}/apply',    [CreditNoteController::class, 'apply'],  ['auth', 'can:invoices.credit_note']);
+$router->post('credit-notes/{id}/refund',   [CreditNoteController::class, 'refund'], ['auth', 'can:payments.refund']);
+
+// --- Encaissements ------------------------------------------------------
+$router->get('payments',                 [PaymentController::class, 'index'],    ['auth', 'can:payments.view']);
+$router->get('payments/export',          [PaymentController::class, 'export'],   ['auth', 'can:payments.view']);
+$router->get('payments/create',          [PaymentController::class, 'create'],   ['auth', 'can:payments.create']);
+$router->post('payments',                [PaymentController::class, 'store'],    ['auth', 'can:payments.create']);
+$router->get('payments/{id}',            [PaymentController::class, 'show'],     ['auth', 'can:payments.view']);
+$router->post('payments/{id}/allocate',  [PaymentController::class, 'allocate'], ['auth', 'can:payments.create']);
+$router->post('payments/{id}/cancel',    [PaymentController::class, 'cancel'],   ['auth', 'can:payments.cancel']);

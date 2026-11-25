@@ -48,4 +48,21 @@ Sources : [`database/schema.sql`](../database/schema.sql) (structure) et [`datab
 
 ## Évolutions du schéma
 
-Les modifications futures seront livrées sous forme de fichiers `database/migrations/AAAA_MM_JJ_description.sql`, appliqués par l'application et enregistrés dans `schema_migrations`.
+Les évolutions sont livrées sous forme de fichiers `database/migrations/AAAA_MM_JJ_NNN_description.sql`.
+`App\Core\Migrator` les applique **automatiquement** à la première requête qui suit la mise à jour des fichiers
+(verrou MySQL `GET_LOCK` contre les exécutions simultanées), puis les enregistre dans `schema_migrations` ;
+l'empreinte `storage/cache/schema.version` évite toute requête supplémentaire ensuite. L'assistant d'installation
+applique les mêmes migrations sur une nouvelle base. Les scripts sont rejouables (`CREATE TABLE IF NOT EXISTS`, `INSERT IGNORE`).
+
+| Migration | Contenu |
+|---|---|
+| `2026_11_26_001_documents_partage_envoi` | `document_shares` (liens de consultation sécurisés : jeton, expiration, révocation, compteur de vues), `document_emails` (journal des envois e-mail / WhatsApp), paramètres `share_link_days`, `default_deposit_percent`, `quotation_intro`, `email_signature` |
+
+## Règles comptables des documents (Phase 5)
+
+- Une facture **brouillon** n'a pas de numéro et n'entre ni dans le chiffre d'affaires ni dans le solde client.
+- La **validation** attribue le numéro (séquence sans trou, sous verrou), fige les coordonnées client et entreprise (`*_snapshot`) et verrouille la facture (`is_locked`).
+- Une facture validée ne se modifie ni ne se supprime : elle se corrige par un **avoir**. L'annulation émet un avoir total ; la facture annulée et son avoir restent dans le chiffre d'affaires et le solde client, où ils se compensent.
+- `paid_amount`, `credited_amount`, `balance_due` et le statut (payée, partielle, impayée, en retard) sont recalculés à partir de `payment_allocations` et `credit_note_allocations`.
+- Facture de solde = lignes du devis + une ligne négative par taux de TVA et par facture d'acompte (`invoice_deposits`) ; la remise globale ne s'applique jamais aux lignes négatives.
+- Un règlement non imputé reste une avance (`payments.unallocated_amount`) imputable plus tard ; un ticket facturé transmet ses règlements à la facture.

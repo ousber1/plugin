@@ -210,3 +210,16 @@ body { font-family: var(--bs-font-sans-serif); background: var(--hoc-bg); -webki
 .hoc-search-item:hover, .hoc-search-item:focus { background: var(--bs-tertiary-bg); outline: none; }
 .hoc-search-all { display: block; width: 100%; border: 0; border-top: 1px solid var(--hoc-border); background: transparent; padding: .55rem; font-size: .85rem; color: var(--bs-link-color); }
 @media (max-width: 575.98px) { .hoc-search { max-width: none; } .hoc-search input::placeholder { color: transparent; } }
+
+/* --- Phase 5 : documents commerciaux -------------------------------- */
+@media (min-width: 1200px) { .hoc-sticky { position: sticky; top: 84px; } }
+.hoc-doc-lines td { vertical-align: top; }
+.hoc-doc-lines textarea { min-height: 38px; resize: vertical; }
+.hoc-doc-lines .hoc-dims { display: flex; gap: .25rem; margin-top: .35rem; }
+.hoc-doc-lines .hoc-dims input { max-width: 110px; }
+.hoc-doc-preview { width: 100%; min-height: 1100px; border: 1px solid var(--hoc-border); border-radius: .5rem; background: #fff; }
+@media (max-width: 767.98px) { .hoc-doc-preview { min-height: 720px; } }
+.hoc-timeline { list-style: none; padding: 0; margin: 0; }
+.hoc-timeline li { position: relative; padding: 0 0 .9rem 1.1rem; border-left: 2px solid var(--hoc-border); margin-left: .35rem; font-size: .85rem; }
+.hoc-timeline li::before { content: ''; position: absolute; left: -6px; top: .3rem; width: 10px; height: 10px; border-radius: 50%; background: var(--hoc-accent); }
+.hoc-public { max-width: 980px; margin: 0 auto; }

@@ -9,10 +9,11 @@ use App\Core\Database;
  * Compte client : solde, statistiques et relevé.
  *
  * Convention du compte (débit = ce que le client doit, crédit = ce qu'il a réglé) :
- *   Débit  : factures validées non annulées (TTC) + tickets POS terminés non facturés (TTC)
+ *   Débit  : factures validées, y compris annulées (TTC) + tickets POS terminés non facturés (TTC)
  *            + remboursements versés au client
  *   Crédit : paiements reçus + avoirs validés
  * Solde = Débit − Crédit (positif = le client doit de l'argent).
+ * Une facture annulée reste au débit et son avoir d'annulation au crédit : effet nul.
  */
 final class CustomerService
 {
@@ -22,7 +23,7 @@ final class CustomerService
         return "(
             SELECT i.issue_date AS entry_date, 'invoice' AS kind, i.number AS ref,
                    CONCAT('Facture ', i.number) AS label, i.total AS debit, 0 AS credit, i.id AS doc_id
-              FROM invoices i WHERE i.customer_id = :c1 AND i.status NOT IN ('draft','cancelled')
+              FROM invoices i WHERE i.customer_id = :c1 AND i.status <> 'draft'
             UNION ALL
             SELECT DATE(s.sale_date), 'sale', s.number, CONCAT('Ticket ', s.number), s.total - s.refunded_amount, 0, s.id
               FROM sales s WHERE s.customer_id = :c2 AND s.status IN ('completed','partially_refunded','refunded') AND s.invoice_id IS NULL

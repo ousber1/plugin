@@ -28,7 +28,7 @@ final class SaleService
      * @param array $items lignes brutes du panier
      * @return array lignes validées prêtes pour SaleCalculator et l'enregistrement
      */
-    public static function buildLines(array $items, int $customerId): array
+    public static function buildLines(array $items, int $customerId, bool $allowNegativeCustom = false): array
     {
         if (!$items) {
             throw new \DomainException('Le panier est vide.');
@@ -68,7 +68,8 @@ final class SaleService
             }
             $unitPrice = round((float) ($it['unit_price'] ?? 0), 4);
             $discount = round((float) ($it['discount_percent'] ?? 0), 2);
-            if ($unitPrice < 0 || $discount < 0 || $discount > 100) {
+            // Prix négatif admis uniquement pour les lignes libres des factures (déduction d'acompte)
+            if (($unitPrice < 0 && !($allowNegativeCustom && $type === 'custom')) || $discount < 0 || $discount > 100) {
                 throw new \DomainException("{$label} : prix ou remise invalide.");
             }
             $notes = mb_substr(trim((string) ($it['notes'] ?? '')), 0, 255) ?: null;
@@ -83,7 +84,9 @@ final class SaleService
                     throw new \DomainException("{$label} : produit indisponible.");
                 }
                 $pr = $prices[$pid];
-                $description = $p['name_fr'] ?: $p['name'];
+                // Désignation personnalisable sur les devis / factures (le POS envoie le nom du catalogue)
+                $custom = mb_substr(trim((string) ($it['description'] ?? '')), 0, 400);
+                $description = $custom !== '' && $custom !== $p['name'] ? $custom : ($p['name_fr'] ?: $p['name']);
                 if ((int) $p['is_area'] === 1) {
                     // Travail au m² : largeur × hauteur (cm) × nombre d'exemplaires
                     $w = round((float) ($it['width'] ?? 0), 2);
@@ -151,7 +154,8 @@ final class SaleService
                 $line['tax_rate'] = $pack['tax_rate'];
                 $line['unit_cost'] = $pack['cost'];
                 $line['unit_id'] = (int) ($db->fetchColumn("SELECT id FROM units WHERE code = 'pack'") ?: 0) ?: null;
-                $line['description'] = 'Pack ' . $name;
+                $custom = mb_substr(trim((string) ($it['description'] ?? '')), 0, 400);
+                $line['description'] = $custom !== '' && $custom !== $name ? $custom : 'Pack ' . $name;
             } elseif ($type === 'custom') {
                 // Article libre (travail sur mesure, service ponctuel)
                 $description = mb_substr(trim((string) ($it['description'] ?? '')), 0, 500);
@@ -180,7 +184,7 @@ final class SaleService
     }
 
     /** Contrôle de la remise globale. */
-    private static function checkGlobalDiscount(string $type, float $value, float $subtotal): void
+    public static function checkGlobalDiscount(string $type, float $value, float $subtotal): void
     {
         if ($type === 'none' || $value <= 0) {
             return;
@@ -377,7 +381,13 @@ final class SaleService
             // Vente reprise depuis la file d'attente : le brouillon est supprimé
             $draftId = (int) ($input['draft_id'] ?? 0);
             if ($draftId > 0) {
+                // Vente issue d'un devis : le devis est marqué « converti »
+                $quotationId = (int) $db->fetchColumn("SELECT quotation_id FROM sales WHERE id = ? AND status = 'suspended'", [$draftId]);
                 $db->query("DELETE FROM sales WHERE id = ? AND status = 'suspended'", [$draftId]);
+                if ($quotationId > 0) {
+                    $db->update('sales', ['quotation_id' => $quotationId], 'id = :id', ['id' => $saleId]);
+                    QuotationService::markConverted($quotationId, 'sale', $saleId);
+                }
             }
 
             $overrides = count(array_filter($calcLines, static fn($l) => $l['price_overridden']));
@@ -444,10 +454,13 @@ final class SaleService
         $session = CashService::openSession();
         return $db->transaction(function (Database $db) use ($input, $customerId, $calc, $discountType, $session): int {
             $draftId = (int) ($input['draft_id'] ?? 0);
+            $quotationId = null;
             if ($draftId > 0) {
+                $quotationId = $db->fetchColumn("SELECT quotation_id FROM sales WHERE id = ? AND status = 'suspended'", [$draftId]) ?: null;
                 $db->query("DELETE FROM sales WHERE id = ? AND status = 'suspended'", [$draftId]);
             }
             $id = $db->insert('sales', [
+                'quotation_id' => $quotationId,
                 'cash_session_id' => $session['id'] ?? null, 'customer_id' => $customerId, 'user_id' => Auth::id(),
                 'status' => 'suspended', 'sale_date' => date('Y-m-d H:i:s'), 'subtotal' => $calc['subtotal'],
                 'discount_type' => $discountType, 'discount_value' => (float) ($input['discount_value'] ?? 0),

@@ -18,6 +18,7 @@ final class SettingsSchema
             'business' => ['Entreprise', 'bi-building'],
             'currency' => ['Devise & TVA', 'bi-cash-coin'],
             'documents' => ['Documents', 'bi-file-earmark-text'],
+            'templates' => ['Modèles de documents', 'bi-file-earmark-richtext'],
             'numbering' => ['Numérotation', 'bi-123'],
             'pos' => ['Point de vente', 'bi-cart3'],
             'stock' => ['Stock & production', 'bi-box-seam'],
@@ -72,6 +73,10 @@ final class SettingsSchema
                 'quotation_footer'         => ['Mentions en pied de devis', 'textarea', ['max' => 1000, 'group' => 'documents']],
                 'invoice_footer'           => ['Mentions en pied de facture', 'textarea', ['max' => 1000, 'group' => 'documents']],
                 'amount_in_words'          => ['Afficher le montant en lettres sur les factures', 'bool', ['group' => 'documents']],
+                'default_deposit_percent'  => ['Acompte proposé par défaut (%)', 'int', ['min' => 1, 'max' => 99, 'group' => 'documents', 'col' => 4]],
+                'share_link_days'          => ['Validité des liens de consultation (jours)', 'int', ['min' => 1, 'max' => 3650, 'group' => 'documents', 'col' => 4, 'help' => 'Liens envoyés par WhatsApp / e-mail et QR codes.']],
+                'quotation_intro'          => ['Texte d\'introduction des devis', 'textarea', ['max' => 1000, 'group' => 'documents']],
+                'email_signature'          => ['Signature des e-mails et messages', 'textarea', ['max' => 500, 'group' => 'documents']],
             ],
             'pos' => [
                 'require_cash_session'   => ['Exiger une caisse ouverte pour vendre', 'bool', ['group' => 'pos']],

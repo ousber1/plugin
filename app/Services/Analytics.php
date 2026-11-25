@@ -11,8 +11,9 @@ use App\Core\Database;
  *
  * Chiffre d'affaires HT =
  *   + tickets POS terminés NON facturés (total HT, au prorata des remboursements)
- *   + factures validées non annulées (facture, acompte, solde — la facture de
- *     solde porte des lignes négatives de déduction des acomptes)
+ *   + factures validées (facture, acompte, solde — la facture de solde porte des
+ *     lignes négatives de déduction des acomptes), y compris annulées : une
+ *     facture annulée est neutralisée par son avoir d'annulation
  *   − avoirs validés (HT)
  * Un ticket transformé en facture n'est compté qu'une fois (via la facture).
  */
@@ -34,16 +35,20 @@ final class Analytics
             UNION ALL
             SELECT i.issue_date, i.total - i.tax_total, i.cost_total, i.customer_id, 'invoice', i.id
               FROM invoices i
-             WHERE i.status NOT IN ('draft','cancelled')
+             WHERE i.status <> 'draft'
             UNION ALL
-            SELECT c.issue_date, -c.subtotal, 0, c.customer_id, 'credit_note', c.id
+            SELECT c.issue_date, -c.subtotal,
+                   -(SELECT COALESCE(SUM(cni.quantity * COALESCE(ii.unit_cost, 0)), 0)
+                       FROM credit_note_items cni LEFT JOIN invoice_items ii ON ii.id = cni.invoice_item_id
+                      WHERE cni.credit_note_id = c.id),
+                   c.customer_id, 'credit_note', c.id
               FROM credit_notes c
              WHERE c.status IN ('validated','applied','refunded')
         )";
     }
 
     /**
-     * Sous-requête des lignes vendues (POS non facturé + factures validées).
+     * Sous-requête des lignes vendues (POS non facturé + factures validées − lignes d'avoirs).
      * Colonnes : doc_date, product_id, description, quantity, revenue_ht, cost
      */
     public static function soldLinesSql(): string
@@ -58,7 +63,12 @@ final class Analytics
             UNION ALL
             SELECT i.issue_date, ii.product_id, ii.description, ii.quantity, ii.line_subtotal, ii.unit_cost * ii.quantity
               FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
-             WHERE i.status NOT IN ('draft','cancelled')
+             WHERE i.status <> 'draft'
+            UNION ALL
+            SELECT c.issue_date, cni.product_id, cni.description, -cni.quantity, -cni.line_subtotal, -cni.quantity * COALESCE(ii.unit_cost, 0)
+              FROM credit_note_items cni JOIN credit_notes c ON c.id = cni.credit_note_id
+              LEFT JOIN invoice_items ii ON ii.id = cni.invoice_item_id
+             WHERE c.status IN ('validated','applied','refunded')
         )";
     }
 

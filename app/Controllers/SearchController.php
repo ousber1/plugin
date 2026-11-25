@@ -79,17 +79,25 @@ final class SearchController extends Controller
                 ['a' => $like, 'b' => $like, 'c' => $like, 'd' => $like]
             )));
         }
-        // Documents par numéro : liés à la fiche client tant que les modules de documents (Phases 4-5) ne sont pas livrés
+        // Documents par numéro (devis, factures, avoirs, reçus)
         if (can('customers.view') && preg_match('/[0-9]/', $q)) {
             $docs = [];
             if (can('quotations.view')) {
-                foreach ($this->db->fetchAll("SELECT number, customer_id, total FROM quotations WHERE deleted_at IS NULL AND number LIKE :a LIMIT 10", ['a' => $like]) as $r) {
-                    $docs[] = ['title' => 'Devis ' . $r['number'], 'subtitle' => money($r['total']), 'url' => url('customers/' . $r['customer_id'], ['tab' => 'quotations'])];
+                foreach ($this->db->fetchAll("SELECT id, number, customer_id, total FROM quotations WHERE deleted_at IS NULL AND number LIKE :a LIMIT 10", ['a' => $like]) as $r) {
+                    $docs[] = ['title' => 'Devis ' . $r['number'], 'subtitle' => money($r['total']), 'url' => url('quotations/' . $r['id'])];
                 }
             }
             if (can('invoices.view')) {
-                foreach ($this->db->fetchAll("SELECT number, customer_id, total FROM invoices WHERE number LIKE :a LIMIT 10", ['a' => $like]) as $r) {
-                    $docs[] = ['title' => 'Facture ' . $r['number'], 'subtitle' => money($r['total']), 'url' => url('customers/' . $r['customer_id'], ['tab' => 'invoices'])];
+                foreach ($this->db->fetchAll("SELECT id, number, customer_id, total FROM invoices WHERE number LIKE :a LIMIT 10", ['a' => $like]) as $r) {
+                    $docs[] = ['title' => 'Facture ' . $r['number'], 'subtitle' => money($r['total']), 'url' => url('invoices/' . $r['id'])];
+                }
+                foreach ($this->db->fetchAll("SELECT id, number, total FROM credit_notes WHERE number LIKE :a LIMIT 5", ['a' => $like]) as $r) {
+                    $docs[] = ['title' => 'Avoir ' . $r['number'], 'subtitle' => money($r['total']), 'url' => url('credit-notes/' . $r['id'])];
+                }
+            }
+            if (can('payments.view')) {
+                foreach ($this->db->fetchAll("SELECT id, number, amount FROM payments WHERE number LIKE :a OR reference LIKE :b LIMIT 5", ['a' => $like, 'b' => $like]) as $r) {
+                    $docs[] = ['title' => 'Reçu ' . $r['number'], 'subtitle' => money($r['amount']), 'url' => url('payments/' . $r['id'])];
                 }
             }
             $add('Documents', 'bi-file-earmark-text', $docs);

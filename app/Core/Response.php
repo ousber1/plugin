@@ -20,7 +20,7 @@ final class Response
             . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
             . "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-            . "img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'");
+            . "img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; form-action 'self' https://wa.me https://api.whatsapp.com; base-uri 'self'");
         if (Request::isHttps()) {
             header('Strict-Transport-Security: max-age=31536000');
         }

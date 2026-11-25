@@ -25,6 +25,14 @@ $empty = static fn(string $t) => '<div class="hoc-empty"><i class="bi bi-inbox">
     <?php if ($c['phone']): ?><a class="btn btn-outline-secondary" href="tel:<?= e(preg_replace('/[^\d+]/', '', $c['phone'])) ?>"><i class="bi bi-telephone"></i> Appeler</a><?php endif; ?>
     <?php if ($c['email']): ?><a class="btn btn-outline-secondary" href="mailto:<?= e($c['email']) ?>"><i class="bi bi-envelope"></i> E-mail</a><?php endif; ?>
     <a class="btn btn-outline-secondary" href="<?= e(url('customers/' . $c['id'] . '/statement')) ?>" target="_blank"><i class="bi bi-file-earmark-spreadsheet"></i> Relevé de compte</a>
+    <?php if (!$c['is_walk_in'] && (can('quotations.create') || can('invoices.create') || can('payments.create'))): ?>
+      <div class="dropdown"><button class="btn btn-accent dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-plus-lg"></i> Créer</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <?php if (can('quotations.create')): ?><li><a class="dropdown-item" href="<?= e(url('quotations/create', ['customer' => $c['id']])) ?>"><i class="bi bi-file-earmark-text"></i> Devis</a></li><?php endif; ?>
+          <?php if (can('invoices.create')): ?><li><a class="dropdown-item" href="<?= e(url('invoices/create', ['customer' => $c['id']])) ?>"><i class="bi bi-file-earmark-ruled"></i> Facture</a></li><?php endif; ?>
+          <?php if (can('payments.create')): ?><li><a class="dropdown-item" href="<?= e(url('payments/create', ['customer' => $c['id']])) ?>"><i class="bi bi-cash-coin"></i> Encaissement</a></li><?php endif; ?>
+        </ul></div>
+    <?php endif; ?>
     <?php if (can('customers.edit')): ?><a class="btn btn-dark" href="<?= e(url('customers/' . $c['id'] . '/edit')) ?>"><i class="bi bi-pencil"></i> Modifier</a><?php endif; ?>
   </div>
 </div>
@@ -85,28 +93,28 @@ $empty = static fn(string $t) => '<div class="hoc-empty"><i class="bi bi-inbox">
   <div class="tab-pane fade<?= $tab === 'quotations' ? ' show active' : '' ?>" id="t-quotations" role="tabpanel"><div class="card">
     <?php if (!$quotations): ?><?= $empty('Aucun devis pour ce client.') ?><?php else: ?>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Numéro</th><th>Date</th><th>Validité</th><th>Statut</th><th class="text-end">Total TTC</th></tr></thead><tbody>
-      <?php foreach ($quotations as $q): ?><tr><td><code><?= e($q['number']) ?></code></td><td><?= e(format_date($q['issue_date'])) ?></td><td><?= e(format_date($q['valid_until'])) ?></td><td><?= status_badge('quotation', $q['status']) ?></td><td class="text-end"><?= e(money($q['total'])) ?></td></tr><?php endforeach; ?>
+      <?php foreach ($quotations as $q): ?><tr><td><a href="<?= e(url('quotations/' . $q['id'])) ?>"><code><?= e($q['number']) ?></code></a></td><td><?= e(format_date($q['issue_date'])) ?></td><td><?= e(format_date($q['valid_until'])) ?></td><td><?= status_badge('quotation', $q['status']) ?></td><td class="text-end"><?= e(money($q['total'])) ?></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div></div>
 
   <div class="tab-pane fade<?= $tab === 'invoices' ? ' show active' : '' ?>" id="t-invoices" role="tabpanel"><div class="card">
     <?php if (!$invoices): ?><?= $empty('Aucune facture pour ce client.') ?><?php else: ?>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Numéro</th><th>Date</th><th>Échéance</th><th>Statut</th><th class="text-end">Total</th><th class="text-end">Payé</th><th class="text-end">Reste</th></tr></thead><tbody>
-      <?php foreach ($invoices as $i): ?><tr><td><code><?= e($i['number']) ?></code><?= $i['invoice_type'] !== 'standard' ? ' <small class="text-body-secondary">' . ($i['invoice_type'] === 'deposit' ? 'acompte' : 'solde') . '</small>' : '' ?></td><td><?= e(format_date($i['issue_date'])) ?></td><td><?= e(format_date($i['due_date'])) ?></td><td><?= status_badge('invoice', $i['status']) ?></td><td class="text-end"><?= e(money($i['total'])) ?></td><td class="text-end"><?= e(money($i['paid_amount'])) ?></td><td class="text-end fw-semibold"><?= e(money($i['balance_due'])) ?></td></tr><?php endforeach; ?>
+      <?php foreach ($invoices as $i): ?><tr><td><a href="<?= e(url('invoices/' . $i['id'])) ?>"><code><?= e($i['number']) ?></code></a><?= $i['invoice_type'] !== 'standard' ? ' <small class="text-body-secondary">' . ($i['invoice_type'] === 'deposit' ? 'acompte' : 'solde') . '</small>' : '' ?></td><td><?= e(format_date($i['issue_date'])) ?></td><td><?= e(format_date($i['due_date'])) ?></td><td><?= status_badge('invoice', $i['status']) ?></td><td class="text-end"><?= e(money($i['total'])) ?></td><td class="text-end"><?= e(money($i['paid_amount'])) ?></td><td class="text-end fw-semibold"><?= e(money($i['balance_due'])) ?></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div></div>
 
   <div class="tab-pane fade<?= $tab === 'sales' ? ' show active' : '' ?>" id="t-sales" role="tabpanel"><div class="card">
     <?php if (!$sales): ?><?= $empty('Aucune vente au comptoir pour ce client.') ?><?php else: ?>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Ticket</th><th>Date</th><th>Statut</th><th class="text-end">Total</th><th class="text-end">Payé</th></tr></thead><tbody>
-      <?php foreach ($sales as $s): ?><tr><td><code><?= e($s['number'] ?? '—') ?></code><?= $s['invoice_id'] ? ' <small class="text-body-secondary">facturé</small>' : '' ?></td><td><?= e(format_date($s['sale_date'], true)) ?></td><td><?= status_badge('sale', $s['status']) ?></td><td class="text-end"><?= e(money($s['total'])) ?></td><td class="text-end"><?= e(money($s['paid_amount'])) ?></td></tr><?php endforeach; ?>
+      <?php foreach ($sales as $s): ?><tr><td><a href="<?= e(url('sales/' . $s['id'])) ?>"><code><?= e($s['number'] ?? '—') ?></code></a><?= $s['invoice_id'] ? ' <small class="text-body-secondary">facturé</small>' : '' ?></td><td><?= e(format_date($s['sale_date'], true)) ?></td><td><?= status_badge('sale', $s['status']) ?></td><td class="text-end"><?= e(money($s['total'])) ?></td><td class="text-end"><?= e(money($s['paid_amount'])) ?></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div></div>
 
   <div class="tab-pane fade<?= $tab === 'payments' ? ' show active' : '' ?>" id="t-payments" role="tabpanel"><div class="card">
     <?php if (!$payments): ?><?= $empty('Aucun paiement enregistré.') ?><?php else: ?>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Reçu</th><th>Date</th><th>Mode</th><th>Référence</th><th>Statut</th><th class="text-end">Montant</th></tr></thead><tbody>
-      <?php foreach ($payments as $pay): $ref = $pay['direction'] === 'refund'; ?><tr><td><code><?= e($pay['number']) ?></code><?= $ref ? ' <small class="text-danger">remboursement</small>' : '' ?></td><td><?= e(format_date($pay['payment_date'], true)) ?></td><td><?= e($pay['method']) ?></td><td><?= e($pay['reference'] ?? '—') ?></td><td><?= status_badge('payment', $pay['status']) ?></td><td class="text-end <?= $ref ? 'text-danger' : '' ?>"><?= $ref ? '−' : '' ?><?= e(money($pay['amount'])) ?></td></tr><?php endforeach; ?>
+      <?php foreach ($payments as $pay): $ref = $pay['direction'] === 'refund'; ?><tr><td><a href="<?= e(url('payments/' . $pay['id'])) ?>"><code><?= e($pay['number']) ?></code></a><?= $ref ? ' <small class="text-danger">remboursement</small>' : '' ?></td><td><?= e(format_date($pay['payment_date'], true)) ?></td><td><?= e($pay['method']) ?></td><td><?= e($pay['reference'] ?? '—') ?></td><td><?= status_badge('payment', $pay['status']) ?></td><td class="text-end <?= $ref ? 'text-danger' : '' ?>"><?= $ref ? '−' : '' ?><?= e(money($pay['amount'])) ?></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div></div>
 
@@ -120,7 +128,7 @@ $empty = static fn(string $t) => '<div class="hoc-empty"><i class="bi bi-inbox">
   <div class="tab-pane fade<?= $tab === 'credits' ? ' show active' : '' ?>" id="t-credits" role="tabpanel"><div class="card">
     <?php if (!$creditNotes): ?><?= $empty('Aucun avoir.') ?><?php else: ?>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Numéro</th><th>Date</th><th>Motif</th><th>Statut</th><th class="text-end">Montant</th></tr></thead><tbody>
-      <?php foreach ($creditNotes as $cn): ?><tr><td><code><?= e($cn['number']) ?></code></td><td><?= e(format_date($cn['issue_date'])) ?></td><td><?= e($cn['reason']) ?></td><td><?= status_badge('credit_note', $cn['status']) ?></td><td class="text-end"><?= e(money($cn['total'])) ?></td></tr><?php endforeach; ?>
+      <?php foreach ($creditNotes as $cn): ?><tr><td><a href="<?= e(url('credit-notes/' . $cn['id'])) ?>"><code><?= e($cn['number']) ?></code></a></td><td><?= e(format_date($cn['issue_date'])) ?></td><td><?= e($cn['reason']) ?></td><td><?= status_badge('credit_note', $cn['status']) ?></td><td class="text-end"><?= e(money($cn['total'])) ?></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div></div>
 

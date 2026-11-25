@@ -28,7 +28,7 @@ AddDefaultCharset UTF-8
     RewriteEngine On
 
     # Dossiers privés : 403 (doublé par un .htaccess dans chaque dossier)
-    RewriteRule ^(app|config|database|storage|docs)(/|$) - [F,L]
+    RewriteRule ^(app|config|database|storage|docs|vendor)(/|$) - [F,L]
 
     # Fichiers et dossiers réels (assets, install/) servis directement
     RewriteCond %{REQUEST_FILENAME} -f [OR]

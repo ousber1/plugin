@@ -174,7 +174,34 @@ final class SaleController extends Controller
             ),
             'canCancel' => can('pos.cancel') && $sale['status'] === 'completed' && !$sale['invoice_id'] && $session && (int) $session['id'] === (int) $sale['cash_session_id'],
             'canReturn' => can('pos.refund') && in_array($sale['status'], ['completed', 'partially_refunded'], true) && !$sale['invoice_id'],
+            'invoice' => $sale['invoice_id'] ? $this->db->fetch('SELECT id, number, status FROM invoices WHERE id = ?', [$sale['invoice_id']]) : null,
+            'canInvoice' => can('invoices.create') && in_array($sale['status'], ['completed', 'partially_refunded'], true) && !$sale['invoice_id'],
         ]);
+    }
+
+    /**
+     * Réaffecte une vente à un autre client (ex. ticket « comptoir » à facturer au nom d'une société).
+     * Interdit si la vente est déjà facturée ; les paiements du ticket suivent la vente.
+     */
+    public function changeCustomer(int $id): void
+    {
+        $sale = $this->db->fetch('SELECT * FROM sales WHERE id = ?', [$id]);
+        $cid = Request::int('customer_id');
+        $customer = $cid ? $this->db->fetch('SELECT * FROM customers WHERE id = ? AND deleted_at IS NULL AND is_active = 1', [$cid]) : null;
+        if (!$sale || !in_array($sale['status'], ['completed', 'partially_refunded'], true) || $sale['invoice_id']) {
+            $this->fail('Le client ne peut être changé que sur une vente terminée non facturée.', 'sales/' . $id);
+        }
+        if (!$customer) {
+            $this->fail('Choisissez un client.', 'sales/' . $id);
+        }
+        $this->db->transaction(function () use ($id, $cid): void {
+            $this->db->update('sales', ['customer_id' => $cid], 'id = :id', ['id' => $id]);
+            $this->db->query('UPDATE payments SET customer_id = ? WHERE sale_id = ?', [$cid, $id]);
+        });
+        \App\Core\AuditLog::log('change_customer', 'pos', 'sale', $id, 'Vente ' . $sale['number'] . ' réaffectée au client ' . \App\Services\CustomerService::displayName($customer),
+            ['customer_id' => (int) $sale['customer_id']], ['customer_id' => $cid]);
+        \App\Core\Session::flash('success', 'Vente réaffectée à ' . \App\Services\CustomerService::displayName($customer) . '.');
+        $this->redirect('sales/' . $id);
     }
 
     /** Ticket de caisse thermique 58 / 80 mm. */

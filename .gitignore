@@ -14,7 +14,6 @@
 *.tmp
 .DS_Store
 Thumbs.db
-/vendor/
 /node_modules/
 /assets/uploads/*/*
 !/assets/uploads/**/.gitkeep

@@ -139,6 +139,34 @@ $genericTabs = ['business', 'currency', 'documents', 'pos', 'stock', 'pdf', 'app
       </script>
     <?php endif; ?>
 
+    <?php if ($tab === 'templates'):
+      $editId = (int) ($_GET['edit'] ?? ($templates[0]['id'] ?? 0));
+      $cur = null; foreach ($templates as $t) { if ((int) $t['id'] === $editId) { $cur = $t; } }
+      $cur ??= $templates[0] ?? null;
+      $labels = ['quotation' => 'Devis', 'invoice' => 'Facture', 'deposit' => 'Facture d\'acompte', 'balance' => 'Facture de solde', 'credit_note' => 'Avoir', 'receipt' => 'Reçu de paiement', 'sales_order' => 'Bon de commande']; ?>
+      <div class="card mb-3"><div class="card-header fw-semibold">Modèles de documents</div>
+        <div class="card-body pb-2"><p class="small text-body-secondary">Personnalisez le titre, les textes, les conditions et l'apparence de chaque document PDF. Le logo, la signature et le cachet se chargent dans l'onglet « Impression &amp; PDF » ; les coordonnées et mentions légales dans « Entreprise ».</p>
+          <div class="d-flex flex-wrap gap-2"><?php foreach ($templates as $t): ?><a class="btn btn-sm <?= $cur && (int) $cur['id'] === (int) $t['id'] ? 'btn-dark' : 'btn-outline-dark' ?>" href="<?= e(url('settings/templates', ['edit' => $t['id']])) ?>"><?= e($labels[$t['doc_type']] ?? $t['name']) ?></a><?php endforeach; ?></div></div></div>
+      <?php if ($cur): ?>
+      <form method="post" action="<?= e(url('settings/templates')) ?>" class="card"><?= csrf_field() ?><input type="hidden" name="template_id" value="<?= (int) $cur['id'] ?>">
+        <div class="card-header fw-semibold"><?= e($labels[$cur['doc_type']] ?? $cur['name']) ?></div>
+        <div class="card-body row g-3">
+          <div class="col-md-8"><label class="form-label" for="tTitle">Titre imprimé *</label><input class="form-control" id="tTitle" name="title" required maxlength="100" value="<?= e(old('title', $cur['title'])) ?>"></div>
+          <div class="col-md-4"><label class="form-label" for="tColor">Couleur principale</label><input class="form-control form-control-color w-100" type="color" id="tColor" name="accent_color" value="<?= e(old('accent_color', $cur['accent_color'])) ?>"></div>
+          <div class="col-12"><label class="form-label" for="tHead">Texte d'introduction (sous l'en-tête)</label><textarea class="form-control" id="tHead" name="header_text" rows="2" maxlength="2000"><?= e(old('header_text', $cur['header_text'] ?? '')) ?></textarea></div>
+          <div class="col-12"><label class="form-label" for="tTerms">Conditions générales</label><textarea class="form-control" id="tTerms" name="terms" rows="4" maxlength="3000"><?= e(old('terms', $cur['terms'] ?? '')) ?></textarea></div>
+          <div class="col-12"><label class="form-label" for="tFoot">Ligne supplémentaire du pied de page</label><input class="form-control" id="tFoot" name="footer_text" maxlength="500" value="<?= e(old('footer_text', $cur['footer_text'] ?? '')) ?>" placeholder="Ex. Merci pour votre confiance !"></div>
+          <div class="col-12 d-flex flex-wrap gap-4">
+            <?php foreach (['show_logo' => 'Logo', 'show_qr' => 'QR code de vérification', 'show_signature' => 'Signature', 'show_stamp' => 'Cachet'] as $k => $l): ?>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="t<?= $k ?>" name="<?= $k ?>" value="1" <?= (int) $cur[$k] ? 'checked' : '' ?>><label class="form-check-label" for="t<?= $k ?>"><?= e($l) ?></label></div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent d-flex justify-content-end"><button class="btn btn-dark"><i class="bi bi-check2"></i> Enregistrer le modèle</button></div>
+      </form>
+      <?php endif; ?>
+    <?php endif; ?>
+
     <?php if ($tab === 'notifications'): ?>
       <form method="post" action="<?= e(url('settings/notifications')) ?>" class="card">
         <div class="card-header fw-semibold">Notifications</div>

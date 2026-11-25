@@ -4,7 +4,7 @@ Logiciel de gestion (point de vente + ERP) conçu pour une agence marocaine d'im
 de publicité, de design et de communication. Interface entièrement en français, devise MAD (DH).
 
 **Stack :** PHP 8.2+ · MySQL/MariaDB · PDO · Bootstrap 5 · JavaScript natif / AJAX.
-Aucune dépendance Composer : compatible hébergement mutualisé cPanel.
+Aucune installation Composer requise : les bibliothèques PDF (dompdf, php-qrcode) sont incluses dans `vendor/`. Compatible hébergement mutualisé cPanel.
 
 ## Démarrage rapide
 
@@ -23,5 +23,5 @@ Détails : [docs/INSTALLATION.md](docs/INSTALLATION.md)
 
 ## État
 
-Phases 1 (architecture, installation), 2 (tableau de bord, paramètres, utilisateurs) 3 (clients, fournisseurs, catalogue, packs, matières, stock, recherche) et 4 (point de vente, caisse, ventes) terminées.
+Phases 1 (architecture, installation), 2 (tableau de bord, paramètres, utilisateurs), 3 (clients, fournisseurs, catalogue, packs, matières, stock, recherche), 4 (point de vente, caisse, ventes) et 5 (devis, factures, avoirs, encaissements, PDF, envoi e-mail / WhatsApp) terminées.
 Voir [docs/PROGRESS.md](docs/PROGRESS.md) pour la suite.

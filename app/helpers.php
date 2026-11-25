@@ -160,6 +160,8 @@ function status_map(string $domain): array
         'credit_note' => ['draft' => ['Brouillon', 'secondary'], 'validated' => ['Validé', 'info'], 'applied' => ['Imputé', 'success'],
             'refunded' => ['Remboursé', 'success'], 'cancelled' => ['Annulé', 'dark']],
         'payment' => ['valid' => ['Valide', 'success'], 'cancelled' => ['Annulé', 'dark']],
+        'sales_order' => ['pending' => ['En attente', 'warning'], 'confirmed' => ['Confirmé', 'info'], 'in_production' => ['En production', 'primary'],
+            'ready' => ['Prêt', 'success'], 'delivered' => ['Livré', 'success'], 'completed' => ['Terminé', 'dark'], 'cancelled' => ['Annulé', 'danger']],
         'inventory' => ['draft' => ['Brouillon', 'secondary'], 'validated' => ['Validé', 'success'], 'cancelled' => ['Annulé', 'dark']],
         default => [],
     };

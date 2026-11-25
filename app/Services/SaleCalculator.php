@@ -30,9 +30,16 @@ final class SaleCalculator
             $subtotal += $gross;
         }
         $subtotal = round($subtotal, 2);
+        // Base de la remise globale : lignes positives uniquement (une ligne négative,
+        // ex. déduction d'acompte, n'est jamais remisée)
+        $base = 0.0;
+        foreach ($lines as $l) {
+            $base += max(0.0, $l['gross']);
+        }
+        $base = round($base, 2);
 
         $discount = match ($discountType) {
-            'percent' => round($subtotal * max(0.0, min(100.0, $discountValue)) / 100, 2),
+            'percent' => round(min($subtotal, $base * max(0.0, min(100.0, $discountValue)) / 100), 2),
             'amount'  => round(max(0.0, min($subtotal, $discountValue)), 2),
             default   => 0.0,
         };
@@ -41,7 +48,7 @@ final class SaleCalculator
         $allocated = 0.0;
         $largest = null;
         foreach ($lines as $i => $l) {
-            $share = $subtotal > 0 ? round($discount * $l['gross'] / $subtotal, 2) : 0.0;
+            $share = $base > 0 && $l['gross'] > 0 ? round($discount * $l['gross'] / $base, 2) : 0.0;
             $lines[$i]['global_discount'] = $share;
             $allocated += $share;
             if ($largest === null || $l['gross'] > $lines[$largest]['gross']) {
@@ -72,6 +79,7 @@ final class SaleCalculator
         return [
             'lines'          => $lines,
             'subtotal'       => $subtotal,
+            'discount_base'  => $base,
             'discount_total' => $discount,
             'net_total'      => round($net, 2),
             'tax_total'      => round($taxTotal, 2),

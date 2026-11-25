@@ -505,7 +505,14 @@
     var r = e.target.closest('[data-resume]'), del = e.target.closest('[data-del]');
     if (r) {
       if (state.items.length && !confirm('Le panier actuel sera remplacé. Continuer ?')) { return; }
-      HOC.fetchJson(HOC.withId(CFG.urls.resume, r.dataset.resume)).then(function (d) {
+      resumeDraft(r.dataset.resume);
+    }
+    if (del && confirm('Supprimer définitivement cette vente en attente ?')) {
+      HOC.fetchJson(HOC.withId(CFG.urls.deleteDraft, del.dataset.del), { method: 'POST' }).then(function () { del.closest('.list-group-item').remove(); });
+    }
+  });
+  function resumeDraft(id) {
+      HOC.fetchJson(HOC.withId(CFG.urls.resume, id)).then(function (d) {
         var dr = d.draft;
         state.items = dr.items.map(function (it) {
           return Object.assign(it, { key: ++seq, manual_price: Math.abs(it.unit_price - it.catalog_price) > 0.0049, default_discount: it.discount_percent, min_price: 0,
@@ -517,12 +524,8 @@
         $('posNotes').value = state.notes;
         HOC.fetchJson(HOC.withId(CFG.urls.customer, dr.customer_id)).then(function (c) { setCustomer(c.customer, false); render(); });
         bs('draftsModal').hide(); render(); toast('Vente reprise : validez-la ou remettez-la en attente.');
-      });
-    }
-    if (del && confirm('Supprimer définitivement cette vente en attente ?')) {
-      HOC.fetchJson(HOC.withId(CFG.urls.deleteDraft, del.dataset.del), { method: 'POST' }).then(function () { del.closest('.list-group-item').remove(); });
-    }
-  });
+      }).catch(function (e) { toast(e.message || 'Impossible de reprendre la vente.'); });
+  }
 
   function toast(msg) {
     var t = document.createElement('div'); t.className = 'pos-toast'; t.textContent = msg; document.body.appendChild(t);
@@ -556,4 +559,12 @@
   render();
   loadProducts('', currentCat);
   if (!document.getElementById('posClosed')) { search.focus(); }
+  // Ouverture directe d'une vente en attente (ex. devis converti en vente au comptoir)
+  var resumeId = new URLSearchParams(window.location.search).get('resume');
+  if (resumeId && /^\d+$/.test(resumeId)) {
+    resumeDraft(resumeId);
+    if (window.history.replaceState) {
+      var u = new URL(window.location.href); u.searchParams.delete('resume'); window.history.replaceState(null, '', u.toString());
+    }
+  }
 })();

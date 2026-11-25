@@ -7,7 +7,7 @@
 | Langage | PHP 8.2+ (`declare(strict_types=1)`) | Disponible sur tous les hébergements cPanel |
 | Base | MySQL 5.7+ / MariaDB 10.3+, InnoDB, `utf8mb4` | Clés étrangères, transactions, verrous de ligne |
 | Accès données | PDO, requêtes préparées uniquement (`ATTR_EMULATE_PREPARES = false`) | Protection injection SQL |
-| Architecture | MVC léger maison, autoloader PSR-4, **aucune dépendance Composer** | Déploiement par simple copie FTP / gestionnaire de fichiers |
+| Architecture | MVC léger maison, autoloader PSR-4 ; bibliothèques tierces (dompdf, php-qrcode) **livrées dans `vendor/`** : aucune commande Composer sur l'hébergement | Déploiement par simple copie FTP / gestionnaire de fichiers |
 | Interface | Bootstrap 5.3, Bootstrap Icons, police Inter, JS natif + AJAX (`fetch`) | Pas d'étape de build |
 | Langue | Français (interface, messages, documents) | Exigence métier |
 | Fuseau | `Africa/Casablanca` (PHP et session MySQL alignés) | Dates cohérentes |

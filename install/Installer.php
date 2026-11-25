@@ -62,6 +62,7 @@ final class Installer
             'openssl'   => 'OpenSSL (jetons sécurisés)',
             'fileinfo'  => 'Fileinfo (contrôle des fichiers envoyés)',
             'session'   => 'Sessions',
+            'dom'       => 'DOM (génération des PDF)',
         ] as $ext => $label) {
             $add('Extension ' . $label, extension_loaded($ext), extension_loaded($ext) ? 'Chargée' : 'Manquante — à activer dans cPanel > Sélecteur de PHP');
         }
@@ -196,8 +197,12 @@ final class Installer
     /** Liste des tables définies dans schema.sql. */
     public static function schemaTables(): array
     {
-        preg_match_all('/^CREATE TABLE\s+`?([a-z0-9_]+)`?/mi', (string) file_get_contents(BASE_PATH . '/database/schema.sql'), $m);
-        return array_map('strtolower', $m[1]);
+        $sql = (string) file_get_contents(BASE_PATH . '/database/schema.sql');
+        foreach (glob(BASE_PATH . '/database/migrations/*.sql') ?: [] as $file) {
+            $sql .= "\n" . file_get_contents($file);
+        }
+        preg_match_all('/^CREATE TABLE\s+(?:IF NOT EXISTS\s+)?`?([a-z0-9_]+)`?/mi', $sql, $m);
+        return array_values(array_unique(array_map('strtolower', $m[1])));
     }
 
     /**
@@ -389,6 +394,9 @@ final class Installer
                 ->execute([$adminId, 'install', 'system', 'Installation de HO CREATIVE POS & ERP v' . APP_VERSION,
                     $_SERVER['REMOTE_ADDR'] ?? null, mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255)]);
             $pdo->commit();
+
+            // 2 bis. Migrations postérieures au schéma initial
+            \App\Core\Migrator::migrate($pdo);
 
             // 3. Fichier de configuration
             Config::write(self::CONFIG_FILE, [

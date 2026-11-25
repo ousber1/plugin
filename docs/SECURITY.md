@@ -24,6 +24,9 @@
 | Clickjacking | `X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'` | `Response.php` |
 | Réinstallation | `storage/installed.lock` bloque l'assistant ; recommandation de supprimer `install/` | `install/index.php` |
 | Traçabilité | `activity_logs` : utilisateur, action, entité, valeurs avant/après (champs sensibles masqués), IP, navigateur | `AuditLog.php` |
+| Liens de documents | Jeton aléatoire 160 bits (`random_bytes`), expiration configurable, révocation, accès limité au seul document (consultation, PDF, acceptation d'un devis) ; pages `noindex`, CSP stricte sans script pour le rendu | `ShareService.php`, `PublicDocumentController.php` |
+| Documents commerciaux | Lignes, prix, remises, frais et totaux recalculés côté serveur (mêmes règles que le POS) ; facture validée verrouillée et corrigée uniquement par avoir ; brouillon non envoyable ; chaque validation, envoi, annulation, avoir, paiement et acceptation en ligne journalisé | `DocumentService.php`, `InvoiceService.php` |
+| Génération PDF | dompdf sans accès réseau (`isRemoteEnabled = false`), sans PHP (`isPhpEnabled = false`), `chroot` limité ; images intégrées en data URI ; dossier `vendor/` interdit au web | `DocumentRenderer.php`, `.htaccess` |
 | Intégrité financière | Numérotation sous verrou `SELECT … FOR UPDATE` dans la transaction du document : pas de doublon ni de trou ; documents validés verrouillés (`is_locked`) | `DocumentNumber.php` |
 
 ## Rôles par défaut

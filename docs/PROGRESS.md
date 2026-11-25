@@ -61,10 +61,33 @@ Légende : ✅ terminé et testé · 🟡 base posée (schéma prêt, interface 
   écart, rapports X et Z imprimables, historique des sessions, notification d'écart
 - ✅ Stock déduit automatiquement (produits suivis, composants des packs, matières de la nomenclature)
 - ✅ Points de fidélité (si activés), alerte de crédit client proche de la limite
-- ⏭ Facture A4 officielle depuis un ticket et conversion devis → vente : Phase 5 (module Factures / Devis)
+- ✅ Facture A4 officielle depuis un ticket et conversion devis → vente : livrées en Phase 5
 
-## Phase 5 — Documents 🟡
-- 🟡 Devis · Factures (acompte, solde) · Avoirs · Reçus · PDF · Envoi e-mail / WhatsApp
+## Phase 5 — Documents commerciaux ✅
+- ✅ Éditeur commun devis / factures : recherche catalogue (prix du client), travaux au m², lignes libres, remise ligne et
+  globale, frais de design / pose / transport, TVA par ligne, totaux recalculés en direct **par le serveur**
+- ✅ Devis : numérotation, validité, délai et date de livraison, suivi commercial (brouillon, envoyé, en attente, accepté,
+  refusé avec motif, expiré automatiquement, converti), historique, duplication, alerte avant expiration, taux de transformation,
+  coût et marge estimés (permission)
+- ✅ Conversions : devis → facture, facture d'acompte (%), facture de solde (acomptes déduits automatiquement),
+  bon de commande, vente au comptoir (ouverte directement au POS) ; bon de commande → facture ; ticket → facture
+  (règlements du ticket imputés, réaffectation d'un ticket « comptoir » à un client)
+- ✅ Factures : brouillon modifiable, validation = numéro définitif sans trou + coordonnées figées + verrouillage ;
+  statuts payée / partielle / impayée / en retard (calculés), échéance, relances (e-mail, WhatsApp, appel, courrier)
+- ✅ Annulation d'une facture validée par **avoir total automatique** (jamais de suppression) ; avoirs partiels par ligne
+  avec remise en stock, imputés sur la facture, conservés au crédit du client ou remboursés (caisse)
+- ✅ Encaissements : imputation sur plusieurs factures et tickets à crédit (manuelle ou automatique, plus anciens d'abord),
+  avance client et imputation ultérieure, référence obligatoire (chèque, virement…), caisse alimentée, annulation tracée,
+  reçus numérotés, export CSV
+- ✅ PDF (dompdf intégré, aucune installation) : devis, factures (standard / acompte / solde), avoirs, reçus, bons de commande ;
+  logo, coordonnées et mentions légales (ICE, IF, RC, patente, CNSS), ventilation TVA, montant en lettres, RIB,
+  « Bon pour accord », signature, cachet, QR code de vérification, filigrane BROUILLON, pagination
+- ✅ Modèles de documents personnalisables (titre, introduction, conditions, pied de page, couleur, éléments affichés)
+- ✅ Envoi par e-mail (PDF joint + lien) et par WhatsApp (message pré-rempli + lien), historique des envois
+- ✅ Lien de consultation sécurisé (jeton 160 bits, expiration, révocable) : le client consulte et télécharge le PDF
+  sans compte et **accepte le devis en ligne** (nom, date, IP enregistrés, notification)
+- ✅ Mises à jour du schéma automatiques (migrations) pour les installations existantes
+- ⏭ Relevé de compte client en PDF : imprimable / enregistrable en PDF par le navigateur ; PDF dédié en Phase 7 (finances)
 
 ## Phase 6 — ERP impression 🟡
 - 🟡 Calculateurs (bâche, vinyle, DTF, sublimation, laser, Konica Minolta) · Coûts machines · Production (Kanban, calendrier) · Design · Consommation matières · Maintenance

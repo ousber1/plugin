@@ -1869,7 +1869,7 @@ CREATE TABLE delivery_status_history (
 -- ---------------------------------------------------------------------
 
 CREATE TABLE schema_migrations (
-  version     VARCHAR(30) NOT NULL,
+  version     VARCHAR(100) NOT NULL,
   description VARCHAR(255) NULL,
   applied_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (version)

@@ -4,7 +4,7 @@
 
 ## Prérequis
 
-- PHP **8.2+** avec les extensions `pdo_mysql`, `mbstring`, `json`, `openssl`, `fileinfo`
+- PHP **8.2+** avec les extensions `pdo_mysql`, `mbstring`, `json`, `openssl`, `fileinfo`, `dom`
   (recommandées : `gd`, `zip`, `intl`, `curl`)
 - MySQL **5.7+** ou MariaDB **10.3+**
 - Apache ou LiteSpeed avec prise en charge de `.htaccess` (standard sur cPanel). La réécriture d'URL est facultative : elle est détectée automatiquement.
@@ -88,4 +88,18 @@ Si vous changez d'hébergement, supprimez `storage/cache/rewrite.ok` pour relanc
 
 Envoyez le nouveau ZIP et **extrayez-le par-dessus** le dossier existant (écraser les fichiers).
 Le ZIP ne contient ni `config/config.php` ni `storage/installed.lock` : votre configuration, votre base et
-vos fichiers sont conservés. Supprimez ensuite le dossier `install/`. Aucune réinstallation n'est nécessaire.
+vos fichiers sont conservés. Supprimez ensuite le dossier `install/`. Aucune réinstallation n'est nécessaire :
+les mises à jour de la base (nouvelles tables, nouveaux paramètres) sont appliquées automatiquement à la première
+page ouverte après la mise à jour (voir `schema_migrations` dans [DATABASE.md](DATABASE.md)).
+
+### Envoi des documents par e-mail
+
+Renseignez **Paramètres › E-mail** (adresse d'expédition, serveur SMTP de votre hébergeur, port 465 SSL ou 587 STARTTLS,
+identifiants) puis utilisez « Envoyer un e-mail de test ». Sans SMTP, l'application utilise la fonction `mail()` de
+l'hébergeur si elle est disponible. En cas d'échec, le message d'erreur s'affiche et l'envoi est journalisé ; vous pouvez
+toujours télécharger le PDF ou l'envoyer par WhatsApp (lien sécurisé, aucun réglage nécessaire).
+
+### PDF
+
+Les PDF sont générés par dompdf (inclus). Extensions PHP requises : `mbstring`, `gd` (images) et `dom` (présentes sur
+cPanel par défaut). Le dossier `storage/cache/dompdf` doit être accessible en écriture.

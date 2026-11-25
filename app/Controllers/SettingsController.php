@@ -51,6 +51,9 @@ final class SettingsController extends Controller
         if ($tab === 'numbering') {
             $data['sequences'] = $this->db->fetchAll('SELECT * FROM document_sequences ORDER BY id');
         }
+        if ($tab === 'templates') {
+            $data['templates'] = $this->db->fetchAll("SELECT * FROM document_templates WHERE doc_type IN ('quotation','invoice','deposit','balance','credit_note','receipt','sales_order') ORDER BY id");
+        }
         if ($tab === 'notifications') {
             $data['notificationSettings'] = $this->db->fetchAll('SELECT * FROM notification_settings ORDER BY id');
             $data['roles'] = $this->db->fetchAll('SELECT id, name FROM roles ORDER BY id');
@@ -64,6 +67,7 @@ final class SettingsController extends Controller
         match ($tab) {
             'numbering'     => $this->saveSequences(),
             'notifications' => $this->saveNotifications(),
+            'templates'     => $this->saveTemplates(),
             default         => $this->saveGeneric($tab),
         };
     }
@@ -332,6 +336,32 @@ final class SettingsController extends Controller
     /* ------------------------------------------------------------------
        Notifications
        ------------------------------------------------------------------ */
+
+    /** Modèles de documents : titre, textes d'en-tête / pied, conditions, couleur, éléments affichés. */
+    private function saveTemplates(): void
+    {
+        $id = Request::int('template_id');
+        $tpl = $this->db->fetch('SELECT * FROM document_templates WHERE id = ?', [$id]);
+        if (!$tpl) {
+            $this->fail('Modèle introuvable.', 'settings/templates');
+        }
+        $title = mb_substr(Request::string('title'), 0, 100);
+        $color = Request::string('accent_color');
+        if ($title === '' || !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            $this->fail('Titre obligatoire et couleur au format #RRGGBB.', 'settings/templates', ['edit' => $id]);
+        }
+        $clean = static fn(string $k, int $max) => mb_substr(trim((string) ($_POST[$k] ?? '')), 0, $max) ?: null;
+        $new = [
+            'title' => $title, 'header_text' => $clean('header_text', 2000), 'footer_text' => $clean('footer_text', 500), 'terms' => $clean('terms', 3000),
+            'accent_color' => strtolower($color), 'show_logo' => Request::post('show_logo') ? 1 : 0, 'show_qr' => Request::post('show_qr') ? 1 : 0,
+            'show_signature' => Request::post('show_signature') ? 1 : 0, 'show_stamp' => Request::post('show_stamp') ? 1 : 0,
+        ];
+        $this->db->update('document_templates', $new, 'id = :id', ['id' => $id]);
+        AuditLog::log('update', 'settings', 'document_template', $id, 'Modèle « ' . $tpl['name'] . ' » modifié',
+            array_intersect_key($tpl, $new), $new);
+        Session::flash('success', 'Modèle « ' . $tpl['name'] . ' » enregistré.');
+        $this->redirect('settings/templates', ['edit' => $id]);
+    }
 
     private function saveNotifications(): void
     {

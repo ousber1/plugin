@@ -8,6 +8,11 @@ $cost = (float) $sale['cost_total']; $net = (float) $sale['total'] - (float) $sa
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-outline-secondary" href="<?= e(url('sales/' . $sale['id'] . '/receipt')) ?>" target="hoc_receipt"><i class="bi bi-printer"></i> Ticket</a>
     <a class="btn btn-outline-secondary" href="<?= e(url('sales/' . $sale['id'] . '/print')) ?>" target="_blank"><i class="bi bi-file-earmark-text"></i> Bon A4</a>
+    <?php if (!empty($invoice)): ?><a class="btn btn-outline-dark" href="<?= e(url('invoices/' . $invoice['id'])) ?>"><i class="bi bi-file-earmark-ruled"></i> Facture <?= e($invoice['number'] ?? '') ?></a><?php endif; ?>
+    <?php if (!empty($canInvoice)): ?>
+      <?php if ($sale['is_walk_in']): ?><button class="btn btn-accent" data-bs-toggle="collapse" data-bs-target="#customerBox"><i class="bi bi-file-earmark-ruled"></i> Établir une facture</button>
+      <?php else: ?><form method="post" action="<?= e(url('sales/' . $sale['id'] . '/invoice')) ?>" data-confirm="Établir la facture de ce ticket ? Elle sera validée et numérotée immédiatement."><?= csrf_field() ?><button class="btn btn-accent"><i class="bi bi-file-earmark-ruled"></i> Établir une facture</button></form><?php endif; ?>
+    <?php endif; ?>
     <?php if ($canReturn): ?><a class="btn btn-outline-dark" href="<?= e(url('sales/' . $sale['id'] . '/return')) ?>"><i class="bi bi-arrow-counterclockwise"></i> Retour / remboursement</a><?php endif; ?>
     <?php if ($canCancel): ?><button class="btn btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#cancelBox"><i class="bi bi-x-circle"></i> Annuler la vente</button><?php endif; ?>
   </div>
@@ -16,6 +21,13 @@ $cost = (float) $sale['cost_total']; $net = (float) $sale['total'] - (float) $sa
   <div class="collapse mb-3" id="cancelBox"><form method="post" action="<?= e(url('sales/' . $sale['id'] . '/cancel')) ?>" class="card border-danger" data-confirm="Annuler définitivement cette vente ? Les paiements seront contre-passés et le stock réintégré."><div class="card-body d-flex flex-wrap gap-2 align-items-end"><?= csrf_field() ?>
     <div class="flex-grow-1"><label class="form-label small" for="reason">Motif de l'annulation *</label><input class="form-control" id="reason" name="reason" required minlength="3" maxlength="255" placeholder="Ex. erreur de saisie, client parti sans payer…"></div>
     <button class="btn btn-danger">Confirmer l'annulation</button></div></form></div>
+<?php endif; ?>
+<?php if (!empty($canInvoice)): ?>
+  <div class="collapse mb-3<?= $sale['is_walk_in'] ? '' : '' ?>" id="customerBox"><form method="post" action="<?= e(url('sales/' . $sale['id'] . '/customer')) ?>" class="card"><div class="card-body d-flex flex-wrap gap-2 align-items-end"><?= csrf_field() ?>
+    <div class="flex-grow-1" style="min-width:260px"><label class="form-label small">Client à facturer *</label>
+      <div class="hoc-lookup" data-lookup="<?= e(url('customers/lookup')) ?>"><input class="form-control" data-lookup-input autocomplete="off" placeholder="Rechercher un client enregistré…"><input type="hidden" name="customer_id" data-lookup-value required></div>
+      <div class="form-text">Une facture doit être au nom d'un client enregistré (nom, ICE…). Le ticket et ses paiements lui seront réaffectés.</div></div>
+    <button class="btn btn-dark">Affecter la vente à ce client</button></div></form></div>
 <?php endif; ?>
 <?php if ($sale['status'] === 'cancelled'): ?><div class="alert alert-dark"><i class="bi bi-x-octagon"></i> Vente annulée le <?= e(format_date($sale['cancelled_at'], true)) ?> par <?= e($sale['cancelled_name'] ?? '') ?> : <?= e($sale['cancel_reason']) ?></div><?php endif; ?>
 <div class="row g-3">
@@ -39,8 +51,8 @@ $cost = (float) $sale['cost_total']; $net = (float) $sale['total'] - (float) $sa
   </div>
   <div class="col-xl-4">
     <div class="card mb-3"><div class="card-header fw-semibold">Client</div><div class="card-body">
-      <?php if ($sale['is_walk_in']): ?><span class="text-body-secondary">Client comptoir</span>
-      <?php else: ?><a class="fw-semibold" href="<?= e(url('customers/' . $sale['customer_id'])) ?>"><?= e(\App\Controllers\SaleController::customerName($sale)) ?></a><div class="small text-body-secondary"><?= e($sale['customer_code']) ?><?= $sale['phone'] ? ' · ' . e($sale['phone']) : '' ?></div><?php endif; ?>
+      <?php if ($sale['is_walk_in']): ?><span class="text-body-secondary">Client comptoir</span><?php if (!empty($canInvoice)): ?> <button class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="collapse" data-bs-target="#customerBox">affecter à un client</button><?php endif; ?>
+      <?php else: ?><a class="fw-semibold" href="<?= e(url('customers/' . $sale['customer_id'])) ?>"><?= e(\App\Controllers\SaleController::customerName($sale)) ?></a><?php if (!empty($canInvoice)): ?> <button class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="collapse" data-bs-target="#customerBox">changer</button><?php endif; ?><div class="small text-body-secondary"><?= e($sale['customer_code']) ?><?= $sale['phone'] ? ' · ' . e($sale['phone']) : '' ?></div><?php endif; ?>
     </div></div>
     <div class="card mb-3"><div class="card-header fw-semibold">Montants</div><div class="card-body">
       <div class="hoc-mini"><span>Sous-total HT</span><span><?= e(money($sale['subtotal'])) ?></span></div>
@@ -49,7 +61,8 @@ $cost = (float) $sale['cost_total']; $net = (float) $sale['total'] - (float) $sa
       <div class="hoc-mini fw-bold fs-5"><span>Total TTC</span><span><?= e(money($sale['total'])) ?></span></div>
       <div class="hoc-mini"><span>Réglé</span><span><?= e(money($sale['paid_amount'])) ?></span></div>
       <?php if ((float) $sale['change_amount'] > 0): ?><div class="hoc-mini"><span>Monnaie rendue</span><span><?= e(money($sale['change_amount'])) ?></span></div><?php endif; ?>
-      <?php if ($due > 0.004 && $sale['status'] !== 'cancelled'): ?><div class="hoc-mini text-danger fw-semibold"><span>Reste dû</span><span><?= e(money($due)) ?></span></div><?php endif; ?>
+      <?php if ($due > 0.004 && $sale['status'] !== 'cancelled'): ?><div class="hoc-mini text-danger fw-semibold"><span>Reste dû</span><span><?= e(money($due)) ?></span></div>
+        <?php if (!$sale['invoice_id'] && !$sale['is_walk_in'] && can('payments.create')): ?><a class="btn btn-sm btn-outline-dark mt-2" href="<?= e(url('payments/create', ['customer' => $sale['customer_id'], 'sale' => $sale['id']])) ?>"><i class="bi bi-cash-coin"></i> Encaisser le reste dû</a><?php endif; ?><?php endif; ?>
       <?php if ((float) $sale['refunded_amount'] > 0): ?><div class="hoc-mini text-danger"><span>Remboursé</span><span>−<?= e(money($sale['refunded_amount'])) ?></span></div><?php endif; ?>
       <?php if ($showCost && $net > 0): ?><div class="hoc-mini text-body-secondary small"><span>Coût · marge brute</span><span><?= e(money($cost)) ?> · <?= e(number_fr(($net - $cost) / $net * 100, 1)) ?> %</span></div><?php endif; ?>
     </div></div>

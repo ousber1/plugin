@@ -81,6 +81,9 @@ set_error_handler(static function (int $severity, string $message, string $file,
     throw new \ErrorException($message, 0, $severity, $file, $line);
 });
 
+// Mise à jour automatique du schéma après remplacement des fichiers (sans effet si la base est à jour)
+\App\Core\Migrator::autoMigrate();
+
 Response::securityHeaders();
 Session::start((int) Settings::get('session_lifetime_minutes', 120));
 Session::rotateOldInput();
