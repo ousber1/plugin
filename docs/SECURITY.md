@@ -1,0 +1,33 @@
+# HO CREATIVE — Architecture de sécurité
+
+| Menace | Protection | Où |
+|---|---|---|
+| Injection SQL | PDO avec requêtes préparées natives ; noms de tables/colonnes dynamiques validés par liste blanche (`Database::assertIdentifier`) | `app/Core/Database.php` |
+| XSS | Échappement systématique `e()` dans les vues ; Content-Security-Policy ; `X-Content-Type-Options: nosniff` | `helpers.php`, `Response::securityHeaders()` |
+| CSRF | Jeton de session (64 hex) vérifié automatiquement par le routeur pour **toute** requête POST ; en-tête `X-CSRF-Token` pour l'AJAX ; jeton renouvelé à la connexion | `Csrf.php`, `Router.php`, `assets/js/app.js` |
+| Mots de passe | `password_hash(PASSWORD_DEFAULT)` (bcrypt / argon2 selon PHP), rehash automatique, 10 caractères min. avec majuscules, minuscules et chiffres | `Auth.php` |
+| Force brute | Verrouillage du compte après N échecs (5 par défaut, configurable) pendant M minutes (15) ; limite de 30 échecs par IP ; message d'erreur générique ; temps de réponse constant si le compte n'existe pas | `Auth::attempt()`, table `login_attempts` |
+| Vol / fixation de session | Cookie `HttpOnly`, `SameSite=Lax`, `Secure` en HTTPS, `use_strict_mode`, régénération à la connexion et toutes les 15 min, empreinte navigateur, expiration d'inactivité (120 min par défaut) | `Session.php` |
+| Contrôle d'accès | 6 rôles, 84 permissions `module.action`, surcharges par utilisateur ; middleware `can:` + `Controller::authorize()` ; refus journalisés | `Auth::can()`, `Router.php` |
+| Open redirect | Redirections internes uniquement (route validée par regex ou URL commençant par l'URL de l'application) | `AuthController`, `Controller::back()` |
+| Fichiers sensibles | `.htaccess` racine + `.htaccess` dans `app/ config/ database/ storage/ docs/` ; extensions `.sql .log .lock .env .bak…` refusées | `.htaccess` |
+| Fichiers envoyés (Phase 3+) | Stockage hors accès web (`storage/uploads`), nom aléatoire, contrôle MIME réel (`finfo`), liste blanche d'extensions, taille max., téléchargement via contrôleur authentifié | à venir |
+| Sauvegardes (Phase 8) | `storage/backups` interdit au web, téléchargement réservé à `backups.manage`, somme SHA-256 | à venir |
+| Fuite d'erreurs | `display_errors = 0` ; erreurs journalisées dans `storage/logs` ; page 500 générique | `bootstrap.php` |
+| Clickjacking | `X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'` | `Response.php` |
+| Réinstallation | `storage/installed.lock` bloque l'assistant ; recommandation de supprimer `install/` | `install/index.php` |
+| Traçabilité | `activity_logs` : utilisateur, action, entité, valeurs avant/après (champs sensibles masqués), IP, navigateur | `AuditLog.php` |
+| Intégrité financière | Numérotation sous verrou `SELECT … FOR UPDATE` dans la transaction du document : pas de doublon ni de trou ; documents validés verrouillés (`is_locked`) | `DocumentNumber.php` |
+
+## Rôles par défaut
+
+| Rôle | Périmètre |
+|---|---|
+| Administrateur | Tout |
+| Manager | Tout sauf utilisateurs, paramètres, sauvegardes |
+| Caissier | POS, caisse, clients, devis, factures, encaissements |
+| Production | Ordres de production, machines, matières, livraisons |
+| Designer | Commandes de design, statut production |
+| Stock | Catalogue, stock, inventaires, fournisseurs, achats |
+
+Les permissions de chaque rôle seront modifiables depuis l'interface (Phase 2 — gestion des utilisateurs).

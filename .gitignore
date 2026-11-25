@@ -1,0 +1,18 @@
+# Configuration et état d'installation (spécifiques à chaque serveur)
+/config/config.php
+/storage/installed.lock
+
+# Données d'exécution
+/storage/logs/*
+/storage/backups/*
+/storage/uploads/*
+/storage/cache/*
+/storage/sessions/*
+!/storage/**/.gitkeep
+
+# Divers
+*.tmp
+.DS_Store
+Thumbs.db
+/vendor/
+/node_modules/

@@ -1,0 +1,129 @@
+<?php
+declare(strict_types=1);
+
+use App\Core\Auth;
+use App\Core\Config;
+use App\Core\Csrf;
+use App\Core\Session;
+use App\Core\Settings;
+
+/**
+ * Fonctions utilitaires globales utilisées par les vues et contrôleurs.
+ */
+
+/** Échappement HTML (protection XSS) — à utiliser pour TOUTE donnée affichée. */
+function e(mixed $value): string
+{
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/** URL interne de l'application. url('customers', ['page' => 2]) */
+function url(string $route = '', array $query = []): string
+{
+    $base = rtrim((string) Config::get('app.url', ''), '/');
+    $route = trim($route, '/');
+    if (Config::get('app.pretty_urls', true)) {
+        $u = $base . '/' . $route;
+        return $query ? $u . '?' . http_build_query($query) : $u;
+    }
+    $params = $route !== '' ? array_merge(['route' => $route], $query) : $query;
+    return $base . '/index.php' . ($params ? '?' . http_build_query($params) : '');
+}
+
+/** URL d'un fichier statique avec version anti-cache. */
+function asset(string $path): string
+{
+    $path = ltrim($path, '/');
+    $file = BASE_PATH . '/assets/' . $path;
+    $version = is_file($file) ? substr((string) filemtime($file), -6) : '1';
+    return rtrim((string) Config::get('app.url', ''), '/') . '/assets/' . $path . '?v=' . $version;
+}
+
+function csrf_field(): string
+{
+    return Csrf::field();
+}
+
+function csrf_token(): string
+{
+    return Csrf::token();
+}
+
+function setting(string $key, mixed $default = null): mixed
+{
+    return Settings::get($key, $default);
+}
+
+function can(string $permission): bool
+{
+    return Auth::can($permission);
+}
+
+function auth_user(): ?array
+{
+    return Auth::user();
+}
+
+function old(string $key, mixed $default = ''): mixed
+{
+    return Session::old($key, $default);
+}
+
+/**
+ * Formate un montant selon les paramètres de devise (par défaut : 1 234,50 DH).
+ */
+function money(float|int|string|null $amount, bool $withSymbol = true): string
+{
+    $decimals = (int) Settings::get('currency_decimals', 2);
+    $formatted = number_format(
+        (float) ($amount ?? 0),
+        $decimals,
+        (string) Settings::get('decimal_separator', ','),
+        (string) Settings::get('thousands_separator', ' ')
+    );
+    if (!$withSymbol) {
+        return $formatted;
+    }
+    $symbol = (string) Settings::get('currency_symbol', 'DH');
+    return Settings::get('currency_position', 'after') === 'before'
+        ? $symbol . ' ' . $formatted
+        : $formatted . ' ' . $symbol;
+}
+
+/** Nombre au format français : 1 234,5 */
+function number_fr(float|int|string|null $value, int $decimals = 2): string
+{
+    return number_format((float) ($value ?? 0), $decimals, ',', ' ');
+}
+
+/** Date au format configuré (d/m/Y par défaut). */
+function format_date(?string $date, bool $withTime = false): string
+{
+    if ($date === null || $date === '' || str_starts_with($date, '0000')) {
+        return '—';
+    }
+    $ts = strtotime($date);
+    if ($ts === false) {
+        return '—';
+    }
+    $format = (string) Settings::get('date_format', 'd/m/Y');
+    return date($withTime ? $format . ' H:i' : $format, $ts);
+}
+
+/** Arrondi monétaire (évite les erreurs de flottants). */
+function round_money(float $value): float
+{
+    return round($value + 0.0, 2, PHP_ROUND_HALF_UP);
+}
+
+/** Lien WhatsApp (format international marocain). */
+function whatsapp_link(?string $phone, string $message = ''): string
+{
+    $digits = preg_replace('/\D+/', '', (string) $phone) ?? '';
+    if (str_starts_with($digits, '00')) {
+        $digits = substr($digits, 2);
+    } elseif (str_starts_with($digits, '0')) {
+        $digits = '212' . substr($digits, 1);
+    }
+    return 'https://wa.me/' . $digits . ($message !== '' ? '?text=' . rawurlencode($message) : '');
+}

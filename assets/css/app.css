@@ -1,0 +1,140 @@
+/* =====================================================================
+   HO CREATIVE — Identité visuelle
+   Noir premium, blanc, gris neutres + couleur d'accent créative.
+   Thèmes clair / sombre via [data-bs-theme] (Bootstrap 5.3).
+   ===================================================================== */
+
+:root {
+  --hoc-accent: #ff3d00;
+  --hoc-black: #0b0b0c;
+  --hoc-sidebar-w: 260px;
+  --hoc-sidebar-w-collapsed: 76px;
+  --hoc-topbar-h: 64px;
+  --hoc-radius: 14px;
+  --bs-font-sans-serif: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bs-border-radius: 10px;
+}
+
+[data-bs-theme="light"] {
+  --hoc-bg: #f4f4f5;
+  --hoc-surface: #ffffff;
+  --hoc-sidebar-bg: #0b0b0c;
+  --hoc-sidebar-fg: #a1a1aa;
+  --hoc-sidebar-active: #ffffff;
+  --hoc-border: #e4e4e7;
+  --bs-body-bg: #f4f4f5;
+}
+
+[data-bs-theme="dark"] {
+  --hoc-bg: #09090b;
+  --hoc-surface: #131316;
+  --hoc-sidebar-bg: #000000;
+  --hoc-sidebar-fg: #8b8b93;
+  --hoc-sidebar-active: #ffffff;
+  --hoc-border: #27272a;
+  --bs-body-bg: #09090b;
+  --bs-tertiary-bg: #18181b;
+}
+
+body { font-family: var(--bs-font-sans-serif); background: var(--hoc-bg); -webkit-font-smoothing: antialiased; }
+.hoc-accent-text { color: var(--hoc-accent); }
+
+/* ---------- Boutons ---------- */
+.hoc-btn-primary, .btn-dark { --bs-btn-bg: var(--hoc-black); --bs-btn-border-color: var(--hoc-black);
+  --bs-btn-hover-bg: var(--hoc-accent); --bs-btn-hover-border-color: var(--hoc-accent);
+  --bs-btn-active-bg: var(--hoc-accent); --bs-btn-active-border-color: var(--hoc-accent); transition: all .18s ease; }
+[data-bs-theme="dark"] .btn-dark { --bs-btn-bg: #fafafa; --bs-btn-color: #0b0b0c; --bs-btn-border-color: #fafafa;
+  --bs-btn-hover-color: #fff; }
+.btn-accent { --bs-btn-bg: var(--hoc-accent); --bs-btn-color: #fff; --bs-btn-border-color: var(--hoc-accent);
+  --bs-btn-hover-bg: #e03500; --bs-btn-hover-color: #fff; --bs-btn-hover-border-color: #e03500; }
+.form-control:focus, .form-select:focus { border-color: var(--hoc-accent); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--hoc-accent) 20%, transparent); }
+
+/* ---------- Logo ---------- */
+.hoc-logo-mark { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px;
+  background: var(--hoc-black); color: #fff; font-weight: 800; letter-spacing: -.04em; font-size: 1.35rem;
+  box-shadow: inset 0 -4px 0 var(--hoc-accent); }
+.hoc-logo-sm { width: 40px; height: 40px; border-radius: 12px; font-size: 1rem; background: #fff; color: var(--hoc-black); }
+
+/* ---------- Pages d'authentification ---------- */
+.hoc-auth-wrap { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
+@media (min-width: 992px) { .hoc-auth-wrap { grid-template-columns: 1.1fr 1fr; } }
+.hoc-auth-brand { background: radial-gradient(1200px 600px at -10% -10%, color-mix(in srgb, var(--hoc-accent) 35%, transparent), transparent 60%), var(--hoc-black);
+  color: #fff; padding: 4rem; flex-direction: column; justify-content: space-between; }
+.hoc-auth-brand .hoc-logo-mark { background: #fff; color: var(--hoc-black); }
+.hoc-auth-features li { padding: .45rem 0; opacity: .85; } .hoc-auth-features i { color: var(--hoc-accent); margin-right: .6rem; }
+.hoc-auth-panel { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.hoc-auth-card { width: 100%; max-width: 420px; }
+
+/* ---------- Structure de l'application ---------- */
+.hoc-shell { display: flex; min-height: 100vh; }
+.hoc-sidebar { position: fixed; inset: 0 auto 0 0; width: var(--hoc-sidebar-w); background: var(--hoc-sidebar-bg);
+  color: var(--hoc-sidebar-fg); display: flex; flex-direction: column; z-index: 1040; transition: width .2s ease, transform .2s ease; }
+.hoc-sidebar-brand { height: var(--hoc-topbar-h); display: flex; align-items: center; gap: .75rem; padding: 0 1.1rem;
+  color: #fff; font-weight: 700; letter-spacing: .02em; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; overflow: hidden; }
+.hoc-nav { flex: 1; overflow-y: auto; padding: .75rem .65rem; }
+.hoc-nav-section { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; padding: 1rem .75rem .4rem; color: #52525b; white-space: nowrap; }
+.hoc-nav-link { display: flex; align-items: center; gap: .8rem; padding: .62rem .8rem; border-radius: 10px; color: var(--hoc-sidebar-fg);
+  text-decoration: none; font-weight: 500; white-space: nowrap; transition: background .15s, color .15s; }
+.hoc-nav-link i { font-size: 1.1rem; width: 1.3rem; text-align: center; }
+.hoc-nav-link:hover { background: rgba(255,255,255,.06); color: #fff; }
+.hoc-nav-link.active { background: rgba(255,255,255,.1); color: var(--hoc-sidebar-active); box-shadow: inset 3px 0 0 var(--hoc-accent); }
+.hoc-sidebar-foot { padding: .9rem 1.1rem; color: #52525b; border-top: 1px solid rgba(255,255,255,.06); }
+
+.hoc-main { flex: 1; min-width: 0; margin-left: var(--hoc-sidebar-w); transition: margin-left .2s ease; }
+.hoc-topbar { position: sticky; top: 0; z-index: 1030; height: var(--hoc-topbar-h); display: flex; align-items: center; gap: .75rem;
+  padding: 0 1rem; background: color-mix(in srgb, var(--hoc-surface) 85%, transparent); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hoc-border); }
+.hoc-topbar .breadcrumb a { color: inherit; text-decoration: none; opacity: .7; }
+.hoc-icon-btn { color: var(--bs-body-color); width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; padding: 0; }
+.hoc-icon-btn:hover { background: var(--bs-tertiary-bg); color: var(--bs-body-color); }
+.hoc-user-btn { display: flex; align-items: center; gap: .6rem; color: var(--bs-body-color); text-decoration: none; }
+.hoc-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--hoc-black); color: #fff;
+  font-weight: 700; font-size: .85rem; box-shadow: 0 0 0 2px var(--hoc-accent); }
+.hoc-content { padding: 1.5rem; max-width: 1600px; }
+
+/* Barre latérale repliée (bureau) */
+.hoc-shell.collapsed .hoc-sidebar { width: var(--hoc-sidebar-w-collapsed); }
+.hoc-shell.collapsed .hoc-main { margin-left: var(--hoc-sidebar-w-collapsed); }
+.hoc-shell.collapsed .hoc-brand-text, .hoc-shell.collapsed .hoc-nav-link span, .hoc-shell.collapsed .hoc-nav-section,
+.hoc-shell.collapsed .hoc-sidebar-foot { display: none; }
+.hoc-shell.collapsed .hoc-nav-link { justify-content: center; }
+
+/* Mobile / tablette : barre latérale en tiroir */
+.hoc-backdrop { display: none; }
+@media (max-width: 991.98px) {
+  .hoc-sidebar { transform: translateX(-100%); }
+  .hoc-main, .hoc-shell.collapsed .hoc-main { margin-left: 0; }
+  .hoc-shell.mobile-open .hoc-sidebar { transform: none; width: var(--hoc-sidebar-w); }
+  .hoc-shell.mobile-open .hoc-backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1035; }
+  .hoc-content { padding: 1rem; }
+}
+
+/* ---------- Cartes & statistiques ---------- */
+.card { border-color: var(--hoc-border); border-radius: var(--hoc-radius); background: var(--hoc-surface); }
+.card-header { background: transparent; border-bottom-color: var(--hoc-border); padding: .9rem 1.1rem; }
+.hoc-stat .card-body { position: relative; }
+.hoc-stat-icon { position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--hoc-accent) 12%, transparent); color: var(--hoc-accent); font-size: 1.15rem; }
+.list-group-item { background: transparent; border-color: var(--hoc-border); }
+.table { --bs-table-bg: transparent; }
+
+/* ---------- Installateur ---------- */
+.hoc-install { min-height: 100vh; background: var(--hoc-bg); }
+.hoc-install-card { max-width: 860px; margin: 2rem auto; }
+.hoc-steps { display: flex; gap: .4rem; flex-wrap: wrap; counter-reset: step; }
+.hoc-step { flex: 1 1 0; min-width: 90px; font-size: .78rem; text-align: center; padding: .55rem .25rem; border-radius: 10px;
+  background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-weight: 600; }
+.hoc-step.done { background: color-mix(in srgb, #22c55e 15%, transparent); color: #16a34a; }
+.hoc-step.current { background: var(--hoc-black); color: #fff; box-shadow: inset 0 -3px 0 var(--hoc-accent); }
+[data-bs-theme="dark"] .hoc-step.current { background: #fafafa; color: #0b0b0c; }
+
+@media print {
+  .hoc-sidebar, .hoc-topbar, .hoc-backdrop { display: none !important; }
+  .hoc-main { margin: 0 !important; }
+}
+
+/* Tableaux dans les cartes : alignement sur le padding des cartes */
+.card > .table-responsive > .table > :not(caption) > * > *:first-child,
+.card > .table > :not(caption) > * > *:first-child { padding-left: 1.1rem; }
+.card > .table-responsive > .table > :not(caption) > * > *:last-child,
+.card > .table > :not(caption) > * > *:last-child { padding-right: 1.1rem; }

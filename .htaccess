@@ -1,0 +1,46 @@
+# =====================================================================
+# HO CREATIVE — POS & ERP : configuration Apache
+# =====================================================================
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Fichiers sensibles : jamais servis
+<FilesMatch "(\.(sql|lock|log|ini|env|bak|sh|md|json|dist|gz|zip)|^\..*)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Dossiers privés : 403 (doublé par un .htaccess dans chaque dossier)
+    RewriteRule ^(app|config|database|storage|docs)(/|$) - [F,L]
+
+    # Fichiers et dossiers réels (assets, install/) servis directement
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Tout le reste passe par le contrôleur frontal
+    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_value upload_max_filesize 64M
+    php_value post_max_size 70M
+</IfModule>
