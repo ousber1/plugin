@@ -13,12 +13,21 @@ Légende : ✅ terminé et testé · 🟡 base posée (schéma prêt, interface 
 - ✅ Assistant d'installation en 6 étapes + verrouillage
 - ✅ Connexion / déconnexion, page d'état du système
 
-## Phase 2 — Fondations ⬜
-- ⬜ Tableau de bord statistique (données réelles)
-- ⬜ Navigation complète, recherche globale, notifications dans la barre supérieure
-- ⬜ Paramètres (entreprise, logo, devise, TVA, numérotation, POS, PDF, stock…)
-- ⬜ Utilisateurs, rôles et permissions
-- ⬜ Mot de passe oublié / changement de mot de passe, profil
+## Phase 2 — Fondations ✅
+- ✅ Tableau de bord : CA jour/semaine/mois/année avec variation, dépenses, bénéfice estimé, marge, encours, devis en attente,
+  ventes, factures (payées/partielles/impayées), clients, production (en cours/en retard/à livrer), stock faible,
+  performance machines, paiements et activité récents ; graphiques CA/dépenses/bénéfice 12 mois, ventes journalières,
+  ventes par catégorie et par machine ; top produits, services et clients — tout calculé depuis la base
+- ✅ Navigation : barre latérale repliable filtrée par permission, fil d'Ariane, thème clair/sombre mémorisé sur le compte
+- ✅ Notifications : cloche avec compteur, menu déroulant AJAX, centre de notifications, lecture individuelle
+- ✅ Paramètres (11 onglets) : entreprise + logo, devise, taux de TVA, documents, numérotation (aperçu en direct,
+  anti-doublon), POS, stock & production, PDF (cachet, signature), apparence, notifications, e-mail SMTP (test d'envoi), sécurité
+- ✅ Utilisateurs : liste/recherche/filtres, création, modification, activation, déverrouillage, réinitialisation
+  du mot de passe, suppression logique, permissions particulières par utilisateur ; protection du dernier administrateur
+- ✅ Rôles : création, matrice de permissions par module, suppression des rôles personnalisés ; droits appliqués immédiatement
+- ✅ Profil, changement de mot de passe, historique des connexions ; mot de passe oublié par e-mail
+- ✅ Journal d'activité consultable (filtres, détail avant/après)
+- ⏭ Recherche globale : livrée en Phase 3 avec les clients, produits et documents à rechercher
 
 ## Phase 3 — Gestion commerciale 🟡
 - 🟡 Clients (CRM) · Fournisseurs · Catégories · Produits & services · Listes de prix · Packs · Matières · Stock

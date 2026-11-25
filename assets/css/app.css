@@ -138,3 +138,50 @@ body { font-family: var(--bs-font-sans-serif); background: var(--hoc-bg); -webki
 .card > .table > :not(caption) > * > *:first-child { padding-left: 1.1rem; }
 .card > .table-responsive > .table > :not(caption) > * > *:last-child,
 .card > .table > :not(caption) > * > *:last-child { padding-right: 1.1rem; }
+
+/* ---------- Phase 2 : navigation, notifications, paramètres ---------- */
+.hoc-logo-img { width: 40px; height: 40px; border-radius: 12px; background: #fff; display: grid; place-items: center; overflow: hidden; flex: 0 0 40px; }
+.hoc-logo-img img { max-width: 34px; max-height: 34px; object-fit: contain; }
+.hoc-badge { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--hoc-accent); color: #fff; font-size: .65rem; font-weight: 700; line-height: 18px; text-align: center; }
+.hoc-notif-menu { width: min(380px, calc(100vw - 24px)); }
+.hoc-notif-list { max-height: 380px; overflow-y: auto; }
+.hoc-notif-item { display: flex; gap: .7rem; padding: .7rem 1rem; color: var(--bs-body-color); text-decoration: none; border-bottom: 1px solid var(--hoc-border); }
+.hoc-notif-item:hover { background: var(--bs-tertiary-bg); }
+.hoc-notif-item.unread { background: color-mix(in srgb, var(--hoc-accent) 6%, transparent); }
+.hoc-notif-item.unread strong::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--hoc-accent); margin-left: .4rem; vertical-align: middle; }
+.hoc-notif-item > i { font-size: 1.1rem; margin-top: .1rem; }
+.hoc-settings-nav .list-group-item { border-color: var(--hoc-border); background: var(--hoc-surface); }
+.hoc-settings-nav .list-group-item.active { background: var(--hoc-black); border-color: var(--hoc-black); box-shadow: inset 3px 0 0 var(--hoc-accent); }
+[data-bs-theme="dark"] .hoc-settings-nav .list-group-item.active { background: #fafafa; color: #0b0b0c; border-color: #fafafa; }
+.hoc-image-preview { width: 96px; height: 96px; border: 1px dashed var(--hoc-border); border-radius: 12px; display: grid; place-items: center;
+  background: repeating-conic-gradient(var(--bs-tertiary-bg) 0 25%, transparent 0 50%) 50% / 14px 14px; overflow: hidden; }
+.hoc-image-preview img { max-width: 90px; max-height: 90px; object-fit: contain; }
+.hoc-page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1.5rem; }
+.hoc-filters { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
+.hoc-filters .form-control, .hoc-filters .form-select { min-width: 160px; }
+.hoc-perm-module { border: 1px solid var(--hoc-border); border-radius: 12px; padding: .9rem 1rem; height: 100%; }
+.hoc-perm-module h3 { font-size: .9rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.hoc-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; }
+.table thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--bs-secondary-color); font-weight: 600; white-space: nowrap; }
+
+/* Tableau de bord */
+.hoc-kpi { position: relative; }
+.hoc-kpi .hoc-kpi-value { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.hoc-kpi .hoc-kpi-label { font-size: .8rem; color: var(--bs-secondary-color); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.hoc-kpi .hoc-kpi-sub { font-size: .8rem; color: var(--bs-secondary-color); }
+.hoc-delta { font-size: .78rem; font-weight: 600; }
+.hoc-mini { display: flex; justify-content: space-between; padding: .55rem 0; border-bottom: 1px dashed var(--hoc-border); font-size: .9rem; }
+.hoc-mini:last-child { border-bottom: 0; }
+.hoc-chart { position: relative; height: 280px; }
+.hoc-chart-sm { position: relative; height: 230px; }
+.hoc-empty { color: var(--bs-secondary-color); text-align: center; padding: 2rem 1rem; font-size: .9rem; }
+.hoc-empty i { display: block; font-size: 1.6rem; margin-bottom: .35rem; opacity: .6; }
+.hoc-quick { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* Palette des graphiques : ordre catégoriel fixe, validé clair / sombre (daltonisme) */
+[data-bs-theme="light"] { --series-1: #257de0; --series-2: #f47230; --series-3: #00b894; }
+[data-bs-theme="dark"]  { --series-1: #338ced; --series-2: #e76624; --series-3: #00a888; }
+.hoc-bar { background: var(--series-1); }
+/* Les libellés .visually-hidden (position absolue) restent dans la zone défilante */
+.table-responsive { position: relative; }

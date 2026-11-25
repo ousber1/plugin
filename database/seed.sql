@@ -504,6 +504,7 @@ INSERT INTO settings (setting_group, setting_key, setting_value, value_type) VAL
 
 ('system',   'app_language',         'fr',  'string'),
 ('system',   'timezone',             'Africa/Casablanca', 'string'),
-('system',   'date_format',          'd/m/Y', 'string');
+('system',   'date_format',          'd/m/Y', 'string'),
+('system',   'permissions_version',  '0',   'int');
 
 INSERT INTO schema_migrations (version, description) VALUES ('1.0.0', 'Schéma initial HO CREATIVE POS & ERP');

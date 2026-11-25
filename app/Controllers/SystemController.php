@@ -8,19 +8,10 @@ use App\Core\Controller;
 use App\Core\DocumentNumber;
 
 /**
- * Pages système : accueil provisoire (Phase 1) et état de l'installation.
+ * État technique de l'installation (base, schéma, séquences, activité).
  */
 final class SystemController extends Controller
 {
-    /**
-     * Accueil après connexion. En Phase 1, affiche l'état réel du système ;
-     * le tableau de bord statistique le remplacera en Phase 2.
-     */
-    public function home(): void
-    {
-        $this->view('system/status', $this->collectStatus() + ['title' => 'Accueil']);
-    }
-
     public function status(): void
     {
         $this->view('system/status', $this->collectStatus() + ['title' => 'État du système']);

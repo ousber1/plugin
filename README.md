@@ -23,5 +23,5 @@ Détails : [docs/INSTALLATION.md](docs/INSTALLATION.md)
 
 ## État
 
-Phase 1 (architecture, base de données, sécurité, installation) terminée.
+Phases 1 (architecture, base de données, sécurité, installation) et 2 (tableau de bord, paramètres, utilisateurs, rôles, profil, notifications) terminées.
 Voir [docs/PROGRESS.md](docs/PROGRESS.md) pour la suite.

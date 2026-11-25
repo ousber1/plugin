@@ -166,7 +166,10 @@ final class Auth
         if (!$user) {
             return self::$permissions = [];
         }
-        if (isset($_SESSION['_permissions']) && is_array($_SESSION['_permissions'])) {
+        // Cache de session invalidé dès qu'un rôle ou une surcharge change (version globale)
+        $version = (int) Settings::get('permissions_version', 0);
+        if (isset($_SESSION['_permissions']) && is_array($_SESSION['_permissions'])
+            && (int) ($_SESSION['_permissions_version'] ?? -1) === $version) {
             return self::$permissions = $_SESSION['_permissions'];
         }
         $db = Database::instance();
@@ -186,6 +189,7 @@ final class Auth
             }
         }
         $_SESSION['_permissions'] = array_keys($perms);
+        $_SESSION['_permissions_version'] = $version;
         return self::$permissions = $_SESSION['_permissions'];
     }
 
@@ -200,9 +204,13 @@ final class Auth
         return in_array($permission, self::permissions(), true);
     }
 
-    /** Invalide le cache de permissions (après modification d'un rôle). */
+    /**
+     * Invalide le cache de permissions de TOUS les utilisateurs connectés
+     * (après modification d'un rôle ou des droits d'un utilisateur).
+     */
     public static function refreshPermissions(): void
     {
+        Settings::set('permissions_version', (int) Settings::get('permissions_version', 0) + 1, 'system', 'int');
         unset($_SESSION['_permissions']);
         self::$permissions = null;
     }

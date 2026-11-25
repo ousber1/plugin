@@ -11,7 +11,10 @@
 | Contrôle d'accès | 6 rôles, 84 permissions `module.action`, surcharges par utilisateur ; middleware `can:` + `Controller::authorize()` ; refus journalisés | `Auth::can()`, `Router.php` |
 | Open redirect | Redirections internes uniquement (route validée par regex ou URL commençant par l'URL de l'application) | `AuthController`, `Controller::back()` |
 | Fichiers sensibles | `.htaccess` racine + `.htaccess` dans `app/ config/ database/ storage/ docs/` ; extensions `.sql .log .lock .env .bak…` refusées | `.htaccess` |
-| Fichiers envoyés (Phase 3+) | Stockage hors accès web (`storage/uploads`), nom aléatoire, contrôle MIME réel (`finfo`), liste blanche d'extensions, taille max., téléchargement via contrôleur authentifié | à venir |
+| Fichiers envoyés | Contrôle MIME réel (`finfo`), liste blanche, taille max., nom aléatoire. Images publiques (logo, cachet, signature) ré-encodées par GD dans `assets/uploads` où PHP est désactivé ; fichiers privés dans `storage/uploads`, servis par contrôleur authentifié | `Uploader.php`, `assets/uploads/.htaccess` |
+| Mot de passe oublié | Jeton 256 bits, seule l'empreinte SHA-256 est stockée, validité 60 min, usage unique, réponse identique que le compte existe ou non, 3 demandes/heure/compte et 10/heure/IP | `PasswordResetController.php` |
+| Secrets en base | Mot de passe SMTP chiffré AES-256-GCM avec la clé applicative | `Crypto.php` |
+| Révocation des droits | Version globale des permissions : toute modification d'un rôle ou d'un utilisateur s'applique à la requête suivante de chaque session ; un compte désactivé est déconnecté immédiatement | `Auth::permissions()` |
 | Sauvegardes (Phase 8) | `storage/backups` interdit au web, téléchargement réservé à `backups.manage`, somme SHA-256 | à venir |
 | Fuite d'erreurs | `display_errors = 0` ; erreurs journalisées dans `storage/logs` ; page 500 générique | `bootstrap.php` |
 | Clickjacking | `X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'` | `Response.php` |
@@ -30,4 +33,4 @@
 | Designer | Commandes de design, statut production |
 | Stock | Catalogue, stock, inventaires, fournisseurs, achats |
 
-Les permissions de chaque rôle seront modifiables depuis l'interface (Phase 2 — gestion des utilisateurs).
+Les permissions sont modifiables dans *Administration › Rôles & permissions*, avec des surcharges par utilisateur.

@@ -1,18 +1,49 @@
 <?php
 /**
- * Gabarit principal (utilisateur connecté) : barre latérale repliable + barre supérieure.
- * Variables : $content, $title
- * Le menu ne liste que les modules réellement disponibles ; il s'enrichit à chaque phase.
+ * Gabarit principal (utilisateur connecté) : barre latérale repliable, barre
+ * supérieure avec notifications et menu utilisateur, fil d'Ariane.
+ * Variables : $content, $title, $breadcrumbs (optionnel : [[libellé, route|null], …])
+ *
+ * Le menu ne liste que les modules disponibles ; chaque phase y ajoute ses entrées.
+ * Chaque entrée est filtrée par permission.
  */
 $user = auth_user();
 $current = \App\Core\Request::route();
 $menu = [
     ['section' => 'Général'],
-    ['route' => '', 'icon' => 'bi-house', 'label' => 'Accueil', 'perm' => null],
-    ['section' => 'Administration', 'perm' => 'settings.manage'],
-    ['route' => 'system/status', 'icon' => 'bi-activity', 'label' => 'État du système', 'perm' => 'settings.manage'],
+    ['route' => '', 'icon' => 'bi-grid-1x2', 'label' => 'Tableau de bord', 'perm' => 'dashboard.view'],
+    ['route' => 'notifications', 'icon' => 'bi-bell', 'label' => 'Notifications', 'perm' => null, 'match' => 'notifications'],
+    ['section' => 'Administration'],
+    ['route' => 'users', 'icon' => 'bi-people', 'label' => 'Utilisateurs', 'perm' => 'users.view', 'match' => 'users'],
+    ['route' => 'roles', 'icon' => 'bi-shield-check', 'label' => 'Rôles & permissions', 'perm' => 'users.view', 'match' => 'roles'],
+    ['route' => 'settings', 'icon' => 'bi-gear', 'label' => 'Paramètres', 'perm' => 'settings.manage', 'match' => 'settings'],
+    ['route' => 'logs', 'icon' => 'bi-journal-text', 'label' => 'Journal d\'activité', 'perm' => 'logs.view', 'match' => 'logs'],
+    ['route' => 'system/status', 'icon' => 'bi-activity', 'label' => 'État du système', 'perm' => 'settings.manage', 'match' => 'system'],
 ];
+// Retire les sections vides (aucune entrée autorisée)
+$visible = [];
+foreach ($menu as $item) {
+    if (isset($item['section'])) {
+        $visible[] = $item;
+        continue;
+    }
+    if ($item['perm'] === null || can($item['perm'])) {
+        $visible[] = $item;
+    }
+}
+$visible = array_values(array_filter($visible, static function ($item, $i) use ($visible) {
+    return !isset($item['section']) || (isset($visible[$i + 1]) && !isset($visible[$i + 1]['section']));
+}, ARRAY_FILTER_USE_BOTH));
+
+$isActive = static function (array $item) use ($current): bool {
+    if (isset($item['match'])) {
+        return $current === $item['match'] || str_starts_with($current, $item['match'] . '/');
+    }
+    return $current === $item['route'];
+};
 $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0, 1), array_slice(preg_split('/\s+/', trim((string) ($user['full_name'] ?? '?'))) ?: ['?'], 0, 2))));
+$logo = (string) setting('business_logo', '');
+$breadcrumbs ??= ($current !== '' && ($title ?? '') !== '') ? [[$title, null]] : [];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -20,26 +51,30 @@ $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0
 <?php \App\Core\View::partial('head', ['title' => $title ?? '']); ?>
 </head>
 <body class="hoc-app">
+<a class="visually-hidden-focusable position-absolute p-2 bg-body z-3" href="#hocMainContent">Aller au contenu</a>
 <div class="hoc-shell" id="hocShell">
   <aside class="hoc-sidebar" id="hocSidebar" aria-label="Navigation principale">
-    <div class="hoc-sidebar-brand">
-      <span class="hoc-logo-mark hoc-logo-sm">HO</span>
-      <span class="hoc-brand-text"><?= e(setting('business_name', 'HO CREATIVE')) ?></span>
-    </div>
+    <a class="hoc-sidebar-brand text-decoration-none" href="<?= e(url('')) ?>">
+      <?php if ($logo !== ''): ?>
+        <span class="hoc-logo-img"><img src="<?= e(asset($logo)) ?>" alt=""></span>
+      <?php else: ?>
+        <span class="hoc-logo-mark hoc-logo-sm">HO</span>
+      <?php endif; ?>
+      <span class="hoc-brand-text text-truncate"><?= e(setting('business_name', 'HO CREATIVE')) ?></span>
+    </a>
     <nav class="hoc-nav">
-      <?php foreach ($menu as $item):
-        if (!empty($item['perm']) && !can($item['perm'])) { continue; }
+      <?php foreach ($visible as $item):
         if (isset($item['section'])): ?>
           <div class="hoc-nav-section"><?= e($item['section']) ?></div>
         <?php else:
-          $active = $current === $item['route']; ?>
-          <a href="<?= e(url($item['route'])) ?>" class="hoc-nav-link<?= $active ? ' active' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?>>
+          $active = $isActive($item); ?>
+          <a href="<?= e(url($item['route'])) ?>" class="hoc-nav-link<?= $active ? ' active' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?> title="<?= e($item['label']) ?>">
             <i class="bi <?= e($item['icon']) ?>"></i><span><?= e($item['label']) ?></span>
           </a>
         <?php endif;
       endforeach; ?>
     </nav>
-    <div class="hoc-sidebar-foot small">v<?= e(APP_VERSION) ?></div>
+    <div class="hoc-sidebar-foot small">HO CREATIVE ERP · v<?= e(APP_VERSION) ?></div>
   </aside>
   <div class="hoc-backdrop" id="hocBackdrop"></div>
 
@@ -48,18 +83,38 @@ $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0
       <button class="btn btn-link hoc-icon-btn" id="hocToggle" type="button" aria-label="Afficher / masquer le menu">
         <i class="bi bi-list fs-4"></i>
       </button>
-      <nav aria-label="Fil d'Ariane" class="d-none d-md-block">
-        <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="<?= e(url('')) ?>">Accueil</a></li>
-          <?php if (($title ?? '') !== '' && $current !== ''): ?>
-            <li class="breadcrumb-item active" aria-current="page"><?= e($title) ?></li>
-          <?php endif; ?>
+      <nav aria-label="Fil d'Ariane" class="d-none d-md-block text-truncate">
+        <ol class="breadcrumb mb-0 flex-nowrap">
+          <li class="breadcrumb-item"><a href="<?= e(url('')) ?>"><i class="bi bi-house"></i><span class="visually-hidden">Accueil</span></a></li>
+          <?php foreach ($breadcrumbs as $i => [$label, $route]):
+            $last = $i === array_key_last($breadcrumbs); ?>
+            <li class="breadcrumb-item<?= $last ? ' active' : '' ?>"<?= $last ? ' aria-current="page"' : '' ?>>
+              <?php if (!$last && $route !== null): ?><a href="<?= e(url($route)) ?>"><?= e($label) ?></a><?php else: ?><?= e($label) ?><?php endif; ?>
+            </li>
+          <?php endforeach; ?>
         </ol>
       </nav>
       <div class="ms-auto d-flex align-items-center gap-1">
-        <button class="btn btn-link hoc-icon-btn" id="hocTheme" type="button" aria-label="Basculer le thème clair / sombre">
+        <button class="btn btn-link hoc-icon-btn" id="hocTheme" type="button" aria-label="Basculer le thème clair / sombre" data-url="<?= e(url('profile/theme')) ?>">
           <i class="bi bi-moon-stars"></i>
         </button>
+
+        <div class="dropdown" id="hocNotif" data-feed="<?= e(url('notifications/feed')) ?>" data-read-all="<?= e(url('notifications/read-all')) ?>" data-read="<?= e(url('notifications/0/read')) ?>">
+          <button class="btn btn-link hoc-icon-btn position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Notifications">
+            <i class="bi bi-bell"></i>
+            <?php $unread = \App\Services\NotificationService::unreadCount(); ?>
+            <span class="hoc-badge<?= $unread ? '' : ' d-none' ?>" id="hocNotifCount"><?= $unread > 99 ? '99+' : (int) $unread ?></span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end shadow hoc-notif-menu p-0">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+              <strong>Notifications</strong>
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="hocNotifReadAll">Tout marquer comme lu</button>
+            </div>
+            <div id="hocNotifList" class="hoc-notif-list"><div class="p-3 text-center text-body-secondary small">Chargement…</div></div>
+            <a href="<?= e(url('notifications')) ?>" class="d-block text-center py-2 border-top small text-decoration-none">Voir toutes les notifications</a>
+          </div>
+        </div>
+
         <div class="dropdown">
           <button class="btn btn-link hoc-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="hoc-avatar"><?= e($initials) ?></span>
@@ -70,6 +125,11 @@ $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow">
             <li><span class="dropdown-item-text small text-body-secondary"><?= e($user['email'] ?? '') ?></span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="<?= e(url('profile')) ?>"><i class="bi bi-person me-2"></i>Mon profil</a></li>
+            <?php if (can('settings.manage')): ?>
+              <li><a class="dropdown-item" href="<?= e(url('settings')) ?>"><i class="bi bi-gear me-2"></i>Paramètres</a></li>
+            <?php endif; ?>
             <li><hr class="dropdown-divider"></li>
             <li>
               <form method="post" action="<?= e(url('logout')) ?>">
@@ -82,7 +142,7 @@ $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0
       </div>
     </header>
 
-    <main class="hoc-content">
+    <main class="hoc-content" id="hocMainContent">
       <?php \App\Core\View::partial('flash'); ?>
       <?= $content ?>
     </main>
@@ -90,5 +150,8 @@ $initials = mb_strtoupper(implode('', array_map(static fn($p) => mb_substr($p, 0
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
+<?php if (!empty($scripts)): foreach ((array) $scripts as $src): ?>
+<script src="<?= e($src) ?>"></script>
+<?php endforeach; endif; ?>
 </body>
 </html>

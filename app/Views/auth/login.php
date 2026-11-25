@@ -14,7 +14,10 @@
     </div>
   </div>
   <div class="mb-4">
-    <label for="password" class="form-label">Mot de passe</label>
+    <div class="d-flex justify-content-between">
+      <label for="password" class="form-label">Mot de passe</label>
+      <a href="<?= e(url('password/forgot')) ?>" class="small text-decoration-none">Mot de passe oublié ?</a>
+    </div>
     <div class="input-group">
       <span class="input-group-text"><i class="bi bi-lock"></i></span>
       <input type="password" class="form-control form-control-lg" id="password" name="password"

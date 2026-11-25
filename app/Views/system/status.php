@@ -1,6 +1,6 @@
 <?php
 /**
- * État du système (Phase 1). Toutes les valeurs proviennent de la base de données.
+ * État du système. Toutes les valeurs proviennent de la base de données.
  * Variables : $tables, $counts, $sequences, $dbVersion, $schema, $phpVersion, $installedAt, $lastLogs
  */
 ?>
@@ -12,11 +12,6 @@
   <span class="badge text-bg-success fs-6"><i class="bi bi-check2-circle me-1"></i>Système installé</span>
 </div>
 
-<div class="alert alert-info d-flex gap-2">
-  <i class="bi bi-info-circle"></i>
-  <div><strong>Phase 1 terminée</strong> — architecture, base de données, sécurité et installation.
-    Le tableau de bord statistique, les paramètres et la gestion des utilisateurs arrivent en Phase 2.</div>
-</div>
 
 <div class="row g-3 mb-4">
   <?php foreach ([
