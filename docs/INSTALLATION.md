@@ -86,5 +86,6 @@ Si vous changez d'hébergement, supprimez `storage/cache/rewrite.ok` pour relanc
 
 ### Mettre à jour une installation existante
 
-Remplacez tous les fichiers **sauf** `config/config.php` et le dossier `storage/` (qui contient `installed.lock`
-et vos données), puis supprimez le dossier `install/`. Aucune réinstallation n'est nécessaire.
+Envoyez le nouveau ZIP et **extrayez-le par-dessus** le dossier existant (écraser les fichiers).
+Le ZIP ne contient ni `config/config.php` ni `storage/installed.lock` : votre configuration, votre base et
+vos fichiers sont conservés. Supprimez ensuite le dossier `install/`. Aucune réinstallation n'est nécessaire.
