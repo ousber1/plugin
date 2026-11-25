@@ -46,8 +46,22 @@ Légende : ✅ terminé et testé · 🟡 base posée (schéma prêt, interface 
 - ⏭ Transferts entre emplacements : un seul emplacement pour l'instant (le schéma est prêt)
 - ⏭ Bon de sortie et relevé en PDF : Phase 5 (le relevé est déjà imprimable / enregistrable en PDF par le navigateur)
 
-## Phase 4 — POS 🟡
-- 🟡 Interface POS · Panier · Remises · Taxes · Paiements mixtes/partiels/crédit · Caisse · Tickets 58/80 mm
+## Phase 4 — Point de vente ✅
+- ✅ Écran POS plein écran (bureau, tablette, mobile) : recherche, scan de code-barres (Entrée), catégories, boutons rapides,
+  images, packs, travaux au m² (largeur × hauteur × exemplaires), article libre avec création au catalogue
+- ✅ Prix client automatiques (prix négocié → liste de prix → détail), remise de groupe, remise ligne et globale,
+  prix modifiable selon permission, prix minimum, TVA par ligne
+- ✅ Encaissement : espèces (rendu de monnaie), carte, virement, chèque, mobile (référence obligatoire), paiement mixte,
+  partiel et à crédit (limite de crédit contrôlée)
+- ✅ Ventes en attente (mise en attente / reprise / suppression), panier conservé si la page est rechargée
+- ✅ Ticket thermique 58 / 80 mm (montant en lettres, ventilation TVA) et bon de vente A4
+- ✅ Historique des ventes filtrable et exportable, détail, annulation (même session), retours partiels avec
+  remise en stock et remboursement plafonné au montant payé (ou avoir sur le compte client)
+- ✅ Caisse : ouverture (fond), dépôts / retraits / transferts, solde théorique, clôture avec comptage des billets et pièces,
+  écart, rapports X et Z imprimables, historique des sessions, notification d'écart
+- ✅ Stock déduit automatiquement (produits suivis, composants des packs, matières de la nomenclature)
+- ✅ Points de fidélité (si activés), alerte de crédit client proche de la limite
+- ⏭ Facture A4 officielle depuis un ticket et conversion devis → vente : Phase 5 (module Factures / Devis)
 
 ## Phase 5 — Documents 🟡
 - 🟡 Devis · Factures (acompte, solde) · Avoirs · Reçus · PDF · Envoi e-mail / WhatsApp

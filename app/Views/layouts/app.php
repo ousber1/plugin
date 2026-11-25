@@ -13,6 +13,10 @@ $menu = [
     ['section' => 'Général'],
     ['route' => '', 'icon' => 'bi-grid-1x2', 'label' => 'Tableau de bord', 'perm' => 'dashboard.view'],
     ['route' => 'notifications', 'icon' => 'bi-bell', 'label' => 'Notifications', 'perm' => null, 'match' => 'notifications'],
+    ['section' => 'Ventes'],
+    ['route' => 'pos', 'icon' => 'bi-cart3', 'label' => 'Point de vente', 'perm' => 'pos.access', 'match' => 'pos'],
+    ['route' => 'sales', 'icon' => 'bi-receipt', 'label' => 'Historique des ventes', 'perm' => 'pos.access', 'match' => 'sales'],
+    ['route' => 'cash', 'icon' => 'bi-cash-stack', 'label' => 'Caisse', 'perm' => 'cash.view', 'match' => 'cash'],
     ['section' => 'Commercial'],
     ['route' => 'customers', 'icon' => 'bi-people', 'label' => 'Clients', 'perm' => 'customers.view', 'match' => 'customers'],
     ['route' => 'suppliers', 'icon' => 'bi-truck', 'label' => 'Fournisseurs', 'perm' => 'suppliers.view', 'match' => 'suppliers'],
@@ -118,6 +122,7 @@ $breadcrumbs ??= ($current !== '' && ($title ?? '') !== '') ? [[$title, null]] :
         <div class="hoc-search-results shadow d-none" id="hocSearchResults"></div>
       </form>
       <div class="ms-auto d-flex align-items-center gap-1">
+        <?php if (can('pos.access')): ?><a class="btn btn-accent btn-sm d-none d-sm-inline-flex align-items-center gap-1 me-1" href="<?= e(url('pos')) ?>"><i class="bi bi-cart3"></i><span class="d-none d-lg-inline">Point de vente</span></a><?php endif; ?>
         <button class="btn btn-link hoc-icon-btn" id="hocTheme" type="button" aria-label="Basculer le thème clair / sombre" data-url="<?= e(url('profile/theme')) ?>">
           <i class="bi bi-moon-stars"></i>
         </button>

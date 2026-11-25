@@ -52,6 +52,8 @@
     var m = document.querySelector('meta[name="csrf-token"]');
     return m ? m.getAttribute('content') : '';
   };
+  // Remplace l'identifiant fictif « /0 » d'une URL générée côté serveur (adresses simplifiées ou index.php?route=…)
+  window.HOC.withId = function (url, id) { return url.replace(/\/0(?=\/|&|\?|#|$)/, '/' + encodeURIComponent(id)); };
   window.HOC.fetchJson = function (url, options) {
     options = options || {};
     options.headers = Object.assign({
@@ -104,7 +106,7 @@
       if (!a) { return; }
       var href = a.getAttribute('href');
       e.preventDefault();
-      window.HOC.fetchJson(notif.dataset.read.replace('/0/', '/' + a.dataset.id + '/'), { method: 'POST' })
+      window.HOC.fetchJson(window.HOC.withId(notif.dataset.read, a.dataset.id), { method: 'POST' })
         .then(function (r) { setBadge(r.unread); a.classList.remove('unread'); if (href && href !== '#') { window.location.href = href; } })
         .catch(function () { if (href && href !== '#') { window.location.href = href; } });
     });

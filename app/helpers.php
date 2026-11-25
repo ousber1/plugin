@@ -39,7 +39,8 @@ function url(string $route = '', array $query = []): string
         return $query ? $u . '?' . http_build_query($query) : $u;
     }
     $params = $route !== '' ? array_merge(['route' => $route], $query) : $query;
-    return $base . '/index.php' . ($params ? '?' . http_build_query($params) : '');
+    // Les « / » sont autorisés dans une chaîne de requête : on les garde lisibles (route=customers/5/edit)
+    return $base . '/index.php' . ($params ? '?' . str_replace('%2F', '/', http_build_query($params)) : '');
 }
 
 /** URL d'un fichier statique avec version anti-cache. */
@@ -200,4 +201,77 @@ function current_query(array $extra = []): array
 function route_field(string $route): string
 {
     return pretty_urls_active() ? '' : '<input type="hidden" name="route" value="' . e(trim($route, '/')) . '">';
+}
+
+/**
+ * Nombre entier en toutes lettres (français, règles de 1990 sans traits d'union systématiques).
+ */
+function number_to_words_fr(int $n): string
+{
+    if ($n === 0) {
+        return 'zéro';
+    }
+    $units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize',
+        'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    $tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante', 'quatre-vingt', 'quatre-vingt'];
+    $below100 = static function (int $n) use ($units, $tens): string {
+        if ($n < 20) {
+            return $units[$n];
+        }
+        $t = intdiv($n, 10);
+        $u = $n % 10;
+        if ($t === 7 || $t === 9) {
+            $u += 10; // soixante-dix, quatre-vingt-dix
+        }
+        $word = $tens[$t];
+        if ($u === 0) {
+            return $t === 8 ? 'quatre-vingts' : $word;
+        }
+        $joiner = ($u === 1 || $u === 11) && $t < 8 ? ' et ' : '-';
+        return $word . $joiner . $units[$u];
+    };
+    $below1000 = static function (int $n) use ($below100): string {
+        $h = intdiv($n, 100);
+        $r = $n % 100;
+        $out = '';
+        if ($h > 0) {
+            $out = ($h === 1 ? 'cent' : $below100($h) . ' cent') . ($h > 1 && $r === 0 ? 's' : '');
+        }
+        if ($r > 0) {
+            $out .= ($out !== '' ? ' ' : '') . $below100($r);
+        }
+        return $out;
+    };
+    $parts = [];
+    foreach ([[1000000000, 'milliard'], [1000000, 'million'], [1000, 'mille']] as [$size, $name]) {
+        if ($n >= $size) {
+            $q = intdiv($n, $size);
+            $n %= $size;
+            if ($name === 'mille') {
+                $parts[] = $q === 1 ? 'mille' : rtrim($below1000($q), 's') . ' mille';
+            } else {
+                $parts[] = $below1000($q) . ' ' . $name . ($q > 1 ? 's' : '');
+            }
+        }
+    }
+    if ($n > 0) {
+        $parts[] = $below1000($n);
+    }
+    return implode(' ', $parts);
+}
+
+/** Montant en lettres : « mille deux cent cinquante dirhams et cinquante centimes ». */
+function amount_in_words(float $amount): string
+{
+    $amount = round(abs($amount), 2);
+    $int = (int) floor($amount);
+    $cents = (int) round(($amount - $int) * 100);
+    $code = strtoupper((string) setting('currency_code', 'MAD'));
+    [$main, $sub] = $code === 'MAD' ? ['dirham', 'centime'] : ($code === 'EUR' ? ['euro', 'centime'] : [strtolower($code), 'centime']);
+    // « un million de dirhams » : préposition « de » après million(s) / milliard(s) ronds
+    $text = number_to_words_fr($int) . ($int >= 1000000 && $int % 1000000 === 0 ? ' de ' : ' ') . $main . ($int > 1 ? 's' : '');
+    if ($cents > 0) {
+        $text .= ' et ' . number_to_words_fr($cents) . ' ' . $sub . ($cents > 1 ? 's' : '');
+    }
+    return mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
 }

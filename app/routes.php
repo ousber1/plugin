@@ -18,11 +18,14 @@ use App\Controllers\RoleController;
 use App\Controllers\SettingsController;
 use App\Controllers\SystemController;
 use App\Controllers\UserController;
+use App\Controllers\CashController;
 use App\Controllers\CategoryController;
 use App\Controllers\CustomerController;
 use App\Controllers\MaterialController;
 use App\Controllers\PackController;
+use App\Controllers\PosController;
 use App\Controllers\ProductController;
+use App\Controllers\SaleController;
 use App\Controllers\SearchController;
 use App\Controllers\StockController;
 use App\Controllers\SupplierController;
@@ -175,3 +178,32 @@ $router->post('stock/inventories',             [StockController::class, 'startIn
 $router->get('stock/inventories/{id}',         [StockController::class, 'showInventory'],   ['auth', 'can:stock.view']);
 $router->post('stock/inventories/{id}',        [StockController::class, 'saveInventory'],   ['auth', 'can:stock.movements']);
 $router->post('stock/inventories/{id}/cancel', [StockController::class, 'cancelInventory'], ['auth', 'can:stock.inventory']);
+
+/* ======================================================================
+   Phase 4 — Point de vente, ventes et caisse
+   ====================================================================== */
+$router->get('pos',                       [PosController::class, 'index'],       ['auth', 'can:pos.access']);
+$router->get('pos/products',              [PosController::class, 'products'],    ['auth', 'can:pos.access']);
+$router->post('pos/prices',               [PosController::class, 'prices'],      ['auth', 'can:pos.access']);
+$router->get('pos/customer/{id}',         [PosController::class, 'customer'],    ['auth', 'can:pos.access']);
+$router->post('pos/checkout',             [PosController::class, 'checkout'],    ['auth', 'can:pos.access']);
+$router->post('pos/suspend',              [PosController::class, 'suspend'],     ['auth', 'can:pos.access']);
+$router->get('pos/drafts',                [PosController::class, 'drafts'],      ['auth', 'can:pos.access']);
+$router->get('pos/drafts/{id}',           [PosController::class, 'resume'],      ['auth', 'can:pos.access']);
+$router->post('pos/drafts/{id}/delete',   [PosController::class, 'deleteDraft'], ['auth', 'can:pos.access']);
+
+$router->get('sales',                [SaleController::class, 'index'],       ['auth', 'can:pos.access']);
+$router->get('sales/export',         [SaleController::class, 'export'],      ['auth', 'can:pos.access']);
+$router->get('sales/{id}',           [SaleController::class, 'show'],        ['auth', 'can:pos.access']);
+$router->get('sales/{id}/receipt',   [SaleController::class, 'receipt'],     ['auth', 'can:pos.access']);
+$router->get('sales/{id}/print',     [SaleController::class, 'printA4'],     ['auth', 'can:pos.access']);
+$router->post('sales/{id}/cancel',   [SaleController::class, 'cancel'],      ['auth', 'can:pos.cancel']);
+$router->get('sales/{id}/return',    [SaleController::class, 'returnForm'],  ['auth', 'can:pos.refund']);
+$router->post('sales/{id}/return',   [SaleController::class, 'returnStore'], ['auth', 'can:pos.refund']);
+
+$router->get('cash',                 [CashController::class, 'index'],    ['auth', 'can:cash.view']);
+$router->post('cash/open',           [CashController::class, 'open'],     ['auth', 'can:cash.open']);
+$router->post('cash/movements',      [CashController::class, 'movement'], ['auth', 'can:cash.movements']);
+$router->post('cash/close',          [CashController::class, 'close'],    ['auth', 'can:cash.close']);
+$router->get('cash/sessions',        [CashController::class, 'sessions'], ['auth', 'can:cash.view']);
+$router->get('cash/sessions/{id}',   [CashController::class, 'show'],     ['auth', 'can:cash.view']);
