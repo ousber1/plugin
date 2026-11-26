@@ -15,6 +15,7 @@
     <script src="<?= e(asset('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('js/app.js')) ?>"></script>
     <script src="<?= e(asset('js/storefront.js')) ?>"></script>
+    <script src="<?= e(asset('js/checkout.js')) ?>"></script>
     <?= $this->section('scripts') ?>
 </body>
 </html>

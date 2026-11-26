@@ -29,9 +29,9 @@ $phone = (string) setting('company_phone', '');
     </div>
 </div>
 <header class="site-header sticky-top">
-    <nav class="navbar navbar-expand-lg py-3" aria-label="<?= e(__('nav.main')) ?>">
+    <nav class="navbar navbar-expand-xl py-3" aria-label="<?= e(__('nav.main')) ?>">
         <div class="container">
-            <a class="navbar-brand me-lg-5" href="<?= e(route('home')) ?>"><?= $this->insert('partials/brand') ?></a>
+            <a class="navbar-brand me-xl-4" href="<?= e(route('home')) ?>"><?= $this->insert('partials/brand') ?></a>
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="<?= e(__('nav.menu')) ?>">
                 <i class="bi bi-list fs-2"></i>
             </button>
@@ -53,7 +53,8 @@ $phone = (string) setting('company_phone', '');
                         <a class="header-icon" href="<?= e(route('customer.login')) ?>" title="<?= e(__('nav.login')) ?>"><i class="bi bi-person"></i><span class="d-lg-none ms-2 fs-6"><?= e(__('nav.login')) ?></span></a>
                     <?php endif; ?>
                     <?php if ($router->has('cart.index')): ?>
-                        <a class="header-icon" href="<?= e(route('cart.index')) ?>" title="<?= e(__('nav.cart')) ?>"><i class="bi bi-bag"></i></a>
+                        <?php $cartCount = \App\Core\App::instance()->isInstalled() ? \App\Services\Sales\CartService::count() : 0; ?>
+                        <a class="header-icon" href="<?= e(route('cart.index')) ?>" title="<?= e(__('nav.cart')) ?>"><i class="bi bi-bag"></i><span class="cart-badge<?= $cartCount > 0 ? '' : ' d-none' ?>" data-cart-count><?= $cartCount ?></span></a>
                     <?php endif; ?>
                 </div>
             </div>

@@ -40,8 +40,10 @@ final class PageController extends Controller
 
     public function contact(): Response
     {
+        $order = preg_replace('/[^A-Z0-9-]/', '', strtoupper((string) $this->request->query('order', '')));
         return $this->view('storefront/pages/contact', [
             'hours' => $this->content('contact_hours'),
+            'orderRef' => $order,
             'seo' => SeoService::page(__('nav.contact'), __('pages.contact_intro'), [
                 'canonical' => '/contact',
                 'jsonLd' => [SeoService::organization()],
@@ -96,6 +98,14 @@ final class PageController extends Controller
         ActivityLogger::log('contact.message', 'notification', $id, (string) $data['email']);
         $this->flash('success', __('pages.contact_sent'));
         return $this->redirectRoute('page.contact');
+    }
+
+    public function terms(): Response
+    {
+        return $this->view('storefront/pages/terms', [
+            'body' => $this->content('terms_body'),
+            'seo' => SeoService::page(__('pages.terms'), null, ['canonical' => '/terms']),
+        ]);
     }
 
     public function faq(): Response

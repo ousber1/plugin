@@ -7,9 +7,15 @@
  */
 
 use App\Controllers\Customer\AccountController;
+use App\Controllers\Customer\AddressController;
+use App\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Controllers\Customer\AuthController as CustomerAuth;
 use App\Controllers\Customer\DesignController;
 use App\Controllers\Storefront\BuilderController;
+use App\Controllers\Storefront\CartController;
+use App\Controllers\Storefront\CheckoutController;
+use App\Controllers\Storefront\PaymentWebhookController;
+use App\Controllers\Storefront\TrackingController;
 use App\Controllers\Storefront\HomeController;
 use App\Controllers\Storefront\CollectionController;
 use App\Controllers\Storefront\LocaleController;
@@ -42,11 +48,28 @@ $router->get('/builder/design/{uuid}', [BuilderController::class, 'showDesign'])
 $router->get('/builder/design/{uuid}/preview', [BuilderController::class, 'designPreview'])->name('builder.design.preview');
 $router->post('/builder/design/{uuid}/delete', [BuilderController::class, 'deleteDesign'])->name('builder.design.delete');
 
+// cart & checkout
+$router->get('/cart', [CartController::class, 'index'])->name('cart.index');
+$router->post('/cart/add', [CartController::class, 'add'])->middleware('throttle:60,1')->name('cart.add');
+$router->post('/cart/item/{id}', [CartController::class, 'update'])->name('cart.update');
+$router->post('/cart/item/{id}/remove', [CartController::class, 'remove'])->name('cart.remove');
+$router->post('/cart/coupon', [CartController::class, 'coupon'])->middleware('throttle:15,10')->name('cart.coupon');
+$router->post('/cart/shipping', [CartController::class, 'shipping'])->middleware('throttle:120,1,session')->name('cart.shipping');
+$router->get('/checkout', [CheckoutController::class, 'show'])->name('checkout.index');
+$router->post('/checkout', [CheckoutController::class, 'place'])->middleware('throttle:10,10')->name('checkout.place');
+$router->get('/order/confirmation/{number}', [CheckoutController::class, 'confirmation'])->name('checkout.confirmation');
+$router->get('/track', [TrackingController::class, 'form'])->name('order.track');
+$router->post('/track', [TrackingController::class, 'lookup'])->middleware('throttle:20,10')->name('order.track.lookup');
+$router->get('/track/{number}/{token}', [TrackingController::class, 'token'])->name('order.track.token');
+// online payment providers (inactive until a gateway is implemented & configured; CSRF-exempt, signature-verified)
+$router->post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])->name('payments.webhook');
+
 // pages
 $router->get('/about', [PageController::class, 'about'])->name('page.about');
 $router->get('/contact', [PageController::class, 'contact'])->name('page.contact');
 $router->post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:5,10')->name('page.contact.send');
 $router->get('/faq', [PageController::class, 'faq'])->name('page.faq');
+$router->get('/terms', [PageController::class, 'terms'])->name('page.terms');
 
 // newsletter
 $router->post('/newsletter', [NewsletterController::class, 'subscribe'])->middleware('throttle:10,10')->name('newsletter.subscribe');
@@ -70,6 +93,13 @@ $router->group(['prefix' => '/account'], function ($router): void {
         $router->get('/', [AccountController::class, 'dashboard'])->name('customer.account');
         $router->get('/profile', [AccountController::class, 'profile'])->name('customer.profile');
         $router->get('/designs', [DesignController::class, 'index'])->name('customer.designs');
+        $router->get('/orders', [CustomerOrderController::class, 'index'])->name('customer.orders');
+        $router->get('/orders/{number}', [CustomerOrderController::class, 'show'])->name('customer.orders.show');
+        $router->post('/orders/{number}/cancel', [CustomerOrderController::class, 'cancel'])->name('customer.orders.cancel');
+        $router->get('/addresses', [AddressController::class, 'index'])->name('customer.addresses');
+        $router->post('/addresses', [AddressController::class, 'store'])->name('customer.addresses.store');
+        $router->post('/addresses/{id}', [AddressController::class, 'update'])->name('customer.addresses.update');
+        $router->post('/addresses/{id}/delete', [AddressController::class, 'destroy'])->name('customer.addresses.delete');
         $router->post('/profile', [AccountController::class, 'updateProfile'])->name('customer.profile.update');
         $router->post('/password', [AccountController::class, 'updatePassword'])->name('customer.password.change');
         $router->post('/logout', [CustomerAuth::class, 'logout'])->name('customer.logout');

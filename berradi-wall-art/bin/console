@@ -102,7 +102,12 @@ try {
             }
             // privacy: delete customer photos whose retention period is over
             $photos = (new \App\Services\Builder\CustomerUploadService())->purgeExpired(500);
-            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed.");
+            // e-mails that could not be sent immediately (SMTP down) are retried
+            $mails = \App\Services\Sales\OrderMailer::retryQueued(30);
+            // carts idle for 24 h with items become "abandoned" (follow-up list for the team)
+            $abandoned = $db->query("UPDATE carts c SET c.status = 'abandoned' WHERE c.status = 'active' AND c.last_activity_at < NOW() - INTERVAL 1 DAY
+                AND EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = c.id)")->rowCount();
+            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed, {$mails} queued e-mails sent, {$abandoned} carts marked abandoned.");
             break;
         case 'demo:install':
             $counts = (new \App\Services\Demo\DemoCatalog(Database::instance(), $app->publicPath(), $app->basePath()))->install();

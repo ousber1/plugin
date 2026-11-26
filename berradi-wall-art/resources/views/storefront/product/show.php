@@ -178,15 +178,15 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
                                 <input type="number" name="quantity" value="1" min="1" max="50" aria-label="<?= e(__('product.quantity')) ?>">
                                 <button type="button" data-step="1" aria-label="<?= e(__('product.increase')) ?>">+</button>
                             </div>
-                            <?php if ($router->has('cart.add')): ?>
+                            <?php if ((int) $p['is_customizable'] === 1 && $router->has('builder.index')): ?>
+                                <a class="btn btn-bwa btn-lg flex-grow-1" href="<?= e(route('builder.index', ['product' => $p['slug']])) ?>"><i class="bi bi-camera me-2"></i><?= e(__('product.customize')) ?></a>
+                            <?php elseif ($router->has('cart.add')): ?>
                                 <button type="submit" class="btn btn-bwa btn-lg flex-grow-1" data-buy <?= $p['out_of_stock'] ? 'disabled' : '' ?>><i class="bi bi-bag me-2"></i><?= e(__('product.add_to_cart')) ?></button>
                             <?php elseif ($whatsapp !== ''): ?>
                                 <a class="btn btn-bwa btn-lg flex-grow-1" href="<?= e($whatsapp) ?>" target="_blank" rel="noopener" data-whatsapp-order><i class="bi bi-whatsapp me-2"></i><?= e(__('product.order_whatsapp')) ?></a>
                             <?php endif; ?>
                         </div>
-                        <?php if ((int) $p['is_customizable'] === 1 && $router->has('builder.index')): ?>
-                            <a class="btn btn-outline-bwa w-100 mt-2" href="<?= e(route('builder.index', ['product' => $p['slug']])) ?>"><i class="bi bi-camera me-2"></i><?= e(__('product.customize')) ?></a>
-                        <?php endif; ?>
+
                         <?php if ($p['out_of_stock']): ?><p class="small text-danger mt-2"><?= e(__('shop.out_of_stock')) ?></p><?php endif; ?>
                     </form>
 

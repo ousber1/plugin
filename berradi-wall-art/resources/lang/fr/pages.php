@@ -34,4 +34,27 @@ return [
     'faq_intro' => 'Formats, qualité des photos, délais, livraison et paiement : l’essentiel à savoir.',
     'faq_empty' => 'Les réponses aux questions fréquentes seront bientôt publiées.',
     'faq_more' => 'Vous ne trouvez pas votre réponse ?',
+    'terms' => 'Conditions générales de vente',
+    'legal' => 'Informations légales',
+    'about_order' => 'Concernant ma commande :number :',
+    'terms_body' => '## Commandes
+Toute commande passée sur le site est confirmée par téléphone ou par écrit avant sa mise en production. Les créations personnalisées ne sont produites qu’après validation du visuel par le client.
+
+## Prix
+Les prix sont indiqués en dirhams marocains (MAD), toutes taxes comprises sauf mention contraire. Les frais de livraison sont indiqués avant la validation de la commande.
+
+## Paiement
+Le paiement s’effectue à la livraison, par virement bancaire ou par tout autre moyen proposé lors de la commande. Aucune somme n’est débitée en ligne sans le consentement du client.
+
+## Livraison
+Les délais indiqués sont estimatifs et comprennent le temps de production. Les colis sont emballés avec protection des angles. Tout dommage constaté à la réception doit être signalé sous 48 heures, photo à l’appui.
+
+## Créations personnalisées
+Les œuvres réalisées à partir des photos du client ne peuvent être ni reprises ni échangées, sauf défaut de fabrication. Le client garantit disposer des droits sur les photos transmises.
+
+## Annulation
+Une commande peut être annulée par le client tant que sa production n’a pas commencé, depuis son espace client ou en nous contactant.
+
+## Données personnelles
+Les données et photos transmises sont utilisées uniquement pour traiter la commande. Les photos sont conservées de façon privée puis supprimées automatiquement à l’issue de la durée de conservation. Le client peut demander leur suppression à tout moment.',
 ];

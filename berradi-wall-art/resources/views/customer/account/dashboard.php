@@ -24,7 +24,7 @@
                                 <thead><tr><th><?= e(__('account.order')) ?></th><th><?= e(__('admin.date')) ?></th><th><?= e(__('admin.status')) ?></th><th class="text-end"><?= e(__('account.total')) ?></th></tr></thead>
                                 <tbody>
                                 <?php foreach ($recentOrders as $o): ?>
-                                    <tr><td class="fw-semibold"><?= e($o['order_number']) ?></td><td><?= e(format_date($o['placed_at'])) ?></td><td><span class="badge-status"><?= e(__('orders.status_' . $o['status'])) ?></span></td><td class="text-end"><?= e(money($o['grand_total'])) ?></td></tr>
+                                    <tr><td class="fw-semibold"><a href="<?= e(route('customer.orders.show', ['number' => $o['order_number']])) ?>"><?= e($o['order_number']) ?></a></td><td><?= e(format_date($o['placed_at'])) ?></td><td><span class="badge-status"><?= e(\App\Services\Sales\OrderStatus::label((string) $o['status'])) ?></span></td><td class="text-end"><?= e(money($o['grand_total'])) ?></td></tr>
                                 <?php endforeach; ?>
                                 </tbody>
                             </table>

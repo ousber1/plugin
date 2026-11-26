@@ -47,5 +47,5 @@ MYSQL_ADMIN_CMD="mysql -uroot" DB_NAME=bwa_install DB_USER=user DB_PASS=pass tes
 ```
 
 ## Default access after installation
-* Storefront: `/`, `/custom-wall-art`, `/shop`, `/collections`, `/best-sellers`, `/new-arrivals`, `/offers`, `/product/{slug}`, `/about`, `/contact`, `/faq` · Customer area: `/account`
+* Storefront: `/`, `/custom-wall-art`, `/cart`, `/checkout`, `/track`, `/shop`, `/collections`, `/best-sellers`, `/new-arrivals`, `/offers`, `/product/{slug}`, `/about`, `/contact`, `/faq` · Customer area: `/account`
 * Administration: `/admin` (change with `ADMIN_PATH` in `.env`); Super Admin created by the installer

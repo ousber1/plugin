@@ -66,7 +66,27 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Fixes found by tests: request throttle shared by IP across routes (could lock out "forgot password"), readonly exception property crash, "126 × 3 cm" formatting | ✅ | regression tests added |
 | "Add to cart" from a design | ⬜ | Phase 4 (button appears automatically when the cart exists) |
 
-## Phase 4: Cart, checkout, customer area, shipping, payments ⬜
+## Phase 4: Cart, checkout, customer area, shipping, payments ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Server-side cart (hashed cookie token for guests, linked to the account, merged on login, revived after "abandoned"), products/variants and saved designs, quantity merge, stock limits, ownership checks | ✅ | integration + HTTP |
+| Every cart view re-prices every line (catalogue promo windows, current builder pricing); tampered stored prices are ignored | ✅ | integration (unit price forced to 1.00 → order at real price) |
+| Customizable products must go through the builder (no "add to cart" without a photo) | ✅ | integration + HTTP |
+| Coupons: percent / fixed / free shipping, minimum order, max discount, product or category scope, dates, global & per-customer limits, atomic redemption, released on cancellation | ✅ | integration (single-use coupon cannot be used twice) |
+| Shipping: city rates (accent-insensitive) → zone thresholds, unknown city → flat rate + global free threshold, delivery estimate in working days (Sunday skipped), live estimate on cart & checkout | ✅ | integration + HTTP + Playwright |
+| Taxes: TVA included (TTC) or added (HT), computed on goods − discount + shipping | ✅ | integration (both modes) |
+| Checkout (guest or customer): validation, saved addresses, optional account creation, account e-mail cannot be overridden, abandoned-cart contact capture | ✅ | HTTP + Playwright |
+| Payment methods: cash on delivery, bank transfer (RIB on confirmation/e-mail), manual; online methods only if a gateway is implemented & configured; nothing is marked paid at checkout; verified-webhook extension point | ✅ | integration + HTTP (webhook 404, CMI never offered) |
+| Order creation in one transaction: sequential number, line snapshots, design customizations (crop, DPI, preview), photo retention extended, stock locked & decremented, coupon redemption, status history, cart converted | ✅ | integration |
+| Confirmation page (private to the buyer), e-mails to customer (in their language) & admin, recorded in `notifications`, retried by cron when SMTP is down | ✅ | HTTP (2 notifications recorded) |
+| Order tracking: number + e-mail/phone (any format) or private token link; shows status & shipment only | ✅ | integration + HTTP |
+| Customer area: order history, detail, cancellation of eligible orders (restock, coupon & design release), addresses CRUD, contact support prefilled, invoices listed when issued (Phase 7) | ✅ | HTTP |
+| Payment recording service (partial/paid/refund status sync, idempotent provider transactions) | ✅ | integration |
+| Terms of sale page (FR/AR, editable via settings `terms_body_fr/ar`) | ✅ | HTTP |
+| Responsive & RTL (cart, checkout, tracking), header fits at ≥1200px, burger below | ✅ | Playwright 390/1100/1280/1440 px |
+| Real e-mail delivery | 🟡 | sandbox has no mail server: messages are queued and retried by cron; verify SMTP on the host |
+
 ## Phase 5: Admin dashboard KPIs & charts, products, categories, collections, customers ⬜
 ## Phase 6: Orders, status workflow, production, artwork management, inventory ⬜
 ## Phase 7: Invoices, quotations, PDF (FR/AR), payments, finance ⬜

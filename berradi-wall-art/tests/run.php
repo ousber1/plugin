@@ -210,6 +210,7 @@ $cfg = [
 $db = new Database(Database::connect($cfg));
 Database::setInstance($db);
 Config::set('database', $cfg);
+$app->markInstalledForTesting(); // setting() now reads the test database instead of returning defaults
 
 // wipe test database
 $db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 0');
@@ -756,5 +757,227 @@ $t->test('retention: expired photos are purged and their designs expire', functi
     $db->query("UPDATE uploaded_images SET status = 'ordered', retention_until = NOW() + INTERVAL 1 DAY WHERE status <> 'purged' LIMIT 1");
     $t->equals(0, $uploads->purgeExpired(), 'nothing else expired');
 });
+
+
+$t->section('Cart, checkout & orders (Phase 4)');
+Auth::logoutCustomer();
+\App\Services\OwnerToken::set(str_repeat('e', 64));
+\App\Services\Sales\CartService::setToken(str_repeat('1', 64));
+$demo->install();
+$pid = fn (string $slug): int => (int) $db->value('SELECT id FROM products WHERE slug = ?', [$slug]);
+$vid = fn (string $slug, int $n = 0): int => (int) $db->value('SELECT id FROM product_variants WHERE product_id = ? ORDER BY sort_order LIMIT 1 OFFSET ' . $n, [$pid($slug)]);
+$place = function (array $over = []): array {
+    return \App\Services\Sales\OrderService::place($over + [
+        'full_name' => 'Yassine El Amrani', 'phone' => '06 61 23 45 67', 'email' => 'yassine@client.ma', 'country' => 'MA',
+        'city' => 'Casablanca', 'address' => '12 Rue des Orangers, Maârif', 'postal_code' => '20330', 'delivery_instructions' => null,
+        'payment_method' => 'cod',
+    ], '10.0.0.5');
+};
+
+$t->test('shipping: city rates (accent-insensitive), fallback flat rate, free threshold, business days', function (TestRunner $t): void {
+    $S = \App\Services\Sales\ShippingService::class;
+    $q = $S::quote('casablanca', '100.00');
+    $t->equals('25.00', $q['price']);
+    $t->equals(true, $q['known_city']);
+    $t->equals('40.00', $S::quote('  FES ', '100.00')['price'], 'Fès matched without accent');
+    $t->equals('0.00', $S::quote('Casablanca', '800.00')['price'], 'zone free threshold 800');
+    $u = $S::quote('Ifrane', '100.00');
+    $t->equals(false, $u['known_city']);
+    $t->equals('40.00', $u['price'], 'flat rate');
+    $t->equals('0.00', $S::quote('Ifrane', '100.00', true)['price'], 'free-shipping coupon');
+    $t->equals('2026-11-30', $S::addBusinessDays(1, '2026-11-28'), 'Saturday + 1 working day = Monday (Sunday skipped)');
+    $t->assert(in_array('Marrakech', $S::cities(), true));
+});
+$t->test('coupons: percent, fixed + minimum, scope, dates, usage limits', function (TestRunner $t) use ($db, $pid): void {
+    $cat = (int) $db->value("SELECT id FROM categories WHERE slug = 'nature-landscapes'");
+    $db->query("INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, max_discount_amount, category_id, usage_limit, starts_at, ends_at, is_active) VALUES
+        ('BIENVENUE10','percent',10,NULL,NULL,NULL,NULL,NULL,NULL,1),
+        ('MOINS100','fixed',100,500,NULL,NULL,NULL,NULL,NULL,1),
+        ('NATURE20','percent',20,NULL,50,?,NULL,NULL,NULL,1),
+        ('OLD','percent',50,NULL,NULL,NULL,NULL,NULL,'2020-01-01',1),
+        ('UNIQUE','fixed',30,NULL,NULL,NULL,1,NULL,NULL,1),
+        ('LIVRAISON','free_shipping',0,NULL,NULL,NULL,NULL,NULL,NULL,1)", [$cat]);
+    $C = \App\Services\Sales\CouponService::class;
+    $lines = [['product_id' => $pid('aube-sur-atlas'), 'category_id' => $cat, 'line_total' => '300.00'], ['product_id' => $pid('orbites'), 'category_id' => 999, 'line_total' => '200.00']];
+    $t->equals('50.00', $C::evaluate('bienvenue10', $lines, '500.00')['discount'], 'case-insensitive, 10 %');
+    $t->equals('100.00', $C::evaluate('MOINS100', $lines, '500.00')['discount']);
+    $t->equals(false, $C::evaluate('MOINS100', $lines, '499.99')['ok'], 'minimum order');
+    $t->equals('50.00', $C::evaluate('NATURE20', $lines, '500.00')['discount'], '20 % of 300 = 60 capped at 50');
+    $t->equals(false, $C::evaluate('NATURE20', [$lines[1]], '200.00')['ok'], 'category scope');
+    $t->equals(false, $C::evaluate('OLD', $lines, '500.00')['ok'], 'expired');
+    $t->equals(true, $C::evaluate('LIVRAISON', $lines, '500.00')['free_shipping']);
+    $t->equals(false, $C::evaluate("x' OR 1=1 --", $lines, '500.00')['ok']);
+});
+$t->test('cart: variants required, customizable products go through the builder, stock limits, merge lines', function (TestRunner $t) use ($pid, $vid, $db): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $t->equals(false, $Cart::addProduct($pid('aube-sur-atlas'), null, 1)['ok'], 'a size must be chosen');
+    $t->equals(false, $Cart::addProduct($pid('toile-photo-personnalisee'), $vid('toile-photo-personnalisee'), 1)['ok'], 'needs a photo');
+    $t->equals(true, $Cart::addProduct($pid('aube-sur-atlas'), $vid('aube-sur-atlas'), 1)['ok']);
+    $t->equals(true, $Cart::addProduct($pid('aube-sur-atlas'), $vid('aube-sur-atlas'), 2)['ok']);
+    $t->equals(3, $Cart::count(), 'same variant merged');
+    $t->equals(false, $Cart::addProduct($pid('eclipse-doree'), $vid('eclipse-doree'), 26)['ok'], 'limited edition: 25 in stock');
+    $t->equals(true, $Cart::addProduct($pid('eclipse-doree'), $vid('eclipse-doree'), 2)['ok']);
+    $t->equals(false, $Cart::addProduct($pid('orbites'), $vid('orbites'), 0)['ok'], 'quantity >= 1');
+    $cart = $Cart::current(false);
+    $lines = $Cart::lines($cart);
+    $t->equals(2, count($lines));
+    $t->equals(true, $lines[0]['available']);
+    // a variant of another product is refused
+    $t->equals(false, $Cart::addProduct($pid('orbites'), $vid('aube-sur-atlas'), 1)['ok']);
+    $t->equals(true, $Cart::updateQuantity($lines[1]['id'], 1)['ok']);
+    $foreign = $db->insert('carts', ['token' => hash('sha256', 'other'), 'status' => 'active']);
+    $fitem = $db->insert('cart_items', ['cart_id' => $foreign, 'product_id' => $pid('orbites'), 'product_variant_id' => $vid('orbites'), 'quantity' => 1, 'unit_price' => '1.00']);
+    $t->equals(false, $Cart::remove($fitem)['ok'], 'cannot touch another visitor cart');
+});
+$t->test('totals: prices TTC (TVA included) and prices HT (TVA added)', function (TestRunner $t): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $cart = $Cart::current(false);
+    $lines = $Cart::lines($cart);
+    $sub = \App\Helpers\Money::add('0', ...array_map(fn ($l) => $l['line_total'], $lines));
+    $T = \App\Services\Sales\CheckoutCalculator::totals($cart, $lines, 'Rabat');
+    $t->equals($sub, $T['subtotal']);
+    $base = \App\Helpers\Money::add($sub, $T['shipping_total']);
+    $t->equals($base, $T['grand_total'], 'TTC: total unchanged');
+    $t->equals(\App\Helpers\Money::sub($base, \App\Helpers\Money::htFromTtc($base, '20')), $T['tax_total']);
+    \App\Services\SettingsService::set('tax_prices_include_tax', false);
+    $H = \App\Services\Sales\CheckoutCalculator::totals($cart, $lines, 'Rabat');
+    $t->equals(\App\Helpers\Money::percent($base, '20'), $H['tax_total']);
+    $t->equals(\App\Helpers\Money::add($base, $H['tax_total']), $H['grand_total']);
+    \App\Services\SettingsService::set('tax_prices_include_tax', true);
+    $t->equals(null, \App\Services\Sales\CheckoutCalculator::totals($cart, $lines, null)['shipping'], 'no city yet');
+});
+$orderA = null;
+$t->test('place order: server prices (tampering ignored), snapshot, stock, coupon, history, tracking token', function (TestRunner $t) use ($db, $place, $pid, &$orderA): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $cart = $Cart::current(false);
+    $db->query('UPDATE cart_items SET unit_price = 1.00 WHERE cart_id = ?', [(int) $cart['id']]); // tampered snapshot
+    $t->equals(true, $Cart::applyCoupon('BIENVENUE10')['ok']);
+    $expected = \App\Services\Sales\CheckoutCalculator::totals($Cart::current(false), $Cart::lines($Cart::current(false)), 'Casablanca');
+    $stockBefore = (int) $db->value('SELECT stock_quantity FROM products WHERE id = ?', [$pid('eclipse-doree')]);
+    $r = $place();
+    $o = $r['order'];
+    $orderA = $r;
+    $t->assert(preg_match('/^BWA-\d{4}-\d{6}$/', $o['order_number']) === 1, 'order number ' . $o['order_number']);
+    $t->equals($expected['grand_total'], (string) $o['grand_total']);
+    $t->assert(\App\Helpers\Money::toCents((string) $o['subtotal']) > 300, 'not the tampered 1.00 prices');
+    $t->equals('new', $o['status']);
+    $t->equals('unpaid', $o['payment_status']);
+    $t->equals(0, (int) $db->value('SELECT COUNT(*) FROM payments WHERE order_id = ?', [(int) $o['id']]), 'no payment recorded at checkout');
+    $t->equals($stockBefore - 1, (int) $db->value('SELECT stock_quantity FROM products WHERE id = ?', [$pid('eclipse-doree')]));
+    $t->equals(2, (int) $db->value('SELECT COUNT(*) FROM order_items WHERE order_id = ?', [(int) $o['id']]));
+    $t->equals(1, (int) $db->value("SELECT used_count FROM coupons WHERE code = 'BIENVENUE10'"));
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM order_status_history WHERE order_id = ?', [(int) $o['id']]));
+    $t->equals('converted', (string) $db->value('SELECT status FROM carts WHERE id = ?', [(int) $cart['id']]));
+    $t->equals(1, (int) $db->value('SELECT is_guest FROM customers WHERE id = ?', [(int) $o['customer_id']]), 'guest customer record');
+    $t->equals(64, strlen((string) $o['access_token']));
+    $t->assert($o['access_token'] !== $r['token'], 'only the hash is stored');
+    $t->assert($o['estimated_delivery_min'] !== null && $o['estimated_delivery_max'] >= $o['estimated_delivery_min']);
+    // the catalogue changing later does not alter the order
+    $db->query("UPDATE products SET title = 'Renamed' WHERE id = ?", [$pid('aube-sur-atlas')]);
+    $t->equals(1, (int) $db->value("SELECT COUNT(*) FROM order_items WHERE order_id = ? AND title = 'Aube sur l’Atlas'", [(int) $o['id']]));
+    $db->query("UPDATE products SET title = 'Aube sur l’Atlas' WHERE id = ?", [$pid('aube-sur-atlas')]);
+    $mails = array_column(\App\Services\Mailer::$sent, 'subject');
+    $t->assert(in_array('Confirmation de votre commande ' . $o['order_number'], $mails, true), 'customer e-mail');
+});
+$t->test('tracking: number + e-mail / phone (any format) / private token', function (TestRunner $t) use (&$orderA): void {
+    $O = \App\Services\Sales\OrderService::class;
+    $n = $orderA['order']['order_number'];
+    $t->assert($O::findForTracking($n, 'YASSINE@client.ma') !== null);
+    $t->assert($O::findForTracking(strtolower($n), '+212661234567') !== null, 'international phone format');
+    $t->assert($O::findForTracking($n, '0661234567') !== null);
+    $t->assert($O::findForTracking($n, null, $orderA['token']) !== null);
+    $t->equals(null, $O::findForTracking($n, 'someone@else.ma'));
+    $t->equals(null, $O::findForTracking($n, '0600000000'));
+    $t->equals(null, $O::findForTracking($n, null, str_repeat('0', 48)));
+    $t->equals(null, $O::findForTracking("' OR 1=1", 'x'));
+});
+$t->test('empty cart and invalid payment method are refused; online gateways are never offered', function (TestRunner $t) use ($place, $db): void {
+    $e = null;
+    try { $place(); } catch (\App\Core\ValidationException $ex) { $e = $ex; }
+    $t->assert($e !== null && isset($e->errors['cart']), 'cart converted → empty');
+    $db->query("UPDATE payment_methods SET is_active = 1 WHERE code = 'cmi'");
+    $codes = array_column(\App\Services\Payments\PaymentRegistry::available(), 'code');
+    $t->assert(!in_array('cmi', $codes, true), 'CMI active in DB but no gateway → not offered');
+    $t->equals(['cod', 'bank_transfer', 'manual'], $codes);
+    $db->query("UPDATE payment_methods SET is_active = 0 WHERE code = 'cmi'");
+    \App\Services\Sales\CartService::addProduct((int) $db->value("SELECT id FROM products WHERE slug = 'orbites'"), (int) $db->value("SELECT v.id FROM product_variants v JOIN products p ON p.id = v.product_id WHERE p.slug = 'orbites' LIMIT 1"), 1);
+    $e = null;
+    try { $place(['payment_method' => 'cmi']); } catch (\App\Core\ValidationException $ex) { $e = $ex; }
+    $t->assert($e !== null && isset($e->errors['payment_method']));
+});
+$t->test('single-use coupon cannot be redeemed twice', function (TestRunner $t) use ($place, $db): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $t->equals(true, $Cart::applyCoupon('UNIQUE')['ok']);
+    $place(['email' => 'first@client.ma']);
+    $Cart::setToken(str_repeat('2', 64));
+    $Cart::addProduct((int) $db->value("SELECT id FROM products WHERE slug = 'orbites'"), (int) $db->value("SELECT v.id FROM product_variants v JOIN products p ON p.id = v.product_id WHERE p.slug = 'orbites' LIMIT 1"), 1);
+    $t->equals(false, $Cart::applyCoupon('UNIQUE')['ok'], 'exhausted');
+    $t->equals(1, (int) $db->value("SELECT used_count FROM coupons WHERE code = 'UNIQUE'"));
+});
+$t->test('design order: customizations, photo retention extended, design locked', function (TestRunner $t) use ($place, $db, $upload, $jpeg): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $info = $upload($jpeg(2400, 1600), 'famille.jpg');
+    $d = \App\Services\Builder\DesignService::save([
+        'material_id' => (int) $db->value("SELECT id FROM product_materials WHERE code = 'canvas'"), 'layout' => 'single', 'panel_width_cm' => 60, 'panel_height_cm' => 40, 'border' => 'wrap', 'quantity' => 1,
+        'images' => [['uuid' => $info['uuid'], 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 2400, 'height' => 1600, 'rotate' => 0]]],
+    ]);
+    $t->equals(true, $Cart::addDesign($d['uuid'], 2)['ok']);
+    \App\Services\OwnerToken::set(str_repeat('f', 64));
+    $t->equals(false, $Cart::addDesign($d['uuid'], 1)['ok'], 'someone else cannot add my design');
+    \App\Services\OwnerToken::set(str_repeat('e', 64));
+    $r = $place(['email' => 'design@client.ma', 'payment_method' => 'bank_transfer']);
+    $item = $db->fetch('SELECT * FROM order_items WHERE order_id = ? AND custom_design_id IS NOT NULL', [(int) $r['order']['id']]);
+    $t->equals(2, (int) $item['quantity']);
+    $t->equals('canvas', $item['product_type']);
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM order_customizations WHERE order_item_id = ?', [(int) $item['id']]));
+    $t->equals('ordered', (string) $db->value('SELECT status FROM custom_designs WHERE uuid = ?', [$d['uuid']]));
+    $u = $db->fetch('SELECT status, retention_until FROM uploaded_images WHERE uuid = ?', [$info['uuid']]);
+    $t->equals('ordered', $u['status']);
+    $t->assert(strtotime((string) $u['retention_until']) > time() + 300 * 86400, 'kept for the ordered retention period');
+    $t->equals(false, \App\Services\Builder\CustomerUploadService::isDeletable($db->fetch('SELECT * FROM uploaded_images WHERE uuid = ?', [$info['uuid']])));
+    $t->equals(false, $Cart::addDesign($d['uuid'], 1)['ok'], 'an ordered design cannot be re-added');
+});
+$t->test('customer cancellation restocks, releases the coupon, frees designs; blocked once in production', function (TestRunner $t) use ($db, $pid, &$orderA): void {
+    $O = \App\Services\Sales\OrderService::class;
+    $o = $db->fetch('SELECT * FROM orders WHERE id = ?', [(int) $orderA['order']['id']]);
+    $stock = (int) $db->value('SELECT stock_quantity FROM products WHERE id = ?', [$pid('eclipse-doree')]);
+    $t->equals(true, $O::cancelByCustomer($o, 'Erreur de format'));
+    $t->equals('cancelled', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]));
+    $t->equals($stock + 1, (int) $db->value('SELECT stock_quantity FROM products WHERE id = ?', [$pid('eclipse-doree')]));
+    $t->equals(0, (int) $db->value("SELECT used_count FROM coupons WHERE code = 'BIENVENUE10'"));
+    $t->equals(false, $O::cancelByCustomer($db->fetch('SELECT * FROM orders WHERE id = ?', [(int) $o['id']])), 'already cancelled');
+    $other = $db->fetch("SELECT * FROM orders WHERE customer_email = 'design@client.ma'");
+    $db->update('orders', ['status' => 'printing'], ['id' => (int) $other['id']]);
+    $t->equals(false, $O::cancelByCustomer($db->fetch('SELECT * FROM orders WHERE id = ?', [(int) $other['id']])), 'production started');
+});
+$t->test('payments: partial then full, idempotent provider transaction, order balance in sync', function (TestRunner $t) use ($db): void {
+    $o = $db->fetch("SELECT * FROM orders WHERE customer_email = 'design@client.ma'");
+    $m = (int) $db->value("SELECT id FROM payment_methods WHERE code = 'bank_transfer'");
+    \App\Services\Payments\PaymentService::recordConfirmed((int) $o['id'], '100.00', $m, null, 'VIR-1');
+    $t->equals('partial', (string) $db->value('SELECT payment_status FROM orders WHERE id = ?', [(int) $o['id']]));
+    $rest = \App\Helpers\Money::sub((string) $o['grand_total'], '100.00');
+    $p1 = \App\Services\Payments\PaymentService::recordConfirmed((int) $o['id'], $rest, $m, 'TX-123');
+    $p2 = \App\Services\Payments\PaymentService::recordConfirmed((int) $o['id'], $rest, $m, 'TX-123');
+    $t->equals($p1, $p2, 'same provider transaction recorded once');
+    $row = $db->fetch('SELECT payment_status, amount_paid, balance_due FROM orders WHERE id = ?', [(int) $o['id']]);
+    $t->equals('paid', $row['payment_status']);
+    $t->equals((string) $o['grand_total'], (string) $row['amount_paid']);
+    $t->equals('0.00', (string) $row['balance_due']);
+    $t->throws(fn () => \App\Services\Payments\PaymentService::recordConfirmed((int) $o['id'], '0', $m), InvalidArgumentException::class);
+});
+$t->test('checkout can create a customer account and log in', function (TestRunner $t) use ($place, $db): void {
+    $Cart = \App\Services\Sales\CartService::class;
+    $Cart::setToken(str_repeat('3', 64));
+    $Cart::addProduct((int) $db->value("SELECT id FROM products WHERE slug = 'orbites'"), (int) $db->value("SELECT v.id FROM product_variants v JOIN products p ON p.id = v.product_id WHERE p.slug = 'orbites' LIMIT 1"), 1);
+    $r = $place(['email' => 'newacc@client.ma', 'create_account' => true, 'password' => 'Secret2026', 'save_address' => true]);
+    $t->equals(true, $r['account_created']);
+    $c = $db->fetch('SELECT * FROM customers WHERE email = ?', ['newacc@client.ma']);
+    $t->equals(0, (int) $c['is_guest']);
+    $t->assert(password_verify('Secret2026', (string) $c['password_hash']));
+    $t->equals((int) $c['id'], (int) Auth::customer()['id'], 'logged in');
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM customer_addresses WHERE customer_id = ?', [(int) $c['id']]));
+    Auth::logoutCustomer();
+});
+$demo->remove();
 
 exit($t->finish());

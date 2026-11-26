@@ -44,10 +44,10 @@ $wa = whatsapp_link(null, __('common.whatsapp_greeting'));
                                 <div class="col-md-6"><?= $this->insert('partials/field', ['name' => 'name', 'label' => __('pages.your_name'), 'required' => true, 'attrs' => 'autocomplete="name"', 'value' => auth_customer() ? trim(auth_customer()['first_name'] . ' ' . auth_customer()['last_name']) : '']) ?></div>
                                 <div class="col-md-6"><?= $this->insert('partials/field', ['name' => 'email', 'label' => __('auth.email'), 'type' => 'email', 'required' => true, 'attrs' => 'autocomplete="email"', 'value' => auth_customer()['email'] ?? '']) ?></div>
                                 <div class="col-md-6"><?= $this->insert('partials/field', ['name' => 'phone', 'label' => __('auth.phone'), 'type' => 'tel', 'attrs' => 'autocomplete="tel"', 'value' => auth_customer()['phone'] ?? '']) ?></div>
-                                <div class="col-md-6"><?= $this->insert('partials/field', ['name' => 'subject', 'label' => __('pages.subject'), 'type' => 'select', 'required' => true, 'options' => [
+                                <div class="col-md-6"><?= $this->insert('partials/field', ['name' => 'subject', 'label' => __('pages.subject'), 'type' => 'select', 'required' => true, 'value' => $orderRef !== '' ? 'order' : 'custom', 'options' => [
                                     'custom' => __('pages.subject_custom'), 'order' => __('pages.subject_order'), 'quote' => __('pages.subject_quote'), 'b2b' => __('pages.subject_b2b'), 'other' => __('pages.subject_other'),
                                 ]]) ?></div>
-                                <div class="col-12"><?= $this->insert('partials/field', ['name' => 'message', 'label' => __('pages.message'), 'type' => 'textarea', 'rows' => 6, 'required' => true]) ?></div>
+                                <div class="col-12"><?= $this->insert('partials/field', ['name' => 'message', 'label' => __('pages.message'), 'type' => 'textarea', 'rows' => 6, 'required' => true, 'value' => $orderRef !== '' ? __('pages.about_order', ['number' => $orderRef]) . "\n" : '']) ?></div>
                             </div>
                             <button type="submit" class="btn btn-bwa btn-lg"><?= e(__('pages.send')) ?></button>
                         </form>

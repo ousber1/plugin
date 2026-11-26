@@ -701,3 +701,74 @@ html[dir="rtl"] .opt-title { letter-spacing: 0; font-size: .95rem; }
     .builder-options { position: static; }
     .stage-edit, .stage-wall { aspect-ratio: 1 / 1; }
 }
+
+/* ==========================================================================
+   Phase 4 — cart, checkout, orders, tracking
+   ========================================================================== */
+.header-icon { position: relative; }
+.cart-badge { position: absolute; top: -2px; inset-inline-end: -4px; min-width: 18px; height: 18px; border-radius: 999px; background: var(--bwa-gold); color: var(--bwa-black); font-size: .66rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; }
+.cart-line { display: grid; grid-template-columns: 88px 1fr auto auto 28px; gap: 1rem; align-items: center; padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--bwa-line); }
+.cart-line:last-child { border-bottom: 0; }
+.cart-line.is-unavailable { background: #FFF8F6; }
+.cl-thumb { width: 88px; height: 88px; display: flex; align-items: center; justify-content: center; background: #EFEBE4; border-radius: var(--bwa-radius); overflow: hidden; color: var(--bwa-gold); font-size: 1.6rem; }
+.cl-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.cl-title { font-family: var(--bwa-font-display); font-size: 1.2rem; color: var(--bwa-black); }
+.cl-total { font-weight: 600; min-width: 90px; text-align: end; }
+.summary-card { position: sticky; top: 100px; }
+.totals { margin: 0; display: grid; gap: .45rem; font-size: .92rem; }
+.totals > div { display: flex; justify-content: space-between; gap: 1rem; }
+.totals dt { font-weight: 400; color: var(--bwa-muted); }
+.totals dd { margin: 0; }
+.totals .is-discount dd { color: var(--bwa-success); }
+.totals .is-tax { font-size: .8rem; }
+.totals .is-total { border-top: 1px solid var(--bwa-line); padding-top: .7rem; margin-top: .3rem; font-size: 1.15rem; }
+.totals .is-total dt, .totals .is-total dd { color: var(--bwa-black); font-weight: 700; }
+.coupon-applied { background: #EAF4EE; border: 1px dashed var(--bwa-success); padding: .5rem .8rem; border-radius: var(--bwa-radius); font-size: .88rem; }
+.step-pill { width: 24px; height: 24px; border-radius: 50%; background: var(--bwa-black); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: .74rem; margin-inline-end: .6rem; }
+.payment-methods { display: grid; gap: .6rem; }
+.payment-option { display: flex; gap: .8rem; align-items: flex-start; border: 1px solid var(--bwa-line); border-radius: var(--bwa-radius); padding: .9rem 1rem; cursor: pointer; margin: 0; }
+.payment-option:has(input:checked) { border-color: var(--bwa-black); box-shadow: inset 0 0 0 1px var(--bwa-black); }
+.payment-option input { margin-top: .3rem; accent-color: var(--bwa-black); }
+.po-body { display: grid; gap: .15rem; }
+.po-body small { color: var(--bwa-muted); }
+.order-lines li { display: grid; grid-template-columns: 56px 1fr auto; gap: .8rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid var(--bwa-line); }
+.order-lines .ol-thumb { position: relative; width: 56px; height: 56px; background: #EFEBE4; border-radius: var(--bwa-radius); display: flex; align-items: center; justify-content: center; color: var(--bwa-gold); }
+.order-lines .ol-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.order-lines .ol-qty { position: absolute; top: -6px; inset-inline-end: -6px; background: var(--bwa-black); color: #fff; border-radius: 999px; font-size: .66rem; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+.order-lines .ol-main { display: grid; min-width: 0; }
+.order-lines .ol-main strong { font-size: .9rem; }
+.order-lines .ol-main small { color: var(--bwa-muted); font-size: .76rem; }
+.order-lines .ol-total { font-weight: 600; font-size: .9rem; white-space: nowrap; }
+.next-steps { padding-inline-start: 1.2rem; display: grid; gap: .5rem; font-size: .92rem; }
+.order-timeline { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; }
+.order-timeline::before { content: ""; position: absolute; top: 15px; inset-inline: 10%; height: 2px; background: var(--bwa-line); }
+.order-timeline li { text-align: center; position: relative; font-size: .76rem; color: var(--bwa-muted); }
+.order-timeline .dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--bwa-line); background: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; position: relative; z-index: 1; }
+.order-timeline li.done .dot { background: var(--bwa-gold); border-color: var(--bwa-gold); color: #fff; }
+.order-timeline li.current .dot { background: var(--bwa-black); border-color: var(--bwa-black); color: #fff; }
+.order-timeline li.current, .order-timeline li.done { color: var(--bwa-black); }
+.order-timeline .lbl { display: block; margin-top: .4rem; }
+.shipment-box { background: var(--bwa-gold-tint); padding: .7rem .9rem; border-radius: var(--bwa-radius); font-size: .86rem; }
+.history-list li { padding: .3rem 0; border-bottom: 1px dashed var(--bwa-line); }
+.address-card.is-default { border-color: var(--bwa-black); }
+@media (max-width: 767.98px) {
+    .cart-line { grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-areas: "thumb info remove" "thumb qty total"; gap: .6rem .8rem; padding: 1rem; }
+    .cl-remove { justify-self: end; }
+    .cl-total { min-width: 0; }
+    .cl-thumb { grid-area: thumb; width: 72px; height: 72px; }
+    .cl-info { grid-area: info; }
+    .cl-qty { grid-area: qty; }
+    .cl-total { grid-area: total; }
+    .cl-remove { grid-area: remove; }
+    .summary-card { position: static; }
+    .order-timeline { font-size: .68rem; }
+    .order-timeline .lbl { font-size: .66rem; }
+}
+.site-nav .nav-link { white-space: nowrap; padding: .5rem .6rem !important; letter-spacing: .1em; }
+.site-nav .nav-link::after { left: .6rem; right: .6rem; }
+@media (max-width: 1199.98px) { .site-nav .nav-link::after { display: none; } }
+@media (min-width: 1200px) and (max-width: 1439.98px) {
+    .site-nav .nav-link { font-size: .68rem; letter-spacing: .06em; padding: .5rem .45rem !important; }
+    .site-nav .nav-link::after { left: .45rem; right: .45rem; }
+    .brand-mark .brand-name { font-size: 1.3rem; }
+}

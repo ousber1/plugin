@@ -154,6 +154,7 @@ final class Auth
         Database::instance()->update('customers', ['last_login_at' => date('Y-m-d H:i:s')], ['id' => $customerId]);
         // photos and designs created as a guest in this browser now belong to the account
         OwnerToken::claimFor($customerId);
+        \App\Services\Sales\CartService::mergeOnLogin($customerId);
     }
 
     public static function logoutCustomer(): void

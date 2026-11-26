@@ -123,9 +123,20 @@ final class App
         return $this->publicPath . ($sub !== '' ? '/' . ltrim($sub, '/') : '');
     }
 
+    private ?bool $installedOverride = null;
+
     public function isInstalled(): bool
     {
+        if ($this->installedOverride !== null) {
+            return $this->installedOverride;
+        }
         return is_file($this->storagePath('installed.lock')) && is_file($this->basePath('.env'));
+    }
+
+    /** Integration tests only: run against a test database without writing installed.lock into the project. */
+    public function markInstalledForTesting(bool $installed = true): void
+    {
+        $this->installedOverride = $installed;
     }
 
     public function handle(Request $request): Response

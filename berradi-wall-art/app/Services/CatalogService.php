@@ -439,4 +439,60 @@ final class CatalogService
         );
         return ['min' => Money::normalize((string) ($r['mn'] ?? '0')), 'max' => Money::normalize((string) ($r['mx'] ?? '0'))];
     }
+
+    /**
+     * Current selling price and snapshot data of a product (+ variant) for the cart / order.
+     * Returns null when the product or variant is not purchasable.
+     *
+     * @return array<string,mixed>|null
+     */
+    public static function purchasable(int $productId, ?int $variantId): ?array
+    {
+        $db = Database::instance();
+        $p = $db->fetch(
+            'SELECT id, slug, sku, title, product_type, main_image, category_id, selling_price, promo_price, promo_starts_at, promo_ends_at,
+                    cost_price, track_stock, stock_quantity, is_customizable,
+                    (SELECT COUNT(*) FROM product_variants WHERE product_id = products.id AND is_active = 1) AS variant_count
+             FROM products WHERE id = ? AND is_active = 1 AND deleted_at IS NULL',
+            [$productId]
+        );
+        if ($p === null) {
+            return null;
+        }
+        $p = TranslationService::applyOne('product', $p, ['title']);
+        $promoOpen = $p['promo_price'] !== null
+            && ($p['promo_starts_at'] === null || strtotime((string) $p['promo_starts_at']) <= time())
+            && ($p['promo_ends_at'] === null || strtotime((string) $p['promo_ends_at']) >= time());
+        $out = [
+            'product_id' => (int) $p['id'], 'variant_id' => null, 'slug' => $p['slug'], 'sku' => $p['sku'], 'title' => $p['title'],
+            'product_type' => $p['product_type'], 'image' => $p['main_image'], 'category_id' => $p['category_id'] !== null ? (int) $p['category_id'] : null,
+            'variant_name' => null, 'width_cm' => null, 'height_cm' => null, 'material_name' => null, 'frame_name' => null, 'panels' => 1,
+            'track_stock' => (int) $p['track_stock'] === 1, 'stock' => (int) $p['stock_quantity'], 'is_customizable' => (int) $p['is_customizable'] === 1,
+        ];
+        if ((int) $p['variant_count'] > 0) {
+            if ($variantId === null) {
+                return null; // a size/material must be chosen
+            }
+            $v = $db->fetch(
+                'SELECT v.*, m.name AS material_name, f.name AS frame_name FROM product_variants v
+                 LEFT JOIN product_materials m ON m.id = v.product_material_id LEFT JOIN frames f ON f.id = v.frame_id
+                 WHERE v.id = ? AND v.product_id = ? AND v.is_active = 1',
+                [$variantId, $productId]
+            );
+            if ($v === null) {
+                return null;
+            }
+            $price = $promoOpen && $v['promo_price'] !== null && Money::compare((string) $v['promo_price'], (string) $v['price']) < 0 ? (string) $v['promo_price'] : (string) $v['price'];
+            return array_merge($out, [
+                'variant_id' => (int) $v['id'], 'sku' => $v['sku'], 'variant_name' => $v['name'], 'width_cm' => (float) $v['width_cm'], 'height_cm' => (float) $v['height_cm'],
+                'material_name' => $v['material_name'], 'frame_name' => $v['frame_name'], 'panels' => (int) $v['panels'],
+                'unit_price' => Money::normalize($price), 'regular_price' => Money::normalize((string) $v['price']), 'unit_cost' => Money::normalize((string) $v['cost_price']),
+                'stock' => $out['track_stock'] ? min((int) $p['stock_quantity'], (int) $v['stock_quantity']) : 0,
+            ]);
+        }
+        $price = $promoOpen && Money::compare((string) $p['promo_price'], (string) $p['selling_price']) < 0 ? (string) $p['promo_price'] : (string) $p['selling_price'];
+        return array_merge($out, [
+            'unit_price' => Money::normalize($price), 'regular_price' => Money::normalize((string) $p['selling_price']), 'unit_cost' => Money::normalize((string) $p['cost_price']),
+        ]);
+    }
 }

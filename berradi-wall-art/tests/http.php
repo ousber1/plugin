@@ -523,6 +523,147 @@ $t->test('customer account: claimed photos & designs, delete photo now', functio
     $t->equals(404, $guest->status, 'purged');
 });
 
+$t->section('Cart, checkout & orders (Phase 4)');
+$pdo = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+$pdo->exec("INSERT INTO coupons (code, discount_type, discount_value, is_active) VALUES ('ATELIER10', 'percent', 10, 1)");
+$shopper = new Browser($base);
+$ord = [];
+$t->test('add to cart from the product page, header badge, cart page', function (TestRunner $t) use ($shopper): void {
+    $shopper->get('/product/vallee-du-dades');
+    preg_match('/name="product_id" value="(\d+)"/', $shopper->body, $p);
+    preg_match('/name="variant_id" value="(\d+)"/', $shopper->body, $v);
+    $t->contains('Ajouter au panier', $shopper->body);
+    $shopper->post('/cart/add', ['product_id' => $p[1], 'variant_id' => $v[1], 'quantity' => '2']);
+    $t->equals('/cart', $shopper->location());
+    $shopper->get('/cart');
+    $t->contains('Vallée du Dadès', $shopper->body);
+    $t->contains('data-cart-count>2<', $shopper->body);
+    $shopper->get('/product/toile-photo-personnalisee');
+    $t->assert(!str_contains($shopper->body, 'Ajouter au panier'), 'customizable product: builder only');
+    $t->contains('/custom-wall-art?product=toile-photo-personnalisee', $shopper->body);
+});
+$t->test('coupon, live shipping estimate and quantity update', function (TestRunner $t) use ($shopper): void {
+    $shopper->post('/cart/coupon', ['code' => 'nope'], '/cart');
+    $shopper->get('/cart');
+    $t->contains('n’existe pas', $shopper->body);
+    $shopper->post('/cart/coupon', ['code' => 'atelier10'], '/cart');
+    $shopper->get('/cart');
+    $t->contains('ATELIER10', $shopper->body);
+    $shopper->json('/cart/shipping', ['city' => 'Marrakech']);
+    $t->equals('40,00 DH', $shopper->data()['shipping'] ?? null);
+    $shopper->get('/cart');
+    $shopper->json('/cart/shipping', ['city' => 'Tata']);
+    $t->equals('40,00 DH', $shopper->data()['shipping'] ?? null, 'unknown city → flat rate');
+    $shopper->get('/cart');
+    preg_match('#action="[^"]*/cart/item/(\d+)"#', $shopper->body, $m);
+    $shopper->post('/cart/item/' . $m[1], ['quantity' => '1'], '/cart');
+    $shopper->get('/cart');
+    $t->contains('data-cart-count>1<', $shopper->body);
+});
+$t->test('checkout validation keeps input and shows errors', function (TestRunner $t) use ($shopper): void {
+    $shopper->get('/checkout');
+    $t->equals(200, $shopper->status);
+    $t->contains('Paiement à la livraison', $shopper->body);
+    $t->contains('Virement bancaire', $shopper->body);
+    $t->assert(!str_contains($shopper->body, 'Carte bancaire (CMI)'), 'online payment not offered');
+    $shopper->post('/checkout', ['full_name' => 'Al', 'phone' => 'abc', 'country' => 'MA', 'city' => 'Rabat', 'address' => '', 'payment_method' => 'cod'], '/checkout');
+    $shopper->get('/checkout');
+    $t->contains('is-invalid', $shopper->body);
+    $t->contains('value="Rabat"', $shopper->body);
+});
+$t->test('guest order → confirmation page (private) → e-mail tracking link', function (TestRunner $t) use ($shopper, $base, $pdo, &$ord): void {
+    $shopper->post('/checkout', [
+        'full_name' => 'Hind Bennani', 'phone' => '0662 11 22 33', 'email' => 'hind@client.test', 'country' => 'MA', 'city' => 'Rabat',
+        'address' => '8 Avenue Fal Ould Oumeir, Agdal', 'postal_code' => '10090', 'payment_method' => 'bank_transfer', 'accept_terms' => '1',
+    ], '/checkout');
+    $t->assert(str_starts_with($shopper->location(), '/order/confirmation/BWA-'), 'redirect ' . $shopper->location());
+    $ord['number'] = substr($shopper->location(), strlen('/order/confirmation/'));
+    $shopper->get($shopper->location());
+    $t->equals(200, $shopper->status);
+    $t->contains('Merci pour votre commande', $shopper->body);
+    $t->contains($ord['number'], $shopper->body);
+    $t->contains('Paiement par virement', $shopper->body);
+    $t->contains('ATELIER10', $shopper->body);
+    $t->contains('data-cart-count>0<', str_replace('d-none" data-cart-count', '" data-cart-count', $shopper->body), 'cart emptied');
+    preg_match('#href="([^"]*/track/' . preg_quote($ord['number'], '#') . '/([a-f0-9]{48}))"#', $shopper->body, $m);
+    $ord['token'] = $m[2] ?? '';
+    $other = new Browser($base);
+    $other->get('/order/confirmation/' . $ord['number']);
+    $t->equals(404, $other->status, 'confirmation is private to the buyer');
+    $other->get('/track/' . $ord['number'] . '/' . $ord['token']);
+    $t->equals(200, $other->status);
+    $t->contains('Reçue', $other->body);
+    $t->assert(!str_contains($other->body, 'Fal Ould Oumeir'), 'tracking page does not expose the address');
+    $row = $pdo->query("SELECT status, payment_status, grand_total FROM orders WHERE order_number = " . $pdo->quote($ord['number']))->fetch(PDO::FETCH_ASSOC);
+    $t->equals(['new', 'unpaid'], [$row['status'], $row['payment_status']]);
+    $t->equals(2, (int) $pdo->query("SELECT COUNT(*) FROM notifications WHERE related_type = 'order' AND event IN ('order_placed','order_new_admin')")->fetchColumn(), 'customer + admin e-mails recorded');
+});
+$t->test('public tracking by number + phone; wrong contact refused', function (TestRunner $t) use ($base, &$ord): void {
+    $v = new Browser($base);
+    $v->post('/track', ['number' => $ord['number'], 'contact' => '+212 662 11 22 33'], '/track');
+    $t->equals(200, $v->status);
+    $t->contains('Statut actuel', $v->body);
+    $v->post('/track', ['number' => $ord['number'], 'contact' => '0600000000'], '/track');
+    $v->get('/track');
+    $t->contains('Aucune commande ne correspond', $v->body);
+});
+$t->test('logged-in customer: order with saved address, history, detail, cancel', function (TestRunner $t) use ($base, $pdo): void {
+    $c = new Browser($base);
+    $c->post('/account/register', ['first_name' => 'Rachid', 'last_name' => 'Tazi', 'email' => 'rachid@client.test', 'phone' => '0612121212', 'password' => 'Client2026', 'password_confirmation' => 'Client2026', 'accept_terms' => '1'], '/account/register');
+    $c->post('/account/addresses', ['label' => 'Maison', 'full_name' => 'Rachid Tazi', 'phone' => '0612121212', 'city' => 'Tanger', 'address_line1' => '3 Rue de Fès, Malabata'], '/account/addresses');
+    $c->get('/account/addresses');
+    $t->contains('Malabata', $c->body);
+    $c->get('/product/orbites');
+    preg_match('/name="product_id" value="(\d+)"/', $c->body, $p);
+    preg_match('/name="variant_id" value="(\d+)"/', $c->body, $v);
+    $c->post('/cart/add', ['product_id' => $p[1], 'variant_id' => $v[1], 'quantity' => '1']);
+    $c->get('/checkout');
+    $t->contains('Malabata', $c->body, 'saved address offered');
+    $t->contains('value="rachid@client.test"', $c->body);
+    $c->post('/checkout', ['full_name' => 'Rachid Tazi', 'phone' => '0612121212', 'email' => 'attacker@evil.test', 'country' => 'MA', 'city' => 'Tanger', 'address' => '3 Rue de Fès, Malabata', 'payment_method' => 'cod', 'accept_terms' => '1'], '/checkout');
+    $number = substr($c->location(), strlen('/order/confirmation/'));
+    $t->equals('rachid@client.test', (string) $pdo->query("SELECT customer_email FROM orders WHERE order_number = " . $pdo->quote($number))->fetchColumn(), 'account e-mail cannot be overridden');
+    $c->get('/account/orders');
+    $t->contains($number, $c->body);
+    $c->get('/account/orders/' . $number);
+    $t->contains('Annuler la commande', $c->body);
+    $c->post('/account/orders/' . $number . '/cancel', ['reason' => 'Changement d’avis'], '/account/orders/' . $number);
+    $c->follow();
+    $t->contains('Votre commande a été annulée', $c->body);
+    $t->assert(!str_contains($c->body, 'Annuler la commande'), 'no second cancel');
+    $other = new Browser($base);
+    $other->post('/account/register', ['first_name' => 'X', 'last_name' => 'Y', 'email' => 'other@client.test', 'phone' => '0613131313', 'password' => 'Client2026', 'password_confirmation' => 'Client2026', 'accept_terms' => '1'], '/account/register');
+    $other->get('/account/orders/' . $number);
+    $t->equals(404, $other->status, 'orders are private to their customer');
+});
+$t->test('a saved design goes to the cart from its page', function (TestRunner $t) use ($base, $mkJpeg): void {
+    $g = new Browser($base);
+    $g->get('/custom-wall-art');
+    $g->request('POST', '/builder/upload', ['_token' => $g->token()], ['photo' => [$mkJpeg(2400, 1600), 'image/jpeg', 'p.jpg']], ['Accept: application/json']);
+    $uuid = $g->data()['image']['uuid'] ?? '';
+    $g->get('/custom-wall-art');
+    preg_match('#"materials":\[\{"id":(\d+),"code":"canvas"#', $g->body, $m);
+    $g->json('/builder/design', ['material_id' => (int) $m[1], 'layout' => 'single', 'panel_width_cm' => 60, 'panel_height_cm' => 40, 'border' => 'wrap',
+        'images' => [['uuid' => $uuid, 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 2400, 'height' => 1600, 'rotate' => 0]]]]);
+    $design = $g->data()['design']['uuid'] ?? '';
+    $g->get('/builder/design/' . $design);
+    $t->contains('Ajouter au panier', $g->body);
+    $g->post('/cart/add', ['design' => $design]);
+    $g->get('/cart');
+    $t->contains('Création personnalisée', $g->body);
+    $t->contains('60 × 40 cm', $g->body);
+});
+$t->test('empty cart redirects from checkout; terms page; payment webhook inactive', function (TestRunner $t) use ($base): void {
+    $e = new Browser($base);
+    $e->get('/checkout');
+    $t->equals('/cart', $e->location());
+    $e->get('/terms');
+    $t->equals(200, $e->status);
+    $t->contains('Créations personnalisées', $e->body);
+    $e->request('POST', '/webhooks/payments/cmi', ['order' => 'x', 'amount' => '999']);
+    $t->equals(404, $e->status, 'no gateway → cannot mark anything paid');
+});
+
 $t->section('Admin authentication, RBAC & settings');
 $t->test('protected admin pages redirect to login', function (TestRunner $t) use ($b): void {
     $b->get('/admin/settings');
