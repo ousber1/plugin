@@ -16,4 +16,12 @@ return [
     'company' => 'Société (facultatif)',
     'ice' => 'ICE (facultatif)',
     'ice_help' => 'Pour les factures professionnelles.',
+    'designs' => 'Mes créations',
+    'no_designs' => 'Vous n’avez pas encore de création. Lancez-vous !',
+    'my_photos' => 'Mes photos (données privées)',
+    'photos_privacy' => 'Vos photos ne sont accessibles qu’à vous et à notre atelier. Les photos non commandées sont supprimées automatiquement après :days jours ; vous pouvez aussi les supprimer immédiatement.',
+    'no_photos' => 'Aucune photo enregistrée.',
+    'photo_ordered' => 'Utilisée dans une commande',
+    'photo_until' => 'Suppression automatique le :date',
+    'delete_now' => 'Supprimer',
 ];

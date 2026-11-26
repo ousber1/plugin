@@ -62,6 +62,29 @@ final class Browser
         return $this;
     }
 
+    /** POST a JSON body (AJAX style) with the CSRF header. @param array<string,mixed> $data */
+    public function json(string $path, array $data, ?string $token = null): self
+    {
+        $ch = curl_init($this->base . $path);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_COOKIEJAR => $this->jar, CURLOPT_COOKIEFILE => $this->jar,
+            CURLOPT_POST => true, CURLOPT_POSTFIELDS => (string) json_encode($data), CURLOPT_USERAGENT => 'BWA-HTTP-Tests', CURLOPT_TIMEOUT => 60,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json', 'X-Requested-With: XMLHttpRequest', 'X-CSRF-Token: ' . ($token ?? $this->token())],
+        ]);
+        $raw = (string) curl_exec($ch);
+        $this->status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $hsize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        curl_close($ch);
+        $this->body = substr($raw, $hsize);
+        return $this;
+    }
+
+    /** @return array<string,mixed> */
+    public function data(): array
+    {
+        return (array) json_decode($this->body, true);
+    }
+
     public function get(string $path): self
     {
         return $this->request('GET', $path);
@@ -374,6 +397,130 @@ $t->test('newsletter: consent required, JSON for AJAX, one-click unsubscribe', f
     $t->equals('unsubscribed', (string) $pdo->query("SELECT status FROM newsletter_subscribers WHERE email = 'fan@client.test'")->fetchColumn());
     $b->get('/newsletter/unsubscribe/' . str_repeat('0', 64));
     $t->equals(404, $b->status);
+});
+
+$t->section('Custom Wall Art Builder (Phase 3)');
+$mkJpeg = function (int $w, int $h): string {
+    $im = imagecreatetruecolor($w, $h);
+    imagefill($im, 0, 0, imagecolorallocate($im, 60, 110, 170));
+    imagefilledellipse($im, intdiv($w, 2), intdiv($h, 2), intdiv($w, 2), intdiv($w, 2), imagecolorallocate($im, 240, 210, 140));
+    $f = tempnam(sys_get_temp_dir(), 'bwaimg') . '.jpg';
+    imagejpeg($im, $f, 90);
+    return $f;
+};
+$guest = new Browser($base);
+$state = [];
+$t->test('builder page renders with JSON config (FR & AR)', function (TestRunner $t) use ($guest, $base): void {
+    $guest->get('/custom-wall-art');
+    $t->equals(200, $guest->status);
+    $t->contains('id="builder-config"', $guest->body);
+    $t->contains('cropper.min.js', $guest->body);
+    $t->contains('bwa_owner=', $guest->headers['set-cookie'] ?? '', 'ownership cookie');
+    preg_match('#<script type="application/json" id="builder-config">(.*?)</script>#s', $guest->body, $m);
+    $cfg = json_decode($m[1] ?? '', true);
+    $t->assert(is_array($cfg) && count($cfg['materials']) === 5 && count($cfg['frames']) === 6, 'materials & frames');
+    $t->assert(count($cfg['layouts']) === 5 && isset($cfg['i18n']['save']), 'layouts + i18n');
+    $a = new Browser($base);
+    $a->get('/lang/ar');
+    $a->get('/custom-wall-art?product=toile-photo-personnalisee');
+    $t->contains('dir="rtl"', $a->body);
+    $t->contains('لوحة كانفاس بصورتك', $a->body, 'product title translated');
+    $t->contains('كانفاس مشدود', $a->body, 'material description translated');
+});
+$t->test('price API: server-side pricing and validation', function (TestRunner $t) use ($guest): void {
+    $guest->get('/custom-wall-art');
+    $tok = $guest->token();
+    preg_match('#"materials":\[\{"id":(\d+),"code":"canvas"#', $guest->body, $m);
+    $guest->json('/builder/price', ['material_id' => (int) ($m[1] ?? 0), 'layout' => 'triptych', 'panel_width_cm' => 40, 'panel_height_cm' => 30, 'border' => 'wrap', 'quantity' => 2], $tok);
+    $t->equals(200, $guest->status);
+    $t->equals('687.00', $guest->data()['unit_price'] ?? null);
+    $t->equals('1374.00', $guest->data()['total'] ?? null);
+    $guest->json('/builder/price', ['material_id' => (int) ($m[1] ?? 0), 'panel_width_cm' => 999, 'panel_height_cm' => 30], $tok);
+    $t->equals(422, $guest->status);
+    $guest->request('POST', '/builder/price', ['material_id' => 1], [], ['Accept: application/json']);
+    $t->equals(419, $guest->status, 'CSRF required');
+});
+$t->test('photo upload: stored privately, served only to its owner', function (TestRunner $t) use ($guest, $base, $mkJpeg, &$state): void {
+    $guest->get('/custom-wall-art');
+    $guest->request('POST', '/builder/upload', ['_token' => $guest->token()], ['photo' => [$mkJpeg(2400, 1600), 'image/jpeg', 'souvenir.jpg']], ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+    $t->equals(200, $guest->status, $guest->body);
+    $img = $guest->data()['image'] ?? [];
+    $t->equals(2400, $img['width'] ?? null);
+    $state['uuid'] = $img['uuid'] ?? '';
+    $guest->get('/builder/image/' . $state['uuid'] . '/preview');
+    $t->equals(200, $guest->status);
+    $t->equals('image/jpeg', $guest->headers['content-type'] ?? '');
+    $t->contains('no-store', $guest->headers['cache-control'] ?? '');
+    $guest->get('/builder/image/' . $state['uuid'] . '/original');
+    $t->equals(403, $guest->status, 'originals only for the workshop');
+    $other = new Browser($base);
+    $other->get('/builder/image/' . $state['uuid'] . '/preview');
+    $t->equals(404, $other->status, 'other visitor');
+    $other->get('/builder/image/../../.env/preview');
+    $t->assert(in_array($other->status, [400, 403, 404], true), 'path traversal refused (' . $other->status . ')');
+    $t->assert(!str_contains($other->body, 'DB_PASSWORD'));
+    $guest->get('/custom-wall-art');
+    $t->contains($state['uuid'], $guest->body, 'recent photos restored after reload');
+});
+$t->test('upload rejects fake, tiny and non-image files', function (TestRunner $t) use ($guest, $mkJpeg): void {
+    $php = tempnam(sys_get_temp_dir(), 'bwa') . '.jpg';
+    file_put_contents($php, '<?php system($_GET["c"]); ?>');
+    foreach ([[$php, 'shell.jpg'], [$mkJpeg(120, 90), 'tiny.jpg']] as [$file, $name]) {
+        $guest->get('/custom-wall-art');
+        $guest->request('POST', '/builder/upload', ['_token' => $guest->token()], ['photo' => [$file, 'image/jpeg', $name]], ['Accept: application/json']);
+        $t->equals(422, $guest->status, $name);
+    }
+    $t->contains('trop petite', $guest->data()['message'] ?? '');
+});
+$t->test('design save → private design page → WhatsApp order → delete', function (TestRunner $t) use ($guest, $base, &$state): void {
+    $guest->get('/custom-wall-art');
+    preg_match('#"materials":\[\{"id":(\d+),"code":"canvas"#', $guest->body, $m);
+    $tok = $guest->token();
+    $guest->json('/builder/design', [
+        'material_id' => (int) $m[1], 'layout' => 'single', 'mode' => 'span', 'panel_width_cm' => 60, 'panel_height_cm' => 40, 'border' => 'mirror', 'quantity' => 1,
+        'images' => [['uuid' => $state['uuid'], 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 2400, 'height' => 1600, 'rotate' => 0]]],
+        'price' => '1.00', // ignored: the server always prices
+    ], $tok);
+    $t->equals(200, $guest->status, $guest->body);
+    $d = $guest->data()['design'] ?? [];
+    $t->equals('199.00', $d['unit_price'] ?? null);
+    $state['design'] = $d['uuid'] ?? '';
+    $guest->get('/builder/design/' . $state['design']);
+    $t->equals(200, $guest->status);
+    $t->contains('60 × 40 cm', $guest->body);
+    $t->contains('Bords miroir', $guest->body);
+    $t->contains('wa.me/212661000000?text=', $guest->body);
+    $t->contains('noindex', $guest->body);
+    $other = new Browser($base);
+    $other->get('/builder/design/' . $state['design']);
+    $t->equals(404, $other->status, 'designs are private');
+    $guest->json('/builder/design', ['material_id' => (int) $m[1], 'layout' => 'single', 'panel_width_cm' => 60, 'panel_height_cm' => 40,
+        'images' => [['uuid' => $state['uuid'], 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 2400, 'height' => 600, 'rotate' => 0]]]], $tok);
+    $t->equals(422, $guest->status, 'tampered crop ratio');
+});
+$t->test('workshop staff can open customer photos and originals', function (TestRunner $t) use ($base, $adminPass, &$state): void {
+    $a = new Browser($base);
+    $a->post('/admin/login', ['email' => 'owner@berradi.test', 'password' => $adminPass], '/admin/login');
+    $a->get('/builder/image/' . $state['uuid'] . '/original');
+    $t->equals(200, $a->status);
+    $t->contains('attachment', $a->headers['content-disposition'] ?? '');
+    $a->get('/builder/design/' . $state['design']);
+    $t->equals(200, $a->status);
+});
+$t->test('customer account: claimed photos & designs, delete photo now', function (TestRunner $t) use ($guest, &$state): void {
+    $guest->post('/account/register', ['first_name' => 'Imane', 'last_name' => 'B', 'email' => 'imane@client.test', 'phone' => '0612000000', 'password' => 'Client2026', 'password_confirmation' => 'Client2026', 'accept_terms' => '1'], '/account/register');
+    $guest->get('/account/designs');
+    $t->equals(200, $guest->status);
+    $t->contains($state['design'], $guest->body, 'guest design now in the account');
+    $t->contains('souvenir.jpg', $guest->body);
+    $guest->post('/builder/design/' . $state['design'] . '/delete', [], '/account/designs');
+    $guest->get('/account/designs');
+    $t->assert(!str_contains($guest->body, $state['design']), 'design deleted');
+    $guest->post('/builder/image/' . $state['uuid'] . '/delete', [], '/account/designs');
+    $guest->follow();
+    $t->contains('supprimée définitivement', $guest->body);
+    $guest->get('/builder/image/' . $state['uuid'] . '/preview');
+    $t->equals(404, $guest->status, 'purged');
 });
 
 $t->section('Admin authentication, RBAC & settings');

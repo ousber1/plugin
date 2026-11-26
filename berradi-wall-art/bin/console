@@ -100,7 +100,9 @@ try {
                     $sessions++;
                 }
             }
-            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions removed.");
+            // privacy: delete customer photos whose retention period is over
+            $photos = (new \App\Services\Builder\CustomerUploadService())->purgeExpired(500);
+            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed.");
             break;
         case 'demo:install':
             $counts = (new \App\Services\Demo\DemoCatalog(Database::instance(), $app->publicPath(), $app->basePath()))->install();

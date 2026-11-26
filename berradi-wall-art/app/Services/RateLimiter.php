@@ -44,6 +44,15 @@ final class RateLimiter
         return self::attempts($key, $ip, $decayMinutes) >= $max;
     }
 
+    /** Hits recorded for one exact key (no IP aggregation): used by the generic request throttle. */
+    public static function hitsFor(string $key, int $decayMinutes): int
+    {
+        return (int) Database::instance()->value(
+            'SELECT COUNT(*) FROM login_attempts WHERE throttle_key = ? AND created_at >= (NOW() - INTERVAL ? MINUTE)',
+            [$key, $decayMinutes]
+        );
+    }
+
     public static function hit(string $key, string $ip): void
     {
         Database::instance()->insert('login_attempts', [

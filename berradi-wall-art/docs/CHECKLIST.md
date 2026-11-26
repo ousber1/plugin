@@ -44,9 +44,27 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Responsive & RTL | ✅ | Playwright: 14 pages × FR/AR at 390px, no overflow, no JS errors |
 | Contact e-mail delivery on the real host | 🟡 | message stored when `mail()` is unavailable; real SMTP to verify on the host |
 
-## Phase 3: Custom Wall Art Builder ⬜
-Private photo upload (multi-panel), browser canvas editor (crop/zoom/move/rotate/ratios), sizes/materials/frames/
-borders/panels, server-side live pricing API, mockup preview, DPI quality warnings, saved designs.
+## Phase 3: Custom Wall Art Builder ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Photo upload (JPG/PNG/WEBP, several photos, drag & drop, progress), type/size/dimension validation, per-visitor quota | ✅ | integration + HTTP (fake PHP file, tiny image, admin size limit) + Playwright |
+| Originals stored byte-for-byte in `storage/private_uploads` (outside web root), randomized names, SHA-256 checksum | ✅ | integration (checksum identical) |
+| Previews/thumbnails generated in the browser (canvas) and only re-encoded by the server; GD fallback only when memory allows | ✅ | integration (browser preview used / mismatched preview rejected → fallback) |
+| Private serving with ownership checks (guest cookie token stored hashed, customer account, staff `artwork.view`); originals only for staff | ✅ | HTTP (other visitor 404, customer 403 on original, admin 200) |
+| Guest photos & designs claimed by the account on login/registration | ✅ | integration + HTTP |
+| Editor (Cropper.js 1.6.2, self-hosted): fixed print-ratio frame, move, zoom (buttons/slider/wheel, never below "cover"), rotate ±90°, center, reset | ✅ | Playwright |
+| Portrait / landscape / square, standard sizes (filtered per support), custom size within support limits | ✅ | Playwright + integration |
+| Supports, canvas borders, finishes, frames (only when the support can be framed), 1–5 panels, one photo across panels or one photo per panel, quantity | ✅ | Playwright (single, triptych span, diptych per-panel) |
+| Live price from the server (`/builder/price`), breakdown; same formula enforced again on save | ✅ | integration (199 / 587 / 687 / 710 DH cases) + HTTP + Playwright |
+| Wall mockup at real scale (3 m wall, 2 m sofa) with frames, gaps and canvas depth | ✅ | Playwright screenshots |
+| Print-quality check (effective DPI) with warning and hard block under the admin minimum, re-checked on the server | ✅ | integration + Playwright (25 dpi blocked, 55 dpi warning) |
+| Save design: config, crops in original pixels (rotation aware), server price, quality, browser-rendered preview stored privately | ✅ | integration + HTTP (tampered price ignored, tampered crop 422) |
+| Design page (private), WhatsApp order with design reference, "Mes créations" in the account, delete design / delete photo now | ✅ | HTTP |
+| Retention: cron purges expired photos (files deleted, row kept for audit) and expires designs that used them | ✅ | integration |
+| FR/AR (RTL) + mobile | ✅ | Playwright 390px FR/AR |
+| Fixes found by tests: request throttle shared by IP across routes (could lock out "forgot password"), readonly exception property crash, "126 × 3 cm" formatting | ✅ | regression tests added |
+| "Add to cart" from a design | ⬜ | Phase 4 (button appears automatically when the cart exists) |
 
 ## Phase 4: Cart, checkout, customer area, shipping, payments ⬜
 ## Phase 5: Admin dashboard KPIs & charts, products, categories, collections, customers ⬜

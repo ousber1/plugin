@@ -69,3 +69,23 @@ tests/             run.php (unit + DB integration), http.php + e2e.sh (HTTP end-
 * **Security.** Prepared statements everywhere; identifiers validated; CSRF on every POST (form field or
   `X-CSRF-Token`); `e()` escaping in views; CSP without inline scripts; DB rate limiting; uploads checked
   by finfo + getimagesize and re-encoded with GD; upload folder has execution disabled; audit log.
+
+## Custom Wall Art Builder (Phase 3)
+
+```
+Browser                                              Server
+───────                                              ──────
+choose photo → canvas preview (≤1600 px JPEG) ──►  POST /builder/upload  (original + preview, CSRF, throttled)
+                                                     · validate original (finfo + getimagesize, size, ≥200 px)
+                                                     · store original untouched in storage/private_uploads/Y/m/uuid.ext
+                                                     · re-encode browser preview (or GD fallback) → storage/previews
+                                                     · uploaded_images row: owner token hash / customer, retention date
+Cropper.js on the preview (fixed print ratio) ◄────  GET /builder/image/{uuid}/preview  (ownership check, no-store)
+options change → POST /builder/price  ◄──────────►  PricingService::quote (authoritative)
+crop → DPI from original pixels (warning / block)
+save → crops in ORIGINAL pixels + mockup data URL ─► POST /builder/design → DesignService::save
+                                                     · re-validate options, ownership, crop bounds & ratio, DPI
+                                                     · re-price, store design + per-panel crops + private preview
+```
+
+Production (Phase 6) prints from the untouched original using the stored crop `{x, y, width, height, rotate}`.

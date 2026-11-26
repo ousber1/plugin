@@ -269,7 +269,7 @@ final class CatalogService
                 ? Money::normalize((string) $v['promo_price'])
                 : Money::normalize((string) $v['price']);
             $v['regular_price'] = Money::normalize((string) $v['price']);
-            $v['size_label'] = rtrim(rtrim((string) $v['width_cm'], '0'), '.') . ' × ' . rtrim(rtrim((string) $v['height_cm'], '0'), '.') . ' cm';
+            $v['size_label'] = cm($v['width_cm']) . ' × ' . cm($v['height_cm']) . ' cm';
             $v['out_of_stock'] = (int) $product['track_stock'] === 1 && (int) $v['stock_quantity'] <= 0;
         }
         unset($v);

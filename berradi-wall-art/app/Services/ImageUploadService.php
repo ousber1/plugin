@@ -18,9 +18,10 @@ final class ImageUploadService
     /**
      * @param array<string,mixed> $file entry from $_FILES
      * @param array<string,string> $allowedMimes mime => extension
+     * @param bool $trustedTmp true only for temp files created by the application itself (decoded data URLs)
      * @return array{tmp:string,mime:string,ext:string,width:int,height:int,size:int,original:string}
      */
-    public static function validate(array $file, array $allowedMimes, int $maxMb): array
+    public static function validate(array $file, array $allowedMimes, int $maxMb, bool $trustedTmp = false): array
     {
         $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
         if ($error !== UPLOAD_ERR_OK) {
@@ -31,7 +32,7 @@ final class ImageUploadService
             });
         }
         $tmp = (string) ($file['tmp_name'] ?? '');
-        if ($tmp === '' || !is_file($tmp) || (PHP_SAPI !== 'cli' && !is_uploaded_file($tmp))) {
+        if ($tmp === '' || !is_file($tmp) || (!$trustedTmp && PHP_SAPI !== 'cli' && !is_uploaded_file($tmp))) {
             throw new UploadException(__('validation.upload_failed'));
         }
         $size = (int) filesize($tmp);

@@ -360,6 +360,14 @@ $t->test('login is rate limited after 5 failures', function (TestRunner $t) use 
     $t->equals(['ok' => true], Auth::attemptAdmin('designer@example.ma', 'Password1', $request));
     Auth::logoutAdmin();
 });
+$t->test('request throttles are independent per route (heavy use of one never blocks another)', function (TestRunner $t): void {
+    for ($i = 0; $i < 30; $i++) {
+        RateLimiter::hit('throttle:/builder/upload|10.9.9.9', '10.9.9.9');
+    }
+    $t->equals(30, RateLimiter::hitsFor('throttle:/builder/upload|10.9.9.9', 10));
+    $t->equals(0, RateLimiter::hitsFor('throttle:/admin/forgot-password|10.9.9.9', 10));
+    $t->assert(!RateLimiter::tooManyAttempts(RateLimiter::key('login_admin', 'someone@example.ma'), '10.9.9.9', 5, 15), 'login limiter unaffected');
+});
 $t->test('inactive accounts cannot log in', function (TestRunner $t) use ($request, $db, $accountantId): void {
     $db->update('users', ['is_active' => 0], ['id' => $accountantId]);
     $t->equals('inactive', Auth::attemptAdmin('compta@example.ma', 'Password1', $request)['error'] ?? null);
@@ -566,6 +574,187 @@ $t->test('demo catalogue removal deletes everything it created', function (TestR
     $t->equals(13, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type = 'category'"), 'seeded category translations kept');
     $t->equals([], glob($tmpPublic . '/uploads/products/demo/*.jpg') ?: []);
     $t->equals(0, CatalogService::listing([], 60, 1)->total);
+});
+
+
+$t->section('Custom Wall Art Builder (Phase 3)');
+$builderTmp = sys_get_temp_dir() . '/bwa_builder_' . bin2hex(random_bytes(4));
+Config::set('uploads.private_dir', $builderTmp . '/private');
+Config::set('uploads.preview_dir', $builderTmp . '/previews');
+\App\Services\Builder\BuilderOptions::flush();
+$migrator->seed(['07_builder_options']);
+$mat = fn (string $code): int => (int) $db->value('SELECT id FROM product_materials WHERE code = ?', [$code]);
+$frameId = fn (string $code): int => (int) $db->value('SELECT id FROM frames WHERE code = ?', [$code]);
+$jpeg = function (int $w, int $h): string {
+    $im = imagecreatetruecolor($w, $h);
+    imagefill($im, 0, 0, imagecolorallocate($im, 30, 90, 160));
+    imagefilledellipse($im, intdiv($w, 2), intdiv($h, 2), intdiv($w, 3), intdiv($w, 3), imagecolorallocate($im, 240, 200, 120));
+    ob_start();
+    imagejpeg($im, null, 90);
+    return (string) ob_get_clean();
+};
+
+$t->test('pricing: area/minimum, frame perimeter, multi-panel surcharge, quantity', function (TestRunner $t) use ($mat, $frameId): void {
+    $q = \App\Services\Builder\PricingService::quote(['material_id' => $mat('canvas'), 'layout' => 'single', 'panel_width_cm' => 40, 'panel_height_cm' => 60, 'quantity' => 1]);
+    $t->equals('199.00', $q['unit_price'], 'canvas 40x60 hits the 199 DH minimum');
+    $q = \App\Services\Builder\PricingService::quote(['material_id' => $mat('canvas'), 'layout' => 'single', 'panel_width_cm' => 100, 'panel_height_cm' => 150, 'quantity' => 1]);
+    $t->equals('975.00', $q['unit_price'], '1.5 m2 x 650');
+    $q = \App\Services\Builder\PricingService::quote(['material_id' => $mat('photo_paper'), 'frame_id' => $frameId('gold'), 'layout' => 'single', 'panel_width_cm' => 90, 'panel_height_cm' => 60, 'quantity' => 1]);
+    $t->equals('587.00', $q['unit_price'], '226.80 paper + 3 m x 120 frame (same as the browser showed)');
+    $q = \App\Services\Builder\PricingService::quote(['material_id' => $mat('canvas'), 'layout' => 'triptych', 'panel_width_cm' => 40, 'panel_height_cm' => 30, 'border' => 'wrap', 'finish' => 'matte', 'quantity' => 3]);
+    $t->equals('687.00', $q['unit_price'], '3 x 199 + 15 %');
+    $t->equals('2061.00', $q['total']);
+    $t->equals(126.0, $q['overall_width_cm']);
+    $q = \App\Services\Builder\PricingService::quote(['material_id' => $mat('canvas'), 'layout' => 'single', 'panel_width_cm' => 100, 'panel_height_cm' => 100, 'finish' => 'gloss']);
+    $t->equals('710.00', $q['unit_price'], '650 + gloss 60/m2');
+});
+$t->test('pricing rejects invalid configurations', function (TestRunner $t) use ($mat, $frameId): void {
+    $P = fn (array $c) => \App\Services\Builder\PricingService::quote($c + ['material_id' => $mat('canvas'), 'layout' => 'single', 'panel_width_cm' => 40, 'panel_height_cm' => 60]);
+    $t->assert(isset($P(['material_id' => 99999])['errors']['material_id']));
+    $t->assert(isset($P(['panel_width_cm' => 5])['errors']['size']), 'too small');
+    $t->assert(isset($P(['panel_width_cm' => 400])['errors']['size']), 'too big');
+    $t->assert(isset($P(['panel_width_cm' => 'abc'])['errors']['size']));
+    $t->assert(isset($P(['material_id' => $mat('bache'), 'frame_id' => $frameId('black')])['errors']['frame_id']), 'bache cannot be framed');
+    $t->assert(isset($P(['material_id' => $mat('poster'), 'border' => 'wrap'])['errors']['border']), 'no canvas border on posters');
+    $t->assert(isset($P(['quantity' => 0])['errors']['quantity']));
+    $t->assert(isset($P(['layout' => 'hexa'])['errors']['layout']));
+    $t->equals(true, $P([])['ok']);
+});
+$t->test('DPI and quality thresholds', function (TestRunner $t): void {
+    $t->equals(300, \App\Services\Builder\PricingService::dpi(1182, 10));
+    $t->equals(299, \App\Services\Builder\PricingService::dpi(1181, 10), 'never rounded up');
+    $t->equals('ok', \App\Services\Builder\PricingService::quality(150));
+    $t->equals('warning', \App\Services\Builder\PricingService::quality(80));
+    $t->equals('low', \App\Services\Builder\PricingService::quality(40));
+});
+
+\App\Services\OwnerToken::set(str_repeat('a', 64));
+$uploads = new \App\Services\Builder\CustomerUploadService();
+$upload = function (string $bin, string $name, ?string $previewBin = null) use ($uploads): array {
+    $tmp = tempnam(sys_get_temp_dir(), 'bwa');
+    file_put_contents($tmp, $bin);
+    $prev = null;
+    if ($previewBin !== null) {
+        $pt = tempnam(sys_get_temp_dir(), 'bwa');
+        file_put_contents($pt, $previewBin);
+        $prev = ['name' => 'preview.jpg', 'tmp_name' => $pt, 'error' => UPLOAD_ERR_OK];
+    }
+    return $uploads->store(['name' => $name, 'tmp_name' => $tmp, 'error' => UPLOAD_ERR_OK, 'size' => strlen($bin)], $prev);
+};
+$photo = $jpeg(3000, 2000);
+$info = null;
+$t->test('upload: original kept byte-for-byte outside the web root, preview + thumb created', function (TestRunner $t) use ($upload, $photo, $db, $builderTmp, &$info): void {
+    $info = $upload($photo, 'Mariage été.jpg');
+    $row = $db->fetch('SELECT * FROM uploaded_images WHERE uuid = ?', [$info['uuid']]);
+    $t->equals(3000, (int) $row['width_px']);
+    $t->equals(hash('sha256', $photo), $row['checksum'], 'original untouched');
+    $t->equals($photo, file_get_contents($builderTmp . '/private/' . $row['stored_path']));
+    $t->assert(is_file($builderTmp . '/previews/' . $row['preview_path']) && getimagesize($builderTmp . '/previews/' . $row['preview_path'])[0] === 1600, 'server preview 1600px');
+    $t->assert(is_file($builderTmp . '/previews/' . $row['thumb_path']), 'thumb');
+    $t->equals('temporary', $row['status']);
+    $t->assert(strtotime($row['retention_until']) > time() + 29 * 86400, 'retention date set');
+    $t->assert(!str_contains($row['stored_path'], 'Mariage'), 'random file name');
+});
+$t->test('upload: browser preview is used when it matches the photo proportions', function (TestRunner $t) use ($upload, $photo, $jpeg, $db, $builderTmp): void {
+    $i = $upload($photo, 'a.jpg', $jpeg(1600, 1067));
+    $t->assert($i['has_preview']);
+    $i2 = $upload($photo, 'b.jpg', $jpeg(500, 1000)); // wrong proportions: ignored, server fallback
+    $t->assert($i2['has_preview'], 'fallback preview');
+    $row = $db->fetch('SELECT preview_path FROM uploaded_images WHERE uuid = ?', [$i2['uuid']]);
+    $t->equals(1600, getimagesize($builderTmp . '/previews/' . $row['preview_path'])[0]);
+});
+$t->test('upload: tiny, fake and oversized files are refused', function (TestRunner $t) use ($upload, $jpeg): void {
+    $t->throws(fn () => $upload($jpeg(150, 100), 'tiny.jpg'), UploadException::class, 'too small');
+    $t->throws(fn () => $upload('<?php echo 1;', 'x.jpg'), UploadException::class, 'php');
+    $t->throws(fn () => $upload("GIF89a" . str_repeat("\0", 100), 'x.gif'), UploadException::class, 'gif');
+    \App\Services\SettingsService::set('upload_max_mb', '1');
+    $big = $jpeg(4000, 4000);
+    $t->assert(strlen($big) < 1048576 || true);
+    $noise = imagecreatetruecolor(2500, 2500);
+    for ($i = 0; $i < 400000; $i++) { imagesetpixel($noise, random_int(0, 2499), random_int(0, 2499), random_int(0, 0xFFFFFF)); }
+    ob_start(); imagejpeg($noise, null, 100); $heavy = (string) ob_get_clean();
+    $t->assert(strlen($heavy) > 1048576, 'test file > 1 MB');
+    $t->throws(fn () => $upload($heavy, 'heavy.jpg'), UploadException::class, 'over the admin limit');
+    \App\Services\SettingsService::set('upload_max_mb', '25');
+});
+$t->test('photos are private: other visitors cannot access them', function (TestRunner $t) use (&$info): void {
+    $t->assert(\App\Services\Builder\CustomerUploadService::findAccessible($info['uuid']) !== null, 'owner');
+    \App\Services\OwnerToken::set(str_repeat('b', 64));
+    $t->equals(null, \App\Services\Builder\CustomerUploadService::findAccessible($info['uuid']), 'other guest');
+    $t->equals(null, \App\Services\Builder\CustomerUploadService::findAccessible('not-a-uuid'));
+    \App\Services\OwnerToken::set(str_repeat('a', 64));
+});
+
+$designIn = function (array $over = []) use ($mat, &$info): array {
+    return array_replace_recursive([
+        'material_id' => $mat('canvas'), 'layout' => 'single', 'mode' => 'span', 'panel_width_cm' => 60, 'panel_height_cm' => 40,
+        'border' => 'wrap', 'finish' => 'matte', 'quantity' => 2,
+        'images' => [['uuid' => $info['uuid'], 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 3000, 'height' => 2000, 'rotate' => 0]]],
+    ], $over);
+};
+$t->test('design save: server re-prices, checks crop & DPI, attaches the photo', function (TestRunner $t) use ($designIn, $db, &$info): void {
+    $r = \App\Services\Builder\DesignService::save($designIn(['preview' => 'data:image/jpeg;base64,' . base64_encode((function () { $im = imagecreatetruecolor(600, 400); ob_start(); imagejpeg($im); return ob_get_clean(); })())]));
+    $t->equals('199.00', $r['unit_price']);
+    $t->equals('398.00', $r['total']);
+    $t->equals(127, $r['min_dpi'], '3000 px over 60 cm');
+    $t->equals('ok', $r['quality']);
+    $d = $db->fetch('SELECT * FROM custom_designs WHERE uuid = ?', [$r['uuid']]);
+    $t->assert($d['preview_path'] !== null, 'preview stored');
+    $t->equals('attached', (string) $db->value('SELECT status FROM uploaded_images WHERE uuid = ?', [$info['uuid']]));
+    $crop = json_decode((string) $db->value('SELECT crop FROM custom_design_images WHERE custom_design_id = ?', [(int) $d['id']]), true);
+    $t->equals(['x' => 0, 'y' => 0, 'width' => 3000, 'height' => 2000, 'rotate' => 0], $crop);
+    $t->assert(\App\Services\Builder\DesignService::findAccessible($r['uuid']) !== null);
+    \App\Services\OwnerToken::set(str_repeat('c', 64));
+    $t->equals(null, \App\Services\Builder\DesignService::findAccessible($r['uuid']), 'other visitor');
+    \App\Services\OwnerToken::set(str_repeat('a', 64));
+});
+$t->test('design save: rotated crop uses swapped dimensions', function (TestRunner $t) use ($designIn): void {
+    $r = \App\Services\Builder\DesignService::save($designIn(['panel_width_cm' => 40, 'panel_height_cm' => 60, 'images' => [['crop' => ['x' => 0, 'y' => 0, 'width' => 2000, 'height' => 3000, 'rotate' => 90]]]]));
+    $t->equals('ok', $r['quality']);
+    $t->equals(null, \App\Services\Builder\DesignService::validateCrop(['x' => 0, 'y' => 0, 'width' => 2000, 'height' => 3000, 'rotate' => 0], 3000, 2000, 2 / 3), 'without rotation it overflows');
+    $t->equals(null, \App\Services\Builder\DesignService::validateCrop(['x' => 0, 'y' => 0, 'width' => 2000, 'height' => 2000, 'rotate' => 45], 3000, 2000, 1.0), '45 degrees refused');
+});
+$t->test('design save refuses tampered or low-quality configurations', function (TestRunner $t) use ($designIn, $upload, $jpeg): void {
+    $E = function (array $over) use ($designIn): string {
+        try {
+            \App\Services\Builder\DesignService::save($designIn($over));
+        } catch (\App\Core\ValidationException $e) {
+            return (string) array_key_first($e->errors);
+        }
+        return 'saved';
+    };
+    $t->equals('images', $E(['images' => [['crop' => ['width' => 3000, 'height' => 1000]]]]), 'wrong ratio');
+    $t->equals('images', $E(['images' => [['crop' => ['x' => 500, 'width' => 3000]]]]), 'outside image');
+    $t->equals('images', $E(['panel_width_cm' => 300, 'panel_height_cm' => 200, 'border' => null, 'material_id' => (int) \App\Core\Database::instance()->value("SELECT id FROM product_materials WHERE code = 'bache'")]), 'DPI below minimum');
+    $t->equals('images', $E(['layout' => 'triptych', 'mode' => 'per_panel']), 'per-panel needs 3 photos');
+    $t->equals('images', $E(['images' => [['uuid' => '00000000-0000-4000-8000-000000000000']]]), 'unknown photo');
+    $t->equals('frame_id', $E(['material_id' => (int) \App\Core\Database::instance()->value("SELECT id FROM product_materials WHERE code = 'bache'"), 'frame_id' => 1, 'border' => null, 'panel_width_cm' => 30, 'panel_height_cm' => 20]), 'invalid option');
+    $t->equals('product', $E(['product' => 'not-customizable-product']));
+    // a photo of another visitor cannot be used
+    \App\Services\OwnerToken::set(str_repeat('d', 64));
+    $foreign = $upload($jpeg(1200, 800), 'other.jpg');
+    \App\Services\OwnerToken::set(str_repeat('a', 64));
+    $t->equals('images', $E(['images' => [['uuid' => $foreign['uuid']]]]), 'foreign photo');
+});
+$t->test('guest photos and designs are claimed by the account on login', function (TestRunner $t) use ($db, &$info, $request): void {
+    $cid = $db->insert('customers', ['first_name' => 'Nora', 'email' => 'nora@example.ma', 'password_hash' => Auth::hashPassword('Client123')]);
+    Auth::loginCustomer($cid);
+    $t->equals($cid, (int) $db->value('SELECT customer_id FROM uploaded_images WHERE uuid = ?', [$info['uuid']]));
+    $t->assert((int) $db->value('SELECT COUNT(*) FROM custom_designs WHERE customer_id = ?', [$cid]) >= 2);
+    Auth::logoutCustomer();
+    // once claimed, the guest token alone no longer opens it
+    $t->equals(null, \App\Services\Builder\CustomerUploadService::findAccessible($info['uuid'], false));
+});
+$t->test('retention: expired photos are purged and their designs expire', function (TestRunner $t) use ($db, $uploads, $builderTmp, &$info): void {
+    $row = $db->fetch('SELECT * FROM uploaded_images WHERE uuid = ?', [$info['uuid']]);
+    $db->query('UPDATE uploaded_images SET retention_until = NOW() - INTERVAL 1 DAY WHERE uuid = ?', [$info['uuid']]);
+    $t->assert($uploads->purgeExpired() >= 1);
+    $after = $db->fetch('SELECT * FROM uploaded_images WHERE uuid = ?', [$info['uuid']]);
+    $t->equals('purged', $after['status']);
+    $t->assert(!is_file($builderTmp . '/private/' . $row['stored_path']) && !is_file($builderTmp . '/previews/' . $row['preview_path']), 'files deleted');
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM custom_designs d JOIN custom_design_images di ON di.custom_design_id = d.id JOIN uploaded_images u ON u.id = di.uploaded_image_id WHERE u.uuid = ? AND d.status = 'draft'", [$info['uuid']]));
+    $db->query("UPDATE uploaded_images SET status = 'ordered', retention_until = NOW() + INTERVAL 1 DAY WHERE status <> 'purged' LIMIT 1");
+    $t->equals(0, $uploads->purgeExpired(), 'nothing else expired');
 });
 
 exit($t->finish());

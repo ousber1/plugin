@@ -12,9 +12,11 @@ use App\Core\Session;
 use App\Services\RateLimiter;
 
 /**
- * Generic request throttle per IP + route path. Usage: "throttle:10,1" (10 requests / 1 minute).
- * Only counts state-changing requests (POST).
- * Before installation (no database yet) a session-based counter is used instead.
+ * Generic request throttle per route path + client IP. Usage: "throttle:10,1" (10 requests / 1 minute).
+ * "throttle:240,1,session" keeps the counter in the session (high-frequency endpoints such as live pricing,
+ * so they never write to the database). Only POST requests are counted.
+ * Counters are independent per route: heavy use of one endpoint never blocks another one.
+ * Before installation (no database yet) the session counter is always used.
  */
 final class ThrottleMiddleware implements MiddlewareInterface
 {
@@ -25,9 +27,10 @@ final class ThrottleMiddleware implements MiddlewareInterface
         }
         $max = (int) ($params[0] ?? 30);
         $minutes = (int) ($params[1] ?? 1);
+        $useSession = ($params[2] ?? '') === 'session';
         $key = 'throttle:' . $request->path();
 
-        if (!App::instance()->isInstalled()) {
+        if ($useSession || !App::instance()->isInstalled()) {
             $now = time();
             $hits = array_values(array_filter((array) Session::get('_throttle_' . $key, []), fn ($ts) => (int) $ts > $now - $minutes * 60));
             if (count($hits) >= $max) {
@@ -38,10 +41,11 @@ final class ThrottleMiddleware implements MiddlewareInterface
             return $next($request);
         }
 
-        if (RateLimiter::tooManyAttempts($key, $request->ip(), $max, $minutes)) {
+        $dbKey = mb_substr($key . '|' . $request->ip(), 0, 191);
+        if (RateLimiter::hitsFor($dbKey, $minutes) >= $max) {
             throw new HttpException(429, __('common.too_many_requests'));
         }
-        RateLimiter::hit($key, $request->ip());
+        RateLimiter::hit($dbKey, $request->ip());
         return $next($request);
     }
 }

@@ -249,3 +249,10 @@ function whatsapp_link(?string $number = null, string $message = ''): string
     }
     return 'https://wa.me/' . $number . ($message !== '' ? '?text=' . rawurlencode($message) : '');
 }
+
+/** Format centimetres without useless decimals: 30 → "30", 92.5 → "92,5". */
+function cm(float|int|string|null $value): string
+{
+    $s = rtrim(rtrim(number_format((float) $value, 1, '.', ''), '0'), '.');
+    return locale() === 'fr' ? str_replace('.', ',', $s) : $s;
+}

@@ -158,7 +158,7 @@ final class UserController extends Controller
         try {
             $this->assertNotLastSuperAdmin($user, (int) $user['role_id'], $new);
         } catch (ValidationException $e) {
-            $this->flash('danger', (string) reset($e->errors));
+            $this->flash('danger', (string) (array_values($e->errors)[0] ?? ''));
             return $this->redirectRoute('admin.users.index');
         }
         Database::instance()->update('users', ['is_active' => $new], ['id' => (int) $user['id']]);
