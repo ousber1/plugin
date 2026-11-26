@@ -10,7 +10,7 @@ $val = function (int $i, string $k) use ($src, $old): string {
     }
     $v = (string) $src[$i][$k];
     if ($k === 'tax_rate' && !is_array($old)) {
-        return rtrim(rtrim(number_format((float) $v * 100, 2, '.', ''), '0'), '.');
+        return rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
     }
     return $v;
 };

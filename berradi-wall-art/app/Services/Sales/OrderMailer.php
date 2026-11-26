@@ -67,6 +67,20 @@ final class OrderMailer
         self::send($order, (string) $order['customer_email'], 'artwork_proof', 'artwork_proof', ['proofUrl' => $proofUrl, 'message' => $message], (string) $order['locale']);
     }
 
+    /**
+     * Quotation / invoice e-mail to the customer (link to view and download the document).
+     *
+     * @param array<string,mixed> $doc row with id, customer_email, customer_name, locale and order_number = document number
+     * @param array<string,mixed> $extra
+     */
+    public static function document(array $doc, string $relatedType, string $template, array $extra): void
+    {
+        if (empty($doc['customer_email'])) {
+            return;
+        }
+        self::send($doc, (string) $doc['customer_email'], $template, $template, $extra + ['related_type' => $relatedType], (string) ($doc['locale'] ?? 'fr'));
+    }
+
     /** Internal alert (artwork feedback from the customer, etc.). @param array<string,mixed> $order */
     public static function internal(array $order, string $event, string $message): void
     {
@@ -83,18 +97,18 @@ final class OrderMailer
         Translator::setLocale($locale);
         try {
             $subject = __('emails.' . $template . '_subject', ['number' => (string) $order['order_number']]);
-            $method = $order['payment_method_id'] !== null
+            $method = ($order['payment_method_id'] ?? null) !== null
                 ? Database::instance()->fetch('SELECT code, name, instructions FROM payment_methods WHERE id = ?', [(int) $order['payment_method_id']])
                 : null;
             $html = \App\Core\View::make('emails/' . $template, $extra + [
                 'subject' => $subject,
                 'order' => $order,
-                'items' => OrderService::items((int) $order['id']),
+                'items' => isset($order['shipping_city']) ? OrderService::items((int) $order['id']) : [],
                 'method' => $method,
             ]);
             $id = Database::instance()->insert('notifications', [
                 'channel' => 'email', 'event' => $event, 'recipient' => $to, 'subject' => mb_substr($subject, 0, 255),
-                'body' => $html, 'related_type' => 'order', 'related_id' => (int) $order['id'], 'status' => 'queued',
+                'body' => $html, 'related_type' => $extra['related_type'] ?? 'order', 'related_id' => (int) $order['id'], 'status' => 'queued',
             ]);
             $ok = Mailer::send($to, $subject, $html);
             Database::instance()->update('notifications', [

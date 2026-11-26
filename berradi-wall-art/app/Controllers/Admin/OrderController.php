@@ -130,6 +130,8 @@ final class OrderController extends Controller
             'methods' => $db->fetchAll('SELECT id, name FROM payment_methods WHERE is_active = 1 ORDER BY sort_order, id'),
             'customerOrders' => $o['customer_id'] ? (int) $db->value('SELECT COUNT(*) FROM orders WHERE customer_id = ?', [(int) $o['customer_id']]) : 0,
             'couriers' => ShipmentService::COURIERS,
+            'invoices' => $db->fetchAll('SELECT id, invoice_number, invoice_type, status, total_ttc FROM invoices WHERE order_id = ? ORDER BY id', [(int) $o['id']]),
+            'activeInvoice' => \App\Services\Finance\InvoiceService::activeForOrder((int) $o['id']),
         ]);
     }
 

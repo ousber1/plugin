@@ -1,4 +1,4 @@
--- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-26 12:13
+-- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-26 17:06
 -- Optional: import with phpMyAdmin, then run the web installer anyway: it detects the
 -- migrations already applied and only inserts the default data (roles, settings...).
 
@@ -1342,5 +1342,16 @@ CREATE TABLE IF NOT EXISTS campaign_products (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000008_marketing_content', 1);
+
+-- 2026_01_01_000009_document_access
+ALTER TABLE quotations ADD COLUMN access_token CHAR(64) NULL COMMENT 'sha256 of the link sent to the customer' AFTER notes,
+                        ADD COLUMN response_ip VARCHAR(45) NULL AFTER rejected_at,
+                        ADD KEY idx_quotations_validity (status, valid_until);
+
+ALTER TABLE invoices ADD COLUMN access_token CHAR(64) NULL COMMENT 'sha256 of the download link sent to the customer' AFTER pdf_path,
+                      ADD COLUMN sent_at DATETIME NULL AFTER issued_by,
+                      ADD KEY idx_invoices_order_type (order_id, invoice_type, status);
+
+INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000009_document_access', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;

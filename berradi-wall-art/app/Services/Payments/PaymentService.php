@@ -62,7 +62,8 @@ final class PaymentService
     {
         $paid = Money::toCents((string) $db->value("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE order_id = ? AND status = 'confirmed' AND payment_type = 'payment'", [$orderId]));
         $refunded = Money::toCents((string) $db->value("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE order_id = ? AND status = 'confirmed' AND payment_type = 'refund'", [$orderId]));
-        $total = Money::toCents((string) $db->value('SELECT grand_total FROM orders WHERE id = ?', [$orderId]));
+        $order = $db->fetch('SELECT grand_total, status FROM orders WHERE id = ?', [$orderId]);
+        $total = Money::toCents((string) $order['grand_total']);
         $net = $paid - $refunded;
         $status = match (true) {
             $refunded > 0 && $net <= 0 => 'refunded',
@@ -73,8 +74,63 @@ final class PaymentService
         };
         $db->update('orders', [
             'amount_paid' => Money::fromCents($net),
-            'balance_due' => Money::fromCents(max(0, $total - $net)),
+            // a cancelled order owes nothing; what was paid stays visible until refunded
+            'balance_due' => $order['status'] === 'cancelled' ? '0.00' : Money::fromCents(max(0, $total - $net)),
             'payment_status' => $status,
         ], ['id' => $orderId]);
+        \App\Services\Finance\InvoiceService::syncForOrder($orderId);
+    }
+
+    /**
+     * Money given back to a customer (never more than what was received). Recorded as a negative movement,
+     * the original payment stays untouched.
+     */
+    public static function refund(int $orderId, string $amount, int $paymentMethodId, string $reason, ?int $userId = null): int
+    {
+        $amount = Money::normalize($amount);
+        if (Money::toCents($amount) <= 0) {
+            throw new \InvalidArgumentException(__('finance.err_amount'));
+        }
+        return Database::instance()->transaction(function (Database $db) use ($orderId, $amount, $paymentMethodId, $reason, $userId): int {
+            $o = $db->fetch('SELECT id, customer_id, amount_paid, order_number FROM orders WHERE id = ? FOR UPDATE', [$orderId]);
+            if ($o === null) {
+                throw new \RuntimeException('Order not found');
+            }
+            if (Money::compare($amount, (string) $o['amount_paid']) > 0) {
+                throw new \InvalidArgumentException(__('finance.err_refund_max', ['max' => money($o['amount_paid'])]));
+            }
+            $id = $db->insert('payments', [
+                'payment_number' => SequenceService::next('payment'), 'payment_type' => 'refund', 'order_id' => $orderId, 'customer_id' => $o['customer_id'],
+                'payment_method_id' => $paymentMethodId, 'amount' => $amount, 'currency' => (string) setting('currency_code', 'MAD'), 'status' => 'confirmed',
+                'paid_at' => date('Y-m-d H:i:s'), 'confirmed_by' => $userId, 'notes' => mb_substr($reason, 0, 1000),
+            ]);
+            self::syncOrder($db, $orderId);
+            ActivityLogger::log('payment.refunded', 'order', $orderId, (string) $o['order_number'], ['amount' => $amount]);
+            return $id;
+        });
+    }
+
+    /** Payment received for an invoice that has no online order (B2B, services). */
+    public static function recordForInvoice(int $invoiceId, string $amount, int $paymentMethodId, ?string $reference, ?int $userId): int
+    {
+        $amount = Money::normalize($amount);
+        return Database::instance()->transaction(function (Database $db) use ($invoiceId, $amount, $paymentMethodId, $reference, $userId): int {
+            $inv = $db->fetch('SELECT * FROM invoices WHERE id = ? FOR UPDATE', [$invoiceId]);
+            if ($inv === null || $inv['invoice_type'] !== 'invoice' || $inv['order_id'] !== null || !in_array($inv['status'], ['issued', 'partially_paid'], true)) {
+                throw new \InvalidArgumentException(__('finance.err_invoice_payment'));
+            }
+            $left = \App\Services\Finance\InvoiceService::balance($inv);
+            if (Money::toCents($amount) <= 0 || Money::compare($amount, $left) > 0) {
+                throw new \InvalidArgumentException(__('finance.err_pay_max', ['max' => money($left)]));
+            }
+            $id = $db->insert('payments', [
+                'payment_number' => SequenceService::next('payment'), 'payment_type' => 'payment', 'invoice_id' => $invoiceId, 'customer_id' => $inv['customer_id'],
+                'payment_method_id' => $paymentMethodId, 'amount' => $amount, 'currency' => (string) setting('currency_code', 'MAD'), 'status' => 'confirmed',
+                'reference' => $reference, 'paid_at' => date('Y-m-d H:i:s'), 'confirmed_by' => $userId,
+            ]);
+            \App\Services\Finance\InvoiceService::syncPaid($invoiceId);
+            ActivityLogger::log('payment.confirmed', 'invoice', $invoiceId, (string) $inv['invoice_number'], ['amount' => $amount]);
+            return $id;
+        });
     }
 }

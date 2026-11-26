@@ -60,6 +60,10 @@ $router->post('/checkout', [CheckoutController::class, 'place'])->middleware('th
 $router->get('/order/confirmation/{number}', [CheckoutController::class, 'confirmation'])->name('checkout.confirmation');
 $router->get('/track', [TrackingController::class, 'form'])->name('order.track');
 $router->post('/track', [TrackingController::class, 'lookup'])->middleware('throttle:20,10')->name('order.track.lookup');
+$router->get('/quote/{token}', [\App\Controllers\Storefront\DocumentController::class, 'quote'])->middleware('throttle:60,10')->name('quote.show');
+$router->get('/quote/{token}/pdf', [\App\Controllers\Storefront\DocumentController::class, 'quotePdf'])->middleware('throttle:30,10')->name('quote.pdf');
+$router->post('/quote/{token}', [\App\Controllers\Storefront\DocumentController::class, 'quoteRespond'])->middleware('throttle:10,10')->name('quote.respond');
+$router->get('/invoice/{id}/{token}', [\App\Controllers\Storefront\DocumentController::class, 'invoiceLink'])->middleware('throttle:30,10')->name('invoice.link');
 $router->get('/artwork/{token}', [\App\Controllers\Storefront\ArtworkProofController::class, 'show'])->middleware('throttle:60,10')->name('artwork.proof');
 $router->get('/artwork/{token}/preview', [\App\Controllers\Storefront\ArtworkProofController::class, 'preview'])->name('artwork.proof.preview');
 $router->post('/artwork/{token}', [\App\Controllers\Storefront\ArtworkProofController::class, 'respond'])->middleware('throttle:10,10')->name('artwork.proof.respond');
@@ -99,6 +103,7 @@ $router->group(['prefix' => '/account'], function ($router): void {
         $router->get('/orders', [CustomerOrderController::class, 'index'])->name('customer.orders');
         $router->get('/orders/{number}', [CustomerOrderController::class, 'show'])->name('customer.orders.show');
         $router->post('/orders/{number}/cancel', [CustomerOrderController::class, 'cancel'])->name('customer.orders.cancel');
+        $router->get('/invoices/{id}', [\App\Controllers\Storefront\DocumentController::class, 'customerInvoice'])->name('customer.invoices.download');
         $router->get('/addresses', [AddressController::class, 'index'])->name('customer.addresses');
         $router->post('/addresses', [AddressController::class, 'store'])->name('customer.addresses.store');
         $router->post('/addresses/{id}', [AddressController::class, 'update'])->name('customer.addresses.update');

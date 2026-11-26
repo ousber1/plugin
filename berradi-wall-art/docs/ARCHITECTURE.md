@@ -105,3 +105,17 @@ Production (Phase 6) prints from the untouched original using the stored crop `{
   the weighted average cost; exits are valued at it. Quantities are computed in thousandths, costs in 1/10 000 DH
   (integers), never floats.
 * **Print-ready files** — `storage/print_files` (deny-all), type checked with finfo, downloads logged.
+
+## Documents & finance (Phase 7)
+
+* **Numbering** — `SequenceService::next()` per type and year (`DEV`, `FAC`, `AV`, `REC`…). Invoice numbers are taken
+  only when a draft is issued, inside the issuing transaction, so a failed issue never consumes a number.
+* **Immutability** — an issued invoice / credit note stores `company_snapshot` (legal identity at issue time) and
+  `integrity_hash` (SHA-256 of number, dates, parties, lines, totals). `InvoiceService::verify()` recomputes it.
+  Corrections are credit notes only; a fully credited invoice becomes *cancelled* and stays in the books.
+* **Amounts** — integer cents everywhere (`Money`), decimal quantities as hundredths (`Money::mulQty`). Invoices built
+  from orders keep the order's TTC total exactly: HT = TTC / (1 + rate) per line, VAT = total − HT.
+* **PDF** — Dompdf with the bundled DejaVu Sans. Arabic is shaped (contextual forms, lam-alef) and put in visual order
+  by `ArabicShaper`, since Dompdf has no bidi support; Arabic documents also emit table columns right-to-left.
+  Issued PDFs are archived under `storage/invoices/YYYY/` (deny-all) and served only through authorised routes.
+* **Customer links** — quotations and invoices e-mailed with a 64-hex secret; only its SHA-256 is stored.

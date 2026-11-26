@@ -27,4 +27,13 @@ return [
     'artwork_proof_cta' => 'عرض تصميمي والمصادقة عليه',
     'artwork_proof_note' => 'هذا الرابط شخصي ولا يمكن استعماله إلا مرة واحدة.',
     'internal_alert_subject' => '[الورشة] الطلب :number',
+    'quotation_sent_subject' => 'عرض السعر :number — BERRADI WALL ART',
+    'quotation_text' => 'تجدون عرض السعر :number بمبلغ :total، صالح إلى غاية :date. يمكنكم الاطلاع عليه وتحميله وإعطاء موافقتكم عبر الإنترنت.',
+    'quotation_cta' => 'عرض عرض السعر',
+    'invoice_sent_subject' => 'وثيقتكم :number — BERRADI WALL ART',
+    'invoice_text' => 'فاتورتكم :number بمبلغ :total متوفرة.',
+    'credit_note_text' => 'إشعار الدائن :number بمبلغ :total متوفر.',
+    'invoice_cta' => 'تحميل PDF',
+    'private_link' => 'هذا الرابط شخصي: لا تقم بإعادة توجيهه.',
+    'internal_alert_subject_q' => '[عرض سعر] :number',
 ];

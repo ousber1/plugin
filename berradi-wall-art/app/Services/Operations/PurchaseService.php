@@ -54,7 +54,7 @@ final class PurchaseService
             $sub += $lineCents;
             $tax += $lineTax;
             $clean[] = ['material_id' => $mat, 'description' => mb_substr($desc, 0, 255), 'quantity' => InventoryService::fromMilli(InventoryService::toMilli($q)),
-                'unit_cost' => InventoryService::microToCost(InventoryService::costToMicro($c)), 'tax_rate' => number_format((float) $r / 100, 4, '.', ''), 'line_total' => Money::fromCents($lineCents)];
+                'unit_cost' => InventoryService::microToCost(InventoryService::costToMicro($c)), 'tax_rate' => number_format((float) $r, 4, '.', ''), 'line_total' => Money::fromCents($lineCents)];
         }
         return $db->transaction(function (Database $db) use ($id, $head, $clean, $sub, $tax, $userId): int {
             $values = [

@@ -8,6 +8,11 @@
 
 use App\Controllers\Admin\ActivityLogController;
 use App\Controllers\Admin\ArtworkController;
+use App\Controllers\Admin\ExpenseController;
+use App\Controllers\Admin\FinanceController;
+use App\Controllers\Admin\InvoiceController;
+use App\Controllers\Admin\PaymentController;
+use App\Controllers\Admin\QuotationController;
 use App\Controllers\Admin\InventoryController;
 use App\Controllers\Admin\OrderController;
 use App\Controllers\Admin\ProductionController;
@@ -128,6 +133,58 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->post('/maintenance/update', [MaintenanceController::class, 'update'])->name('maintenance.update');
             $router->post('/maintenance/demo', [MaintenanceController::class, 'demo'])->name('maintenance.demo');
         });
+
+        // ---------------------------------------------------------------- quotations
+        $router->group(['middleware' => ['can:quotations.view,quotations.manage']], function ($router): void {
+            $router->get('/quotations', [QuotationController::class, 'index'])->name('quotations.index');
+        });
+        $router->group(['middleware' => ['can:quotations.manage']], function ($router): void {
+            $router->get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+            $router->post('/quotations', [QuotationController::class, 'save'])->name('quotations.store');
+            $router->get('/quotations/{id}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
+            $router->post('/quotations/{id}', [QuotationController::class, 'save'])->name('quotations.update');
+            $router->post('/quotations/{id}/send', [QuotationController::class, 'send'])->middleware('throttle:20,10')->name('quotations.send');
+            $router->post('/quotations/{id}/status', [QuotationController::class, 'status'])->name('quotations.status');
+            $router->post('/quotations/{id}/duplicate', [QuotationController::class, 'duplicate'])->name('quotations.duplicate');
+            $router->post('/quotations/{id}/convert', [QuotationController::class, 'convert'])->middleware('can:orders.create')->name('quotations.convert');
+        });
+        $router->group(['middleware' => ['can:quotations.view,quotations.manage']], function ($router): void {
+            $router->get('/quotations/{id}', [QuotationController::class, 'show'])->name('quotations.show');
+            $router->get('/quotations/{id}/pdf', [QuotationController::class, 'pdf'])->name('quotations.pdf');
+        });
+
+        // ---------------------------------------------------------------- invoices & credit notes
+        $router->group(['middleware' => ['can:invoices.view,invoices.manage']], function ($router): void {
+            $router->get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        });
+        $router->group(['middleware' => ['can:invoices.manage']], function ($router): void {
+            $router->get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+            $router->post('/invoices', [InvoiceController::class, 'save'])->name('invoices.store');
+            $router->post('/invoices/from-order/{orderId}', [InvoiceController::class, 'fromOrder'])->name('invoices.from_order');
+            $router->get('/invoices/{id}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
+            $router->post('/invoices/{id}', [InvoiceController::class, 'save'])->name('invoices.update');
+            $router->post('/invoices/{id}/issue', [InvoiceController::class, 'issue'])->name('invoices.issue');
+            $router->post('/invoices/{id}/delete', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+            $router->post('/invoices/{id}/credit', [InvoiceController::class, 'credit'])->name('invoices.credit');
+            $router->post('/invoices/{id}/send', [InvoiceController::class, 'send'])->middleware('throttle:20,10')->name('invoices.send');
+        });
+        $router->post('/invoices/{id}/payments', [InvoiceController::class, 'payment'])->middleware('can:payments.manage')->name('invoices.payment');
+        $router->group(['middleware' => ['can:invoices.view,invoices.manage']], function ($router): void {
+            $router->get('/invoices/{id}', [InvoiceController::class, 'show'])->name('invoices.show');
+            $router->get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        });
+
+        // ---------------------------------------------------------------- payments, expenses, finance
+        $router->get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view,payments.manage')->name('payments.index');
+        $router->post('/orders/{orderId}/refunds', [PaymentController::class, 'refund'])->middleware('can:payments.manage')->name('orders.refund');
+        $router->group(['middleware' => ['can:expenses.manage']], function ($router): void {
+            $router->get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+            $router->post('/expenses', [ExpenseController::class, 'save'])->name('expenses.store');
+            $router->post('/expenses/{id}', [ExpenseController::class, 'save'])->name('expenses.update');
+            $router->post('/expenses/{id}/delete', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+            $router->get('/expenses/{id}/receipt', [ExpenseController::class, 'receipt'])->name('expenses.receipt');
+        });
+        $router->get('/finance', [FinanceController::class, 'index'])->middleware('can:finance.view')->name('finance.index');
 
         // ---------------------------------------------------------------- orders
         $router->get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');

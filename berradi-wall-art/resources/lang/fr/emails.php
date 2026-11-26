@@ -27,4 +27,13 @@ return [
     'artwork_proof_cta' => 'Voir et valider mon visuel',
     'artwork_proof_note' => 'Ce lien est personnel et ne peut être utilisé qu’une fois.',
     'internal_alert_subject' => '[Atelier] Commande :number',
+    'quotation_sent_subject' => 'Votre devis :number — BERRADI WALL ART',
+    'quotation_text' => 'Veuillez trouver votre devis :number d’un montant de :total, valable jusqu’au :date. Vous pouvez le consulter, le télécharger et nous donner votre accord en ligne.',
+    'quotation_cta' => 'Voir le devis',
+    'invoice_sent_subject' => 'Votre document :number — BERRADI WALL ART',
+    'invoice_text' => 'Votre facture :number d’un montant de :total est disponible.',
+    'credit_note_text' => 'Votre avoir :number d’un montant de :total est disponible.',
+    'invoice_cta' => 'Télécharger le PDF',
+    'private_link' => 'Ce lien est personnel : ne le transférez pas.',
+    'internal_alert_subject_q' => '[Devis] :number',
 ];

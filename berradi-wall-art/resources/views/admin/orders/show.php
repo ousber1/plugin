@@ -159,6 +159,19 @@ $cod = $method !== null && $method['code'] === 'cod';
                     <div class="stat-line"><span><code class="small"><?= e($p['payment_number']) ?></code> · <?= e((string) $p['method_name']) ?><?= $p['reference'] ? ' · ' . e($p['reference']) : '' ?> <span class="small text-muted-bwa"><?= $p['paid_at'] ? e(format_date($p['paid_at'], true)) : '' ?></span></span>
                         <span class="<?= $p['payment_type'] === 'refund' ? 'text-danger' : '' ?>"><?= $p['payment_type'] === 'refund' ? '− ' : '' ?><?= e(money($p['amount'])) ?> <span class="badge-status <?= status_class($p['status']) ?>"><?= e($p['status']) ?></span></span></div>
                 <?php endforeach; ?>
+                <?php if (can('payments.manage') && (float) $o['amount_paid'] > 0): ?>
+                    <details class="mt-3">
+                        <summary class="small text-danger"><?= e(__('finance.refund')) ?></summary>
+                        <form method="post" action="<?= e(route('admin.orders.refund', ['orderId' => $o['id']])) ?>" class="row g-2 align-items-end mt-1" novalidate>
+                            <?= csrf_field() ?>
+                            <div class="col-md-3"><label class="form-label small" for="refund_amount"><?= e(__('orders.amount')) ?></label><input class="form-control" id="refund_amount" name="amount" inputmode="decimal"></div>
+                            <div class="col-md-3"><label class="form-label small" for="refund_method"><?= e(__('orders.payment_method')) ?></label><select class="form-select" id="refund_method" name="payment_method_id"><?php foreach ($methods as $m): ?><option value="<?= (int) $m['id'] ?>"><?= e($m['name']) ?></option><?php endforeach; ?></select></div>
+                            <div class="col-md-4"><label class="form-label small" for="refund_reason"><?= e(__('finance.reason')) ?></label><input class="form-control" id="refund_reason" name="reason" maxlength="1000"></div>
+                            <div class="col-md-2"><button class="btn btn-outline-danger w-100" type="submit" data-confirm-click="<?= e(__('finance.refund_confirm')) ?>"><?= e(__('finance.refund_btn')) ?></button></div>
+                            <div class="col-12 form-text"><?= e(__('finance.refund_help', ['max' => money($o['amount_paid'])])) ?></div>
+                        </form>
+                    </details>
+                <?php endif; ?>
                 <?php if (can('payments.manage') && (float) $o['balance_due'] > 0 && $o['status'] !== OrderStatus::CANCELLED): ?>
                     <form method="post" action="<?= e(route('admin.orders.payment', ['id' => $o['id']])) ?>" class="row g-2 align-items-end mt-2" novalidate>
                         <?= csrf_field() ?>
@@ -171,6 +184,24 @@ $cod = $method !== null && $method['code'] === 'cod';
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- invoices -->
+        <?php if (can('invoices.view') || can('invoices.manage')): ?>
+            <div class="admin-card mb-4" id="invoices">
+                <div class="card-header"><h2><?= e(__('finance.invoices')) ?></h2>
+                    <?php if (can('invoices.manage') && $activeInvoice === null && $o['status'] !== OrderStatus::CANCELLED): ?>
+                        <form method="post" action="<?= e(route('admin.invoices.from_order', ['orderId' => $o['id']])) ?>"><?= csrf_field() ?><button class="btn btn-sm btn-outline-bwa" type="submit"><i class="bi bi-file-earmark-plus me-1"></i><?= e(__('finance.create_invoice')) ?></button></form>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body">
+                    <?php foreach ($invoices as $iv): ?>
+                        <div class="stat-line"><span><a href="<?= e(route('admin.invoices.show', ['id' => $iv['id']])) ?>"><?= e($iv['invoice_number'] ?: __('finance.draft_n', ['n' => $iv['id']])) ?></a> · <?= e(__($iv['invoice_type'] === 'credit_note' ? 'finance.credit_note' : 'finance.invoice')) ?></span>
+                            <span><span class="badge-status <?= status_class($iv['status'] === 'issued' ? 'unpaid' : ($iv['status'] === 'partially_paid' ? 'partial' : $iv['status'])) ?>"><?= e(__('finance.is_' . $iv['status'])) ?></span> <?= $iv['invoice_type'] === 'credit_note' ? '−' : '' ?><?= e(money($iv['total_ttc'])) ?></span></div>
+                    <?php endforeach; ?>
+                    <?php if ($invoices === []): ?><p class="small text-muted-bwa mb-0"><?= e(__('finance.no_invoice_yet')) ?></p><?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- history -->
         <div class="admin-card" id="history">

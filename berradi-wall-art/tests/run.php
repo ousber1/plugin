@@ -1243,6 +1243,175 @@ $t->test('print-ready files: type checked by content, stored privately', functio
     @unlink($tmp);
 });
 
+
+$t->section('Phase 7: quotations, invoices, credit notes, payments, PDF, finance');
+$scratch = getenv('BWA_PDF_OUT') ?: '';
+$t->test('document lines: decimal quantities, line discounts, VAT per line, validation', function (TestRunner $t): void {
+    $c = \App\Services\Finance\DocumentLines::compute([
+        ['description' => 'Toile 120×80', 'quantity' => '2', 'unit_price' => '1 250,00', 'discount' => '100', 'tax_rate' => '20'],
+        ['description' => 'Pose sur site', 'quantity' => '2,5', 'unit_price' => '199.99', 'tax_rate' => '20'],
+        ['description' => '', 'unit_price' => ''],
+    ]);
+    $t->equals(2, count($c['lines']), 'empty row ignored');
+    $t->equals('2400.00', $c['lines'][0]['ht']);
+    $t->equals('480.00', $c['lines'][0]['tax']);
+    $t->equals('499.98', $c['lines'][1]['ht'], '2.5 × 199.99 rounded half up');
+    $t->equals('2899.98', $c['ht']);
+    $t->equals('580.00', $c['tax']);
+    $t->equals('3479.98', $c['total']);
+    $t->throws(fn () => \App\Services\Finance\DocumentLines::compute([['description' => 'X', 'quantity' => '1', 'unit_price' => '10', 'discount' => '11', 'tax_rate' => '20']]), \App\Core\ValidationException::class);
+    $t->throws(fn () => \App\Services\Finance\DocumentLines::compute([['description' => 'X', 'quantity' => '0', 'unit_price' => '10', 'tax_rate' => '20']]), \App\Core\ValidationException::class);
+    $t->equals('mille-deux-cent-quatre-vingts dirhams et cinquante centimes', \App\Services\Finance\AmountInWords::fr('1280.50'));
+    $t->equals("\u{FEE1}\u{FEFC}\u{FEB3}", \App\Services\Finance\ArabicShaper::visualLine('سلام'), 'Arabic joined + RTL');
+});
+$t->test('quotation: numbered draft, single-use customer link, acceptance, conversion into an order with the same total', function (TestRunner $t) use ($db): void {
+    $Q = \App\Services\Finance\QuotationService::class;
+    $id = $Q::save(null, ['customer_name' => 'Riad Atlas', 'customer_company' => 'Riad Atlas SARL', 'customer_ice' => '001122334000055', 'customer_email' => 'contact@riad.test',
+        'customer_phone' => '0524000000', 'customer_address' => 'Derb Sidi Bouloukat, Marrakech'], [
+        ['description' => 'Triptyque Atlas 3×(60×90) toile', 'quantity' => '2', 'unit_price' => '2500', 'tax_rate' => '20'],
+        ['description' => 'Installation', 'quantity' => '1', 'unit_price' => '400', 'discount' => '50', 'tax_rate' => '20'],
+    ], 1);
+    $q = $Q::find($id);
+    $t->assert(str_starts_with((string) $q['quotation_number'], 'DEV-' . date('Y') . '-'), 'number');
+    $t->equals('6420.00', (string) $q['total'], '(5000 + 350) × 1.2');
+    $t->equals(date('Y-m-d', strtotime('+15 days')), (string) $q['valid_until'], 'validity from settings');
+    $raw = substr($Q::send($id, 1), -64);
+    $t->equals(hash('sha256', $raw), (string) $db->value('SELECT access_token FROM quotations WHERE id = ?', [$id]));
+    $t->equals(1, (int) $db->value("SELECT COUNT(*) FROM notifications WHERE event = 'quotation_sent' AND related_type = 'quotation' AND related_id = ?", [$id]));
+    $t->equals(true, $Q::respond($raw, true, '127.0.0.1'));
+    $t->equals(false, $Q::respond($raw, false, '127.0.0.1'), 'answered once');
+    $t->equals('accepted', (string) $db->value('SELECT status FROM quotations WHERE id = ?', [$id]));
+    $t->throws(fn () => $Q::save($id, ['customer_name' => 'X'], [['description' => 'Y', 'quantity' => '1', 'unit_price' => '1', 'tax_rate' => '20']], 1), \App\Core\ValidationException::class, 'accepted quote is locked');
+    $order = $Q::convert($id, ['city' => 'Marrakech', 'address' => 'Derb Sidi Bouloukat', 'phone' => '0524000000'], 1);
+    $t->equals('6420.00', (string) $order['grand_total']);
+    $t->equals('quotation', $order['source']);
+    $t->equals('converted', (string) $db->value('SELECT status FROM quotations WHERE id = ?', [$id]));
+    $t->equals((int) $order['id'], (int) $db->value('SELECT converted_order_id FROM quotations WHERE id = ?', [$id]));
+    $dup = $Q::duplicate($id, 1);
+    $t->equals('draft', (string) $db->value('SELECT status FROM quotations WHERE id = ?', [$dup]));
+    $t->equals('6420.00', (string) $db->value('SELECT total FROM quotations WHERE id = ?', [$dup]));
+    $db->update('quotations', ['status' => 'sent', 'valid_until' => date('Y-m-d', strtotime('-1 day'))], ['id' => $dup]);
+    $t->assert($Q::expireDue() >= 1, 'cron expires');
+    $t->equals('expired', (string) $db->value('SELECT status FROM quotations WHERE id = ?', [$dup]));
+});
+$t->test('invoice from an order: HT/VAT split equals the amount owed, sequential numbers at issue, integrity hash', function (TestRunner $t) use ($db): void {
+    $I = \App\Services\Finance\InvoiceService::class;
+    $o = $db->fetch("SELECT * FROM orders WHERE source = 'quotation' ORDER BY id DESC LIMIT 1");
+    $id = $I::fromOrder((int) $o['id'], 1);
+    $inv = $I::find($id);
+    $t->equals('draft', $inv['status']);
+    $t->equals(null, $inv['invoice_number'], 'drafts have no number');
+    $t->equals((string) $o['grand_total'], (string) $inv['total_ttc']);
+    $ht = \App\Helpers\Money::add(\App\Helpers\Money::sub((string) $inv['subtotal_ht'], (string) $inv['discount_total']), (string) $inv['shipping_ht']);
+    $t->equals((string) $inv['total_ttc'], \App\Helpers\Money::add($ht, (string) $inv['tax_total']), 'HT + VAT = TTC');
+    $t->equals('5350.00', $ht);
+    $t->throws(fn () => $I::fromOrder((int) $o['id'], 1), \App\Core\ValidationException::class, 'one invoice per order');
+    $before = (int) $db->value("SELECT COALESCE(MAX(last_number), 0) FROM document_sequences WHERE sequence_type = 'invoice' AND period_year = ?", [(int) date('Y')]);
+    $issued = $I::issue($id, 1);
+    $t->equals(sprintf('FAC-%s-%06d', date('Y'), $before + 1), $issued['invoice_number']);
+    $t->equals(date('Y-m-d'), (string) $issued['issue_date']);
+    $t->assert(json_decode((string) $issued['company_snapshot'], true)['company_name'] !== null, 'company frozen');
+    $t->equals(true, $I::verify($issued));
+    $line = $db->fetch('SELECT id, total_ttc FROM invoice_items WHERE invoice_id = ? LIMIT 1', [$id]);
+    $db->update('invoice_items', ['total_ttc' => '1.00'], ['id' => (int) $line['id']]);
+    $t->equals(false, $I::verify($I::find($id)), 'tampering detected');
+    $db->update('invoice_items', ['total_ttc' => $line['total_ttc']], ['id' => (int) $line['id']]);
+    $t->equals(true, $I::verify($I::find($id)));
+    $t->throws(fn () => $I::deleteDraft($id), \App\Core\ValidationException::class, 'issued invoice cannot be deleted');
+    $t->throws(fn () => $I::issue($id, 1), \App\Core\ValidationException::class, 'issued once');
+    \App\Services\Payments\PaymentService::recordConfirmed((int) $o['id'], '1000.00', (int) $db->value("SELECT id FROM payment_methods WHERE code = 'bank_transfer'"), null, 'VIR-INV', null, 1);
+    $t->equals('partially_paid', (string) $db->value('SELECT status FROM invoices WHERE id = ?', [$id]));
+    $t->equals('1000.00', (string) $db->value('SELECT amount_paid FROM invoices WHERE id = ?', [$id]));
+});
+$t->test('credit notes: partial then the rest cancels the invoice (kept, never deleted); refunds capped at what was paid', function (TestRunner $t) use ($db): void {
+    $I = \App\Services\Finance\InvoiceService::class;
+    $inv = $db->fetch("SELECT i.* FROM invoices i JOIN orders o ON o.id = i.order_id WHERE o.source = 'quotation' AND i.invoice_type = 'invoice' ORDER BY i.id DESC LIMIT 1");
+    $t->throws(fn () => $I::creditNote((int) $inv['id'], 'x', 1), \App\Core\ValidationException::class, 'reason required');
+    $t->throws(fn () => $I::creditNote((int) $inv['id'], 'Geste commercial', 1, '99999'), \App\Core\ValidationException::class, 'above invoice');
+    $cn = $I::creditNote((int) $inv['id'], 'Geste commercial (retard)', 1, '420');
+    $t->assert(str_starts_with((string) $cn['invoice_number'], 'AV-' . date('Y') . '-'), 'credit note number');
+    $t->equals('420.00', (string) $cn['total_ttc']);
+    $t->equals('350.00', (string) $cn['subtotal_ht'], '420 TTC at 20 %');
+    $t->equals('partially_paid', (string) $db->value('SELECT status FROM invoices WHERE id = ?', [(int) $inv['id']]));
+    $t->equals('5000.00', $I::balance($I::find((int) $inv['id'])), '6420 − 420 − 1000');
+    $t->throws(fn () => $I::creditNote((int) $inv['id'], 'Annulation', 1), \App\Core\ValidationException::class, 'full credit after a partial one must state the amount');
+    $I::creditNote((int) $inv['id'], 'Annulation de la commande', 1, '6000');
+    $row = $db->fetch('SELECT status, cancel_reason, invoice_number FROM invoices WHERE id = ?', [(int) $inv['id']]);
+    $t->equals('cancelled', $row['status']);
+    $t->equals('Annulation de la commande', $row['cancel_reason']);
+    $t->assert($row['invoice_number'] !== null, 'number kept');
+    $t->equals(2, (int) $db->value("SELECT COUNT(*) FROM invoices WHERE original_invoice_id = ? AND invoice_type = 'credit_note'", [(int) $inv['id']]));
+    $P = \App\Services\Payments\PaymentService::class;
+    $m = (int) $db->value("SELECT id FROM payment_methods WHERE code = 'bank_transfer'");
+    $t->throws(fn () => $P::refund((int) $inv['order_id'], '1000.01', $m, 'Remboursement', 1), InvalidArgumentException::class);
+    $P::refund((int) $inv['order_id'], '400.00', $m, 'Remboursement partiel', 1);
+    $o = $db->fetch('SELECT amount_paid, payment_status FROM orders WHERE id = ?', [(int) $inv['order_id']]);
+    $t->equals('600.00', (string) $o['amount_paid']);
+    $t->equals('partially_refunded', $o['payment_status']);
+    $t->assert($I::activeForOrder((int) $inv['order_id']) === null, 'fully credited: the order may be invoiced again');
+});
+$t->test('standalone invoice: typed HT lines, payments on the invoice, overpayment refused', function (TestRunner $t) use ($db): void {
+    $I = \App\Services\Finance\InvoiceService::class;
+    $id = $I::saveManual(null, ['customer_name' => 'Agence Lumière', 'customer_ice' => '002233445000011', 'locale' => 'fr'], [
+        ['description' => 'Décoration bureaux — 12 toiles 50×70', 'quantity' => '12', 'unit_price' => '350', 'tax_rate' => '20'],
+    ], 1);
+    $t->equals('5040.00', (string) $I::find($id)['total_ttc']);
+    $id = $I::saveManual($id, ['customer_name' => 'Agence Lumière', 'customer_ice' => '002233445000011', 'locale' => 'fr'], [
+        ['description' => 'Décoration bureaux — 12 toiles 50×70', 'quantity' => '12', 'unit_price' => '350', 'discount' => '200', 'tax_rate' => '20'],
+    ], 1);
+    $t->equals('4800.00', (string) $I::find($id)['total_ttc'], 'draft edited');
+    $I::issue($id, 1);
+    $P = \App\Services\Payments\PaymentService::class;
+    $m = (int) $db->value("SELECT id FROM payment_methods WHERE code = 'bank_transfer'");
+    $t->throws(fn () => $P::recordForInvoice($id, '4800.01', $m, null, 1), InvalidArgumentException::class);
+    $P::recordForInvoice($id, '4800', $m, 'VIR-LUM', 1);
+    $t->equals('paid', (string) $db->value('SELECT status FROM invoices WHERE id = ?', [$id]));
+    $t->throws(fn () => $I::saveManual($id, ['customer_name' => 'X'], [['description' => 'Y', 'quantity' => '1', 'unit_price' => '1', 'tax_rate' => '20']], 1), \App\Core\ValidationException::class, 'issued invoice locked');
+});
+$t->test('PDF: invoice (FR + AR), credit note and quotation render with Dompdf; issued invoices are archived', function (TestRunner $t) use ($db, $scratch): void {
+    if (!\App\Services\Finance\PdfService::available()) {
+        $t->assert(false, 'Dompdf not installed (composer install)');
+        return;
+    }
+    $inv = $db->fetch("SELECT * FROM invoices WHERE invoice_type = 'invoice' AND order_id IS NULL AND status = 'paid' ORDER BY id DESC LIMIT 1");
+    $pdf = \App\Services\Finance\PdfService::invoice($inv);
+    $t->assert(str_starts_with($pdf, '%PDF-'), 'PDF bytes');
+    $fresh = $db->fetch('SELECT pdf_path FROM invoices WHERE id = ?', [(int) $inv['id']]);
+    $t->assert($fresh['pdf_path'] !== null && is_file(storage_path('invoices/' . $fresh['pdf_path'])), 'archived in storage/invoices');
+    $ar = $inv;
+    $ar['locale'] = 'ar';
+    $ar['pdf_path'] = null;
+    $ar['status'] = 'draft';
+    $ar['customer_name'] = 'شركة الأطلس للديكور';
+    $pdfAr = \App\Services\Finance\PdfService::invoice($ar);
+    $t->assert(str_starts_with($pdfAr, '%PDF-'), 'Arabic PDF');
+    $cn = $db->fetch("SELECT * FROM invoices WHERE invoice_type = 'credit_note' ORDER BY id DESC LIMIT 1");
+    $q = $db->fetch('SELECT * FROM quotations ORDER BY id LIMIT 1');
+    $pdfCn = \App\Services\Finance\PdfService::invoice($cn);
+    $pdfQ = \App\Services\Finance\PdfService::quotation($q);
+    $t->assert(str_starts_with($pdfCn, '%PDF-') && str_starts_with($pdfQ, '%PDF-'));
+    if ($scratch !== '' && is_dir($scratch)) {
+        file_put_contents($scratch . '/invoice-fr.pdf', $pdf);
+        file_put_contents($scratch . '/invoice-ar.pdf', $pdfAr);
+        file_put_contents($scratch . '/credit-note.pdf', $pdfCn);
+        file_put_contents($scratch . '/quotation.pdf', $pdfQ);
+    }
+    @unlink(storage_path('invoices/' . $fresh['pdf_path']));
+});
+$t->test('finance summary: cash in/out, VAT collected − deductible, receivables and payables from recorded documents', function (TestRunner $t) use ($db): void {
+    $F = \App\Services\Finance\FinanceStats::class;
+    $p = $F::period('month');
+    $s = $F::summary($p['from'], $p['to']);
+    $t->equals(\App\Helpers\Money::normalize((string) $db->value("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='confirmed' AND payment_type='payment' AND paid_at >= ? AND paid_at < ?", [$p['from'], $p['to']])), $s['cash_in']);
+    $t->equals(\App\Helpers\Money::sub($s['vat_collected'], $s['vat_deductible']), $s['vat_due']);
+    $t->equals(\App\Helpers\Money::sub($s['cash_in'], $s['cash_out']), $s['net_cash']);
+    $t->assert(\App\Helpers\Money::toCents($s['refunds']) >= 40000, 'refund counted as cash out');
+    $t->equals(12, count($F::cashflow(12)));
+    $r = $F::receivables();
+    $t->equals(\App\Helpers\Money::add($r['orders'], $r['invoices']), $r['total']);
+    $t->assert(\App\Helpers\Money::toCents($F::payables()) >= 0);
+});
+
 $demo->remove();
 
 exit($t->finish());

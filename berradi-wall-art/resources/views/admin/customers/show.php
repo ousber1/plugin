@@ -8,6 +8,7 @@ $canManage = can('customers.manage');
     <?php if ($canManage): ?>
         <div class="page-actions">
             <?php if ($c['phone']): ?><a class="btn btn-sm btn-outline-bwa" href="<?= e(whatsapp_link((string) $c['phone'])) ?>" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>WhatsApp</a><?php endif; ?>
+            <?php if (can('quotations.manage')): ?><a class="btn btn-sm btn-outline-bwa" href="<?= e(route('admin.quotations.create', ['customer' => $c['id']])) ?>"><i class="bi bi-file-earmark-text me-1"></i><?= e(__('finance.new_quote')) ?></a><?php endif; ?>
             <a class="btn btn-sm btn-bwa" href="<?= e(route('admin.customers.edit', ['id' => $c['id']])) ?>"><i class="bi bi-pencil me-1"></i><?= e(__('common.edit')) ?></a>
         </div>
     <?php endif; ?>

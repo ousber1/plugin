@@ -25,7 +25,7 @@ $qty = fn ($v) => rtrim(rtrim((string) $v, '0'), '.');
                     <tr><td><?= e($l['description']) ?><?= $l['material_id'] ? '<div class="small text-muted-bwa"><a href="' . e(route('admin.inventory.show', ['id' => $l['material_id']])) . '">' . e((string) $l['sku']) . '</a></div>' : '<div class="small text-muted-bwa">' . e(__('inventory.not_stocked')) . '</div>' ?></td>
                         <td class="text-end text-nowrap"><?= e($qty($l['quantity'])) ?> <?= $l['unit'] ? e(__('inventory.unit_' . $l['unit'])) : '' ?></td>
                         <td class="text-end text-nowrap"><?= e(number_format((float) $l['unit_cost'], 4, ',', ' ')) ?></td>
-                        <td class="text-end"><?= e(rtrim(rtrim(number_format((float) $l['tax_rate'] * 100, 2, '.', ''), '0'), '.')) ?> %</td>
+                        <td class="text-end"><?= e(rtrim(rtrim(number_format((float) $l['tax_rate'], 2, '.', ''), '0'), '.')) ?> %</td>
                         <td class="text-end text-nowrap"><?= e(money($l['line_total'])) ?></td></tr>
                 <?php endforeach; ?></tbody>
             </table></div>

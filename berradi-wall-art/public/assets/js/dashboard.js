@@ -11,7 +11,7 @@
     const rtl = document.documentElement.dir === 'rtl';
     const nf = new Intl.NumberFormat(document.documentElement.lang === 'ar' ? 'ar-MA' : 'fr-MA', { maximumFractionDigits: 0 });
     const money = (v) => nf.format(v) + ' ' + (data.currency || 'DH');
-    const isMoney = { monthlySales: true, monthlyProfit: true, revenueByCategory: true };
+    const isMoney = { monthlySales: true, monthlyProfit: true, revenueByCategory: true, netCash: true };
     const fmt = (key, v) => (isMoney[key] ? money(v) : nf.format(v));
 
     function series(key) {

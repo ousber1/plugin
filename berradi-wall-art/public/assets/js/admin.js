@@ -112,6 +112,53 @@
             el.addEventListener('focus', function () { el.select(); });
         });
 
+        // ---------------------------------------------------------- live totals of HT document lines (display only; the server recomputes)
+        document.querySelectorAll('[data-doc-lines]').forEach(function (box) {
+            const num = (v) => { const n = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.')); return isFinite(n) ? n : 0; };
+            const cents = (v) => Math.round(v * 100);
+            const fmt = (c) => (c / 100).toLocaleString(document.documentElement.lang === 'ar' ? 'ar-MA' : 'fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DH';
+            const update = function () {
+                let ht = 0, tax = 0;
+                box.querySelectorAll('[data-doc-line]').forEach(function (row) {
+                    const get = (f) => num((row.querySelector('[data-f="' + f + '"]') || {}).value);
+                    const price = (row.querySelector('[data-f="price"]') || {}).value;
+                    const out = row.querySelector('[data-line-total]');
+                    if (!price) { if (out) out.textContent = ''; return; }
+                    const lineHt = cents(get('qty') * get('price')) - cents(get('discount'));
+                    const lineTax = Math.round(lineHt * get('rate') / 100);
+                    ht += lineHt; tax += lineTax;
+                    if (out) out.textContent = fmt(lineHt) + ' HT';
+                });
+                const t = box.querySelector('[data-doc-totals]');
+                if (!t) return;
+                t.querySelector('[data-t="ht"]').textContent = fmt(ht);
+                t.querySelector('[data-t="tax"]').textContent = fmt(tax);
+                t.querySelector('[data-t="ttc"]').textContent = fmt(ht + tax);
+            };
+            box.addEventListener('input', update);
+            new MutationObserver(update).observe(box, { childList: true });
+            update();
+        });
+
+        // ---------------------------------------------------------- customer picker fills the customer block
+        document.querySelectorAll('[data-customer-picker]').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                const o = sel.options[sel.selectedIndex];
+                if (!o || !o.dataset.name) return;
+                const set = (n, v) => { const el = sel.form.querySelector('[name="' + n + '"]'); if (el && v !== undefined) el.value = v; };
+                set('customer_name', o.dataset.name); set('customer_company', o.dataset.company || ''); set('customer_ice', o.dataset.ice || '');
+                set('customer_email', o.dataset.email || ''); set('customer_phone', o.dataset.phone || '');
+            });
+        });
+
+        // ---------------------------------------------------------- credit note: amount field only for a partial credit
+        document.querySelectorAll('[data-credit-mode]').forEach(function (form) {
+            const amount = form.querySelector('[data-credit-amount]');
+            const sync = function () { const v = form.querySelector('[name="mode"]:checked'); if (amount) amount.classList.toggle('d-none', !v || v.value !== 'partial'); };
+            form.addEventListener('change', sync);
+            sync();
+        });
+
         // ---------------------------------------------------------- drag & drop ordering (hidden order[] inputs follow DOM order)
         document.querySelectorAll('[data-sortable]').forEach(function (list) {
             let dragged = null;

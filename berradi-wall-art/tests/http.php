@@ -1247,4 +1247,157 @@ $t->test('Phase 6 admin pages render in Arabic (RTL)', function (TestRunner $t) 
     $o->get('/lang/fr');
 });
 
+$t->section('Quotations, invoices, credit notes, payments & finance (Phase 7)');
+$p7 = ['quote' => 0, 'order' => 0, 'invoice' => 0];
+$t->test('quotation: create, send, customer views the PDF and accepts online, converted into an order', function (TestRunner $t) use ($o, $base, $q6, &$p7): void {
+    $o->post('/admin/quotations', [
+        'customer_name' => 'Yassine Alami', 'customer_company' => 'Hôtel Kasbah', 'customer_ice' => '001234567000088', 'customer_email' => 'yassine@kasbah.test',
+        'customer_phone' => '0524 11 22 33', 'customer_address' => 'Route d’Amizmiz, Marrakech', 'issue_date' => date('Y-m-d'), 'valid_until' => date('Y-m-d', strtotime('+15 days')),
+        'locale' => 'fr', 'terms' => 'Acompte 50 %', 'lines' => [
+            ['description' => 'Toiles chambres 40×60', 'specifications' => 'Toile canvas, bords miroir', 'quantity' => '20', 'unit_price' => '250', 'tax_rate' => '20'],
+            ['description' => 'Grand format lobby 150×100', 'quantity' => '1', 'unit_price' => '2 400,00', 'discount' => '200', 'tax_rate' => '20'],
+            ['description' => '', 'unit_price' => ''],
+        ],
+    ], '/admin/quotations/create');
+    $t->assert(preg_match('#^/admin/quotations/(\d+)$#', $o->location(), $m) === 1, 'saved: ' . $o->location());
+    $p7['quote'] = (int) ($m[1] ?? 0);
+    $t->equals('8640.00', (string) $q6("SELECT total FROM quotations WHERE id = {$p7['quote']}"), '(5000 + 2200) × 1.2');
+    $o->get('/admin/quotations/' . $p7['quote'] . '/pdf');
+    $t->equals('application/pdf', $o->headers['content-type'] ?? '');
+    $t->assert(str_starts_with($o->body, '%PDF-'), 'quotation PDF');
+    $o->post('/admin/quotations/' . $p7['quote'] . '/send', ['message' => 'Comme convenu au téléphone.'], '/admin/quotations/' . $p7['quote']);
+    $o->follow();
+    $t->assert(preg_match('#value="https?://[^"]+/quote/([a-f0-9]{64})"#', $o->body, $mm) === 1, 'share link shown once');
+    $raw = $mm[1] ?? '';
+    $t->contains('/quote/' . $raw, (string) $q6("SELECT body FROM notifications WHERE event = 'quotation_sent' AND related_id = {$p7['quote']}"), 'e-mailed link');
+    $c = new Browser($base);
+    $c->get('/quote/' . $raw);
+    $t->equals(200, $c->status);
+    $t->contains('Toiles chambres 40×60', $c->body);
+    $t->contains('noindex', strtolower($c->headers['x-robots-tag'] ?? ''));
+    $c->get('/quote/' . $raw . '/pdf');
+    $t->assert(str_starts_with($c->body, '%PDF-'), 'customer PDF');
+    $c->get('/quote/' . str_repeat('0', 64));
+    $t->equals(404, $c->status);
+    $c->post('/quote/' . $raw, ['decision' => 'accept', 'comment' => 'Livraison avant le 15 svp'], '/quote/' . $raw);
+    $c->follow();
+    $t->contains('Merci !', $c->body);
+    $t->equals('accepted', (string) $q6("SELECT status FROM quotations WHERE id = {$p7['quote']}"));
+    $o->post('/admin/quotations/' . $p7['quote'] . '/convert', ['address' => 'Route d’Amizmiz km 12', 'city' => 'Marrakech', 'phone' => '0524112233'], '/admin/quotations/' . $p7['quote']);
+    $t->assert(preg_match('#^/admin/orders/(\d+)$#', $o->location(), $om) === 1, 'converted: ' . $o->location());
+    $p7['order'] = (int) ($om[1] ?? 0);
+    $t->equals('8640.00', (string) $q6("SELECT grand_total FROM orders WHERE id = {$p7['order']}"));
+    $t->equals('converted', (string) $q6("SELECT status FROM quotations WHERE id = {$p7['quote']}"));
+});
+$t->test('invoice from the order: draft without number, issue + e-mail, integrity badge, PDF, private customer link', function (TestRunner $t) use ($o, $base, $q6, &$p7): void {
+    $o->get('/admin/orders/' . $p7['order']);
+    $t->contains('Créer la facture', $o->body);
+    $o->post('/admin/invoices/from-order/' . $p7['order'], [], '/admin/orders/' . $p7['order']);
+    $t->assert(preg_match('#^/admin/invoices/(\d+)$#', $o->location(), $m) === 1, 'draft: ' . $o->location());
+    $p7['invoice'] = (int) ($m[1] ?? 0);
+    $t->equals(null, $q6("SELECT invoice_number FROM invoices WHERE id = {$p7['invoice']}") ?: null);
+    $o->post('/admin/invoices/' . $p7['invoice'], ['customer_name' => 'Yassine Alami', 'customer_company' => 'Hôtel Kasbah SARL', 'customer_ice' => '001234567000088', 'customer_email' => 'yassine@kasbah.test', 'locale' => 'fr'], '/admin/invoices/' . $p7['invoice'] . '/edit');
+    $t->equals('Hôtel Kasbah SARL', (string) $q6("SELECT customer_company FROM invoices WHERE id = {$p7['invoice']}"));
+    $o->post('/admin/invoices/' . $p7['invoice'] . '/issue', ['send' => '1'], '/admin/invoices/' . $p7['invoice']);
+    $o->follow();
+    $number = (string) $q6("SELECT invoice_number FROM invoices WHERE id = {$p7['invoice']}");
+    $t->assert(preg_match('/^FAC-' . date('Y') . '-\d{6}$/', $number) === 1, 'numbered at issue: ' . $number);
+    $t->contains('Intègre', $o->body);
+    $t->equals('8640.00', (string) $q6("SELECT total_ttc FROM invoices WHERE id = {$p7['invoice']}"));
+    $o->get('/admin/invoices/' . $p7['invoice'] . '/pdf');
+    $t->assert(str_starts_with($o->body, '%PDF-'), 'invoice PDF');
+    $body = (string) $q6("SELECT body FROM notifications WHERE event = 'invoice_sent' AND related_id = {$p7['invoice']}");
+    $t->assert(preg_match('#/invoice/' . $p7['invoice'] . '/([a-f0-9]{64})#', $body, $lm) === 1, 'download link e-mailed');
+    $c = new Browser($base);
+    $c->get('/invoice/' . $p7['invoice'] . '/' . ($lm[1] ?? ''));
+    $t->equals('application/pdf', $c->headers['content-type'] ?? '');
+    $c->get('/invoice/' . $p7['invoice'] . '/' . str_repeat('a', 64));
+    $t->equals(404, $c->status, 'wrong token');
+    $o->post('/admin/invoices/' . $p7['invoice'] . '/delete', [], '/admin/invoices/' . $p7['invoice']);
+    $o->follow();
+    $t->contains('un document émis se corrige par un avoir', $o->body);
+    $t->equals(1, (int) $q6("SELECT COUNT(*) FROM invoices WHERE id = {$p7['invoice']}"), 'issued invoice kept');
+    $o->post('/admin/invoices/from-order/' . $p7['order'], [], '/admin/orders/' . $p7['order']);
+    $o->follow();
+    $t->contains('déjà une facture', $o->body, 'one invoice per order');
+});
+$t->test('payment on the order updates the invoice; partial then final credit note; refund capped', function (TestRunner $t) use ($o, $q6, &$p7): void {
+    $bank = (string) $q6("SELECT id FROM payment_methods WHERE code = 'bank_transfer'");
+    $o->post('/admin/orders/' . $p7['order'] . '/payments', ['amount' => '4320', 'payment_method_id' => $bank, 'reference' => 'Acompte 50 %'], '/admin/orders/' . $p7['order']);
+    $t->equals('partially_paid', (string) $q6("SELECT status FROM invoices WHERE id = {$p7['invoice']}"));
+    $o->post('/admin/invoices/' . $p7['invoice'] . '/credit', ['mode' => 'partial', 'amount' => '240', 'reason' => 'Geste commercial'], '/admin/invoices/' . $p7['invoice']);
+    $t->assert(preg_match('#^/admin/invoices/(\d+)$#', $o->location(), $m) === 1 && (int) $m[1] !== $p7['invoice'], 'credit note page');
+    $t->assert(preg_match('/^AV-' . date('Y') . '-\d{6}$/', (string) $q6('SELECT invoice_number FROM invoices WHERE id = ' . (int) $m[1])) === 1, 'AV number');
+    $o->post('/admin/orders/' . $p7['order'] . '/refunds', ['amount' => '5000', 'payment_method_id' => $bank, 'reason' => 'Trop'], '/admin/orders/' . $p7['order']);
+    $o->follow();
+    $t->contains('ne peut pas dépasser le montant encaissé', $o->body);
+    $o->post('/admin/orders/' . $p7['order'] . '/refunds', ['amount' => '240', 'payment_method_id' => $bank, 'reason' => 'Geste commercial remboursé'], '/admin/orders/' . $p7['order']);
+    $t->equals('partially_refunded', (string) $q6("SELECT payment_status FROM orders WHERE id = {$p7['order']}"));
+    $o->post('/admin/invoices/' . $p7['invoice'] . '/credit', ['mode' => 'partial', 'amount' => '8400', 'reason' => 'Annulation du solde'], '/admin/invoices/' . $p7['invoice']);
+    $t->equals('cancelled', (string) $q6("SELECT status FROM invoices WHERE id = {$p7['invoice']}"), 'fully credited → cancelled, never deleted');
+    $o->get('/admin/invoices/' . $p7['invoice']);
+    $t->contains('Facture annulée par avoir', $o->body);
+    $o->get('/admin/payments?type=refund');
+    $t->contains('Geste commercial remboursé', $o->body);
+});
+$t->test('standalone invoice: typed lines, issue, payment on the invoice, customer download from the account', function (TestRunner $t) use ($o, $base, $q6): void {
+    $salma = (int) $q6("SELECT id FROM customers WHERE email = 'salma@client.test'");
+    $o->post('/admin/invoices', ['customer_id' => (string) $salma, 'customer_name' => 'Salma Alaoui', 'customer_email' => 'salma@client.test', 'locale' => 'ar', 'lines' => [
+        ['description' => 'Atelier décoration (2 h)', 'quantity' => '2', 'unit_price' => '300', 'tax_rate' => '20'],
+    ]], '/admin/invoices/create');
+    $t->assert(preg_match('#^/admin/invoices/(\d+)$#', $o->location(), $m) === 1, 'draft saved');
+    $id = (int) ($m[1] ?? 0);
+    $o->post('/admin/invoices/' . $id . '/issue', [], '/admin/invoices/' . $id);
+    $t->equals('720.00', (string) $q6("SELECT total_ttc FROM invoices WHERE id = {$id}"));
+    $o->get('/admin/invoices/' . $id . '/pdf');
+    $t->assert(str_starts_with($o->body, '%PDF-'), 'Arabic invoice PDF');
+    $o->post('/admin/invoices/' . $id . '/payments', ['amount' => '720', 'payment_method_id' => (string) $q6("SELECT id FROM payment_methods WHERE code = 'cod'")], '/admin/invoices/' . $id);
+    $t->equals('paid', (string) $q6("SELECT status FROM invoices WHERE id = {$id}"));
+    $c = new Browser($base);
+    $c->post('/account/login', ['email' => 'salma@client.test', 'password' => 'Client2026'], '/account/login');
+    $c->get('/account/invoices/' . $id);
+    $t->equals('application/pdf', $c->headers['content-type'] ?? '', 'own invoice');
+    $x = new Browser($base);
+    $x->post('/account/login', ['email' => 'other@client.test', 'password' => 'Client2026'], '/account/login');
+    $x->get('/account/invoices/' . $id);
+    $t->equals(404, $x->status, 'not another customer\'s');
+});
+$t->test('expenses with a private receipt; finance overview from recorded documents', function (TestRunner $t) use ($o, $q6): void {
+    $pdf = sys_get_temp_dir() . '/bwa-receipt.pdf';
+    file_put_contents($pdf, "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
+    $o->post('/admin/expenses', ['expense_date' => date('Y-m-d'), 'category' => 'rent', 'description' => 'Loyer atelier', 'amount' => '6 000,00', 'tax_amount' => '1000', 'payment_method' => 'bank_transfer'],
+        '/admin/expenses', ['receipt' => [$pdf, 'application/pdf', 'loyer.pdf']]);
+    $id = (int) $q6("SELECT id FROM expenses WHERE description = 'Loyer atelier' ORDER BY id DESC LIMIT 1");
+    $t->assert($id > 0, 'expense saved');
+    $t->equals('6000.00', (string) $q6("SELECT amount FROM expenses WHERE id = {$id}"));
+    $o->get('/admin/expenses/' . $id . '/receipt');
+    $t->equals('application/pdf', $o->headers['content-type'] ?? '');
+    $o->post('/admin/expenses', ['expense_date' => date('Y-m-d'), 'category' => 'rent', 'description' => 'Erreur', 'amount' => '100', 'tax_amount' => '100'], '/admin/expenses');
+    $o->follow();
+    $t->contains('La TVA doit être inférieure', $o->body);
+    $o->get('/admin/finance');
+    $t->equals(200, $o->status);
+    $t->contains('TVA collectée', $o->body);
+    $t->contains('id="dashboard-data"', $o->body);
+    $t->contains('Loyer', $o->body);
+    $o->get('/admin/finance?period=year');
+    $t->equals(200, $o->status);
+    @unlink($pdf);
+});
+$t->test('RBAC: designer has no access to documents and finance; Arabic rendering of Phase 7 pages', function (TestRunner $t) use ($base, $o, &$p7): void {
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    foreach (['/admin/quotations', '/admin/invoices', '/admin/payments', '/admin/expenses', '/admin/finance', '/admin/invoices/' . $p7['invoice'] . '/pdf'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $o->get('/lang/ar');
+    foreach (['/admin/quotations', '/admin/quotations/' . $p7['quote'], '/admin/quotations/create', '/admin/invoices', '/admin/invoices/' . $p7['invoice'], '/admin/invoices/create', '/admin/payments', '/admin/expenses', '/admin/finance'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+
 exit($t->finish());

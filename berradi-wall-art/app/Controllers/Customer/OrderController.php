@@ -52,7 +52,7 @@ final class OrderController extends Controller
             'history' => OrderService::history((int) $order['id']),
             'method' => $db->fetch('SELECT code, name, instructions FROM payment_methods WHERE id = ?', [(int) $order['payment_method_id']]),
             'shipments' => $db->fetchAll('SELECT courier, tracking_number, tracking_url, status, shipped_at FROM shipments WHERE order_id = ? ORDER BY id DESC', [(int) $order['id']]),
-            'invoices' => $db->fetchAll("SELECT id, invoice_number, total_ttc, issue_date FROM invoices WHERE order_id = ? AND status <> 'draft' AND invoice_type = 'invoice' ORDER BY id", [(int) $order['id']]),
+            'invoices' => $db->fetchAll("SELECT id, invoice_number, invoice_type, total_ttc, issue_date FROM invoices WHERE order_id = ? AND status <> 'draft' ORDER BY id", [(int) $order['id']]),
             'cancellable' => OrderService::isCancellable($order),
         ]);
     }

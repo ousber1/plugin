@@ -83,6 +83,20 @@ final class Money
     }
 
     /**
+     * Amount × decimal quantity (up to 2 decimals, e.g. 2.5 m²), rounded half up to the cent.
+     */
+    public static function mulQty(string|int $amount, string|int|float $qty): string
+    {
+        $q = str_replace(',', '.', trim((string) $qty));
+        if (!preg_match('/^\d{1,8}(\.\d{1,2})?$/', $q)) {
+            throw new \InvalidArgumentException('Invalid quantity');
+        }
+        [$i, $d] = array_pad(explode('.', $q, 2), 2, '');
+        $hundredths = (int) $i * 100 + (int) str_pad($d, 2, '0');
+        return self::fromCents(self::roundDiv(self::toCents($amount) * $hundredths, 100));
+    }
+
+    /**
      * Percentage of an amount, e.g. TVA 20% => percent("100.00", "20") = "20.00". Rounds half up.
      * Rate may have up to 4 decimals ("7.5", "20.0000").
      */

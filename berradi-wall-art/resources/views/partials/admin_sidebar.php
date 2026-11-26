@@ -11,9 +11,9 @@ $sections = [
     'admin.nav_sales' => [
         ['admin.orders.index', 'bi-receipt', 'admin.nav_orders', 'orders.view', false, 'orders.manage'],
         ['admin.customers.index', 'bi-people', 'admin.nav_customers', 'customers.view', false, 'customers.manage'],
-        ['admin.quotations.index', 'bi-file-earmark-text', 'admin.nav_quotations', 'quotations.view'],
-        ['admin.invoices.index', 'bi-file-earmark-check', 'admin.nav_invoices', 'invoices.view'],
-        ['admin.payments.index', 'bi-cash-coin', 'admin.nav_payments', 'payments.view'],
+        ['admin.quotations.index', 'bi-file-earmark-text', 'admin.nav_quotations', 'quotations.view', false, 'quotations.manage'],
+        ['admin.invoices.index', 'bi-file-earmark-check', 'admin.nav_invoices', 'invoices.view', false, 'invoices.manage'],
+        ['admin.payments.index', 'bi-cash-coin', 'admin.nav_payments', 'payments.view', false, 'payments.manage'],
     ],
     'admin.nav_catalog' => [
         ['admin.products.index', 'bi-image', 'admin.nav_products', 'products.view', false, 'products.manage'],
@@ -31,6 +31,7 @@ $sections = [
         ['admin.shipping.index', 'bi-truck', 'admin.nav_shipping', 'shipping.manage'],
     ],
     'admin.nav_finance' => [
+        ['admin.finance.index', 'bi-bank', 'admin.nav_finance_overview', 'finance.view'],
         ['admin.expenses.index', 'bi-wallet2', 'admin.nav_expenses', 'expenses.manage'],
         ['admin.reports.index', 'bi-graph-up', 'admin.nav_reports', 'reports.view'],
     ],

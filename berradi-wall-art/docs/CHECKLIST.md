@@ -134,6 +134,25 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | RBAC on every new route (designer: orders read-only, artwork yes, stock/purchases/machines 403, no status change or payment) | ✅ | HTTP |
 | Mobile 390 px and Arabic RTL on all new pages: no horizontal overflow, no JS errors | ✅ | Playwright |
 
-## Phase 7: Invoices, quotations, PDF (FR/AR), payments, finance ⬜
+## Phase 7: Invoices, quotations, PDF (FR/AR), payments, finance ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Document lines priced HT: decimal quantities, line discounts, VAT per line, cent rounding (integer maths), totals = sum of rounded lines | ✅ | integration |
+| Quotations: numbered (DEV-YYYY-NNNNNN), validity from settings, editable while draft/sent (editing a sent quote returns it to draft and kills the old link), duplicate, cancel | ✅ | integration + HTTP |
+| Customer quotation page from a secret link (SHA-256 stored, noindex, no-referrer): view, PDF, accept / decline once, internal alert; cron expires overdue quotes | ✅ | integration + HTTP |
+| Conversion of an accepted quotation into a confirmed order with exactly the same total | ✅ | integration + HTTP |
+| Invoice drafts from an order: HT/VAT split derived from the order (TTC or HT pricing), total = amount owed; one active invoice per order | ✅ | integration + HTTP |
+| Standalone invoices (B2B/services) with typed lines; drafts editable/deletable, never numbered | ✅ | integration + HTTP |
+| Issuing: next number of the year inside the issuing transaction (no gaps), company identity frozen, SHA-256 integrity hash, tampering detected | ✅ | integration (line altered in DB → "modified" badge) |
+| Issued documents never edited or deleted: credit notes (AV-) full or partial; a fully credited invoice is marked cancelled with its reason and kept | ✅ | integration + HTTP |
+| Payments: order payments update the invoice status; payments on standalone invoices; refunds (never above what was received); ledger page with filters | ✅ | integration + HTTP |
+| PDF (Dompdf, no remote resources): FR and AR (Arabic shaping + RTL column order), VAT breakdown, legal identifiers, amount in words (FR), draft/cancelled watermark, signature box on quotes; issued PDFs archived in `storage/invoices` | ✅ | integration + rendered pages inspected |
+| Customer access: invoice link from the e-mail (hashed token) and invoices of their own orders in the account (others: 404) | ✅ | HTTP |
+| Expenses: categories, TTC with recoverable VAT, supplier, private receipt (finfo-checked), monthly view; deletions recorded in the activity log | ✅ | HTTP |
+| Finance overview by period: sales, net invoiced, cash in/out, net cash chart, VAT collected − deductible, receivables (orders + invoices, overdue list), payables, cash by method, expenses by category, estimated profit | ✅ | integration + HTTP + Playwright |
+| RBAC: quotations/invoices/payments/expenses/finance permissions enforced (designer 403) | ✅ | HTTP |
+| Mobile 390 px and Arabic RTL on all new pages: no overflow, no JS errors | ✅ | Playwright |
+
 ## Phase 8: Reports, SEO (sitemap, schema.org, OG), notifications, retention purge, backups, security review ⬜
 ## Phase 9: Optimization, documentation, final ZIP package ⬜

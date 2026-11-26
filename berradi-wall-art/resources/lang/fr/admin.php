@@ -395,4 +395,5 @@ return [
     'nav_machines' => 'Machines',
     'nav_purchases' => 'Achats',
     'nav_suppliers' => 'Fournisseurs',
+    'nav_finance_overview' => 'Vue financière',
 ];

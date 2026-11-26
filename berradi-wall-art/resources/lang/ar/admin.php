@@ -395,4 +395,5 @@ return [
     'nav_machines' => 'الآلات',
     'nav_purchases' => 'المشتريات',
     'nav_suppliers' => 'الموردون',
+    'nav_finance_overview' => 'نظرة مالية',
 ];
