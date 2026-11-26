@@ -32,6 +32,8 @@ php bin/console migrate | migrate:status | migrate:rollback | seed
 php bin/console make:admin email@example.ma "Full Name" 'StrongPass1'
 php bin/console schema:dump      # regenerates database/schema.sql
 php bin/console cron:run         # add to cPanel cron every 15 min
+php bin/console demo:install     # optional demo catalogue (also offered by the installer)
+php bin/console demo:remove      # removes everything the demo created
 php bin/console lint             # php -l on every file
 ```
 
@@ -45,5 +47,5 @@ MYSQL_ADMIN_CMD="mysql -uroot" DB_NAME=bwa_install DB_USER=user DB_PASS=pass tes
 ```
 
 ## Default access after installation
-* Storefront: `/` · Customer area: `/account`
+* Storefront: `/`, `/shop`, `/collections`, `/best-sellers`, `/new-arrivals`, `/offers`, `/product/{slug}`, `/about`, `/contact`, `/faq` · Customer area: `/account`
 * Administration: `/admin` (change with `ADMIN_PATH` in `.env`); Super Admin created by the installer

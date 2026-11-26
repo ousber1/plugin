@@ -44,6 +44,9 @@ $phone = (string) setting('company_phone', '');
                     <?php endforeach; ?>
                 </ul>
                 <div class="d-flex align-items-center gap-1">
+                    <?php if ($router->has('shop.index')): ?>
+                        <button class="header-icon btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#headerSearch" aria-expanded="false" aria-controls="headerSearch" title="<?= e(__('shop.search')) ?>"><i class="bi bi-search"></i></button>
+                    <?php endif; ?>
                     <?php if ($customer): ?>
                         <a class="header-icon" href="<?= e(route('customer.account')) ?>" title="<?= e(__('nav.account')) ?>"><i class="bi bi-person"></i><span class="d-lg-none ms-2 fs-6"><?= e($customer['first_name']) ?></span></a>
                     <?php else: ?>
@@ -56,4 +59,14 @@ $phone = (string) setting('company_phone', '');
             </div>
         </div>
     </nav>
+    <?php if ($router->has('shop.index')): ?>
+        <div class="collapse border-top" id="headerSearch">
+            <form class="container py-3" method="get" action="<?= e(route('shop.index')) ?>" role="search">
+                <div class="input-group">
+                    <input type="search" name="q" class="form-control" placeholder="<?= e(__('shop.search_placeholder')) ?>" aria-label="<?= e(__('shop.search')) ?>" value="<?= e((string) (\App\Core\Request::current()?->query('q') ?? '')) ?>">
+                    <button class="btn btn-bwa" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+        </div>
+    <?php endif; ?>
 </header>

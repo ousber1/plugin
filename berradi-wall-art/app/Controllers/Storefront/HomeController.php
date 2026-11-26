@@ -5,29 +5,48 @@ declare(strict_types=1);
 namespace App\Controllers\Storefront;
 
 use App\Core\Controller;
-use App\Core\Database;
 use App\Core\Response;
-use App\Core\Translator;
+use App\Services\CatalogService;
+use App\Services\SeoService;
 
 /**
- * Homepage. Phase 1 renders the brand hero and real categories from the database;
- * the full premium homepage (collections, best sellers, reviews, gallery...) is built in Phase 2.
+ * Premium homepage. Every section is fed by real database content and is hidden when empty
+ * (no invented products, reviews or statistics).
  */
 final class HomeController extends Controller
 {
     public function index(): Response
     {
-        $db = Database::instance();
-        $categories = $db->fetchAll(
-            "SELECT c.id, c.slug, c.name, c.image, t.value AS name_ar
-             FROM categories c
-             LEFT JOIN translations t ON t.entity_type = 'category' AND t.entity_id = c.id AND t.locale = 'ar' AND t.field = 'name'
-             WHERE c.is_active = 1 ORDER BY c.sort_order, c.name LIMIT 13"
-        );
-        foreach ($categories as &$c) {
-            $c['label'] = Translator::locale() === 'ar' && !empty($c['name_ar']) ? $c['name_ar'] : $c['name'];
+        $data = [
+            'heroBanners' => CatalogService::banners('hero', 3),
+            'promoBanners' => CatalogService::banners('promo', 2),
+            'collections' => CatalogService::collections(true, 4),
+            'bestSellers' => CatalogService::byFlag('best_seller', 8),
+            'newArrivals' => CatalogService::byFlag('new', 8, 'newest'),
+            'offers' => CatalogService::byFlag('promo', 4),
+            'categories' => CatalogService::categories(true),
+            'reviews' => CatalogService::featuredReviews(6),
+            'reviewStats' => CatalogService::reviewStats(),
+            'gallery' => CatalogService::gallery(8),
+            'faqs' => CatalogService::faqs(6),
+        ];
+        if ($data['categories'] === []) {
+            $data['categories'] = array_slice(CatalogService::categories(), 0, 8);
         }
-        unset($c);
-        return $this->view('storefront/home', ['categories' => $categories]);
+        $data['seo'] = SeoService::page('', null, [
+            'canonical' => '/',
+            'jsonLd' => [SeoService::organization(), [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebSite',
+                'name' => (string) setting('company_name', 'BERRADI WALL ART'),
+                'url' => absolute_url('/'),
+                'potentialAction' => [
+                    '@type' => 'SearchAction',
+                    'target' => absolute_url('shop') . '?q={search_term_string}',
+                    'query-input' => 'required name=search_term_string',
+                ],
+            ]],
+        ]);
+        return $this->view('storefront/home', $data);
     }
 }

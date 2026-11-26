@@ -1,8 +1,14 @@
 <?php
-/** Shared <head> content. Variables: $title (string), $metaDescription (?string), $extraCss (list<string>) */
+/**
+ * Shared <head>. Accepts either $seo (from SeoService::page) or $title / $metaDescription / $noindex.
+ * Extra: $extraCss (list<string>).
+ */
 $siteName = (string) setting('company_name', 'BERRADI WALL ART');
-$pageTitle = isset($title) && $title !== '' ? $title . ' — ' . $siteName : (string) setting('seo_meta_title', $siteName);
-$description = $metaDescription ?? (string) setting('seo_meta_description', '');
+$seo = is_array($seo ?? null) ? $seo : [];
+$rawTitle = (string) ($seo['title'] ?? $title ?? '');
+$pageTitle = $rawTitle !== '' ? $rawTitle . ' — ' . $siteName : (string) setting('seo_meta_title', $siteName);
+$description = (string) ($seo['description'] ?? $metaDescription ?? setting('seo_meta_description', ''));
+$robotsNo = !empty($seo['noindex']) || !empty($noindex);
 ?>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,8 +17,26 @@ $description = $metaDescription ?? (string) setting('seo_meta_description', '');
 <?php if ($description !== ''): ?>
 <meta name="description" content="<?= e($description) ?>">
 <?php endif; ?>
-<?php if (!empty($noindex)): ?>
-<meta name="robots" content="noindex, nofollow">
+<?php if ($robotsNo): ?>
+<meta name="robots" content="noindex, follow">
+<?php endif; ?>
+<?php if (!empty($seo['canonical'])): ?>
+<link rel="canonical" href="<?= e($seo['canonical']) ?>">
+<meta property="og:url" content="<?= e($seo['canonical']) ?>">
+<?php endif; ?>
+<?php if ($seo !== []): ?>
+<meta property="og:site_name" content="<?= e($siteName) ?>">
+<meta property="og:type" content="<?= e($seo['og_type'] ?? 'website') ?>">
+<meta property="og:title" content="<?= e($rawTitle !== '' ? $rawTitle : $pageTitle) ?>">
+<meta property="og:locale" content="<?= locale() === 'ar' ? 'ar_MA' : 'fr_MA' ?>">
+<?php if ($description !== ''): ?><meta property="og:description" content="<?= e($description) ?>"><?php endif; ?>
+<?php if (!empty($seo['og_image'])): ?>
+<meta property="og:image" content="<?= e($seo['og_image']) ?>">
+<meta name="twitter:card" content="summary_large_image">
+<?php endif; ?>
+<?php foreach (($seo['jsonLd'] ?? []) as $ld): ?>
+<script type="application/ld+json"><?= \App\Services\SeoService::encode($ld) ?></script>
+<?php endforeach; ?>
 <?php endif; ?>
 <meta name="theme-color" content="#171717">
 <link rel="icon" href="<?= e(url('favicon.svg')) ?>" type="image/svg+xml">

@@ -374,6 +374,16 @@ final class InstallController extends Controller
         if (empty($this->state()['admin_id']) || empty($this->state()['db_installed'])) {
             return $this->redirect(route('installer.step', ['step' => 8]));
         }
+        $demo = null;
+        if ($this->request->bool('install_demo')) {
+            try {
+                $demo = (new \App\Services\Demo\DemoCatalog($this->db(), app()->publicPath(), app()->basePath()))->install();
+            } catch (\Throwable $e) {
+                \App\Core\Logger::error('Demo catalogue install failed: ' . $e->getMessage());
+                $this->flash('danger', __('installer.demo_failed') . ' ' . $e->getMessage());
+                return $this->redirect(route('installer.step', ['step' => 9]));
+            }
+        }
         if (!$this->service()->lock((string) Config::get('app.version', '1.0.0'))) {
             $this->flash('danger', __('installer.lock_failed'));
             return $this->redirect(route('installer.step', ['step' => 9]));
@@ -386,6 +396,7 @@ final class InstallController extends Controller
             'steps' => self::STEPS,
             'state' => ['max_step' => 10],
             'adminEmail' => $adminEmail,
+            'demo' => $demo,
             'adminUrl' => url(Config::get('app.admin_path', 'admin') . '/login'),
         ]);
     }

@@ -69,4 +69,8 @@ return [
     'go_admin' => 'Accéder à l’administration',
     'go_store' => 'Voir la boutique',
     'login_with' => 'Connectez-vous avec :email',
+    'demo_label' => 'Installer le catalogue de démonstration',
+    'demo_help' => '19 œuvres d’exemple avec images générées, 4 collections et une FAQ, pour découvrir la boutique. Aucune fausse commande, ni faux avis. Suppression en une commande : php bin/console demo:remove.',
+    'demo_failed' => 'Le catalogue de démonstration n’a pas pu être installé :',
+    'demo_done' => 'Catalogue de démonstration installé : :products produits et :variants variantes.',
 ];

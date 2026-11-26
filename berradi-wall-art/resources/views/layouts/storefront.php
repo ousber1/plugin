@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="<?= e(locale()) ?>" dir="<?= e(is_rtl() ? 'rtl' : 'ltr') ?>">
 <head>
-    <?= $this->insert('partials/head', ['title' => $title ?? '', 'metaDescription' => $metaDescription ?? null, 'noindex' => $noindex ?? false]) ?>
+    <?= $this->insert('partials/head', ['seo' => $seo ?? null, 'title' => $title ?? '', 'metaDescription' => $metaDescription ?? null, 'noindex' => $noindex ?? false]) ?>
     <?= $this->section('head') ?>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -14,6 +14,7 @@
     <?= $this->insert('partials/storefront_footer') ?>
     <script src="<?= e(asset('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('js/app.js')) ?>"></script>
+    <script src="<?= e(asset('js/storefront.js')) ?>"></script>
     <?= $this->section('scripts') ?>
 </body>
 </html>

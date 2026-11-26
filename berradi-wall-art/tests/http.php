@@ -201,12 +201,14 @@ $t->test('step 8 rejects weak password, then creates the super admin', function 
     $b->post('/install/8', ['name' => 'Owner Berradi', 'email' => 'owner@berradi.test', 'password' => $adminPass, 'password_confirmation' => $adminPass], '/install/8');
     $t->equals('/install/9', $b->location());
 });
-$t->test('step 9-10 finish locks the installer permanently', function (TestRunner $t) use ($b): void {
+$t->test('step 9-10 finish (with demo catalogue) locks the installer permanently', function (TestRunner $t) use ($b): void {
     $b->get('/install/9');
     $t->contains('cron:run', $b->body);
-    $b->post('/install/9');
+    $t->contains('name="install_demo"', $b->body);
+    $b->post('/install/9', ['install_demo' => '1']);
     $t->equals(200, $b->status);
     $t->contains('verrouillé de façon permanente', $b->body);
+    $t->contains('19 produits', $b->body, 'demo installed');
     $b->get('/install/1');
     $t->equals(404, $b->status, 'installer locked');
     $b->get('/install');
@@ -263,6 +265,115 @@ $t->test('private folders and dotfiles are not served', function (TestRunner $t)
     $t->assert(!str_contains($b->body, 'DB_PASSWORD'));
     $b->get('/../.env');
     $t->assert(!str_contains($b->body, 'DB_PASSWORD'));
+});
+
+$t->section('Catalogue storefront (Phase 2)');
+$t->test('homepage shows real catalogue sections and JSON-LD', function (TestRunner $t) use ($b): void {
+    $b->get('/');
+    foreach (['Nos collections', 'Meilleures ventes', 'Nouveautés', 'Offres spéciales', 'Comment ça marche', 'Questions fréquentes', 'Inspirations &amp; avant-premières', 'Héritage Marocain', '/product/arches-de-marrakech'] as $needle) {
+        $t->contains($needle, $b->body);
+    }
+    $t->assert(!str_contains($b->body, 'Avis clients'), 'no review section without real reviews');
+    $t->assert(!str_contains($b->body, 'Nos œuvres installées'), 'no gallery section without real installations');
+    $t->contains('"@type":"Organization"', $b->body);
+    $t->contains('<link rel="canonical"', $b->body);
+    $t->contains('property="og:title"', $b->body);
+});
+$t->test('shop listing, filters, sorting, search and pagination', function (TestRunner $t) use ($b): void {
+    $b->get('/shop');
+    $t->equals(200, $b->status);
+    $t->contains('19 œuvre(s)', $b->body);
+    $t->equals(19, substr_count($b->body, '<article class="product-card">'), 'all 19 cards on one page (24 per page)');
+    $b->get('/shop?q=dunes');
+    $t->contains('2 œuvre(s)', $b->body);
+    $t->contains('noindex', $b->body, 'filtered pages not indexed');
+    $b->get('/shop?type=framed&sort=price_desc');
+    $t->contains('3 œuvre(s)', $b->body);
+    $b->get('/shop?min=abc&max=%27%20OR%201=1&sort=%3Cscript%3E&type=zzz');
+    $t->equals(200, $b->status, 'garbage filters are ignored safely');
+    $t->assert(!str_contains($b->body, '<script>'), 'no reflected script');
+    $b->get('/shop?q=%3Cscript%3Ealert(1)%3C/script%3E');
+    $t->assert(!str_contains($b->body, '<script>alert(1)</script>'), 'search term escaped');
+    $t->contains('&lt;script&gt;', $b->body);
+});
+$t->test('category, best sellers, new arrivals, offers and collections pages', function (TestRunner $t) use ($b): void {
+    foreach (['/shop/category/nature-landscapes' => 'Nature &amp; Paysages', '/best-sellers' => 'Meilleures ventes', '/new-arrivals' => 'Nouveautés', '/offers' => 'Offres spéciales',
+        '/collections' => 'Lumière d’Atlas', '/collections/noir-et-or' => 'Édition limitée'] as $url => $needle) {
+        $b->get($url);
+        $t->equals(200, $b->status, $url);
+        $t->contains($needle, $b->body, $url);
+        $t->contains('"@type":"BreadcrumbList"', $b->body, $url);
+    }
+    $b->get('/shop/category/unknown-cat');
+    $t->equals(404, $b->status);
+    $b->get('/collections/unknown');
+    $t->equals(404, $b->status);
+});
+$t->test('product page: variants, price, structured data, WhatsApp order', function (TestRunner $t) use ($b): void {
+    $b->get('/product/vallee-du-dades');
+    $t->equals(200, $b->status);
+    $t->contains('<h1 class="product-name mt-2">Vallée du Dadès</h1>', $b->body);
+    $t->contains('"@type":"Product"', $b->body);
+    $t->contains('"@type":"AggregateOffer"', $b->body);
+    $t->contains('"priceCurrency":"MAD"', $b->body);
+    $t->contains('data-variants=', $b->body);
+    $t->contains('Cadre doré', $b->body);
+    $t->contains('wa.me/212661000000?text=', $b->body);
+    $t->contains('Vous aimerez aussi', $b->body);
+    $t->contains('og:type" content="product"', $b->body);
+    $b->get('/product/does-not-exist');
+    $t->equals(404, $b->status);
+});
+$t->test('product page in Arabic (RTL, translated content)', function (TestRunner $t) use ($base): void {
+    $a = new Browser($base);
+    $a->get('/lang/ar');
+    $a->get('/product/zellige-de-fes');
+    $t->contains('dir="rtl"', $a->body);
+    $t->contains('زليج فاس', $a->body);
+    $t->contains('الفن الإسلامي', $a->body);
+    $a->get('/shop?q=' . rawurlencode('شفشاون'));
+    $t->contains('الباب الأزرق بشفشاون', $a->body);
+});
+$t->test('about and FAQ pages (FAQPage schema)', function (TestRunner $t) use ($b): void {
+    $b->get('/about');
+    $t->equals(200, $b->status);
+    $t->contains('L’art de transformer vos souvenirs', $b->body);
+    $b->get('/faq');
+    $t->contains('"@type":"FAQPage"', $b->body);
+    $t->contains('Comment accrocher mon tableau', $b->body);
+});
+$t->test('contact form: validation, honeypot, stored + e-mailed', function (TestRunner $t) use ($b, $db): void {
+    $b->post('/contact', ['name' => '', 'email' => 'x', 'subject' => 'hack', 'message' => 'short'], '/contact');
+    $b->get('/contact');
+    $t->contains('is-invalid', $b->body);
+    $b->post('/contact', ['name' => 'Bot', 'email' => 'bot@spam.test', 'subject' => 'other', 'message' => 'Buy cheap things now!!!', 'website' => 'http://spam'], '/contact');
+    $t->equals('/contact', $b->location());
+    $b->post('/contact', ['name' => 'Karim Test', 'email' => 'karim@client.test', 'phone' => '0611223344', 'subject' => 'b2b', 'message' => 'Bonjour, nous équipons un hôtel de 40 chambres.'], '/contact');
+    $b->follow();
+    $t->contains('Votre message a bien été envoyé', $b->body);
+    $pdo = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+    $t->equals(1, (int) $pdo->query("SELECT COUNT(*) FROM notifications WHERE event = 'contact_message'")->fetchColumn(), 'honeypot message not stored, real one stored');
+    $t->contains('40 chambres', (string) $pdo->query("SELECT body FROM notifications WHERE event = 'contact_message'")->fetchColumn());
+});
+$t->test('newsletter: consent required, JSON for AJAX, one-click unsubscribe', function (TestRunner $t) use ($b, $db): void {
+    $b->get('/');
+    $token = $b->token();
+    $b->request('POST', '/newsletter', ['email' => 'fan@client.test', '_token' => $token], [], ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+    $t->equals(422, $b->status, 'consent missing');
+    $b->request('POST', '/newsletter', ['email' => 'fan@client.test', 'consent' => '1', '_token' => $token], [], ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+    $t->equals(200, $b->status);
+    $t->contains('"ok":true', $b->body);
+    $b->request('POST', '/newsletter', ['email' => 'FAN@client.test', 'consent' => '1', '_token' => $token], [], ['Accept: application/json']);
+    $t->contains('"ok":true', $b->body, 'same answer for known address');
+    $pdo = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+    $t->equals(1, (int) $pdo->query("SELECT COUNT(*) FROM newsletter_subscribers WHERE email = 'fan@client.test'")->fetchColumn());
+    $tok = (string) $pdo->query("SELECT unsubscribe_token FROM newsletter_subscribers WHERE email = 'fan@client.test'")->fetchColumn();
+    $b->get('/newsletter/unsubscribe/' . $tok);
+    $t->equals(200, $b->status);
+    $t->contains('Désinscription confirmée', $b->body);
+    $t->equals('unsubscribed', (string) $pdo->query("SELECT status FROM newsletter_subscribers WHERE email = 'fan@client.test'")->fetchColumn());
+    $b->get('/newsletter/unsubscribe/' . str_repeat('0', 64));
+    $t->equals(404, $b->status);
 });
 
 $t->section('Admin authentication, RBAC & settings');

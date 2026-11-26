@@ -23,6 +23,7 @@ use App\Core\Validator;
 use App\Helpers\Money;
 use App\Helpers\Str;
 use App\Services\Auth;
+use App\Services\CatalogService;
 use App\Services\Crypt;
 use App\Services\ImageUploadService;
 use App\Services\Installer\InstallerService;
@@ -450,6 +451,121 @@ $t->test('JPEG with PHP payload in metadata is neutralized by re-encoding', func
     $payload = substr($jpg, 0, 2) . "\xFF\xFE\x00\x1A<?php echo 'pwned'; ?>\x00\x00" . substr($jpg, 2);
     $path = ImageUploadService::storePublic($makeFile($payload, 'photo.jpg'), 'products');
     $t->assert(!str_contains((string) file_get_contents($tmpPublic . '/uploads/' . $path), '<?php'), 'payload stripped');
+});
+
+
+$t->section('Catalogue (Phase 2)');
+$demo = new \App\Services\Demo\DemoCatalog($db, $tmpPublic, $base);
+$t->test('demo catalogue installs with generated images and real-rate variant prices', function (TestRunner $t) use ($demo, $db, $tmpPublic): void {
+    $counts = $demo->install();
+    $t->equals(19, $counts['products']);
+    $t->assert($counts['variants'] > 100, 'variants ' . $counts['variants']);
+    $t->equals(42, count(glob($tmpPublic . '/uploads/products/demo/*.jpg')));
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM reviews"), 'no fake reviews');
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM orders"), 'no fake orders');
+    // 30x40 canvas = max(minimum 199, 650/m2 * 0.12 m2 = 78) = 199 -> rounded to 199
+    $t->equals('199.00', (string) $db->value("SELECT price FROM product_variants WHERE sku = (SELECT CONCAT(sku, '-30X40') FROM products WHERE slug = 'zellige-de-fes')"));
+    $t->throws(fn () => $demo->install(), RuntimeException::class, 'second install refused');
+});
+$t->test('listing: filters, search (FR + AR), sorting and pagination', function (TestRunner $t): void {
+    Translator::setLocale('fr');
+    $all = CatalogService::listing([], 60, 1);
+    $t->equals(19, $all->total);
+    $t->equals(3, CatalogService::listing(['category' => 'nature-landscapes'], 60, 1)->total);
+    $t->equals(2, CatalogService::listing(['q' => 'dunes'], 60, 1)->total);
+    $t->equals(1, CatalogService::listing(['q' => 'شفشاون'], 60, 1)->total, 'arabic title search');
+    $t->equals(1, CatalogService::listing(['type' => 'limited'], 60, 1)->total);
+    $t->equals(3, CatalogService::listing(['flag' => 'customizable'], 60, 1)->total);
+    $asc = CatalogService::listing(['sort' => 'price_asc'], 60, 1)->items;
+    $prices = array_map(fn ($p) => Money::toCents($p['display_price']), $asc);
+    $sorted = $prices;
+    sort($sorted);
+    $t->equals($sorted, $prices, 'price ascending');
+    $cheap = CatalogService::listing(['max' => '100'], 60, 1)->items;
+    $t->assert($cheap !== [] && max(array_map(fn ($p) => Money::toCents($p['display_price']), $cheap)) <= 10000, 'max price filter');
+    $page2 = CatalogService::listing([], 8, 3);
+    $t->equals(3, count($page2->items));
+    $t->equals(0, CatalogService::listing(['category' => 'does-not-exist'], 60, 1)->total);
+    $t->equals(19, CatalogService::listing(['min' => 'abc', 'type' => 'zzz', 'sort' => 'x; DROP'], 60, 1)->total, 'invalid filters ignored');
+});
+$t->test('promo prices respect their time window', function (TestRunner $t) use ($db): void {
+    $promo = CatalogService::listing(['flag' => 'promo'], 60, 1);
+    $t->equals(2, $promo->total);
+    $p = $promo->items[0];
+    $t->assert($p['on_sale'] && $p['discount_percent'] > 0, 'on sale');
+    $t->assert(Money::compare($p['display_price'], $p['compare_price']) < 0);
+    $db->query("UPDATE products SET promo_ends_at = NOW() - INTERVAL 1 DAY WHERE sku LIKE 'DEMO-%' AND promo_price IS NOT NULL");
+    $t->equals(0, CatalogService::listing(['flag' => 'promo'], 60, 1)->total, 'expired promo not applied');
+    $prod = CatalogService::product('aube-sur-atlas');
+    $t->equals($prod['variants'][0]['regular_price'], $prod['variants'][0]['effective_price'], 'variant promo follows product window');
+    $db->query("UPDATE products SET promo_ends_at = NOW() + INTERVAL 30 DAY WHERE sku LIKE 'DEMO-%' AND promo_price IS NOT NULL");
+    $prod = CatalogService::product('aube-sur-atlas');
+    $t->assert(Money::compare($prod['variants'][0]['effective_price'], $prod['variants'][0]['regular_price']) < 0, 'active again');
+});
+$t->test('product detail: images, variants, translations, related products', function (TestRunner $t): void {
+    Translator::setLocale('ar');
+    $p = CatalogService::product('zellige-de-fes');
+    $t->equals('زليج فاس', $p['title']);
+    $t->equals('الفن الإسلامي', $p['category']['name']);
+    Translator::setLocale('fr');
+    $p = CatalogService::product('zellige-de-fes');
+    $t->equals('Zellige de Fès', $p['title']);
+    $t->equals(2, count($p['images']));
+    $t->equals(4, count($p['variants']));
+    $t->equals('30 × 40 cm', $p['variants'][0]['size_label']);
+    $t->equals(true, $p['from_price']);
+    $rel = CatalogService::related($p, 4);
+    $t->equals(3, count($rel), 'same category + same collection candidates');
+    $t->assert(!in_array($p['id'], array_column($rel, 'id'), true), 'not related to itself');
+    $t->equals(null, CatalogService::product('nope'));
+});
+$t->test('inactive or deleted products are never shown', function (TestRunner $t) use ($db): void {
+    $db->query("UPDATE products SET is_active = 0 WHERE slug = 'orbites'");
+    $t->equals(null, CatalogService::product('orbites'));
+    $t->equals(18, CatalogService::listing([], 60, 1)->total);
+    $db->query("UPDATE products SET is_active = 1, deleted_at = NOW() WHERE slug = 'orbites'");
+    $t->equals(18, CatalogService::listing([], 60, 1)->total);
+    $db->query("UPDATE products SET deleted_at = NULL WHERE slug = 'orbites'");
+});
+$t->test('collections, categories counts, FAQ translations', function (TestRunner $t): void {
+    $t->equals(4, count(CatalogService::collections()));
+    $c = CatalogService::collectionBySlug('noir-et-or');
+    $t->equals(1, (int) $c['is_limited']);
+    $cats = array_column(CatalogService::categories(), 'product_count', 'slug');
+    $t->equals(3, (int) $cats['nature-landscapes']);
+    Translator::setLocale('ar');
+    $t->equals('هل يمكنني رؤية معاينة قبل الطباعة؟', CatalogService::faqs()[4]['question']);
+    Translator::setLocale('fr');
+});
+$t->test('category tree includes sub-categories', function (TestRunner $t) use ($db): void {
+    $parent = (int) $db->value("SELECT id FROM categories WHERE slug = 'nature-landscapes'");
+    $child = $db->insert('categories', ['parent_id' => $parent, 'slug' => 'deserts-test', 'name' => 'Déserts']);
+    $db->query("UPDATE products SET category_id = ? WHERE slug = 'dunes-de-merzouga'", [$child]);
+    $t->equals(3, CatalogService::listing(['category' => 'nature-landscapes'], 60, 1)->total, 'child products included');
+    $t->equals(1, CatalogService::listing(['category' => 'deserts-test'], 60, 1)->total);
+    $db->query("UPDATE products SET category_id = ? WHERE slug = 'dunes-de-merzouga'", [$parent]);
+    $db->delete('categories', ['id' => $child]);
+});
+$t->test('JSON-LD is valid and cannot break out of its script tag', function (TestRunner $t): void {
+    $json = \App\Services\SeoService::encode(['name' => '</script><script>alert(1)</script>', 'q' => "l'été"]);
+    $t->assert(!str_contains($json, '</script>') && !str_contains($json, '<'), 'escaped');
+    $t->equals('</script><script>alert(1)</script>', json_decode($json, true)['name']);
+    $ld = \App\Services\SeoService::product(CatalogService::product('dunes-de-merzouga'));
+    $t->equals('AggregateOffer', $ld['offers']['@type']);
+    $t->equals('MAD', $ld['offers']['priceCurrency']);
+    $t->assert(!isset($ld['aggregateRating']), 'no rating without real reviews');
+});
+$t->test('demo catalogue removal deletes everything it created', function (TestRunner $t) use ($demo, $db, $tmpPublic): void {
+    $out = $demo->remove();
+    $t->equals(19, $out['products']);
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM products"));
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM collections"));
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM faqs"));
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type IN ('product','collection','faq')"));
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM categories WHERE image LIKE 'products/demo/%'"));
+    $t->equals(13, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type = 'category'"), 'seeded category translations kept');
+    $t->equals([], glob($tmpPublic . '/uploads/products/demo/*.jpg') ?: []);
+    $t->equals(0, CatalogService::listing([], 60, 1)->total);
 });
 
 exit($t->finish());

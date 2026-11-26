@@ -15,4 +15,5 @@ return [
     'login' => 'Connexion',
     'register' => 'Créer un compte',
     'cart' => 'Panier',
+    'help' => 'Informations',
 ];

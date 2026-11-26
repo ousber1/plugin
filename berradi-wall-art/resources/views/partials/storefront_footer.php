@@ -25,18 +25,18 @@ $socials = array_filter([
             <div class="col-6 col-lg-2">
                 <h6><?= e(__('nav.shop')) ?></h6>
                 <ul class="list-unstyled d-grid gap-2">
-                    <li><a href="<?= e(route('home')) ?>"><?= e(__('nav.home')) ?></a></li>
-                    <?php foreach (['shop.index' => 'nav.shop', 'builder.index' => 'nav.custom', 'collections.index' => 'nav.collections'] as $r => $label): ?>
+                    <?php foreach (['shop.index' => 'nav.shop', 'builder.index' => 'nav.custom', 'collections.index' => 'nav.collections', 'shop.best_sellers' => 'nav.best_sellers', 'shop.new' => 'shop.new_arrivals', 'shop.offers' => 'shop.offers'] as $r => $label): ?>
                         <?php if (app()->router()->has($r)): ?><li><a href="<?= e(route($r)) ?>"><?= e(__($label)) ?></a></li><?php endif; ?>
                     <?php endforeach; ?>
                 </ul>
             </div>
             <div class="col-6 col-lg-2">
-                <h6><?= e(__('nav.account')) ?></h6>
+                <h6><?= e(__('nav.help')) ?></h6>
                 <ul class="list-unstyled d-grid gap-2">
-                    <li><a href="<?= e(route('customer.login')) ?>"><?= e(__('nav.login')) ?></a></li>
-                    <li><a href="<?= e(route('customer.register')) ?>"><?= e(__('nav.register')) ?></a></li>
-                    <?php if (app()->router()->has('order.track')): ?><li><a href="<?= e(route('order.track')) ?>"><?= e(__('nav.track')) ?></a></li><?php endif; ?>
+                    <?php foreach (['page.about' => 'nav.about', 'page.faq' => 'pages.faq', 'page.contact' => 'nav.contact', 'order.track' => 'nav.track'] as $r => $label): ?>
+                        <?php if (app()->router()->has($r)): ?><li><a href="<?= e(route($r)) ?>"><?= e(__($label)) ?></a></li><?php endif; ?>
+                    <?php endforeach; ?>
+                    <li><a href="<?= e(auth_customer() ? route('customer.account') : route('customer.login')) ?>"><?= e(__('nav.account')) ?></a></li>
                 </ul>
             </div>
             <div class="col-lg-4">
