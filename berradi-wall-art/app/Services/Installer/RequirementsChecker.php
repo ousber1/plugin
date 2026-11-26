@@ -94,6 +94,7 @@ final class RequirementsChecker
             'storage/sessions' => $this->basePath . '/storage/sessions',
             'storage/private_uploads' => $this->basePath . '/storage/private_uploads',
             'storage/previews' => $this->basePath . '/storage/previews',
+            'storage/print_files' => $this->basePath . '/storage/print_files',
             'storage/invoices' => $this->basePath . '/storage/invoices',
             'storage/backups' => $this->basePath . '/storage/backups',
             'public/uploads' => $this->publicPath . '/uploads',

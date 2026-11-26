@@ -7,6 +7,12 @@
  */
 
 use App\Controllers\Admin\ActivityLogController;
+use App\Controllers\Admin\ArtworkController;
+use App\Controllers\Admin\InventoryController;
+use App\Controllers\Admin\OrderController;
+use App\Controllers\Admin\ProductionController;
+use App\Controllers\Admin\PurchaseController;
+use App\Controllers\Admin\SupplierController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CategoryController;
 use App\Controllers\Admin\CollectionController;
@@ -121,6 +127,81 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance');
             $router->post('/maintenance/update', [MaintenanceController::class, 'update'])->name('maintenance.update');
             $router->post('/maintenance/demo', [MaintenanceController::class, 'demo'])->name('maintenance.demo');
+        });
+
+        // ---------------------------------------------------------------- orders
+        $router->get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');
+        $router->post('/orders', [OrderController::class, 'store'])->middleware('can:orders.create')->name('orders.store');
+        $router->group(['middleware' => ['can:orders.view,orders.manage']], function ($router): void {
+            $router->get('/orders', [OrderController::class, 'index'])->name('orders.index');
+            $router->get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+            $router->get('/orders/{id}/print', [OrderController::class, 'printable'])->name('orders.print');
+            $router->get('/orders/{id}/items/{itemId}/preview', [OrderController::class, 'itemPreview'])->name('orders.item_preview');
+        });
+        $router->post('/orders/{id}/status', [OrderController::class, 'status'])->middleware('can:orders.status,orders.manage')->name('orders.status');
+        $router->post('/orders/{id}/details', [OrderController::class, 'update'])->middleware('can:orders.manage')->name('orders.update');
+        $router->post('/orders/{id}/payments', [OrderController::class, 'payment'])->middleware('can:payments.manage')->name('orders.payment');
+        $router->group(['middleware' => ['can:shipments.manage']], function ($router): void {
+            $router->post('/orders/{id}/shipments', [OrderController::class, 'shipment'])->name('orders.shipment');
+            $router->post('/orders/{id}/shipments/{shipmentId}', [OrderController::class, 'shipmentStatus'])->name('orders.shipment.status');
+        });
+
+        // ---------------------------------------------------------------- artwork
+        $router->group(['middleware' => ['can:artwork.view']], function ($router): void {
+            $router->get('/artwork', [ArtworkController::class, 'index'])->name('artwork.index');
+            $router->get('/artwork/{itemId}', [ArtworkController::class, 'show'])->name('artwork.show');
+            $router->get('/artwork/{itemId}/original/{cid}', [ArtworkController::class, 'original'])->name('artwork.original');
+            $router->get('/artwork/{itemId}/print-file/{cid}', [ArtworkController::class, 'downloadPrintFile'])->name('artwork.print_file.download');
+        });
+        $router->group(['middleware' => ['can:artwork.approve']], function ($router): void {
+            $router->post('/artwork/{itemId}/approve', [ArtworkController::class, 'approve'])->name('artwork.approve');
+            $router->post('/artwork/{itemId}/changes', [ArtworkController::class, 'changes'])->name('artwork.changes');
+            $router->post('/artwork/{itemId}/proof', [ArtworkController::class, 'proof'])->middleware('throttle:20,10')->name('artwork.proof');
+            $router->post('/artwork/{itemId}/print-file/{cid}', [ArtworkController::class, 'printFile'])->name('artwork.print_file');
+        });
+        $router->post('/artwork/{itemId}/purge/{cid}', [ArtworkController::class, 'purge'])->middleware('can:artwork.delete')->name('artwork.purge');
+
+        // ---------------------------------------------------------------- production
+        $router->group(['middleware' => ['can:production.view,production.manage']], function ($router): void {
+            $router->get('/production', [ProductionController::class, 'index'])->name('production.index');
+            $router->get('/production/jobs/{id}', [ProductionController::class, 'show'])->name('production.show');
+        });
+        $router->group(['middleware' => ['can:production.manage']], function ($router): void {
+            $router->post('/production/jobs/{id}/tasks/{taskId}', [ProductionController::class, 'task'])->name('production.task');
+            $router->post('/production/jobs/{id}', [ProductionController::class, 'update'])->name('production.update');
+            $router->post('/production/orders/{orderId}/jobs', [ProductionController::class, 'createJobs'])->name('production.create_jobs');
+            $router->get('/machines', [ProductionController::class, 'machines'])->name('machines.index');
+            $router->post('/machines', [ProductionController::class, 'saveMachine'])->name('machines.store');
+            $router->post('/machines/{id}', [ProductionController::class, 'saveMachine'])->name('machines.update');
+        });
+
+        // ---------------------------------------------------------------- inventory
+        $router->group(['middleware' => ['can:inventory.view,inventory.manage']], function ($router): void {
+            $router->get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        });
+        $router->group(['middleware' => ['can:inventory.manage']], function ($router): void {
+            $router->get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+            $router->post('/inventory', [InventoryController::class, 'save'])->name('inventory.store');
+            $router->get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+            $router->post('/inventory/{id}', [InventoryController::class, 'save'])->name('inventory.update');
+            $router->post('/inventory/{id}/movements', [InventoryController::class, 'movement'])->name('inventory.movement');
+        });
+        $router->get('/inventory/{id}', [InventoryController::class, 'show'])->middleware('can:inventory.view,inventory.manage')->name('inventory.show');
+        $router->group(['middleware' => ['can:suppliers.manage']], function ($router): void {
+            $router->get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+            $router->post('/suppliers', [SupplierController::class, 'save'])->name('suppliers.store');
+            $router->post('/suppliers/{id}', [SupplierController::class, 'save'])->name('suppliers.update');
+        });
+        $router->group(['middleware' => ['can:purchases.manage']], function ($router): void {
+            $router->get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+            $router->get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
+            $router->post('/purchases', [PurchaseController::class, 'save'])->name('purchases.store');
+            $router->get('/purchases/{id}', [PurchaseController::class, 'show'])->name('purchases.show');
+            $router->get('/purchases/{id}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
+            $router->post('/purchases/{id}', [PurchaseController::class, 'save'])->name('purchases.update');
+            $router->post('/purchases/{id}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
+            $router->post('/purchases/{id}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
+            $router->post('/purchases/{id}/pay', [PurchaseController::class, 'pay'])->name('purchases.pay');
         });
     });
 });

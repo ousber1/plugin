@@ -11,6 +11,9 @@
 /storage/previews/*
 !/storage/previews/.gitkeep
 !/storage/previews/.htaccess
+/storage/print_files/*
+!/storage/print_files/.gitkeep
+!/storage/print_files/.htaccess
 /storage/invoices/*
 !/storage/invoices/.gitkeep
 !/storage/invoices/.htaccess

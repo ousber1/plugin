@@ -108,7 +108,32 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | RBAC on every new route (designer: catalogue yes, customers/maintenance 403) | ✅ | HTTP |
 | Mobile 390 px and Arabic RTL: no horizontal overflow on all new admin pages, no JS errors | ✅ | Playwright |
 
-## Phase 6: Orders, status workflow, production, artwork management, inventory ⬜
+## Phase 6: Orders, status workflow, production, artwork management, inventory ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Order list: status tabs with counts, search (number/name/phone/e-mail), payment/source/date filters, artwork-to-check flag | ✅ | HTTP |
+| Order detail: lines with private mock-ups, totals, payments, shipments, production jobs, full history with author and "customer notified" | ✅ | HTTP + Playwright |
+| Status workflow with an explicit transition table (impossible jumps refused, only valid next statuses offered), timestamps, comment, optional customer e-mail; cancel/return need `orders.manage` | ✅ | integration + HTTP |
+| Cancellation by staff releases catalogue stock and coupon, returns photos to normal retention, cancels production jobs; paid amounts stay recorded | ✅ | integration |
+| Editable contact/delivery details until shipment; internal notes always | ✅ | HTTP |
+| Phone / WhatsApp / showroom orders: catalogue lines at shop price or negotiated price, free custom lines, shipping by city or manual, same tax rules, stock reserved, customer matched by e-mail/phone | ✅ | integration + HTTP |
+| Printable work order / packing slip (HTML, print button without inline JS) | ✅ | HTTP |
+| Artwork queue + review page: final mock-up, original photo (download logged), crop, effective DPI with warning colours | ✅ | HTTP + Playwright |
+| Proof to customer: single-use link (only SHA-256 hash stored), approve or request changes with feedback, internal alert, order → awaiting approval → approved for production | ✅ | integration + HTTP |
+| Studio approval, change requests, print-ready file upload (PDF/TIFF/JPG/PNG checked by content, private storage), early purge of the original | ✅ | integration + HTTP |
+| Production jobs (one per line) with stage tasks adapted to the line (no artwork stages for catalogue prints, no framing without frame), worked strictly in order | ✅ | integration + HTTP |
+| Board by stage with priority, deadline (late in red), operator, machine; job sheet with planning, hold/resume, real costs (materials at WAC, machine time × hourly rate, labour, other) | ✅ | HTTP + Playwright |
+| Workshop progress pushes the order forward only (printing → framing → quality control → ready to ship); shipping closes the jobs | ✅ | integration + HTTP |
+| Print stage consumes linked stock once (m² × consumption factor for supports, perimeter + 10 % for mouldings) | ✅ | integration + HTTP |
+| Shipments: courier, tracking number/https link, real cost (feeds profit), COD limited to balance, multi-parcel; shipped/delivered/returned update the order and e-mail tracking | ✅ | integration + HTTP |
+| Offline payments recorded on the order (never above the balance) | ✅ | HTTP |
+| Inventory: materials with units, thresholds, locations; signed movement ledger with balance after each move; WAC on valued entries; exits refused below zero (production may go negative); physical count = adjustment | ✅ | integration + HTTP |
+| Suppliers (purchased / still owed), purchases draft → ordered → received (stock in at purchase cost) or cancelled, supplier payments capped at the remaining amount | ✅ | integration + HTTP |
+| Machines with hourly cost and status | ✅ | HTTP |
+| RBAC on every new route (designer: orders read-only, artwork yes, stock/purchases/machines 403, no status change or payment) | ✅ | HTTP |
+| Mobile 390 px and Arabic RTL on all new pages: no horizontal overflow, no JS errors | ✅ | Playwright |
+
 ## Phase 7: Invoices, quotations, PDF (FR/AR), payments, finance ⬜
 ## Phase 8: Reports, SEO (sitemap, schema.org, OG), notifications, retention purge, backups, security review ⬜
 ## Phase 9: Optimization, documentation, final ZIP package ⬜

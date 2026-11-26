@@ -271,26 +271,7 @@ final class OrderService
                 return false;
             }
             $db->update('orders', ['status' => OrderStatus::CANCELLED, 'cancelled_at' => date('Y-m-d H:i:s'), 'balance_due' => '0.00'], ['id' => (int) $order['id']]);
-            foreach (self::items((int) $order['id']) as $it) {
-                if ($it['product_id'] !== null && $it['custom_design_id'] === null) {
-                    $tracked = (int) $db->value('SELECT track_stock FROM products WHERE id = ?', [(int) $it['product_id']]) === 1;
-                    if ($tracked) {
-                        $db->query('UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?', [(int) $it['quantity'], (int) $it['product_id']]);
-                        if ($it['product_variant_id'] !== null) {
-                            $db->query('UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?', [(int) $it['quantity'], (int) $it['product_variant_id']]);
-                        }
-                    }
-                }
-                if ($it['custom_design_id'] !== null) {
-                    $db->query("UPDATE custom_designs SET status = 'draft' WHERE id = ?", [(int) $it['custom_design_id']]);
-                    $db->query(
-                        "UPDATE uploaded_images u JOIN order_customizations oc ON oc.uploaded_image_id = u.id
-                         SET u.status = 'attached', u.retention_until = ? WHERE oc.order_item_id = ? AND u.status = 'ordered'",
-                        [date('Y-m-d H:i:s', time() + (int) setting('retention_unordered_days', 30) * 86400), (int) $it['id']]
-                    );
-                }
-            }
-            CouponService::release($db, (int) $order['id']);
+            self::releaseForCancellation($db, (int) $order['id']);
             $db->insert('order_status_history', [
                 'order_id' => (int) $order['id'], 'from_status' => $order['status'], 'to_status' => OrderStatus::CANCELLED,
                 'comment' => 'Annulée par le client' . ($reason !== '' ? ' : ' . mb_substr($reason, 0, 500) : ''),
@@ -302,6 +283,34 @@ final class OrderService
             OrderMailer::cancelled(array_merge($order, ['status' => OrderStatus::CANCELLED]));
         }
         return $done;
+    }
+
+    /**
+     * Give back what an order holds when it is cancelled: catalogue stock, coupon redemption,
+     * customer designs/photos (back to normal retention). Must run inside the caller's transaction.
+     */
+    public static function releaseForCancellation(Database $db, int $orderId): void
+    {
+        foreach (self::items($orderId) as $it) {
+            if ($it['product_id'] !== null && $it['custom_design_id'] === null) {
+                $tracked = (int) $db->value('SELECT track_stock FROM products WHERE id = ?', [(int) $it['product_id']]) === 1;
+                if ($tracked) {
+                    $db->query('UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?', [(int) $it['quantity'], (int) $it['product_id']]);
+                    if ($it['product_variant_id'] !== null) {
+                        $db->query('UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?', [(int) $it['quantity'], (int) $it['product_variant_id']]);
+                    }
+                }
+            }
+            if ($it['custom_design_id'] !== null) {
+                $db->query("UPDATE custom_designs SET status = 'draft' WHERE id = ?", [(int) $it['custom_design_id']]);
+                $db->query(
+                    "UPDATE uploaded_images u JOIN order_customizations oc ON oc.uploaded_image_id = u.id
+                     SET u.status = 'attached', u.retention_until = ? WHERE oc.order_item_id = ? AND u.status = 'ordered'",
+                    [date('Y-m-d H:i:s', time() + (int) setting('retention_unordered_days', 30) * 86400), (int) $it['id']]
+                );
+            }
+        }
+        CouponService::release($db, $orderId);
     }
 
     /**

@@ -60,6 +60,9 @@ $router->post('/checkout', [CheckoutController::class, 'place'])->middleware('th
 $router->get('/order/confirmation/{number}', [CheckoutController::class, 'confirmation'])->name('checkout.confirmation');
 $router->get('/track', [TrackingController::class, 'form'])->name('order.track');
 $router->post('/track', [TrackingController::class, 'lookup'])->middleware('throttle:20,10')->name('order.track.lookup');
+$router->get('/artwork/{token}', [\App\Controllers\Storefront\ArtworkProofController::class, 'show'])->middleware('throttle:60,10')->name('artwork.proof');
+$router->get('/artwork/{token}/preview', [\App\Controllers\Storefront\ArtworkProofController::class, 'preview'])->name('artwork.proof.preview');
+$router->post('/artwork/{token}', [\App\Controllers\Storefront\ArtworkProofController::class, 'respond'])->middleware('throttle:10,10')->name('artwork.proof.respond');
 $router->get('/track/{number}/{token}', [TrackingController::class, 'token'])->name('order.track.token');
 // online payment providers (inactive until a gateway is implemented & configured; CSRF-exempt, signature-verified)
 $router->post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])->name('payments.webhook');

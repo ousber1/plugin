@@ -39,7 +39,7 @@ database/          migrations/*.php (SQL per module), seeders/*.php (idempotent)
 public/            ONLY web-accessible folder: index.php, .htaccess, assets/, uploads/ (catalogue images)
 resources/         views/ (layouts, partials, storefront, customer, admin, installer, errors, emails), lang/fr|ar
 routes/            installer.php, web.php, admin.php
-storage/           logs, sessions, cache, private_uploads, previews, invoices, backups (all deny-all)
+storage/           logs, sessions, cache, private_uploads, previews, print_files, invoices, backups (all deny-all)
 tests/             run.php (unit + DB integration), http.php + e2e.sh (HTTP end-to-end)
 ```
 
@@ -89,3 +89,19 @@ save → crops in ORIGINAL pixels + mockup data URL ─► POST /builder/design 
 ```
 
 Production (Phase 6) prints from the untouched original using the stored crop `{x, y, width, height, rotate}`.
+
+## Operations (Phase 6)
+
+* **Order workflow** — `App\Services\Sales\OrderWorkflow` holds the transition table; every change goes through
+  `change()` (row lock, timestamps, `order_status_history`, side effects, optional customer e-mail). The workshop
+  can only push an order *forward* along the production chain (`advanceProduction()`).
+* **Artwork proofs** — `ArtworkService::sendProof()` e-mails a 64-hex single-use link; only its SHA-256 is stored in
+  `order_customizations.approval_token`. The customer answers on `/artwork/{token}` (noindex, no-referrer).
+  When every image of the order is approved the order moves to *approved for production* and jobs are created.
+* **Production** — one `production_jobs` row per order line, one `production_tasks` row per applicable stage,
+  worked strictly in order. Finishing *print* calls `InventoryService::consumeForJob()` (idempotent).
+  Shipping the order closes the *package* and *ship* stages.
+* **Inventory** — `stock_movements` is the ledger (signed quantity, unit cost, balance after). Valued entries update
+  the weighted average cost; exits are valued at it. Quantities are computed in thousandths, costs in 1/10 000 DH
+  (integers), never floats.
+* **Print-ready files** — `storage/print_files` (deny-all), type checked with finfo, downloads logged.

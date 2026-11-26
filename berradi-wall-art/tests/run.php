@@ -1073,6 +1073,176 @@ $t->test('catalogue: soft delete keeps order history, frees the slug and empties
     $t->equals(null, \App\Services\CatalogService::product($ordered['slug']), 'hidden from the store');
 });
 
+
+$t->section('Phase 6: orders workflow, artwork, production, inventory, purchases');
+$Inv = \App\Services\Operations\InventoryService::class;
+$t->test('inventory: exact quantities, weighted average cost, exits at WAC, refusal below zero, physical count', function (TestRunner $t) use ($db, $Inv): void {
+    $t->equals(1500, $Inv::toMilli('1,5'));
+    $t->equals('-0.250', $Inv::fromMilli(-250));
+    $id = $db->insert('materials', ['sku' => 'TOILE-TEST', 'name' => 'Toile coton 380g', 'category' => 'canvas', 'unit' => 'm2', 'min_stock' => '5.000']);
+    $Inv::move($id, 'in', '10', '50.00');
+    $Inv::move($id, 'in', '10', '70.00');
+    $t->equals('60.0000', (string) $db->value('SELECT unit_cost FROM materials WHERE id = ?', [$id]), 'WAC');
+    $r = $Inv::move($id, 'out', '-5', null);
+    $t->equals('15.000', $r['balance']);
+    $t->equals('300.00', $r['total_cost'], 'valued at WAC');
+    $t->throws(fn () => $Inv::move($id, 'out', '-16'), \App\Services\Operations\InsufficientStockException::class);
+    $t->throws(fn () => $Inv::move($id, 'in', '-1', '5'), InvalidArgumentException::class, 'sign must match type');
+    $c = $Inv::count($id, '12', null, 'Inventaire');
+    $t->equals('-3.000', (string) $db->value('SELECT quantity FROM stock_movements WHERE id = ?', [$c['id']]));
+    $t->equals(null, $Inv::count($id, '12'), 'no-op count');
+    $t->equals('12.000', (string) $db->value('SELECT stock_quantity FROM materials WHERE id = ?', [$id]));
+    $t->equals('12.000', (string) $db->value('SELECT balance_after FROM stock_movements WHERE material_id = ? ORDER BY id DESC LIMIT 1', [$id]), 'ledger balance = stock');
+    $t->equals(0, count(array_filter($Inv::lowStock(), fn ($m) => (int) $m['id'] === $id)), 'above threshold');
+});
+$t->test('purchases: totals HT/TVA, reception into stock updates WAC, payment limits, locked once received', function (TestRunner $t) use ($db): void {
+    $P = \App\Services\Operations\PurchaseService::class;
+    $sup = $db->insert('suppliers', ['name' => 'Papeterie Atlas', 'city' => 'Casablanca']);
+    $mat = (int) $db->value("SELECT id FROM materials WHERE sku = 'TOILE-TEST'");
+    $id = $P::save(null, ['supplier_id' => $sup, 'purchase_date' => date('Y-m-d'), 'status' => 'ordered'], [
+        ['material_id' => $mat, 'description' => '', 'quantity' => '8', 'unit_cost' => '75', 'tax_rate' => '20'],
+        ['material_id' => null, 'description' => 'Transport', 'quantity' => '1', 'unit_cost' => '100', 'tax_rate' => '0'],
+    ], null);
+    $p = $db->fetch('SELECT * FROM purchases WHERE id = ?', [$id]);
+    $t->equals('700.00', (string) $p['subtotal']);
+    $t->equals('120.00', (string) $p['tax_total']);
+    $t->equals('820.00', (string) $p['total']);
+    $t->assert(str_starts_with((string) $p['purchase_number'], 'ACH-' . date('Y') . '-'), 'sequential number');
+    $t->equals(1, $P::receive($id, null), 'one stocked line');
+    $t->equals('20.000', (string) $db->value('SELECT stock_quantity FROM materials WHERE id = ?', [$mat]));
+    $t->equals('66.0000', (string) $db->value('SELECT unit_cost FROM materials WHERE id = ?', [$mat]), '(12×60 + 8×75) / 20');
+    $t->throws(fn () => $P::receive($id, null), \App\Core\ValidationException::class, 'received once');
+    $t->throws(fn () => $P::pay($id, '900', 'cash', date('Y-m-d'), null, null), \App\Core\ValidationException::class);
+    $P::pay($id, '500', 'bank_transfer', date('Y-m-d'), 'VIR-77', null);
+    $t->equals('500.00', (string) $db->value('SELECT amount_paid FROM purchases WHERE id = ?', [$id]));
+    $t->throws(fn () => $P::cancel($id), \App\Core\ValidationException::class, 'received purchase cannot be cancelled');
+});
+$t->test('manual order: catalogue + custom lines, negotiated price, stock reserved, customer matched by phone', function (TestRunner $t) use ($db): void {
+    $prod = $db->fetch("SELECT p.id, v.id AS vid, v.price FROM products p JOIN product_variants v ON v.product_id = p.id AND v.is_active = 1
+                        WHERE p.slug = 'desert-rose' AND p.deleted_at IS NULL ORDER BY v.sort_order LIMIT 1");
+    $db->update('products', ['track_stock' => 1, 'stock_quantity' => 10], ['id' => (int) $prod['id']]);
+    $db->update('product_variants', ['stock_quantity' => 10], ['id' => (int) $prod['vid']]);
+    $known = $db->fetch("SELECT id, phone FROM customers WHERE phone IS NOT NULL AND deleted_at IS NULL LIMIT 1");
+    $o = \App\Services\Sales\AdminOrderService::create(
+        ['source' => 'whatsapp', 'full_name' => 'Client WhatsApp', 'phone' => $known['phone'], 'email' => null, 'city' => 'Casablanca', 'address' => '12 rue Atlas', 'shipping' => '0', 'locale' => 'fr'],
+        [
+            ['kind' => 'catalog', 'product_id' => (int) $prod['id'], 'variant_id' => (int) $prod['vid'], 'quantity' => 2, 'unit_price' => ''],
+            ['kind' => 'custom', 'title' => 'Toile famille 100×70', 'width_cm' => '100', 'height_cm' => '70', 'quantity' => 1, 'unit_price' => '1 200,00', 'unit_cost' => '300'],
+        ],
+        1
+    );
+    $t->equals('confirmed', $o['status']);
+    $t->equals('whatsapp', $o['source']);
+    $t->equals((int) $db->value('SELECT id FROM customers WHERE phone = ? AND deleted_at IS NULL ORDER BY is_guest, id LIMIT 1', [$known['phone']]), (int) $o['customer_id'], 'matched by phone (account first)');
+    $expected = \App\Helpers\Money::add(\App\Helpers\Money::mul((string) $prod['price'], 2), '1200.00');
+    $t->equals($expected, (string) $o['subtotal']);
+    $t->equals($expected, (string) $o['grand_total'], 'TTC prices, free shipping given');
+    $t->equals(8, (int) $db->value('SELECT stock_quantity FROM product_variants WHERE id = ?', [(int) $prod['vid']]));
+    $t->equals(2, (int) $db->value('SELECT COUNT(*) FROM order_items WHERE order_id = ?', [(int) $o['id']]));
+    $t->throws(fn () => \App\Services\Sales\AdminOrderService::create(['full_name' => 'X', 'phone' => '0600000000', 'city' => 'Rabat', 'address' => 'x', 'shipping' => '', 'locale' => 'fr'],
+        [['kind' => 'catalog', 'product_id' => (int) $prod['id'], 'variant_id' => (int) $prod['vid'], 'quantity' => 9]], 1), \App\Core\ValidationException::class, 'stock limit');
+});
+$t->test('workflow: only allowed transitions, timestamps + history, cancellation releases stock and stops production', function (TestRunner $t) use ($db): void {
+    $W = \App\Services\Sales\OrderWorkflow::class;
+    $o = $db->fetch("SELECT * FROM orders WHERE source = 'whatsapp' ORDER BY id DESC LIMIT 1");
+    $t->throws(fn () => $W::change((int) $o['id'], 'shipped'), \App\Services\Sales\WorkflowException::class, 'confirmed → shipped refused');
+    $t->throws(fn () => $W::change((int) $o['id'], 'confirmed'), \App\Services\Sales\WorkflowException::class, 'same status');
+    $W::change((int) $o['id'], 'approved_for_production', ['comment' => 'OK client', 'user_id' => 1]);
+    $t->equals(2, (int) $db->value('SELECT COUNT(*) FROM production_jobs WHERE order_id = ?', [(int) $o['id']]), 'one job per line');
+    $t->equals('OK client', (string) $db->value('SELECT comment FROM order_status_history WHERE order_id = ? ORDER BY id DESC LIMIT 1', [(int) $o['id']]));
+    // a copy of this order to test cancellation
+    $vid = (int) $db->value('SELECT product_variant_id FROM order_items WHERE order_id = ? AND product_variant_id IS NOT NULL', [(int) $o['id']]);
+    $c = \App\Services\Sales\AdminOrderService::create(['source' => 'phone', 'full_name' => 'Annulation Test', 'phone' => '0611223344', 'city' => 'Rabat', 'address' => '1 av. Hassan II', 'shipping' => '30', 'locale' => 'fr'],
+        [['kind' => 'catalog', 'product_id' => (int) $db->value('SELECT product_id FROM product_variants WHERE id = ?', [$vid]), 'variant_id' => $vid, 'quantity' => 3]], 1);
+    $t->equals(5, (int) $db->value('SELECT stock_quantity FROM product_variants WHERE id = ?', [$vid]));
+    $W::change((int) $c['id'], 'approved_for_production', ['user_id' => 1]);
+    $W::change((int) $c['id'], 'cancelled', ['comment' => 'Client injoignable', 'user_id' => 1]);
+    $row = $db->fetch('SELECT status, cancelled_at, balance_due FROM orders WHERE id = ?', [(int) $c['id']]);
+    $t->equals('cancelled', $row['status']);
+    $t->assert($row['cancelled_at'] !== null, 'cancelled_at set');
+    $t->equals('0.00', (string) $row['balance_due']);
+    $t->equals(8, (int) $db->value('SELECT stock_quantity FROM product_variants WHERE id = ?', [$vid]), 'stock released');
+    $t->equals('cancelled', (string) $db->value('SELECT status FROM production_jobs WHERE order_id = ?', [(int) $c['id']]));
+    $t->equals([], $W::allowed('cancelled'), 'final state');
+});
+$t->test('production: stages in order, print consumes linked stock at WAC, order follows the workshop, shipment closes it', function (TestRunner $t) use ($db): void {
+    $Pr = \App\Services\Operations\ProductionService::class;
+    $mat = (int) $db->value("SELECT id FROM materials WHERE sku = 'TOILE-TEST'");
+    $db->update('product_materials', ['inventory_material_id' => $mat], ['code' => 'canvas']);
+    $o = $db->fetch("SELECT * FROM orders WHERE source = 'whatsapp' ORDER BY id DESC LIMIT 1");
+    $job = $db->fetch('SELECT j.* FROM production_jobs j JOIN order_items oi ON oi.id = j.order_item_id WHERE j.order_id = ? AND oi.product_variant_id IS NOT NULL', [(int) $o['id']]);
+    $other = $db->fetch('SELECT j.* FROM production_jobs j JOIN order_items oi ON oi.id = j.order_item_id WHERE j.order_id = ? AND oi.product_variant_id IS NULL', [(int) $o['id']]);
+    $stages = array_column($db->fetchAll('SELECT stage FROM production_tasks WHERE production_job_id = ? ORDER BY sort_order', [(int) $job['id']]), 'stage');
+    $t->assert(!in_array('approve_artwork', $stages, true), 'no artwork stage for a catalogue print');
+    $t->equals('receive', $stages[0]);
+    $task = fn (int $jobId, string $stage) => (int) $db->value('SELECT id FROM production_tasks WHERE production_job_id = ? AND stage = ?', [$jobId, $stage]);
+    $t->throws(fn () => $Pr::act($task((int) $job['id'], 'print'), 'start', 1), \App\Services\Operations\ProductionException::class, 'cannot skip ahead');
+    $Pr::act($task((int) $job['id'], 'prepare_file'), 'done', 1);
+    $Pr::act($task((int) $job['id'], 'print'), 'start', 1);
+    $t->equals('printing', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]), 'order follows the workshop');
+    $stock = (string) $db->value('SELECT stock_quantity FROM materials WHERE id = ?', [$mat]);
+    $Pr::act($task((int) $job['id'], 'print'), 'done', 1);
+    $item = $db->fetch('SELECT * FROM order_items WHERE id = ?', [(int) $job['order_item_id']]);
+    $need = \App\Services\Operations\InventoryService::requirementsFor($item)['lines'][0]['quantity'];
+    $t->equals(number_format((float) $stock - (float) $need, 3, '.', ''), (string) $db->value('SELECT stock_quantity FROM materials WHERE id = ?', [$mat]), 'consumed ' . $need . ' m²');
+    $cost = (string) $db->value('SELECT material_cost FROM production_jobs WHERE id = ?', [(int) $job['id']]);
+    $t->equals(number_format(round((float) $need * 66, 2), 2, '.', ''), $cost, 'valued at WAC 66.00');
+    \App\Services\Operations\InventoryService::consumeForJob((int) $job['id']);
+    $t->equals($cost, (string) $db->value('SELECT material_cost FROM production_jobs WHERE id = ?', [(int) $job['id']]), 'consumption booked once');
+    foreach ([$job, $other] as $j) {
+        foreach ($db->fetchAll("SELECT id, stage FROM production_tasks WHERE production_job_id = ? AND status = 'pending' AND stage <> 'ship' ORDER BY sort_order", [(int) $j['id']]) as $tk) {
+            $Pr::act((int) $tk['id'], 'done', 1);
+        }
+    }
+    $t->equals('ready_for_shipping', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]));
+    $t->throws(fn () => $Pr::act($task((int) $job['id'], 'ship'), 'done', 1), \App\Services\Operations\ProductionException::class, 'ship closed by the shipment');
+    $t->throws(fn () => \App\Services\Sales\ShipmentService::create((int) $o['id'], ['courier' => 'Amana', 'cod_amount' => '999999'], 1), \App\Services\Sales\WorkflowException::class, 'COD above balance');
+    $sid = \App\Services\Sales\ShipmentService::create((int) $o['id'], ['courier' => 'Amana', 'tracking_number' => 'AM123456789MA', 'shipping_cost' => '45', 'cod_amount' => (string) $o['balance_due']], 1, true, false);
+    $t->equals('shipped', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]));
+    $t->equals(2, (int) $db->value("SELECT COUNT(*) FROM production_jobs WHERE order_id = ? AND status = 'completed'", [(int) $o['id']]), 'jobs closed by shipment');
+    \App\Services\Sales\ShipmentService::updateStatus($sid, 'delivered', 1, false);
+    $row = $db->fetch('SELECT status, delivered_at FROM orders WHERE id = ?', [(int) $o['id']]);
+    $t->equals('delivered', $row['status']);
+    $t->assert($row['delivered_at'] !== null);
+    $from = date('Y-m-01');
+    $to = date('Y-m-01', strtotime('+1 month'));
+    $t->assert(\App\Helpers\Money::compare(\App\Services\Admin\DashboardStats::profit($from, $to)['shipping_cost'], '45.00') >= 0, 'real courier cost reaches profit');
+});
+$t->test('artwork: proof link (hash stored, single use), customer approval releases the order to production', function (TestRunner $t) use ($db): void {
+    $A = \App\Services\Operations\ArtworkService::class;
+    $o = $db->fetch("SELECT * FROM orders WHERE customer_email = 'design@client.ma'");
+    $db->update('orders', ['status' => 'confirmed'], ['id' => (int) $o['id']]);
+    $item = (int) $db->value('SELECT id FROM order_items WHERE order_id = ? AND custom_design_id IS NOT NULL', [(int) $o['id']]);
+    $t->assert($item > 0, 'design line');
+    $url = $A::sendProof($item, 1, 'Merci de vérifier le cadrage');
+    $raw = substr($url, -64);
+    $t->equals('awaiting_artwork_approval', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]));
+    $t->equals(hash('sha256', $raw), (string) $db->value('SELECT approval_token FROM order_customizations WHERE order_item_id = ? LIMIT 1', [$item]), 'only the hash is stored');
+    $t->equals(null, $A::findByToken(str_repeat('a', 64)));
+    $t->assert($A::findByToken($raw) !== null, 'valid link');
+    $t->equals(true, $A::customerRespond($raw, false, 'Le visage est coupé en haut'));
+    $t->equals('changes_requested', (string) $db->value('SELECT approval_status FROM order_customizations WHERE order_item_id = ? LIMIT 1', [$item]));
+    $t->equals(false, $A::customerRespond($raw, true), 'link used once');
+    $raw2 = substr($A::sendProof($item, 1), -64);
+    $t->equals(true, $A::customerRespond($raw2, true));
+    $t->equals('approved_for_production', (string) $db->value('SELECT status FROM orders WHERE id = ?', [(int) $o['id']]), 'released to production');
+    $job = (int) $db->value('SELECT id FROM production_jobs WHERE order_item_id = ?', [$item]);
+    $t->equals('done', (string) $db->value("SELECT status FROM production_tasks WHERE production_job_id = ? AND stage = 'approve_artwork'", [$job]), 'artwork stage already done');
+    $t->equals('prepare_file', (string) $db->value('SELECT current_stage FROM production_jobs WHERE id = ?', [$job]));
+    $t->assert((int) $db->value("SELECT COUNT(*) FROM notifications WHERE event = 'artwork_proof' AND related_id = ?", [(int) $o['id']]) >= 2, 'proof e-mails recorded');
+});
+$t->test('print-ready files: type checked by content, stored privately', function (TestRunner $t) use ($db): void {
+    $cid = (int) $db->value('SELECT oc.id FROM order_customizations oc LIMIT 1');
+    $tmp = tempnam(sys_get_temp_dir(), 'pf');
+    file_put_contents($tmp, '%PDF-1.4' . "\n" . str_repeat('x', 200) . "\n%%EOF");
+    $rel = \App\Services\Operations\ArtworkService::storePrintFile($cid, ['name' => 'tirage.pdf', 'tmp_name' => $tmp, 'error' => 0, 'size' => filesize($tmp)], true);
+    $t->assert(is_file(storage_path('print_files/' . $rel)) && str_ends_with($rel, '.pdf'), 'stored outside public/');
+    file_put_contents($tmp, '<?php echo 1;');
+    $t->throws(fn () => \App\Services\Operations\ArtworkService::storePrintFile($cid, ['name' => 'evil.pdf', 'tmp_name' => $tmp, 'error' => 0, 'size' => filesize($tmp)], true), \App\Services\UploadException::class);
+    @unlink(storage_path('print_files/' . $rel));
+    @unlink($tmp);
+});
+
 $demo->remove();
 
 exit($t->finish());

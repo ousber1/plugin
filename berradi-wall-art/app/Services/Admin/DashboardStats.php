@@ -184,7 +184,7 @@ final class DashboardStats
     /** @return list<array<string,mixed>> */
     public static function latestOrders(int $limit = 8): array
     {
-        return self::db()->fetchAll('SELECT order_number, customer_name, status, payment_status, grand_total, placed_at FROM orders ORDER BY id DESC LIMIT ' . $limit);
+        return self::db()->fetchAll('SELECT id, order_number, customer_name, status, payment_status, grand_total, placed_at FROM orders ORDER BY id DESC LIMIT ' . $limit);
     }
 
     /** @return list<array<string,mixed>> tracked products under 5 units */

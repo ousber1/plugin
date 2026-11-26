@@ -118,7 +118,7 @@ if ($finance) {
                             <tbody>
                             <?php foreach ($latestOrders as $o): ?>
                                 <tr>
-                                    <td class="fw-semibold text-nowrap"><?php if ($router->has('admin.orders.show')): ?><a href="<?= e(route('admin.orders.show', ['number' => $o['order_number']])) ?>"><?= e($o['order_number']) ?></a><?php else: ?><?= e($o['order_number']) ?><?php endif; ?><div class="small text-muted-bwa fw-normal"><?= e(format_date($o['placed_at'], true)) ?></div></td>
+                                    <td class="fw-semibold text-nowrap"><?php if ($router->has('admin.orders.show')): ?><a href="<?= e(route('admin.orders.show', ['id' => $o['id']])) ?>"><?= e($o['order_number']) ?></a><?php else: ?><?= e($o['order_number']) ?><?php endif; ?><div class="small text-muted-bwa fw-normal"><?= e(format_date($o['placed_at'], true)) ?></div></td>
                                     <td><?= e($o['customer_name']) ?></td>
                                     <td><span class="badge-status <?= in_array($o['status'], ['cancelled', 'returned'], true) ? 'is-danger' : ($o['status'] === 'delivered' ? 'is-success' : '') ?>"><?= e(\App\Services\Sales\OrderStatus::label((string) $o['status'])) ?></span></td>
                                     <td class="small"><?= e(__('account.payment_' . $o['payment_status'])) ?></td>

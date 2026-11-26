@@ -72,6 +72,46 @@
             sync();
         });
 
+        // ---------------------------------------------------------- repeatable rows (order / purchase lines)
+        document.querySelectorAll('[data-repeat-add]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const box = document.querySelector(btn.getAttribute('data-repeat-add'));
+                const rows = box ? box.querySelectorAll('[data-repeat-row]') : [];
+                if (!rows.length) return;
+                const clone = rows[rows.length - 1].cloneNode(true);
+                const index = rows.length;
+                clone.querySelectorAll('[data-name]').forEach(function (el) {
+                    el.name = el.getAttribute('data-name').replace('__i__', String(index));
+                    if (el.tagName === 'SELECT') { el.selectedIndex = 0; }
+                    else if (el.name.endsWith('[quantity]') && el.type === 'number') { el.value = '1'; }
+                    else if (!el.name.endsWith('[tax_rate]')) { el.value = ''; }
+                });
+                box.appendChild(clone);
+                const first = clone.querySelector('select, input');
+                if (first) first.focus();
+            });
+        });
+
+        // ---------------------------------------------------------- confirmation on a single button
+        document.querySelectorAll('[data-confirm-click]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                if (!window.confirm(btn.getAttribute('data-confirm-click'))) e.preventDefault();
+            });
+        });
+
+        // ---------------------------------------------------------- order status: confirm cancellation / return
+        document.querySelectorAll('[data-status-form]').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const v = form.querySelector('[name="status"]').value;
+                if ((v === 'cancelled' || v === 'returned') && !window.confirm(form.getAttribute('data-cancel-confirm'))) e.preventDefault();
+            });
+        });
+
+        // ---------------------------------------------------------- one-time links: select on focus
+        document.querySelectorAll('[data-select-on-focus]').forEach(function (el) {
+            el.addEventListener('focus', function () { el.select(); });
+        });
+
         // ---------------------------------------------------------- drag & drop ordering (hidden order[] inputs follow DOM order)
         document.querySelectorAll('[data-sortable]').forEach(function (list) {
             let dragged = null;

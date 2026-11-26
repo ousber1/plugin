@@ -391,4 +391,8 @@ return [
     'private_uploads' => 'صور العملاء (خاص)',
     'public_uploads' => 'الوسائط العامة',
     'cron_help' => 'أضف هذه المهمة في cPanel ← Cron Jobs:',
+    'nav_artwork' => 'صور العملاء',
+    'nav_machines' => 'الآلات',
+    'nav_purchases' => 'المشتريات',
+    'nav_suppliers' => 'الموردون',
 ];

@@ -391,4 +391,8 @@ return [
     'private_uploads' => 'Photos clients (privé)',
     'public_uploads' => 'Médias publics',
     'cron_help' => 'Ajoutez cette tâche dans cPanel → Tâches Cron :',
+    'nav_artwork' => 'Visuels clients',
+    'nav_machines' => 'Machines',
+    'nav_purchases' => 'Achats',
+    'nav_suppliers' => 'Fournisseurs',
 ];

@@ -1028,4 +1028,223 @@ $t->test('admin pages render in Arabic (RTL)', function (TestRunner $t) use ($o)
 });
 @unlink($jpeg);
 
+$t->section('Orders, artwork proofs, production & inventory (Phase 6)');
+$p6 = ['order' => 0, 'number' => '', 'item' => 0];
+$q6 = fn (string $sql) => $pdo5->query($sql)->fetchColumn();
+$t->test('a customer orders a custom design (photo stays private)', function (TestRunner $t) use ($base, $mkJpeg, $q6, &$p6): void {
+    $g = new Browser($base);
+    $g->get('/custom-wall-art');
+    $g->request('POST', '/builder/upload', ['_token' => $g->token()], ['photo' => [$mkJpeg(3000, 2000), 'image/jpeg', 'famille.jpg']], ['Accept: application/json']);
+    $uuid = $g->data()['image']['uuid'] ?? '';
+    $g->get('/custom-wall-art');
+    preg_match('#"materials":\[\{"id":(\d+),"code":"canvas"#', $g->body, $m);
+    $g->json('/builder/design', ['material_id' => (int) ($m[1] ?? 0), 'layout' => 'single', 'panel_width_cm' => 60, 'panel_height_cm' => 40, 'border' => 'wrap',
+        'images' => [['uuid' => $uuid, 'panel' => 0, 'crop' => ['x' => 0, 'y' => 0, 'width' => 3000, 'height' => 2000, 'rotate' => 0]]]]);
+    $g->post('/cart/add', ['design' => $g->data()['design']['uuid'] ?? ''], '/cart');
+    $g->post('/checkout', ['full_name' => 'Nadia Chraibi', 'phone' => '0661 77 88 99', 'email' => 'nadia@client.test', 'country' => 'MA', 'city' => 'Casablanca',
+        'address' => '25 Boulevard d’Anfa', 'payment_method' => 'cod', 'accept_terms' => '1'], '/checkout');
+    $t->assert(str_starts_with($g->location(), '/order/confirmation/BWA-'), 'order placed: ' . $g->location());
+    $p6['number'] = substr($g->location(), strlen('/order/confirmation/'));
+    $p6['order'] = (int) $q6("SELECT id FROM orders WHERE order_number = '{$p6['number']}'");
+    $p6['item'] = (int) $q6("SELECT id FROM order_items WHERE order_id = {$p6['order']} AND custom_design_id IS NOT NULL");
+    $t->assert($p6['item'] > 0, 'custom line');
+    $anon = new Browser($base);
+    $anon->get('/admin/artwork/' . $p6['item']);
+    $t->equals('/admin/login', $anon->location(), 'artwork pages need staff login');
+});
+$t->test('order back office: list, detail, artwork review, private preview & original download', function (TestRunner $t) use ($o, &$p6): void {
+    $o->get('/admin/orders?status=open&q=' . urlencode('Nadia'));
+    $t->equals(200, $o->status);
+    $t->contains($p6['number'], $o->body);
+    $t->contains('1 visuel(s) à valider', $o->body);
+    $o->get('/admin/orders/' . $p6['order']);
+    $t->equals(200, $o->status);
+    $t->contains('Vérifier', $o->body);
+    $t->contains('value="awaiting_confirmation"', $o->body, 'allowed next statuses offered');
+    $t->assert(!str_contains($o->body, 'value="shipped"'), 'impossible transitions not offered');
+    $o->get('/admin/orders/' . $p6['order'] . '/items/' . $p6['item'] . '/preview');
+    $t->equals(200, $o->status);
+    $t->equals('image/jpeg', $o->headers['content-type'] ?? '');
+    $o->get('/admin/artwork?status=open');
+    $t->contains($p6['number'], $o->body);
+    $o->get('/admin/artwork/' . $p6['item']);
+    $t->equals(200, $o->status);
+    $t->contains('Envoyer l’épreuve au client', $o->body);
+    preg_match('#/admin/artwork/' . $p6['item'] . '/original/(\d+)"#', $o->body, $m);
+    $o->get('/admin/artwork/' . $p6['item'] . '/original/' . ($m[1] ?? 0));
+    $t->equals(200, $o->status);
+    $t->contains('attachment', $o->headers['content-disposition'] ?? '', 'original is a download');
+    $o->get('/admin/orders/' . $p6['order'] . '/print');
+    $t->contains($p6['number'], $o->body);
+    $t->contains('Bon de préparation', $o->body);
+});
+$t->test('status workflow: confirm, refuse an impossible jump', function (TestRunner $t) use ($o, $q6, &$p6): void {
+    $o->post('/admin/orders/' . $p6['order'] . '/status', ['status' => 'shipped'], '/admin/orders/' . $p6['order']);
+    $o->follow();
+    $t->contains('Passage impossible', $o->body);
+    $o->post('/admin/orders/' . $p6['order'] . '/status', ['status' => 'confirmed', 'comment' => 'Confirmé par téléphone', 'notify' => '1'], '/admin/orders/' . $p6['order']);
+    $t->equals('confirmed', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $t->equals(1, (int) $q6("SELECT COUNT(*) FROM notifications WHERE event = 'order_status_confirmed' AND related_id = {$p6['order']}"), 'customer e-mail queued/sent');
+    $o->post('/admin/orders/' . $p6['order'] . '/status', ['status' => 'approved_for_production'], '/admin/orders/' . $p6['order']);
+    $o->follow();
+    $t->contains('ne sont pas encore validés', $o->body, 'artwork must be approved first');
+});
+$t->test('proof link: customer sees the mock-up, asks for a change, then approves a new proof (single-use links)', function (TestRunner $t) use ($o, $base, $q6, &$p6): void {
+    $o->post('/admin/artwork/' . $p6['item'] . '/proof', ['message' => 'Voici votre visuel'], '/admin/artwork/' . $p6['item']);
+    $o->follow();
+    $t->assert(preg_match('#value="https?://[^"]+/artwork/([a-f0-9]{64})"#', $o->body, $m) === 1, 'link shown once to staff');
+    $raw = $m[1] ?? '';
+    $t->equals('awaiting_artwork_approval', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $o->get('/admin/artwork/' . $p6['item']);
+    $t->assert(!str_contains($o->body, $raw), 'link not shown again');
+    $c = new Browser($base);
+    $c->get('/artwork/' . $raw);
+    $t->equals(200, $c->status);
+    $t->contains('noindex', strtolower($c->headers['x-robots-tag'] ?? ''));
+    $t->contains($p6['number'], $c->body);
+    $c->get('/artwork/' . $raw . '/preview');
+    $t->equals('image/jpeg', $c->headers['content-type'] ?? '');
+    $c->post('/artwork/' . $raw, ['decision' => 'changes', 'feedback' => 'ok'], '/artwork/' . $raw);
+    $c->follow();
+    $t->contains('5 caractères minimum', $c->body, 'feedback required');
+    $c->post('/artwork/' . $raw, ['decision' => 'changes', 'feedback' => 'Recentrer sur les visages svp'], '/artwork/' . $raw);
+    $t->contains('Demande bien reçue', $c->body);
+    $c->get('/artwork/' . $raw);
+    $t->equals(404, $c->status, 'used link is dead');
+    $o->get('/admin/artwork/' . $p6['item']);
+    $t->contains('Recentrer sur les visages svp', $o->body, 'feedback visible to the studio');
+    $o->post('/admin/artwork/' . $p6['item'] . '/proof', [], '/admin/artwork/' . $p6['item']);
+    $o->follow();
+    preg_match('#/artwork/([a-f0-9]{64})"#', $o->body, $m2);
+    $c->post('/artwork/' . ($m2[1] ?? 'x'), ['decision' => 'approve'], '/artwork/' . ($m2[1] ?? 'x'));
+    $t->contains('Merci, c’est validé', $c->body);
+    $t->equals('approved_for_production', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $t->equals(1, (int) $q6("SELECT COUNT(*) FROM production_jobs WHERE order_id = {$p6['order']}"), 'production job created');
+});
+$t->test('inventory: create a stocked material, link it to canvas, movement refused below zero', function (TestRunner $t) use ($o, $pdo5, $q6): void {
+    $o->post('/admin/inventory', ['sku' => 'CANVAS-380', 'name' => 'Toile canvas 380 g', 'category' => 'canvas', 'unit' => 'm2', 'min_stock' => '5', 'initial_stock' => '25,5', 'unit_cost' => '48', 'is_active' => '1'], '/admin/inventory/create');
+    $mid = (int) $q6("SELECT id FROM materials WHERE sku = 'CANVAS-380'");
+    $t->equals('/admin/inventory/' . $mid, $o->location());
+    $t->equals('25.500', (string) $q6("SELECT stock_quantity FROM materials WHERE id = {$mid}"));
+    $pdo5->exec("UPDATE product_materials SET inventory_material_id = {$mid} WHERE code = 'canvas'");
+    $o->post('/admin/inventory/' . $mid . '/movements', ['type' => 'out', 'quantity' => '99'], '/admin/inventory/' . $mid);
+    $o->follow();
+    $t->contains('Stock insuffisant', $o->body);
+    $o->post('/admin/inventory/' . $mid . '/movements', ['type' => 'waste', 'quantity' => '0,5', 'notes' => 'Chute'], '/admin/inventory/' . $mid);
+    $t->equals('25.000', (string) $q6("SELECT stock_quantity FROM materials WHERE id = {$mid}"));
+    $o->get('/admin/inventory');
+    $t->contains('Toile canvas 380 g', $o->body);
+});
+$t->test('production board: work the stages, print consumes stock, order becomes ready to ship', function (TestRunner $t) use ($o, $q6, $pdo5, &$p6): void {
+    $o->post('/admin/machines', ['code' => 'EPS-P9', 'name' => 'Epson P9500', 'machine_type' => 'printer', 'status' => 'active', 'hourly_cost' => '120'], '/admin/machines');
+    $machine = (int) $q6("SELECT id FROM machines WHERE code = 'EPS-P9'");
+    $job = (int) $q6("SELECT id FROM production_jobs WHERE order_id = {$p6['order']}");
+    $o->get('/admin/production');
+    $t->equals(200, $o->status);
+    $t->contains((string) $q6("SELECT job_number FROM production_jobs WHERE id = {$job}"), $o->body);
+    $o->post('/admin/production/jobs/' . $job, ['priority' => 'urgent', 'machine_id' => (string) $machine, 'labor_cost' => '35'], '/admin/production/jobs/' . $job);
+    $t->equals('urgent', (string) $q6("SELECT priority FROM production_jobs WHERE id = {$job}"));
+    $before = (float) $q6("SELECT stock_quantity FROM materials WHERE sku = 'CANVAS-380'");
+    $guard = 0;
+    while ($guard++ < 12) {
+        $task = $pdo5->query("SELECT id, stage, status FROM production_tasks WHERE production_job_id = {$job} AND status IN ('pending','in_progress') ORDER BY sort_order LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        if (!$task || $task['stage'] === 'ship') {
+            break;
+        }
+        if ($task['status'] === 'pending') {
+            $o->post('/admin/production/jobs/' . $job . '/tasks/' . $task['id'], ['action' => 'start'], '/admin/production/jobs/' . $job);
+        }
+        $o->post('/admin/production/jobs/' . $job . '/tasks/' . $task['id'], ['action' => 'done'], '/admin/production/jobs/' . $job);
+    }
+    $after = (float) $q6("SELECT stock_quantity FROM materials WHERE sku = 'CANVAS-380'");
+    $t->assert($after < $before, "canvas consumed ({$before} → {$after})");
+    $t->assert((float) $q6("SELECT material_cost FROM production_jobs WHERE id = {$job}") > 0, 'material cost booked');
+    $t->equals('ready_for_shipping', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $o->get('/admin/production/jobs/' . $job);
+    $t->contains('Se termine automatiquement', $o->body);
+});
+$t->test('shipping with tracking e-mail, COD cash recorded, delivery', function (TestRunner $t) use ($o, $base, $q6, &$p6): void {
+    $due = (string) $q6("SELECT balance_due FROM orders WHERE id = {$p6['order']}");
+    $o->post('/admin/orders/' . $p6['order'] . '/shipments', ['courier' => 'Amana', 'tracking_number' => 'CB000111222MA', 'tracking_url' => 'http://insecure.example', 'cod_amount' => $due, 'mark_shipped' => '1', 'notify' => '1'], '/admin/orders/' . $p6['order']);
+    $o->follow();
+    $t->contains('https://', $o->body, 'validation message for non-https tracking link');
+    $o->post('/admin/orders/' . $p6['order'] . '/shipments', ['courier' => 'Amana', 'tracking_number' => 'CB000111222MA', 'shipping_cost' => '40', 'cod_amount' => $due, 'mark_shipped' => '1', 'notify' => '1'], '/admin/orders/' . $p6['order']);
+    $t->equals('shipped', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $t->contains('CB000111222MA', (string) $q6("SELECT body FROM notifications WHERE event = 'order_status_shipped' AND related_id = {$p6['order']}"), 'tracking number e-mailed');
+    $t->equals('completed', (string) $q6("SELECT status FROM production_jobs WHERE order_id = {$p6['order']}"));
+    $sid = (int) $q6("SELECT id FROM shipments WHERE order_id = {$p6['order']}");
+    $o->post('/admin/orders/' . $p6['order'] . '/shipments/' . $sid, ['status' => 'delivered'], '/admin/orders/' . $p6['order']);
+    $t->equals('delivered', (string) $q6("SELECT status FROM orders WHERE id = {$p6['order']}"));
+    $o->post('/admin/orders/' . $p6['order'] . '/payments', ['amount' => '999999', 'payment_method_id' => (string) $q6("SELECT id FROM payment_methods WHERE code = 'cod'")], '/admin/orders/' . $p6['order']);
+    $o->follow();
+    $t->contains('dépasse le reste à payer', $o->body);
+    $o->post('/admin/orders/' . $p6['order'] . '/payments', ['amount' => $due, 'payment_method_id' => (string) $q6("SELECT id FROM payment_methods WHERE code = 'cod'"), 'reference' => 'Amana COD'], '/admin/orders/' . $p6['order']);
+    $t->equals('paid', (string) $q6("SELECT payment_status FROM orders WHERE id = {$p6['order']}"));
+    $c = new Browser($base);
+    $c->post('/track', ['number' => $p6['number'], 'contact' => 'nadia@client.test'], '/track');
+    $c->follow();
+    $t->contains('Livrée', $c->body, 'customer tracking reflects delivery');
+});
+$t->test('phone order with a catalogue line and a custom line', function (TestRunner $t) use ($o, $q6): void {
+    $o->get('/admin/orders/create');
+    $t->equals(200, $o->status);
+    preg_match('#<option value="(\d+:\d*)"[^>]*>#', $o->body, $m);
+    $o->post('/admin/orders', [
+        'source' => 'phone', 'full_name' => 'Hôtel Oasis', 'phone' => '0522 33 44 55', 'email' => 'achat@oasis.test', 'city' => 'Marrakech', 'address' => 'Route de l’Ourika km 7',
+        'locale' => 'fr', 'shipping' => '0', 'lines' => [
+            ['product' => $m[1] ?? '', 'quantity' => '4', 'unit_price' => ''],
+            ['product' => '', 'title' => 'Triptyque lobby 3×(60×90)', 'width_cm' => '190', 'height_cm' => '90', 'quantity' => '1', 'unit_price' => '4500'],
+            ['product' => '', 'title' => '', 'quantity' => '1'],
+        ],
+    ], '/admin/orders/create');
+    $t->assert(preg_match('#^/admin/orders/(\d+)$#', $o->location(), $mm) === 1, 'redirect to the order: ' . $o->location());
+    $id = (int) ($mm[1] ?? 0);
+    $t->equals('phone', (string) $q6("SELECT source FROM orders WHERE id = {$id}"));
+    $t->equals('confirmed', (string) $q6("SELECT status FROM orders WHERE id = {$id}"));
+    $t->equals(2, (int) $q6("SELECT COUNT(*) FROM order_items WHERE order_id = {$id}"), 'empty row ignored');
+});
+$t->test('suppliers & purchases: reception adds stock at purchase cost', function (TestRunner $t) use ($o, $q6): void {
+    $o->post('/admin/suppliers', ['name' => 'Toiles du Maroc', 'city' => 'Casablanca', 'phone' => '0522000000', 'is_active' => '1'], '/admin/suppliers');
+    $sup = (int) $q6("SELECT id FROM suppliers WHERE name = 'Toiles du Maroc'");
+    $mid = (int) $q6("SELECT id FROM materials WHERE sku = 'CANVAS-380'");
+    $stock = (float) $q6("SELECT stock_quantity FROM materials WHERE id = {$mid}");
+    $o->post('/admin/purchases', ['supplier_id' => (string) $sup, 'purchase_date' => date('Y-m-d'), 'status' => 'ordered', 'lines' => [
+        ['material_id' => (string) $mid, 'description' => '', 'quantity' => '50', 'unit_cost' => '52', 'tax_rate' => '20'],
+    ]], '/admin/purchases/create');
+    $t->assert(preg_match('#^/admin/purchases/(\d+)$#', $o->location(), $m) === 1, 'purchase saved');
+    $pid = (int) ($m[1] ?? 0);
+    $t->equals('3120.00', (string) $q6("SELECT total FROM purchases WHERE id = {$pid}"));
+    $o->post('/admin/purchases/' . $pid . '/receive', [], '/admin/purchases/' . $pid);
+    $t->equals(number_format($stock + 50, 3, '.', ''), (string) $q6("SELECT stock_quantity FROM materials WHERE id = {$mid}"));
+    $o->post('/admin/purchases/' . $pid . '/pay', ['amount' => '3120', 'payment_method' => 'bank_transfer', 'paid_at' => date('Y-m-d')], '/admin/purchases/' . $pid);
+    $t->equals('3120.00', (string) $q6("SELECT amount_paid FROM purchases WHERE id = {$pid}"));
+    $o->get('/admin/suppliers');
+    $t->contains('Toiles du Maroc', $o->body);
+});
+$t->test('RBAC: designer reviews artwork but cannot change orders, run production or see stock', function (TestRunner $t) use ($base, &$p6): void {
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    foreach (['/admin/orders', '/admin/orders/' . $p6['order'], '/admin/artwork', '/admin/production'] as $p) {
+        $d->get($p);
+        $t->equals(200, $d->status, $p);
+    }
+    foreach (['/admin/inventory', '/admin/purchases', '/admin/suppliers', '/admin/machines', '/admin/orders/create'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $d->post('/admin/orders/' . $p6['order'] . '/status', ['status' => 'returned'], '/admin/orders');
+    $t->equals(403, $d->status, 'status change forbidden');
+    $d->post('/admin/orders/' . $p6['order'] . '/payments', ['amount' => '1', 'payment_method_id' => '1'], '/admin/orders');
+    $t->equals(403, $d->status, 'payments forbidden');
+});
+$t->test('Phase 6 admin pages render in Arabic (RTL)', function (TestRunner $t) use ($o, &$p6): void {
+    $o->get('/lang/ar');
+    foreach (['/admin/orders', '/admin/orders/' . $p6['order'], '/admin/artwork/' . $p6['item'], '/admin/production', '/admin/inventory', '/admin/purchases', '/admin/suppliers', '/admin/machines', '/admin/orders/create'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+
 exit($t->finish());

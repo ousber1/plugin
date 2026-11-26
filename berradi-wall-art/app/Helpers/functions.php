@@ -256,3 +256,15 @@ function cm(float|int|string|null $value): string
     $s = rtrim(rtrim(number_format((float) $value, 1, '.', ''), '0'), '.');
     return locale() === 'fr' ? str_replace('.', ',', $s) : $s;
 }
+
+/** CSS modifier for a status pill (orders, jobs, shipments, purchases, artwork). */
+function status_class(string $status): string
+{
+    return match ($status) {
+        'delivered', 'paid', 'completed', 'received', 'approved', 'done', 'active' => 'is-success',
+        'cancelled', 'returned', 'failed', 'refunded', 'changes_requested', 'inactive' => 'is-danger',
+        'draft', 'pending', 'unpaid', 'skipped', 'on_hold', 'maintenance' => 'is-muted',
+        'shipped', 'in_transit', 'out_for_delivery', 'ready_for_shipping', 'urgent' => 'is-dark',
+        default => '',
+    };
+}

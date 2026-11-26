@@ -38,6 +38,44 @@ final class OrderMailer
         }
     }
 
+    /**
+     * Status update chosen by staff (with optional message and shipment tracking).
+     *
+     * @param array<string,mixed> $order
+     * @param array<string,mixed>|null $shipment
+     */
+    public static function statusChanged(array $order, string $comment = '', ?array $shipment = null): void
+    {
+        if (empty($order['customer_email'])) {
+            return;
+        }
+        self::send($order, (string) $order['customer_email'], 'order_status_' . $order['status'], 'order_status', [
+            'comment' => $comment, 'shipment' => $shipment, 'trackUrl' => absolute_url('track?number=' . rawurlencode((string) $order['order_number'])),
+        ], (string) $order['locale']);
+    }
+
+    /**
+     * Artwork proof to approve (link carries a single-use secret; only its hash is stored).
+     *
+     * @param array<string,mixed> $order
+     */
+    public static function artworkProof(array $order, string $proofUrl, string $message = ''): void
+    {
+        if (empty($order['customer_email'])) {
+            return;
+        }
+        self::send($order, (string) $order['customer_email'], 'artwork_proof', 'artwork_proof', ['proofUrl' => $proofUrl, 'message' => $message], (string) $order['locale']);
+    }
+
+    /** Internal alert (artwork feedback from the customer, etc.). @param array<string,mixed> $order */
+    public static function internal(array $order, string $event, string $message): void
+    {
+        $admin = (string) (setting('admin_notification_email') ?: setting('company_email', ''));
+        if ($admin !== '') {
+            self::send($order, $admin, $event, 'internal_alert', ['message' => $message], (string) setting('default_language', 'fr'));
+        }
+    }
+
     /** @param array<string,mixed> $order @param array<string,mixed> $extra */
     private static function send(array $order, string $to, string $event, string $template, array $extra, string $locale): void
     {

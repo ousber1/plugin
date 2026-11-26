@@ -9,7 +9,7 @@ $sections = [
         ['admin.dashboard', 'bi-grid-1x2', 'admin.nav_dashboard', 'dashboard.view', true],
     ],
     'admin.nav_sales' => [
-        ['admin.orders.index', 'bi-receipt', 'admin.nav_orders', 'orders.view'],
+        ['admin.orders.index', 'bi-receipt', 'admin.nav_orders', 'orders.view', false, 'orders.manage'],
         ['admin.customers.index', 'bi-people', 'admin.nav_customers', 'customers.view', false, 'customers.manage'],
         ['admin.quotations.index', 'bi-file-earmark-text', 'admin.nav_quotations', 'quotations.view'],
         ['admin.invoices.index', 'bi-file-earmark-check', 'admin.nav_invoices', 'invoices.view'],
@@ -22,8 +22,12 @@ $sections = [
         ['admin.options.index', 'bi-sliders', 'admin.nav_options', 'products.manage'],
     ],
     'admin.nav_operations' => [
-        ['admin.production.index', 'bi-printer', 'admin.nav_production', 'production.view'],
-        ['admin.inventory.index', 'bi-box-seam', 'admin.nav_inventory', 'inventory.view'],
+        ['admin.artwork.index', 'bi-palette', 'admin.nav_artwork', 'artwork.view'],
+        ['admin.production.index', 'bi-printer', 'admin.nav_production', 'production.view', false, 'production.manage'],
+        ['admin.machines.index', 'bi-cpu', 'admin.nav_machines', 'production.manage'],
+        ['admin.inventory.index', 'bi-box-seam', 'admin.nav_inventory', 'inventory.view', false, 'inventory.manage'],
+        ['admin.purchases.index', 'bi-cart-check', 'admin.nav_purchases', 'purchases.manage'],
+        ['admin.suppliers.index', 'bi-building', 'admin.nav_suppliers', 'suppliers.manage'],
         ['admin.shipping.index', 'bi-truck', 'admin.nav_shipping', 'shipping.manage'],
     ],
     'admin.nav_finance' => [

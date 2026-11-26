@@ -135,3 +135,21 @@ html[dir="rtl"] .form-section > h3 { letter-spacing: 0; font-size: .85rem; }
 .option-row > summary::-webkit-details-marker { display: none; }
 .option-row[open] > summary { background: #FAF9F6; }
 .option-row:target { box-shadow: 0 0 0 2px var(--bwa-gold); }
+/* ---------------------------------------------------------------- Phase 6 */
+.prod-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr); gap: .8rem; overflow-x: auto; padding-bottom: .8rem; align-items: start; }
+.prod-col { background: #EBE7DF; border-radius: var(--bwa-radius-lg); padding: .6rem; min-height: 160px; }
+.prod-col-head { display: flex; justify-content: space-between; align-items: center; font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .3rem .6rem; }
+html[dir="rtl"] .prod-col-head { letter-spacing: 0; font-size: .85rem; }
+.prod-card { background: #fff; border: 1px solid var(--bwa-line); border-radius: var(--bwa-radius); padding: .65rem .7rem; margin-bottom: .55rem; border-inline-start: 3px solid transparent; }
+.prod-card.is-urgent { border-inline-start-color: #842F29; }
+.prod-card.is-high { border-inline-start-color: var(--bwa-gold); }
+.prod-card.is-hold { opacity: .7; }
+.task-list { list-style: none; padding: 0; margin: 0; }
+.task-list li { display: flex; gap: .75rem; align-items: flex-start; padding: .7rem 0; border-bottom: 1px dashed var(--bwa-line); }
+.task-list li:last-child { border-bottom: 0; }
+.task-dot { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; font-size: .8rem; background: #EEEDEA; color: #5F5B55; }
+.task-dot.is-done { background: #E5F2EA; color: #1E5A40; }
+.task-dot.is-current { background: var(--bwa-black); color: #fff; }
+.task-dot.is-skipped { background: #F4F2EE; color: #A39E95; }
+.line-row { border: 1px solid var(--bwa-line); border-radius: var(--bwa-radius); padding: .8rem; margin-bottom: .6rem; background: #FCFBF8; }
+.filter-bar .form-select { padding-inline-end: 2.4rem; }
