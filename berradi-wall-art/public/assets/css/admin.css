@@ -1,0 +1,89 @@
+/* ==========================================================================
+   BERRADI WALL ART — Administration
+   ========================================================================== */
+
+.admin-body { background: #F4F2EE; font-size: .9rem; }
+
+.admin-sidebar {
+    position: fixed; top: 0; bottom: 0; inset-inline-start: 0; width: 264px; z-index: 1035;
+    background: var(--bwa-black); color: rgba(255, 255, 255, .7);
+    display: flex; flex-direction: column; transition: transform .3s var(--bwa-ease);
+}
+.admin-sidebar .sidebar-brand { padding: 1.4rem 1.5rem 1.2rem; border-bottom: 1px solid rgba(255, 255, 255, .07); }
+.admin-sidebar .brand-mark { color: #fff; }
+.admin-sidebar .brand-mark .brand-name { font-size: 1.25rem; }
+.admin-sidebar .sidebar-scroll { overflow-y: auto; flex: 1; padding: 1rem 0 2rem; }
+.admin-sidebar .nav-section {
+    font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(255, 255, 255, .35);
+    padding: 1.1rem 1.5rem .45rem;
+}
+html[dir="rtl"] .admin-sidebar .nav-section { letter-spacing: 0; font-size: .78rem; }
+.admin-sidebar .nav-link {
+    display: flex; align-items: center; gap: .8rem; color: rgba(255, 255, 255, .72); padding: .58rem 1.5rem;
+    font-size: .86rem; border-inline-start: 2px solid transparent;
+}
+.admin-sidebar .nav-link i { font-size: 1rem; width: 1.1rem; text-align: center; color: rgba(255, 255, 255, .45); }
+.admin-sidebar .nav-link:hover { color: #fff; background: rgba(255, 255, 255, .04); }
+.admin-sidebar .nav-link.active { color: #fff; background: rgba(198, 166, 107, .12); border-inline-start-color: var(--bwa-gold); }
+.admin-sidebar .nav-link.active i { color: var(--bwa-gold); }
+.admin-sidebar .nav-link.disabled { color: rgba(255, 255, 255, .28); pointer-events: none; }
+.admin-sidebar .nav-link.disabled i { color: rgba(255, 255, 255, .2); }
+.admin-sidebar .nav-link .soon { margin-inline-start: auto; font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; border: 1px solid rgba(255, 255, 255, .15); padding: .05rem .35rem; border-radius: 2px; }
+
+.admin-main { margin-inline-start: 264px; min-height: 100vh; display: flex; flex-direction: column; }
+.admin-topbar {
+    position: sticky; top: 0; z-index: 1020; background: rgba(255, 255, 255, .92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--bwa-line); padding: .7rem 1.6rem; display: flex; align-items: center; gap: 1rem;
+}
+.admin-topbar .page-title { font-family: var(--bwa-font-display); font-size: 1.45rem; margin: 0; color: var(--bwa-black); }
+.admin-content { padding: 1.8rem 1.6rem 3rem; flex: 1; }
+.admin-footer { padding: 1rem 1.6rem; font-size: .75rem; color: var(--bwa-muted); border-top: 1px solid var(--bwa-line); }
+
+.avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--bwa-gold); color: var(--bwa-black);
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .78rem;
+}
+
+.admin-card { background: #fff; border: 1px solid var(--bwa-line); border-radius: var(--bwa-radius-lg); box-shadow: 0 1px 2px rgba(23, 23, 23, .03); }
+.admin-card > .card-header { background: transparent; border-bottom: 1px solid var(--bwa-line); padding: 1rem 1.3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.admin-card > .card-header h2, .admin-card > .card-header h3 { font-family: var(--bwa-font-body); font-size: .95rem; font-weight: 600; margin: 0; letter-spacing: 0; }
+.admin-card > .card-body { padding: 1.3rem; }
+
+.table-bwa { margin: 0; --bs-table-bg: transparent; }
+.table-bwa thead th {
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--bwa-muted); font-weight: 600;
+    background: #FAF9F6; border-bottom: 1px solid var(--bwa-line); padding: .75rem 1rem; white-space: nowrap;
+}
+html[dir="rtl"] .table-bwa thead th { letter-spacing: 0; font-size: .8rem; }
+.table-bwa td { padding: .8rem 1rem; vertical-align: middle; border-color: #F0EDE7; }
+.table-bwa tbody tr:hover { background: #FCFBF8; }
+
+.settings-tabs .nav-link {
+    color: var(--bwa-muted); font-size: .84rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: .8rem 1rem;
+}
+.settings-tabs .nav-link.active { color: var(--bwa-black); border-bottom-color: var(--bwa-gold); background: transparent; font-weight: 600; }
+
+.perm-module { border: 1px solid var(--bwa-line); border-radius: var(--bwa-radius); padding: 1rem 1.1rem; background: #FCFBF8; height: 100%; }
+.perm-module h4 { font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--bwa-gold-dark); margin-bottom: .7rem; }
+
+.checklist-item { display: flex; align-items: center; gap: .75rem; padding: .65rem 0; border-bottom: 1px dashed var(--bwa-line); }
+.checklist-item:last-child { border-bottom: 0; }
+.checklist-item i { font-size: 1.1rem; }
+
+.admin-login-body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;
+    background: radial-gradient(900px 500px at 80% 10%, rgba(198, 166, 107, .18), transparent 60%), var(--bwa-black);
+}
+.admin-login-card { width: 100%; max-width: 420px; background: #fff; border-radius: var(--bwa-radius-lg); box-shadow: 0 40px 90px rgba(0, 0, 0, .45); }
+.admin-login-card .card-body { padding: 2.6rem 2.4rem; }
+
+.sidebar-backdrop { display: none; }
+
+@media (max-width: 991.98px) {
+    .admin-sidebar { transform: translateX(-100%); }
+    html[dir="rtl"] .admin-sidebar { transform: translateX(100%); }
+    .admin-sidebar.open { transform: none !important; }
+    .admin-main { margin-inline-start: 0; }
+    .sidebar-backdrop.show { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 1034; }
+    .admin-content { padding: 1.2rem 1rem 2.5rem; }
+}

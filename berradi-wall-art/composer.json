@@ -1,0 +1,43 @@
+{
+    "name": "berradi/wall-art",
+    "description": "BERRADI WALL ART - E-commerce & business management system (cPanel compatible)",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "ext-mbstring": "*",
+        "ext-json": "*",
+        "ext-openssl": "*",
+        "ext-fileinfo": "*",
+        "dompdf/dompdf": "^3.0",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "suggest": {
+        "ext-gd": "Required for optimized image previews and thumbnails",
+        "ext-intl": "Better locale-aware formatting",
+        "ext-zip": "Compressed backups",
+        "ext-curl": "Future online payment integrations"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Helpers/functions.php"
+        ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "php tests/run.php",
+        "lint": "php bin/console lint"
+    },
+    "minimum-stability": "stable"
+}

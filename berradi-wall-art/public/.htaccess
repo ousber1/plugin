@@ -1,0 +1,35 @@
+# BERRADI WALL ART — public web root
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Uncomment to force HTTPS once the SSL certificate is active (cPanel > SSL/TLS Status / AutoSSL)
+    # RewriteCond %{HTTPS} !=on
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Block hidden files (.env, .git, .htpasswd...)
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+    # Never expose the optional deployment path file
+    RewriteRule ^app_path\.php$ - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+<FilesMatch "\.(env|ini|log|sql|sh|bak|lock|json|md|yml|yaml|dist)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    <FilesMatch "\.(css|js|svg|woff2?|ttf|png|jpe?g|webp|gif|ico)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

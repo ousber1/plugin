@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'save' => 'Enregistrer',
+    'cancel' => 'Annuler',
+    'close' => 'Fermer',
+    'search' => 'Rechercher…',
+    'filter' => 'Filtrer',
+    'actions' => 'Actions',
+    'saved' => 'Modifications enregistrées.',
+    'created' => 'Élément créé avec succès.',
+    'deleted' => 'Élément supprimé.',
+    'confirm' => 'Confirmer cette action ?',
+    'confirm_delete' => 'Supprimer définitivement cet élément ?',
+    'no_results' => 'Aucun résultat.',
+    'show_password' => 'Afficher le mot de passe',
+    'skip_to_content' => 'Aller au contenu',
+    'too_many_requests' => 'Trop de tentatives. Veuillez patienter quelques minutes.',
+    'topbar_message' => 'Création artisanale au Maroc · Livraison dans tout le Royaume',
+    'whatsapp_greeting' => 'Bonjour BERRADI WALL ART, je souhaite des informations sur vos tableaux personnalisés.',
+    'footer_about' => 'Toiles, cadres et posters d’exception, imprimés et finis à la main au Maroc à partir de vos photos ou de nos créations.',
+    'rights' => 'Tous droits réservés.',
+    'made_in_morocco' => 'Conçu & imprimé au Maroc',
+    'yes' => 'Oui',
+    'no' => 'Non',
+];
