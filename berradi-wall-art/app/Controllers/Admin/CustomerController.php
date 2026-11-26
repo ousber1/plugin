@@ -160,4 +160,16 @@ final class CustomerController extends Controller
         $this->flash('success', __('admin.customer_anonymized'));
         return $this->redirectRoute('admin.customers.index');
     }
+
+    /** Data-access request: everything stored about the customer, as a JSON download. */
+    public function export(string $id): Response
+    {
+        $row = Database::instance()->fetch('SELECT id FROM customers WHERE id = ?', [(int) $id]);
+        if ($row === null) {
+            throw new \App\Core\HttpException(404);
+        }
+        $json = (string) json_encode(\App\Services\System\RetentionService::exportCustomer((int) $row['id']), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return new Response($json, 200, ['Content-Type' => 'application/json; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="client-' . (int) $row['id'] . '-donnees.json"', 'Cache-Control' => 'private, no-store']);
+    }
 }

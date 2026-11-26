@@ -232,7 +232,8 @@ final class App
             Session::flash('errors', $e->errors);
             Session::flash('old', $old);
             $ref = (string) $request->header('Referer', '');
-            $target = ($ref !== '' && str_starts_with($ref, $request->rootUrl())) ? $ref : url($request->path());
+            $root = rtrim($request->rootUrl(), '/');
+            $target = ($ref !== '' && ($ref === $root || str_starts_with($ref, $root . '/'))) ? $ref : url($request->path());
             return Response::redirect($target);
         }
 

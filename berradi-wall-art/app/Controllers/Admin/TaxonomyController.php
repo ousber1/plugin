@@ -136,6 +136,7 @@ abstract class TaxonomyController extends Controller
             $ar[$f] = $d['ar_' . $f] ?? null;
         }
         TranslationService::save($this->entity(), $id, 'ar', $ar);
+        \App\Services\Seo\SitemapService::forget();
         return $id;
     }
 

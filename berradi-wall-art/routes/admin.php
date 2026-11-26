@@ -8,11 +8,13 @@
 
 use App\Controllers\Admin\ActivityLogController;
 use App\Controllers\Admin\ArtworkController;
+use App\Controllers\Admin\BackupController;
 use App\Controllers\Admin\ExpenseController;
 use App\Controllers\Admin\FinanceController;
 use App\Controllers\Admin\InvoiceController;
 use App\Controllers\Admin\PaymentController;
 use App\Controllers\Admin\QuotationController;
+use App\Controllers\Admin\ReportController;
 use App\Controllers\Admin\InventoryController;
 use App\Controllers\Admin\OrderController;
 use App\Controllers\Admin\ProductionController;
@@ -23,6 +25,7 @@ use App\Controllers\Admin\CategoryController;
 use App\Controllers\Admin\CollectionController;
 use App\Controllers\Admin\CustomerController;
 use App\Controllers\Admin\MaintenanceController;
+use App\Controllers\Admin\NotificationController;
 use App\Controllers\Admin\OptionController;
 use App\Controllers\Admin\ProductController;
 use App\Controllers\Admin\DashboardController;
@@ -185,6 +188,27 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->get('/expenses/{id}/receipt', [ExpenseController::class, 'receipt'])->name('expenses.receipt');
         });
         $router->get('/finance', [FinanceController::class, 'index'])->middleware('can:finance.view')->name('finance.index');
+        $router->get('/reports', [ReportController::class, 'index'])->middleware('can:reports.view')->name('reports.index');
+
+        // ---------------------------------------------------------------- notifications
+        $router->get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        $router->post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read_all');
+        $router->group(['middleware' => ['can:logs.view,settings.manage']], function ($router): void {
+            $router->get('/notifications/emails', [NotificationController::class, 'emails'])->name('notifications.emails');
+            $router->get('/notifications/emails/{id}', [NotificationController::class, 'email'])->name('notifications.email');
+            $router->post('/notifications/emails/{id}/retry', [NotificationController::class, 'retry'])->middleware('throttle:20,10')->name('notifications.retry');
+        });
+        $router->get('/notifications/{id}', [NotificationController::class, 'open'])->name('notifications.open');
+
+        // ---------------------------------------------------------------- backups & retention
+        $router->group(['middleware' => ['can:backups.manage']], function ($router): void {
+            $router->get('/backups', [BackupController::class, 'index'])->name('backups.index');
+            $router->post('/backups', [BackupController::class, 'create'])->middleware('throttle:10,10')->name('backups.create');
+            $router->post('/backups/settings', [BackupController::class, 'settings'])->name('backups.settings');
+            $router->get('/backups/{name}', [BackupController::class, 'download'])->name('backups.download');
+            $router->post('/backups/{name}/delete', [BackupController::class, 'destroy'])->name('backups.destroy');
+        });
+        $router->get('/customers/{id}/export', [CustomerController::class, 'export'])->middleware('can:customers.manage')->name('customers.export');
 
         // ---------------------------------------------------------------- orders
         $router->get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');

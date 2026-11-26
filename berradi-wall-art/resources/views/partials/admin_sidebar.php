@@ -42,9 +42,11 @@ $sections = [
     'admin.nav_system' => [
         ['admin.settings', 'bi-gear', 'admin.nav_settings', 'settings.manage'],
         ['admin.maintenance', 'bi-tools', 'admin.nav_maintenance', 'settings.manage'],
+        ['admin.backups.index', 'bi-database-down', 'admin.nav_backups', 'backups.manage'],
         ['admin.users.index', 'bi-person-badge', 'admin.nav_users', 'users.manage'],
         ['admin.roles.index', 'bi-shield-lock', 'admin.nav_roles', 'roles.manage'],
         ['admin.logs.index', 'bi-journal-text', 'admin.nav_logs', 'logs.view'],
+        ['admin.notifications.emails', 'bi-envelope-paper', 'admin.nav_emails', 'logs.view', false, 'settings.manage'],
     ],
 ];
 ?>

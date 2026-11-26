@@ -28,6 +28,7 @@ final class MaintenanceController extends Controller
         $db = Database::instance();
         $m = $this->migrator();
         return $this->view('admin/maintenance', [
+            'security' => \App\Services\System\SecurityCheck::run($this->request),
             'pending' => $m->pending(),
             'ran' => count($m->ran()),
             'demo' => (new DemoCatalog($db, public_path(), base_path()))->isInstalled(),

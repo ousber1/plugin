@@ -24,11 +24,15 @@ $robotsNo = !empty($seo['noindex']) || !empty($noindex);
 <link rel="canonical" href="<?= e($seo['canonical']) ?>">
 <meta property="og:url" content="<?= e($seo['canonical']) ?>">
 <?php endif; ?>
+<?php foreach (($seo['alternates'] ?? []) as $hl => $href): ?>
+<link rel="alternate" hreflang="<?= e($hl) ?>" href="<?= e($href) ?>">
+<?php endforeach; ?>
 <?php if ($seo !== []): ?>
 <meta property="og:site_name" content="<?= e($siteName) ?>">
 <meta property="og:type" content="<?= e($seo['og_type'] ?? 'website') ?>">
 <meta property="og:title" content="<?= e($rawTitle !== '' ? $rawTitle : $pageTitle) ?>">
 <meta property="og:locale" content="<?= locale() === 'ar' ? 'ar_MA' : 'fr_MA' ?>">
+<meta property="og:locale:alternate" content="<?= locale() === 'ar' ? 'fr_MA' : 'ar_MA' ?>">
 <?php if ($description !== ''): ?><meta property="og:description" content="<?= e($description) ?>"><?php endif; ?>
 <?php if (!empty($seo['og_image'])): ?>
 <meta property="og:image" content="<?= e($seo['og_image']) ?>">

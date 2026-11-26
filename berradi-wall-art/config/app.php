@@ -14,7 +14,7 @@ return [
     'locale' => Env::get('APP_LOCALE', 'fr'),
     'locales' => ['fr' => 'Français', 'ar' => 'العربية'],
     'admin_path' => trim((string) Env::get('ADMIN_PATH', 'admin'), '/') ?: 'admin',
-    'version' => '1.0.0-phase7',
+    'version' => '1.0.0-phase8',
 
     'session' => [
         'name' => Env::get('SESSION_NAME', 'bwa_session'),

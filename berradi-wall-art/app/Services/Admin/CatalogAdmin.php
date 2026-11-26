@@ -96,6 +96,7 @@ final class CatalogAdmin
                 ActivityLogger::log('product.updated', 'product', $id, (string) $d['title']);
             }
             TranslationService::save('product', $id, 'ar', $ar);
+            \App\Services\Seo\SitemapService::forget();
             $db->delete('product_material_map', ['product_id' => $id]);
             foreach (array_unique($materials) as $m) {
                 $db->query('INSERT IGNORE INTO product_material_map (product_id, product_material_id) SELECT ?, id FROM product_materials WHERE id = ?', [$id, $m]);
@@ -165,6 +166,7 @@ final class CatalogAdmin
         if ($ok) {
             $db->query('DELETE FROM cart_items WHERE product_id = ? AND custom_design_id IS NULL', [$id]);
             ActivityLogger::log('product.deleted', 'product', $id);
+            \App\Services\Seo\SitemapService::forget();
         }
         return $ok;
     }

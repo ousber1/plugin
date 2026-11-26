@@ -81,7 +81,7 @@ final class PageController extends Controller
         $to = (string) (setting('admin_notification_email') ?: setting('company_email', ''));
         $db = Database::instance();
         $id = $db->insert('notifications', [
-            'channel' => 'internal',
+            'channel' => 'email',
             'event' => 'contact_message',
             'recipient' => $to !== '' ? $to : 'admin',
             'subject' => mb_substr('[' . $subjectLabel . '] ' . $data['name'], 0, 255),
@@ -96,6 +96,8 @@ final class PageController extends Controller
         );
         $db->update('notifications', ['status' => $sent ? 'sent' : 'queued', 'sent_at' => $sent ? date('Y-m-d H:i:s') : null], ['id' => $id]);
         ActivityLogger::log('contact.message', 'notification', $id, (string) $data['email']);
+        \App\Services\Notifications\StaffNotifier::notify('contact_received', 'customers.view',
+            __('notifications.contact', ['name' => $data['name'], 'subject' => $subjectLabel]), 'notifications/emails/' . $id, 'notification', $id);
         $this->flash('success', __('pages.contact_sent'));
         return $this->redirectRoute('page.contact');
     }

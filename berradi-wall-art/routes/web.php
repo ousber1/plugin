@@ -25,6 +25,8 @@ use App\Controllers\Storefront\ProductController;
 use App\Controllers\Storefront\ShopController;
 
 $router->get('/', [HomeController::class, 'index'])->name('home');
+$router->get('/sitemap.xml', [\App\Controllers\Storefront\SeoController::class, 'sitemap'])->name('seo.sitemap');
+$router->get('/robots.txt', [\App\Controllers\Storefront\SeoController::class, 'robots'])->name('seo.robots');
 $router->get('/lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 // catalogue

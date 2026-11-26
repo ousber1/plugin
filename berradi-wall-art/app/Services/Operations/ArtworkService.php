@@ -166,6 +166,9 @@ final class ArtworkService
         OrderMailer::internal($found['order'], $approve ? 'artwork_customer_approved' : 'artwork_customer_changes',
             ($approve ? __('artwork.mail_approved', ['title' => $found['item']['title']]) : __('artwork.mail_changes', ['title' => $found['item']['title']]))
             . ($feedback !== '' ? "\n\n« " . $feedback . ' »' : ''));
+        \App\Services\Notifications\StaffNotifier::notify($approve ? 'artwork_approved' : 'artwork_changes', 'artwork.view',
+            __($approve ? 'notifications.artwork_approved' : 'notifications.artwork_changes', ['number' => $found['order']['order_number']]),
+            'artwork/' . $itemId, 'order_item', $itemId);
         if ($approve) {
             self::afterApproval((int) $found['order']['id'], $itemId, null);
         }

@@ -223,6 +223,9 @@ final class OrderService
         }
         ActivityLogger::log('order.placed', 'order', (int) $order['id'], (string) $order['order_number'], ['total' => $order['grand_total'], 'payment' => $method['code']]);
         OrderMailer::placed($order, $token);
+        \App\Services\Notifications\StaffNotifier::notify('order_new', 'orders.view',
+            __('notifications.order_new', ['number' => $order['order_number'], 'name' => $order['customer_name'], 'total' => money($order['grand_total'])]),
+            'orders/' . $order['id'], 'order', (int) $order['id']);
         return ['order' => $order, 'token' => $token, 'account_created' => $accountCreated];
     }
 

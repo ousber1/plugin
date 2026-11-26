@@ -37,7 +37,8 @@ abstract class Controller
     {
         $ref = (string) $this->request->header('Referer', '');
         $root = $this->request->rootUrl();
-        if ($ref !== '' && str_starts_with($ref, $root)) {
+        // same origin only: "https://shop.ma.evil.example" must not pass as "https://shop.ma"
+        if ($ref !== '' && ($ref === $root || str_starts_with($ref, rtrim($root, '/') . '/'))) {
             return Response::redirect($ref);
         }
         return Response::redirect(url('/'));

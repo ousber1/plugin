@@ -24,7 +24,8 @@ final class SeoService
         $path = $extra['canonical'] ?? ($request?->path() ?? '/');
         // canonical keeps only the pagination parameter (filters/sorting are not indexable duplicates)
         $page = (int) ($request?->query('page') ?? 1);
-        $canonical = absolute_url(ltrim((string) $path, '/')) . ($page > 1 ? '?page=' . $page : '');
+        $alternates = self::alternates((string) $path, $page);
+        $canonical = $alternates[locale()] ?? $alternates['x-default'];
         $image = (string) ($extra['image'] ?? setting('seo_og_image', '') ?: setting('company_logo', ''));
         $desc = $description !== null && trim($description) !== ''
             ? Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags($description)) ?? ''), 300)
@@ -36,8 +37,28 @@ final class SeoService
             'og_type' => $extra['type'] ?? 'website',
             'og_image' => $image !== '' ? absolute_url('uploads/' . ltrim($image, '/')) : null,
             'noindex' => (bool) ($extra['noindex'] ?? false),
+            'alternates' => !empty($extra['noindex']) ? [] : $alternates,
             'jsonLd' => $extra['jsonLd'] ?? [],
         ];
+    }
+
+    /**
+     * One URL per language (the default language has no parameter, the other one uses ?lang=),
+     * plus x-default. Used for canonical, hreflang and the sitemap.
+     *
+     * @return array<string,string>
+     */
+    public static function alternates(string $path, int $page = 1): array
+    {
+        $base = absolute_url(ltrim($path, '/'));
+        $default = default_locale();
+        $out = [];
+        foreach (\App\Core\Translator::SUPPORTED as $l) {
+            $q = array_filter(['lang' => $l === $default ? null : $l, 'page' => $page > 1 ? $page : null]);
+            $out[$l] = $base . ($q !== [] ? '?' . http_build_query($q) : '');
+        }
+        $out['x-default'] = $out[$default];
+        return $out;
     }
 
     /** @return array<string,mixed> Organization + WebSite schema for the home page */

@@ -30,6 +30,15 @@ final class SecurityHeadersMiddleware implements MiddlewareInterface
         if ($request->isSecure()) {
             $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
+        // private areas and secret-link pages are never indexed, whatever the page itself says
+        $path = $request->path();
+        $admin = '/' . trim((string) config('app.admin_path', 'admin'), '/');
+        foreach ([$admin, '/install', '/account', '/cart', '/checkout', '/order/', '/track/', '/builder/', '/artwork/', '/quote/', '/invoice/', '/newsletter/'] as $prefix) {
+            if ($path === rtrim($prefix, '/') || str_starts_with($path, rtrim($prefix, '/') . '/')) {
+                $response->header('X-Robots-Tag', 'noindex, nofollow');
+                break;
+            }
+        }
         $headers = $response->headers();
         if (!isset($headers['Cache-Control']) && !isset($headers['Location'])) {
             $response->header('Cache-Control', 'no-store, private');

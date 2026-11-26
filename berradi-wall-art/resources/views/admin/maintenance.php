@@ -54,3 +54,18 @@ $cronAge = $system['last_cron'] !== '' ? time() - (int) strtotime($system['last_
         </div></div>
     </div>
 </div>
+<div class="admin-card mt-4" id="security">
+    <div class="card-header"><h2><i class="bi bi-shield-lock me-2 text-gold"></i><?= e(__('security.title')) ?></h2>
+        <?php $fails = count(array_filter($security, fn ($c) => $c['state'] === 'fail')); $warns = count(array_filter($security, fn ($c) => $c['state'] === 'warn')); ?>
+        <span class="small"><?= $fails ? '<span class="text-danger">' . e(__('security.n_fail', ['n' => $fails])) . '</span> · ' : '' ?><?= e(__('security.n_warn', ['n' => $warns])) ?></span></div>
+    <div class="card-body">
+        <?php foreach ($security as $c): ?>
+            <div class="stat-line">
+                <span><i class="bi <?= $c['state'] === 'ok' ? 'bi-check-circle-fill text-success' : ($c['state'] === 'warn' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-x-circle-fill text-danger') ?> me-2"></i><?= e(__('security.' . $c['key'])) ?><?= $c['detail'] !== '' ? ' <code class="small">' . e($c['detail']) . '</code>' : '' ?></span>
+                <?php if ($c['state'] !== 'ok'): ?><span class="small text-muted-bwa text-end" style="max-width:55%"><?= e(__('security.fix_' . $c['key'])) ?></span><?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+        <p class="small text-muted-bwa mt-3 mb-0"><?= e(__('security.help')) ?></p>
+    </div>
+</div>
+

@@ -1400,4 +1400,120 @@ $t->test('RBAC: designer has no access to documents and finance; Arabic renderin
     $o->get('/lang/fr');
 });
 
+$t->section('SEO, reports, notifications, backups & security (Phase 8)');
+$p8 = (string) $q6("SELECT p.slug FROM products p WHERE p.is_active = 1 AND p.deleted_at IS NULL AND p.is_customizable = 0 AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) ORDER BY p.id LIMIT 1");
+$t->test('SEO: hreflang + localized canonical, sitemap.xml, robots.txt, noindex on private areas', function (TestRunner $t) use ($base, $p8): void {
+    $g = new Browser($base);
+    $g->get('/product/' . $p8);
+    $t->contains('hreflang="ar" href="' . $base . '/product/' . $p8 . '?lang=ar"', $g->body);
+    $t->contains('rel="canonical" href="' . $base . '/product/' . $p8 . '"', $g->body);
+    $g->get('/product/' . $p8 . '?lang=ar');
+    $t->contains('rel="canonical" href="' . $base . '/product/' . $p8 . '?lang=ar"', $g->body, 'Arabic page canonical');
+    $t->contains('dir="rtl"', $g->body);
+    $g->get('/lang/fr');
+    $g->get('/sitemap.xml');
+    $t->equals(200, $g->status);
+    $t->contains('application/xml', $g->headers['content-type'] ?? '');
+    $t->assert(simplexml_load_string($g->body) !== false, 'valid XML');
+    $t->contains('/product/' . $p8 . '?lang=ar</loc>', $g->body);
+    $g->get('/robots.txt');
+    $t->contains('Sitemap: ' . $base . '/sitemap.xml', $g->body);
+    $t->assert(!str_contains($g->body, 'Disallow: /admin'), 'admin path not advertised');
+    $g->get('/cart');
+    $t->contains('noindex', $g->headers['x-robots-tag'] ?? '');
+    $g->get('/admin/login');
+    $t->contains('noindex', $g->headers['x-robots-tag'] ?? '');
+    $g->get('/shop');
+    $t->assert(!isset($g->headers['x-robots-tag']), 'shop indexable');
+});
+$t->test('open redirect via a look-alike Referer is refused', function (TestRunner $t) use ($base): void {
+    $g = new Browser($base);
+    $g->request('GET', '/lang/ar', null, [], ['Referer: ' . $base . '.evil.example/phish']);
+    $t->assert(!str_contains($g->location(), 'evil'), 'stays on the site: ' . ($g->headers['location'] ?? ''));
+    $g->request('GET', '/lang/fr', null, [], ['Referer: ' . $base . '/shop']);
+    $t->equals('/shop', $g->location());
+});
+$t->test('reports: every tab renders, CSV export downloads', function (TestRunner $t) use ($o): void {
+    foreach (['sales', 'products', 'categories', 'customers', 'cities', 'channels', 'production', 'inventory', 'expenses', 'catalogue'] as $r) {
+        $o->get('/admin/reports?report=' . $r . '&period=year');
+        $t->equals(200, $o->status, $r);
+    }
+    $o->get('/admin/reports?report=sales&period=year&group=month');
+    $t->contains('id="dashboard-data"', $o->body);
+    $o->get('/admin/reports?report=products&period=year&export=csv');
+    $t->contains('text/csv', $o->headers['content-type'] ?? '');
+    $t->contains('attachment', $o->headers['content-disposition'] ?? '');
+    $t->assert(str_starts_with($o->body, "\xEF\xBB\xBF"), 'BOM for Excel');
+    $t->contains(';', $o->body);
+});
+$t->test('notifications: a storefront order alerts the team; opening marks it read and lands on the order', function (TestRunner $t) use ($o, $base, $q6, $p8): void {
+    $o->post('/admin/notifications/read-all', [], '/admin');
+    $g = new Browser($base);
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY sort_order LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $g->post('/checkout', ['full_name' => 'Omar Tazi', 'phone' => '0661 00 11 22', 'email' => 'omar@client.test', 'country' => 'MA', 'city' => 'Fès',
+        'address' => '3 rue Talaa Kebira', 'payment_method' => 'cod', 'accept_terms' => '1'], '/checkout');
+    $number = substr($g->location(), strlen('/order/confirmation/'));
+    $t->assert(str_starts_with($number, 'BWA-'), 'order placed');
+    $o->get('/admin');
+    $t->contains('class="notif-count"', $o->body, 'unread badge');
+    $t->contains($number, $o->body, 'listed in the bell');
+    $nid = (string) $q6("SELECT n.id FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = 'owner@berradi.test' AND n.event = 'order_new' ORDER BY n.id DESC LIMIT 1");
+    $o->get('/admin/notifications/' . $nid);
+    $t->assert(preg_match('#^/admin/orders/\d+$#', $o->location()) === 1, 'goes to the order: ' . $o->location());
+    $t->equals('read', (string) $q6("SELECT status FROM notifications WHERE id = {$nid}"));
+    $o->get('/admin/notifications');
+    $t->contains($number, $o->body);
+    $o->get('/admin/notifications/emails');
+    $t->equals(200, $o->status);
+    $t->contains('omar@client.test', $o->body, 'customer confirmation logged');
+    $eid = (string) $q6("SELECT id FROM notifications WHERE channel = 'email' AND recipient = 'omar@client.test' ORDER BY id DESC LIMIT 1");
+    $o->get('/admin/notifications/emails/' . $eid);
+    $t->contains($number, $o->body);
+    $t->assert(!str_contains($o->body, '<table role="presentation"'), 'stored HTML shown as text, not rendered');
+});
+$t->test('backups: create, list, download (gzip), delete; customer data export', function (TestRunner $t) use ($o, $q6): void {
+    $o->post('/admin/backups', [], '/admin/backups');
+    $o->follow();
+    $t->assert(preg_match('#(bwa-db-\d{8}-\d{6}-[a-f0-9]{8}\.sql\.gz)#', $o->body, $m) === 1, 'listed');
+    $o->get('/admin/backups/' . $m[1]);
+    $t->equals('application/gzip', $o->headers['content-type'] ?? '');
+    $t->assert(str_contains((string) gzdecode($o->body), 'CREATE TABLE `orders`'), 'real dump');
+    $o->get('/admin/backups/..%2F..%2F.env');
+    $t->assert(in_array($o->status, [403, 404], true), 'no traversal (' . $o->status . ')');
+    $o->get('/admin/backups/bwa-db-20200101-000000-deadbeef.sql.gz');
+    $t->equals(404, $o->status, 'unknown backup');
+    $o->post('/admin/backups/' . $m[1] . '/delete', [], '/admin/backups');
+    $o->get('/admin/backups');
+    $t->assert(!str_contains($o->body, $m[1]), 'deleted');
+    $o->post('/admin/backups/settings', ['backup_auto' => '1', 'backup_keep' => '7', 'retention_unordered_days' => '30', 'retention_ordered_days' => '365', 'retention_logs_days' => '365', 'retention_notifications_days' => '180', 'retention_carts_days' => '60'], '/admin/backups');
+    $t->equals('60', (string) $q6("SELECT setting_value FROM settings WHERE setting_key = 'retention_carts_days'"));
+    $cid = (string) $q6("SELECT id FROM customers WHERE email = 'salma@client.test'");
+    $o->get('/admin/customers/' . $cid . '/export');
+    $t->contains('application/json', $o->headers['content-type'] ?? '');
+    $data = json_decode($o->body, true);
+    $t->equals('salma@client.test', $data['customer']['email'] ?? null);
+    $t->assert(!str_contains($o->body, 'password_hash'), 'no password hash');
+});
+$t->test('maintenance shows the security self-check; RBAC on Phase 8 pages; Arabic rendering', function (TestRunner $t) use ($o, $base): void {
+    $o->get('/admin/maintenance');
+    $t->contains('Contrôle de sécurité', $o->body);
+    $t->contains('Installateur verrouillé', $o->body);
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    foreach (['/admin/reports', '/admin/backups', '/admin/notifications/emails'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $d->get('/admin/notifications');
+    $t->equals(200, $d->status, 'own notifications');
+    $o->get('/lang/ar');
+    foreach (['/admin/reports', '/admin/reports?report=inventory', '/admin/notifications', '/admin/notifications/emails', '/admin/backups', '/admin/maintenance'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+
 exit($t->finish());

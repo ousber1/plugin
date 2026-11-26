@@ -106,6 +106,8 @@ final class AdminOrderService
             return $db->fetch('SELECT * FROM orders WHERE id = ?', [$orderId]);
         });
         ActivityLogger::log('order.created_admin', 'order', (int) $order['id'], (string) $order['order_number']);
+        \App\Services\Notifications\StaffNotifier::notify('order_new', 'production.view',
+            __('notifications.order_staff', ['number' => $order['order_number'], 'name' => $order['customer_name']]), 'orders/' . $order['id'], 'order', (int) $order['id']);
         return $order;
     }
 

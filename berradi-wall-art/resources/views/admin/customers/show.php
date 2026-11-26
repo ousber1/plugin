@@ -59,6 +59,7 @@ $canManage = can('customers.manage');
         <?php if ($canManage): ?>
             <div class="admin-card border-danger-subtle"><div class="card-header"><h2 class="text-danger"><?= e(__('admin.privacy_zone')) ?></h2></div><div class="card-body">
                 <p class="small text-muted-bwa"><?= e(__('admin.anonymize_help')) ?></p>
+                <a class="btn btn-sm btn-outline-bwa mb-3" href="<?= e(route('admin.customers.export', ['id' => $c['id']])) ?>"><i class="bi bi-download me-1"></i><?= e(__('backups.export_customer')) ?></a>
                 <form method="post" action="<?= e(route('admin.customers.anonymize', ['id' => $c['id']])) ?>" data-confirm="<?= e(__('admin.anonymize_confirm')) ?>">
                     <?= csrf_field() ?>
                     <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-incognito me-1"></i><?= e(__('admin.anonymize')) ?></button>

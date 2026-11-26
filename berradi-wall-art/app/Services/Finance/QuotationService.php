@@ -133,6 +133,9 @@ final class QuotationService
         OrderMailer::internal($q + ['order_number' => $q['quotation_number']], $accept ? 'quotation_accepted' : 'quotation_rejected',
             __($accept ? 'finance.mail_quote_accepted' : 'finance.mail_quote_rejected', ['number' => $q['quotation_number'], 'name' => $q['customer_name']])
             . (trim($comment) !== '' ? "\n\n« " . trim($comment) . ' »' : ''));
+        \App\Services\Notifications\StaffNotifier::notify($accept ? 'quote_accepted' : 'quote_rejected', 'quotations.view',
+            __($accept ? 'notifications.quote_accepted' : 'notifications.quote_rejected', ['number' => $q['quotation_number'], 'name' => $q['customer_name']]),
+            'quotations/' . $q['id'], 'quotation', (int) $q['id']);
         return true;
     }
 

@@ -73,6 +73,11 @@ return static function (Database $db): void {
         ['upload_max_files', '10', 'uploads', 'int'],
         ['retention_unordered_days', '30', 'uploads', 'int'],
         ['retention_ordered_days', '365', 'uploads', 'int'],
+        ['retention_logs_days', '365', 'uploads', 'int'],
+        ['retention_notifications_days', '180', 'uploads', 'int'],
+        ['retention_carts_days', '90', 'uploads', 'int'],
+        ['backup_auto', '1', 'uploads', 'bool'],
+        ['backup_keep', '14', 'uploads', 'int'],
 
         // mail
         ['mail_driver', 'mail', 'mail', 'string'],

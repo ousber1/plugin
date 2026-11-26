@@ -396,4 +396,6 @@ return [
     'nav_purchases' => 'Achats',
     'nav_suppliers' => 'Fournisseurs',
     'nav_finance_overview' => 'Vue financière',
+    'nav_backups' => 'Sauvegardes',
+    'nav_emails' => 'Journal des e-mails',
 ];

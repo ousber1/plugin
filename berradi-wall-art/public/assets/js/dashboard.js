@@ -12,7 +12,7 @@
     const nf = new Intl.NumberFormat(document.documentElement.lang === 'ar' ? 'ar-MA' : 'fr-MA', { maximumFractionDigits: 0 });
     const money = (v) => nf.format(v) + ' ' + (data.currency || 'DH');
     const isMoney = { monthlySales: true, monthlyProfit: true, revenueByCategory: true, netCash: true };
-    const fmt = (key, v) => (isMoney[key] ? money(v) : nf.format(v));
+    const fmt = (key, v) => ((isMoney[key] || (key === 'report' && data.money)) ? money(v) : nf.format(v));
 
     function series(key) {
         const d = data[key];

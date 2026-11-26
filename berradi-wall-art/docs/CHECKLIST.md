@@ -154,5 +154,22 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | RBAC: quotations/invoices/payments/expenses/finance permissions enforced (designer 403) | ✅ | HTTP |
 | Mobile 390 px and Arabic RTL on all new pages: no overflow, no JS errors | ✅ | Playwright |
 
-## Phase 8: Reports, SEO (sitemap, schema.org, OG), notifications, retention purge, backups, security review ⬜
+## Phase 8: Reports, SEO (sitemap, schema.org, OG), notifications, retention purge, backups, security review ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| SEO: one URL per language (`?lang=ar`), localized canonical, `hreflang` fr/ar/x-default, `og:locale:alternate` | ✅ | integration + HTTP |
+| `sitemap.xml`: public pages, active categories/collections/products in both languages with alternates, lastmod and images; cached 1 h, refreshed on catalogue changes | ✅ | integration (valid XML, deleted products excluded) + HTTP |
+| Dynamic `robots.txt` (private areas disallowed, sitemap advertised, admin path not revealed, maintenance = disallow all) and `X-Robots-Tag: noindex` on private areas | ✅ | HTTP |
+| Existing schema.org: Organization, WebSite, Product (offers/aggregate offers, real ratings only), BreadcrumbList, FAQPage | ✅ | Phase 2 tests |
+| Reports: sales (day/week/month), products & margins, categories, customers, cities & courier cost, channels & cancellation rate, production lead time & lateness, stock movements & valuation, expenses, catalogue quality (SEO/AR completeness) | ✅ | integration (sales = dashboard figures, categories cover every line) + HTTP |
+| CSV exports for Excel (BOM, `;`, decimal comma, formula injection neutralised), export logged | ✅ | integration + HTTP |
+| Team notifications by permission: new orders, staff orders, artwork answers, quote answers, contact messages; daily low stock / overdue invoices / late jobs (once per 24 h); bell with unread count, list, mark read | ✅ | integration + HTTP + Playwright |
+| E-mail log with status, attempts, error, text view (HTML never rendered) and manual retry | ✅ | HTTP |
+| Retention settings + cron purges (logs, read alerts, e-mail bodies, old carts, print files of finished orders, backup rotation); financial records untouched | ✅ | integration |
+| Customer data export (JSON, no password hash) | ✅ | integration + HTTP |
+| Database backups in pure PHP (gzip SQL), manual + daily automatic, download, delete, rotation, strict file-name validation | ✅ | integration (restored into an empty database: identical row counts) + HTTP |
+| Security review: SQL/XSS/CSRF/session/upload/redirect/host-header audit; **fixed** look-alike-referrer open redirect; `docs/SECURITY.md`; live security self-check on the Maintenance page | ✅ | HTTP (redirect test) + review |
+| RBAC on reports, backups and e-mail log (designer 403); mobile 390 px and RTL without overflow or JS errors | ✅ | HTTP + Playwright |
+
 ## Phase 9: Optimization, documentation, final ZIP package ⬜

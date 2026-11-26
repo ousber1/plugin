@@ -1,6 +1,0 @@
-User-agent: *
-Disallow: /admin
-Disallow: /install
-Disallow: /account
-Disallow: /cart
-Disallow: /checkout

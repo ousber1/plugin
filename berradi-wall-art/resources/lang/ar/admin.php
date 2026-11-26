@@ -396,4 +396,6 @@ return [
     'nav_purchases' => 'المشتريات',
     'nav_suppliers' => 'الموردون',
     'nav_finance_overview' => 'نظرة مالية',
+    'nav_backups' => 'النسخ الاحتياطية',
+    'nav_emails' => 'سجل البريد',
 ];

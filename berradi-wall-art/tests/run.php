@@ -1412,6 +1412,118 @@ $t->test('finance summary: cash in/out, VAT collected − deductible, receivable
     $t->assert(\App\Helpers\Money::toCents($F::payables()) >= 0);
 });
 
+
+$t->section('Phase 8: SEO, reports, notifications, retention, backups, security');
+$t->test('SEO: language alternates, canonical, sitemap with FR/AR URLs and images, robots.txt', function (TestRunner $t) use ($db): void {
+    $alt = \App\Services\SeoService::alternates('/product/orbites');
+    $t->assert(str_ends_with($alt['fr'], '/product/orbites'), 'default language without parameter');
+    $t->assert(str_ends_with($alt['ar'], '/product/orbites?lang=ar'), 'Arabic URL');
+    $t->equals($alt['fr'], $alt['x-default']);
+    $t->assert(str_ends_with(\App\Services\SeoService::alternates('/shop', 3)['ar'], '/shop?lang=ar&page=3'), 'pagination kept');
+    $xml = \App\Services\Seo\SitemapService::xml(true);
+    $doc = simplexml_load_string($xml);
+    $t->assert($doc !== false, 'valid XML');
+    $locs = array_map('strval', $doc->xpath('//*[local-name()="loc"]') ?: []);
+    $active = (int) $db->value('SELECT COUNT(*) FROM products WHERE is_active = 1 AND deleted_at IS NULL');
+    $t->equals($active * 2, count(array_filter($locs, fn ($l) => str_contains($l, '/product/'))), 'every active product in both languages');
+    $deleted = (string) $db->value('SELECT slug FROM products WHERE deleted_at IS NOT NULL LIMIT 1');
+    $t->assert($deleted === '' || !str_contains($xml, '/product/' . $deleted . '<'), 'deleted products excluded');
+    $t->assert(str_contains($xml, 'hreflang="ar"') && str_contains($xml, '<image:loc>'), 'alternates and images');
+    $robots = \App\Services\Seo\SitemapService::robots();
+    $t->assert(str_contains($robots, 'Sitemap: ') && str_contains($robots, 'Disallow: /checkout'), 'robots rules');
+    $t->assert(!str_contains($robots, '/' . trim((string) config('app.admin_path', 'admin'), '/') . "\n"), 'admin path not advertised');
+});
+$t->test('reports: every report runs; sales match the dashboard figures; CSV is Excel-safe', function (TestRunner $t) use ($db): void {
+    $R = \App\Services\Reports\ReportService::class;
+    $from = date('Y-01-01');
+    $to = date('Y-m-d', strtotime('+1 day'));
+    foreach ($R::REPORTS as $r) {
+        $d = $R::run($r, $from, $to, ['group' => 'month']);
+        $t->assert(isset($d['columns'], $d['rows']) && $d['columns'] !== [], $r);
+    }
+    $sales = $R::run('sales', $from, $to, ['group' => 'day']);
+    $t->equals(\App\Services\Admin\DashboardStats::sales($from, $to)['sales'], (string) $sales['totals']['sales']);
+    $t->equals(\App\Services\Admin\DashboardStats::sales($from, $to)['orders'], (int) $sales['totals']['orders']);
+    $cat = $R::run('categories', $from, $to);
+    $lines = \App\Helpers\Money::normalize((string) $db->value("SELECT COALESCE(SUM(oi.line_total),0) FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.status NOT IN ('cancelled','returned') AND o.placed_at >= ? AND o.placed_at < ?", [$from, $to]));
+    $t->equals($lines, (string) $cat['totals']['revenue'], 'category split covers every line');
+    $csv = $R::csv(['columns' => [['key' => 'a', 'label' => 'Nom', 'type' => 'text'], ['key' => 'b', 'label' => 'Montant', 'type' => 'money']], 'rows' => [['a' => '=HYPERLINK("http://x")', 'b' => '1250.50']]]);
+    $t->assert(str_starts_with($csv, "\xEF\xBB\xBF"), 'UTF-8 BOM');
+    $t->assert(str_contains($csv, "'=HYPERLINK"), 'formula neutralised');
+    $t->assert(str_contains($csv, '1250,50'), 'decimal comma');
+    $q = $R::run('catalogue', $from, $to);
+    $t->equals((int) $q['totals']['active'], (int) $q['totals']['complete'] + count($q['rows']));
+});
+$t->test('team notifications: recipients by permission, dedupe, read state, daily checks', function (TestRunner $t) use ($db): void {
+    $N = \App\Services\Notifications\StaffNotifier::class;
+    $expected = (int) $db->value("SELECT COUNT(DISTINCT u.id) FROM users u JOIN roles r ON r.id = u.role_id LEFT JOIN role_permissions rp ON rp.role_id = r.id LEFT JOIN permissions p ON p.id = rp.permission_id WHERE u.is_active = 1 AND (r.slug = 'super_admin' OR p.slug = 'inventory.view')");
+    $t->assert($expected > 0, 'some staff can see stock');
+    $mat = (int) $db->value("SELECT id FROM materials WHERE sku = 'TOILE-TEST'");
+    $db->update('materials', ['min_stock' => '999.000'], ['id' => $mat]);
+    $db->query("DELETE FROM notifications WHERE event = 'low_stock'");
+    $N::dailyChecks();
+    $t->equals($expected, (int) $db->value("SELECT COUNT(*) FROM notifications WHERE event = 'low_stock' AND related_id = ?", [$mat]));
+    $N::dailyChecks();
+    $t->equals($expected, (int) $db->value("SELECT COUNT(*) FROM notifications WHERE event = 'low_stock' AND related_id = ?", [$mat]), 'once per 24 h');
+    $owner = (int) $db->value("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.slug = 'super_admin' LIMIT 1");
+    $before = $N::unreadCount($owner);
+    $t->assert($before >= 1);
+    $t->assert($N::markRead($owner) >= 1);
+    $t->equals(0, $N::unreadCount($owner));
+    $db->update('materials', ['min_stock' => '5.000'], ['id' => $mat]);
+});
+$t->test('backups: pure-PHP gzip dump restores into an empty database with identical row counts', function (TestRunner $t) use ($db, $cfg): void {
+    $B = \App\Services\System\BackupService::class;
+    $name = $B::create('test');
+    $path = $B::path($name);
+    $t->assert($path !== null && filesize($path) > 1000, 'file written');
+    $t->equals(null, $B::path('../../.env'), 'no traversal');
+    $sql = gzdecode((string) file_get_contents($path));
+    $t->assert(str_contains($sql, 'CREATE TABLE `orders`') && str_contains($sql, 'INSERT INTO `orders`'), 'schema + data');
+    try {
+        $pdo = new PDO('mysql:host=' . $cfg['host'] . ';port=' . $cfg['port'] . ';charset=utf8mb4', $cfg['username'], $cfg['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $pdo->exec('CREATE DATABASE IF NOT EXISTS bwa_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        $pdo->exec('USE bwa_restore');
+        $pdo->exec($sql);
+        foreach (['orders', 'order_items', 'invoices', 'payments', 'products', 'settings', 'translations'] as $tb) {
+            $t->equals((int) $db->value("SELECT COUNT(*) FROM `{$tb}`"), (int) (new PDO('mysql:host=' . $cfg['host'] . ';port=' . $cfg['port'] . ';dbname=bwa_restore;charset=utf8mb4', $cfg['username'], $cfg['password']))->query("SELECT COUNT(*) FROM `{$tb}`")->fetchColumn(), 'restored ' . $tb);
+        }
+        $pdo->exec('DROP DATABASE bwa_restore');
+    } catch (PDOException $e) {
+        $t->assert(false, 'restore check needs CREATE DATABASE rights: ' . $e->getMessage());
+    }
+    $B::create('test');
+    $t->assert(count($B::list()) >= 2);
+    $B::rotate(1);
+    $t->equals(1, count($B::list()), 'rotation keeps the newest');
+    foreach ($B::list() as $b) {
+        $B::delete($b['name']);
+    }
+});
+$t->test('retention: old logs, read alerts and e-mail bodies are purged; financial records never', function (TestRunner $t) use ($db): void {
+    $orders = (int) $db->value('SELECT COUNT(*) FROM orders');
+    $invoices = (int) $db->value('SELECT COUNT(*) FROM invoices');
+    $db->insert('activity_logs', ['action' => 'test.old', 'created_at' => date('Y-m-d H:i:s', strtotime('-400 days'))]);
+    $old = $db->insert('notifications', ['channel' => 'email', 'event' => 'test_old', 'recipient' => 'x@test.ma', 'subject' => 'Vieux', 'body' => 'Données personnelles', 'status' => 'sent', 'created_at' => date('Y-m-d H:i:s', strtotime('-200 days'))]);
+    $r = \App\Services\System\RetentionService::run();
+    $t->assert($r['logs'] >= 1, 'old log removed');
+    $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM activity_logs WHERE action = 'test.old'"));
+    $t->equals(null, $db->value('SELECT body FROM notifications WHERE id = ?', [$old]), 'body erased');
+    $t->equals('Vieux', (string) $db->value('SELECT subject FROM notifications WHERE id = ?', [$old]), 'metadata kept');
+    $t->equals($orders, (int) $db->value('SELECT COUNT(*) FROM orders'));
+    $t->equals($invoices, (int) $db->value('SELECT COUNT(*) FROM invoices'));
+});
+$t->test('customer data export and security self-check', function (TestRunner $t) use ($db): void {
+    $cid = (int) $db->value('SELECT customer_id FROM orders WHERE customer_id IS NOT NULL LIMIT 1');
+    $x = \App\Services\System\RetentionService::exportCustomer($cid);
+    $t->equals($cid, (int) $x['customer']['id']);
+    $t->equals((int) $db->value('SELECT COUNT(*) FROM orders WHERE customer_id = ?', [$cid]), count($x['orders']));
+    $t->assert(!isset($x['customer']['password_hash']), 'no password hash in the export');
+    $checks = array_column(\App\Services\System\SecurityCheck::run(), 'state', 'key');
+    $t->assert(isset($checks['https'], $checks['debug'], $checks['installer'], $checks['backup']), 'checks listed');
+    $t->assert(in_array($checks['debug'], ['ok', 'fail'], true));
+});
+
 $demo->remove();
 
 exit($t->finish());
