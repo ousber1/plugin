@@ -99,7 +99,9 @@ final class Browser
             }
             $data['_token'] = $this->token();
         }
-        return $this->request('POST', $path, $data, $files);
+        // a browser always sends the page the form came from (validation errors redirect back to it)
+        $headers = $tokenPage !== null ? ['Referer: ' . $this->base . $tokenPage] : [];
+        return $this->request('POST', $path, $data, $files, $headers);
     }
 
     public function token(): string
@@ -803,5 +805,227 @@ $t->test('XSS payloads are escaped on output', function (TestRunner $t) use ($ba
     $t->assert(!str_contains($c->body, '<script>alert(1)</script>'), 'raw script not present');
     $t->contains('&lt;script&gt;alert(1)&lt;/script&gt;', $c->body);
 });
+
+$t->section('Admin catalogue, customers & dashboard (Phase 5)');
+$pdo5 = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+$q = fn (string $sql) => $pdo5->query($sql)->fetchColumn();
+$o = new Browser($base);
+$o->post('/admin/login', ['email' => 'owner@berradi.test', 'password' => $adminPass], '/admin/login');
+$jpeg = sys_get_temp_dir() . '/bwa-admin-test.jpg';
+$im = imagecreatetruecolor(900, 1200);
+imagefilledrectangle($im, 0, 0, 900, 1200, (int) imagecolorallocate($im, 198, 166, 107));
+imagejpeg($im, $jpeg, 85);
+imagedestroy($im);
+$pid = 0;
+
+$t->test('dashboard: real KPIs, chart data as JSON (no inline script), profit formula, quick actions', function (TestRunner $t) use ($o, $q): void {
+    $o->get('/admin');
+    $t->equals(200, $o->status);
+    $t->contains('<script type="application/json" id="dashboard-data">', $o->body);
+    preg_match('#<script type="application/json" id="dashboard-data">(.*?)</script>#s', $o->body, $m);
+    $data = json_decode($m[1] ?? '', true);
+    $t->assert(is_array($data) && count($data['monthlySales']['values'] ?? []) === 12, '12 months of sales');
+    $t->equals((int) $q('SELECT COUNT(*) FROM orders'), array_sum(array_column($data['ordersByStatus'] ?? [], 'value')), 'status chart matches orders table');
+    $t->contains('Bénéfice estimé =', $o->body);
+    $t->contains('/admin/products/create', $o->body);
+    $t->contains('js/dashboard.js', $o->body);
+    $t->assert(!preg_match('#<script>(?!</script>)#', $o->body), 'no inline executable script');
+});
+$t->test('product list: filters, search and sorting', function (TestRunner $t) use ($o): void {
+    $o->get('/admin/products');
+    $t->equals(200, $o->status);
+    $t->contains('19 produit(s)', $o->body);
+    $o->get('/admin/products?q=orbites');
+    $t->contains('1 produit(s)', $o->body);
+    $o->get('/admin/products?type=multi_panel&sort=price&dir=asc');
+    $t->equals(200, $o->status);
+});
+$t->test('create product with image upload and Arabic translation', function (TestRunner $t) use ($o, $jpeg, $q, &$pid): void {
+    $o->post('/admin/products', [
+        'title' => 'Atlas Bleu', 'product_type' => 'canvas', 'selling_price' => '590,00', 'cost_price' => '140', 'min_panels' => '1', 'max_panels' => '1',
+        'is_active' => '1', 'is_new' => '1', 'short_description' => 'Montagnes au crépuscule', 'ar_title' => 'الأطلس الأزرق',
+    ], '/admin/products/create', ['images[0]' => [$jpeg, 'image/jpeg', 'atlas.jpg']]);
+    $t->assert(preg_match('#^/admin/products/(\d+)/edit$#', $o->location(), $m) === 1, 'redirect to editor: ' . $o->location());
+    $pid = (int) ($m[1] ?? 0);
+    $t->equals('atlas-bleu', (string) $q("SELECT slug FROM products WHERE id = {$pid}"));
+    $t->equals('590.00', (string) $q("SELECT selling_price FROM products WHERE id = {$pid}"));
+    $t->equals(1, (int) $q("SELECT COUNT(*) FROM product_images WHERE product_id = {$pid}"));
+    $main = (string) $q("SELECT main_image FROM products WHERE id = {$pid}");
+    $t->assert($main !== '' && str_starts_with($main, 'products/'), 'main image set: ' . $main);
+    $o->get('/product/atlas-bleu');
+    $t->equals(200, $o->status);
+    $t->contains('Atlas Bleu', $o->body);
+    $o->get('/lang/ar');
+    $o->get('/product/atlas-bleu');
+    $t->contains('الأطلس الأزرق', $o->body);
+    $o->get('/lang/fr');
+});
+$t->test('validation: promo price must be lower than the selling price', function (TestRunner $t) use ($o, &$pid): void {
+    $o->post('/admin/products/' . $pid, ['title' => 'Atlas Bleu', 'product_type' => 'canvas', 'selling_price' => '590', 'promo_price' => '600', 'min_panels' => '1', 'max_panels' => '1', 'tab' => 'pricing'], '/admin/products/' . $pid . '/edit');
+    $o->follow();
+    $t->contains('Le prix promo doit être inférieur au prix de vente.', $o->body);
+});
+$t->test('variants: generate from print options, then edit default and delete one', function (TestRunner $t) use ($o, $q, &$pid): void {
+    $canvas = (int) $q("SELECT id FROM product_materials WHERE code = 'canvas'");
+    $sizes = $o->get('/admin/products/' . $pid . '/edit')->body;
+    preg_match_all('#name="g_sizes\[\]" value="([^"]+)"#', $sizes, $m);
+    $t->assert(count($m[1]) >= 2, 'size options listed');
+    $o->post('/admin/products/' . $pid . '/variants/generate', ['g_sizes' => array_slice($m[1], 0, 2), 'g_materials' => [$canvas], 'g_frames' => ['none'], 'g_panels' => '1']);
+    $o->follow();
+    $t->contains('2 variante(s) créée(s).', $o->body);
+    $ids = $o->body;
+    preg_match_all('#name="variants\[(\d+)\]\[name\]"#', $ids, $v);
+    $t->equals(2, count($v[1]));
+    [$a, $b2] = $v[1];
+    $fields = ['default_variant' => $b2];
+    foreach ([$a, $b2] as $id) {
+        $fields["variants[$id][name]"] = 'V' . $id;
+        $fields["variants[$id][price]"] = $id === $a ? '399' : '799';
+        $fields["variants[$id][cost_price]"] = '50';
+        $fields["variants[$id][stock_quantity]"] = '0';
+        $fields["variants[$id][sort_order]"] = '1';
+        $fields["variants[$id][is_active]"] = '1';
+    }
+    $fields["variants[$a][delete]"] = '1';
+    $o->post('/admin/products/' . $pid . '/variants', $fields, '/admin/products/' . $pid . '/edit');
+    $t->equals(1, (int) $q("SELECT COUNT(*) FROM product_variants WHERE product_id = {$pid}"));
+    $t->equals('799.00', (string) $q("SELECT price FROM product_variants WHERE product_id = {$pid} AND is_default = 1"));
+    $t->equals('799.00', (string) $q("SELECT selling_price FROM products WHERE id = {$pid}"), 'from-price follows variants');
+});
+$t->test('duplicate → inactive copy; bulk deactivate hides products; delete keeps orders', function (TestRunner $t) use ($o, $q, &$pid): void {
+    $o->post('/admin/products/' . $pid . '/duplicate', [], '/admin/products/' . $pid . '/edit');
+    $copy = (int) $q("SELECT id FROM products WHERE slug = 'atlas-bleu-copie'");
+    $t->assert($copy > 0, 'copy exists');
+    $t->equals(0, (int) $q("SELECT is_active FROM products WHERE id = {$copy}"));
+    $o->get('/product/atlas-bleu-copie');
+    $t->equals(404, $o->status, 'inactive copy hidden');
+    $orb = (int) $q("SELECT id FROM products WHERE slug = 'orbites'");
+    $o->post('/admin/products/bulk', ['bulk_action' => 'deactivate', 'ids' => [$orb, $pid]], '/admin/products');
+    $o->follow();
+    $t->contains('2 produit(s) mis à jour.', $o->body);
+    $o->get('/product/orbites');
+    $t->equals(404, $o->status);
+    $o->post('/admin/products/bulk', ['bulk_action' => 'activate', 'ids' => [$orb, $pid]], '/admin/products');
+    $o->get('/product/orbites');
+    $t->equals(200, $o->status);
+    $ordered = (int) $q('SELECT product_id FROM order_items WHERE product_id IS NOT NULL LIMIT 1');
+    $lines = (int) $q("SELECT COUNT(*) FROM order_items WHERE product_id = {$ordered}");
+    $o->post('/admin/products/' . $ordered . '/delete', [], '/admin/products');
+    $t->assert($q("SELECT deleted_at FROM products WHERE id = {$ordered}") !== null, 'soft deleted');
+    $t->equals($lines, (int) $q("SELECT COUNT(*) FROM order_items WHERE product_id = {$ordered}"), 'order lines intact');
+});
+$t->test('categories: create with Arabic name, cycle refused, reorder, delete needs confirmation', function (TestRunner $t) use ($o, $q): void {
+    $o->post('/admin/categories', ['name' => 'Paysages marocains', 'ar_name' => 'مناظر مغربية', 'is_active' => '1'], '/admin/categories/create');
+    $parent = (int) $q("SELECT id FROM categories WHERE slug = 'paysages-marocains'");
+    $t->assert($parent > 0);
+    $o->post('/admin/categories', ['name' => 'Désert', 'parent_id' => (string) $parent, 'is_active' => '1'], '/admin/categories/create');
+    $child = (int) $q("SELECT id FROM categories WHERE slug = 'desert'");
+    $o->post('/admin/categories/' . $parent, ['name' => 'Paysages marocains', 'parent_id' => (string) $child, 'is_active' => '1'], '/admin/categories/' . $parent . '/edit');
+    $o->follow();
+    $t->contains('ne peut pas être son propre parent', $o->body);
+    $t->equals(null, $q("SELECT parent_id FROM categories WHERE id = {$parent}") ?: null);
+    $ids = array_map('intval', $o->get('/admin/categories')->body ? (preg_match_all('#name="order\[\]" value="(\d+)"#', $o->body, $m) ? $m[1] : []) : []);
+    $t->assert(count($ids) >= 3, 'sortable list');
+    $o->post('/admin/categories/reorder', ['order' => array_reverse($ids)], '/admin/categories');
+    $t->equals(10, (int) $q('SELECT sort_order FROM categories WHERE id = ' . end($ids)));
+    $withProducts = (int) $q('SELECT category_id FROM products WHERE category_id IS NOT NULL AND deleted_at IS NULL LIMIT 1');
+    $o->post('/admin/categories/' . $withProducts . '/delete', [], '/admin/categories');
+    $t->assert((int) $q("SELECT COUNT(*) FROM categories WHERE id = {$withProducts}") === 1, 'refused without confirmation');
+    $o->post('/admin/categories/' . $child . '/delete', ['confirm_detach' => '1'], '/admin/categories');
+    $t->equals(0, (int) $q("SELECT COUNT(*) FROM categories WHERE id = {$child}"));
+    $o->get('/lang/ar');
+    $o->get('/shop/category/paysages-marocains');
+    $t->contains('مناظر مغربية', $o->body);
+    $o->get('/lang/fr');
+});
+$t->test('collections: limited edition with date order validation', function (TestRunner $t) use ($o, $q): void {
+    $o->post('/admin/collections', ['name' => 'Ramadan 2027', 'is_limited' => '1', 'starts_at' => '2027-02-10T00:00', 'ends_at' => '2027-02-01T00:00', 'is_active' => '1'], '/admin/collections/create');
+    $o->follow();
+    $t->contains('La date de fin doit être après la date de début.', $o->body);
+    $o->post('/admin/collections', ['name' => 'Ramadan 2027', 'is_limited' => '1', 'starts_at' => '2027-02-01T00:00', 'ends_at' => '2027-03-10T00:00', 'is_active' => '1'], '/admin/collections/create');
+    $t->equals(1, (int) $q("SELECT is_limited FROM collections WHERE slug = 'ramadan-2027'"));
+});
+$t->test('customers: list with spend, profile, create, anonymize', function (TestRunner $t) use ($o, $q): void {
+    $o->get('/admin/customers?sort=spent');
+    $t->equals(200, $o->status);
+    $t->contains('Salma', $o->body);
+    $o->post('/admin/customers', ['first_name' => 'Karim', 'last_name' => 'Bennani', 'phone' => '0661234567', 'email' => 'karim@b2b.test', 'company_name' => 'Hôtel Atlas', 'ice' => '001525252000077', 'locale' => 'fr', 'is_active' => '1'], '/admin/customers/create');
+    $t->assert(preg_match('#^/admin/customers/(\d+)$#', $o->location(), $m) === 1, 'redirect to profile');
+    $o->get($o->location());
+    $t->contains('Hôtel Atlas', $o->body);
+    $t->contains('001525252000077', $o->body);
+    $o->post('/admin/customers', ['first_name' => 'Dup', 'phone' => '0661234568', 'email' => 'karim@b2b.test', 'locale' => 'fr'], '/admin/customers/create');
+    $o->follow();
+    $t->contains('déjà utilisée', $o->body);
+    $o->post('/admin/customers/' . $m[1] . '/anonymize', [], '/admin/customers/' . $m[1]);
+    $t->equals(null, $q('SELECT email FROM customers WHERE id = ' . (int) $m[1]) ?: null);
+    $t->assert($q('SELECT deleted_at FROM customers WHERE id = ' . (int) $m[1]) !== null, 'flagged deleted');
+    $o->get('/admin/customers?q=karim');
+    $t->assert(!str_contains($o->body, 'Hôtel Atlas'), 'gone from the list');
+});
+$t->test('print options: a price change drives the builder price API', function (TestRunner $t) use ($o, $q, $base): void {
+    $canvas = (int) $q("SELECT id FROM product_materials WHERE code = 'canvas'");
+    $o->get('/admin/print-options?tab=materials');
+    $t->equals(200, $o->status);
+    $t->contains('id="row-product_material-' . $canvas . '"', $o->body);
+    $g = new Browser($base);
+    $g->get('/custom-wall-art');
+    $tok = $g->token();
+    $g->json('/builder/price', ['material_id' => $canvas, 'panel_width_cm' => 100, 'panel_height_cm' => 100], $tok);
+    $before = (string) ($g->data()['unit_price'] ?? '');
+    $cur = $o->body;
+    $field = fn (string $n) => preg_match('#<details[^>]+id="row-product_material-' . $canvas . '".*?name="' . $n . '" value="([^"]*)"#s', $cur, $mm) ? html_entity_decode($mm[1]) : '';
+    $post = [];
+    foreach (['code', 'name', 'description', 'minimum_price', 'cost_per_m2', 'consumption_factor', 'min_width_cm', 'max_width_cm', 'min_height_cm', 'max_height_cm', 'sort_order', 'ar_name'] as $n) {
+        $post[$n] = $field($n);
+    }
+    $post += ['material_type' => 'canvas', 'price_per_m2' => '1000.00', 'supports_frame' => '1', 'is_active' => '1'];
+    $o->post('/admin/print-options/materials/' . $canvas, $post, '/admin/print-options');
+    $t->equals('/admin/print-options?tab=materials', strtok($o->location(), '#'));
+    $t->equals('1000.00', (string) $q("SELECT price_per_m2 FROM product_materials WHERE id = {$canvas}"));
+    $g->json('/builder/price', ['material_id' => $canvas, 'panel_width_cm' => 100, 'panel_height_cm' => 100], $tok);
+    $after = (string) ($g->data()['unit_price'] ?? '');
+    $t->assert($after !== '' && $after !== $before && (float) $after >= 1000.0, "builder price follows ({$before} → {$after})");
+    $o->post('/admin/print-options/materials/' . $canvas, ['price_per_m2' => 'abc'] + $post, '/admin/print-options');
+    $o->follow();
+    $t->contains('Non enregistré', $o->body);
+});
+$t->test('maintenance page: migrations status, system info and safe re-run', function (TestRunner $t) use ($o): void {
+    $o->get('/admin/maintenance');
+    $t->equals(200, $o->status);
+    $t->contains('La base de données est à jour.', $o->body);
+    $t->contains('cron:run', $o->body);
+    $o->post('/admin/maintenance/update', [], '/admin/maintenance');
+    $o->follow();
+    $t->contains('Mise à jour terminée (0 migration(s)).', $o->body);
+});
+$t->test('RBAC: designer manages the catalogue but not customers, finance or maintenance', function (TestRunner $t) use ($base): void {
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    $d->get('/admin');
+    $t->equals(200, $d->status);
+    $t->assert(!str_contains($d->body, 'Bénéfice du mois'), 'no finance KPIs');
+    $t->assert(!str_contains($d->body, 'monthlyProfit'), 'no profit chart data');
+    foreach (['/admin/products', '/admin/products/create', '/admin/categories', '/admin/print-options'] as $p) {
+        $d->get($p);
+        $t->equals(200, $d->status, $p);
+    }
+    foreach (['/admin/customers', '/admin/maintenance'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $d->post('/admin/maintenance/update', [], '/admin/products');
+    $t->equals(403, $d->status);
+});
+$t->test('admin pages render in Arabic (RTL)', function (TestRunner $t) use ($o): void {
+    $o->get('/lang/ar');
+    foreach (['/admin', '/admin/products', '/admin/customers', '/admin/print-options', '/admin/maintenance', '/admin/categories'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+@unlink($jpeg);
 
 exit($t->finish());

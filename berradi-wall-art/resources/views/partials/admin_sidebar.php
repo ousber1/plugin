@@ -10,13 +10,13 @@ $sections = [
     ],
     'admin.nav_sales' => [
         ['admin.orders.index', 'bi-receipt', 'admin.nav_orders', 'orders.view'],
-        ['admin.customers.index', 'bi-people', 'admin.nav_customers', 'customers.view'],
+        ['admin.customers.index', 'bi-people', 'admin.nav_customers', 'customers.view', false, 'customers.manage'],
         ['admin.quotations.index', 'bi-file-earmark-text', 'admin.nav_quotations', 'quotations.view'],
         ['admin.invoices.index', 'bi-file-earmark-check', 'admin.nav_invoices', 'invoices.view'],
         ['admin.payments.index', 'bi-cash-coin', 'admin.nav_payments', 'payments.view'],
     ],
     'admin.nav_catalog' => [
-        ['admin.products.index', 'bi-image', 'admin.nav_products', 'products.view'],
+        ['admin.products.index', 'bi-image', 'admin.nav_products', 'products.view', false, 'products.manage'],
         ['admin.categories.index', 'bi-tags', 'admin.nav_categories', 'categories.manage'],
         ['admin.collections.index', 'bi-collection', 'admin.nav_collections', 'collections.manage'],
         ['admin.options.index', 'bi-sliders', 'admin.nav_options', 'products.manage'],
@@ -36,6 +36,7 @@ $sections = [
     ],
     'admin.nav_system' => [
         ['admin.settings', 'bi-gear', 'admin.nav_settings', 'settings.manage'],
+        ['admin.maintenance', 'bi-tools', 'admin.nav_maintenance', 'settings.manage'],
         ['admin.users.index', 'bi-person-badge', 'admin.nav_users', 'users.manage'],
         ['admin.roles.index', 'bi-shield-lock', 'admin.nav_roles', 'roles.manage'],
         ['admin.logs.index', 'bi-journal-text', 'admin.nav_logs', 'logs.view'],
@@ -49,7 +50,7 @@ $sections = [
     <nav class="sidebar-scroll">
         <?php foreach ($sections as $title => $items): ?>
             <?php
-            $visible = array_filter($items, fn ($i) => $router->has($i[0]) && (!empty($i[4]) || can($i[3])));
+            $visible = array_filter($items, fn ($i) => $router->has($i[0]) && (!empty($i[4]) || can($i[3]) || (isset($i[5]) && can($i[5]))));
             if ($visible === []) {
                 continue;
             }

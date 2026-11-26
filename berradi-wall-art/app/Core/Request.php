@@ -102,6 +102,26 @@ final class Request
         return $this->post[$key] ?? $this->query[$key] ?? $default;
     }
 
+    /**
+     * Accept French-formatted amounts ("1 234,50") in the given POST fields by rewriting them to "1234.50"
+     * before validation. Only unambiguous values are touched.
+     *
+     * @param list<string> $keys
+     */
+    public function normalizeDecimals(array $keys): void
+    {
+        foreach ($keys as $k) {
+            $v = $this->post[$k] ?? null;
+            if (is_string($v)) {
+                $clean = str_replace(["\u{00A0}", "\u{202F}", ' '], '', trim($v));
+                if (preg_match('/^-?\d+,\d{1,3}$/', $clean)) {
+                    $clean = str_replace(',', '.', $clean);
+                }
+                $this->post[$k] = $clean;
+            }
+        }
+    }
+
     public function str(string $key, string $default = ''): string
     {
         $v = $this->input($key, $default);

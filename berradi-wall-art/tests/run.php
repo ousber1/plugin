@@ -978,6 +978,101 @@ $t->test('checkout can create a customer account and log in', function (TestRunn
     $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM customer_addresses WHERE customer_id = ?', [(int) $c['id']]));
     Auth::logoutCustomer();
 });
+
+$t->section('Phase 5: admin dashboard figures & catalogue management');
+$t->test('dashboard: profit = sales HT − order costs − shipping costs − expenses HT (cancelled excluded)', function (TestRunner $t) use ($db): void {
+    $S = \App\Services\Admin\DashboardStats::class;
+    $from = date('Y-m-01');
+    $to = date('Y-m-01', strtotime($from . ' +1 month'));
+    $expected = $db->fetch(
+        "SELECT COALESCE(SUM(grand_total - tax_total), 0) AS ht, COALESCE(SUM(cost_total), 0) AS cost, COUNT(*) AS n
+         FROM orders WHERE status NOT IN ('cancelled','returned') AND placed_at >= ? AND placed_at < ?",
+        [$from, $to]
+    );
+    $t->assert((int) $expected['n'] > 0, 'fixtures placed orders this month');
+    $before = $S::profit($from, $to);
+    $t->equals(\App\Helpers\Money::normalize((string) $expected['ht']), $before['sales_ht']);
+    $t->equals(\App\Helpers\Money::normalize((string) $expected['cost']), $before['production_cost']);
+    $db->insert('expenses', ['category' => 'rent', 'description' => 'Loyer atelier (test)', 'amount' => '1200.00', 'tax_amount' => '200.00', 'expense_date' => date('Y-m-d')]);
+    $after = $S::profit($from, $to);
+    $t->equals('1000.00', \App\Helpers\Money::sub($after['expenses'], $before['expenses']), 'expense counted HT');
+    $t->equals(\App\Helpers\Money::sub($before['profit'], '1000.00'), $after['profit']);
+    $cancelled = (int) $db->value("SELECT COUNT(*) FROM orders WHERE status IN ('cancelled','returned')");
+    $t->assert($cancelled > 0, 'fixtures contain a cancelled order');
+    $t->equals((int) $expected['n'], $S::sales($from, $to)['orders'], 'cancelled orders not counted');
+});
+$t->test('dashboard: KPIs, 12-month series and status pipeline are consistent with the database', function (TestRunner $t) use ($db): void {
+    $S = \App\Services\Admin\DashboardStats::class;
+    $k = $S::kpis();
+    $t->equals((int) $db->value('SELECT COUNT(*) FROM orders'), $k['orders_total']);
+    $months = $S::monthly(12);
+    $t->equals(12, count($months));
+    $t->equals(date('Y-m'), $months[11]['month'], 'current month last');
+    $t->equals($k['revenue_month'], $months[11]['sales']);
+    $pipeline = $S::ordersByStatus();
+    $t->equals($k['orders_total'], array_sum(array_column($pipeline, 'count')));
+    $t->equals((string) $db->value("SELECT COALESCE(SUM(balance_due),0) FROM orders WHERE status NOT IN ('cancelled','returned') AND payment_status IN ('unpaid','partial')"), $k['outstanding']);
+    $best = $S::bestSellers(date('Y-m-d', strtotime('-90 days')), date('Y-m-d', strtotime('+1 day')));
+    $t->assert($best !== [], 'best sellers from real order lines');
+});
+$t->test('catalogue: unique slugs/SKUs, save with Arabic translation and option maps', function (TestRunner $t) use ($db): void {
+    $A = \App\Services\Admin\CatalogAdmin::class;
+    $taken = (string) $db->value('SELECT slug FROM products LIMIT 1');
+    $t->equals($taken . '-2', $A::uniqueSlug('products', $taken));
+    $mat = (int) $db->value("SELECT id FROM product_materials WHERE is_active = 1 ORDER BY sort_order LIMIT 1");
+    $id = $A::saveProduct(null, ['title' => 'Désert Rose', 'product_type' => 'canvas', 'selling_price' => '499.00', 'cost_price' => '120.00', 'is_active' => 1],
+        ['title' => 'وردة الصحراء'], [$mat, $mat], [], [(int) $db->value('SELECT id FROM products WHERE deleted_at IS NULL LIMIT 1')]);
+    $row = $db->fetch('SELECT * FROM products WHERE id = ?', [$id]);
+    $t->equals('desert-rose', $row['slug']);
+    $t->equals('BWA-DESERT-ROSE', $row['sku']);
+    $t->equals('وردة الصحراء', \App\Services\TranslationService::get('product', $id, 'ar')['title'] ?? null);
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM product_material_map WHERE product_id = ?', [$id]));
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM related_products WHERE product_id = ?', [$id]));
+    $id2 = $A::saveProduct(null, ['title' => 'Désert Rose', 'product_type' => 'canvas', 'selling_price' => '10.00', 'is_active' => 0], [], [], [], []);
+    $t->equals('desert-rose-2', (string) $db->value('SELECT slug FROM products WHERE id = ?', [$id2]));
+    $t->equals('BWA-DESERT-ROSE-2', (string) $db->value('SELECT sku FROM products WHERE id = ?', [$id2]));
+});
+$t->test('catalogue: variant generation uses the pricing engine, rounds to …9 and skips duplicates', function (TestRunner $t) use ($db): void {
+    $A = \App\Services\Admin\CatalogAdmin::class;
+    $id = (int) $db->value("SELECT id FROM products WHERE slug = 'desert-rose'");
+    $canvas = (int) $db->value("SELECT id FROM product_materials WHERE code = 'canvas'");
+    $frame = (int) $db->value('SELECT id FROM frames WHERE is_active = 1 ORDER BY sort_order LIMIT 1');
+    $n = $A::generateVariants($id, [['w' => 40.0, 'h' => 60.0], ['w' => 60.0, 'h' => 90.0]], [$canvas], [null, $frame]);
+    $t->equals(4, $n);
+    $t->equals(0, $A::generateVariants($id, [['w' => 40.0, 'h' => 60.0]], [$canvas], [null]), 'existing combination skipped');
+    $vs = $db->fetchAll('SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order', [$id]);
+    $t->equals(1, count(array_filter($vs, fn ($v) => (int) $v['is_default'] === 1)), 'exactly one default');
+    foreach ($vs as $v) {
+        $q = \App\Services\Builder\PricingService::quote(['material_id' => $canvas, 'frame_id' => $v['frame_id'] !== null ? (int) $v['frame_id'] : null, 'layout' => 'single', 'panel_width_cm' => (float) $v['width_cm'], 'panel_height_cm' => (float) $v['height_cm']]);
+        $t->assert(\App\Helpers\Money::compare($v['price'], $q['unit_price']) >= 0, 'never below the engine price');
+        $t->equals('9.00', substr(\App\Helpers\Money::normalize((string) $v['price']), -4), 'ends in 9 DH');
+    }
+    $t->equals((string) $db->value('SELECT MIN(price) FROM product_variants WHERE product_id = ?', [$id]), (string) $db->value('SELECT selling_price FROM products WHERE id = ?', [$id]), 'from-price synced');
+});
+$t->test('catalogue: duplicate creates an inactive copy with variants and translations', function (TestRunner $t) use ($db): void {
+    $A = \App\Services\Admin\CatalogAdmin::class;
+    $id = (int) $db->value("SELECT id FROM products WHERE slug = 'desert-rose'");
+    $copy = $A::duplicate($id);
+    $c = $db->fetch('SELECT * FROM products WHERE id = ?', [$copy]);
+    $t->equals(0, (int) $c['is_active']);
+    $t->equals('desert-rose-copie', $c['slug']);
+    $t->equals((int) $db->value('SELECT COUNT(*) FROM product_variants WHERE product_id = ?', [$id]), (int) $db->value('SELECT COUNT(*) FROM product_variants WHERE product_id = ?', [$copy]));
+    $t->equals('وردة الصحراء', \App\Services\TranslationService::get('product', $copy, 'ar')['title'] ?? null);
+});
+$t->test('catalogue: soft delete keeps order history, frees the slug and empties carts', function (TestRunner $t) use ($db): void {
+    $A = \App\Services\Admin\CatalogAdmin::class;
+    $ordered = $db->fetch('SELECT p.id, p.slug FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE p.deleted_at IS NULL LIMIT 1');
+    $lines = (int) $db->value('SELECT COUNT(*) FROM order_items WHERE product_id = ?', [(int) $ordered['id']]);
+    $t->equals(true, $A::softDelete((int) $ordered['id']));
+    $t->equals(false, $A::softDelete((int) $ordered['id']), 'second delete is a no-op');
+    $row = $db->fetch('SELECT * FROM products WHERE id = ?', [(int) $ordered['id']]);
+    $t->assert($row['deleted_at'] !== null && (int) $row['is_active'] === 0);
+    $t->equals($ordered['slug'], $A::uniqueSlug('products', $ordered['slug']), 'slug reusable');
+    $t->equals($lines, (int) $db->value('SELECT COUNT(*) FROM order_items WHERE product_id = ?', [(int) $ordered['id']]), 'order lines intact');
+    $t->equals(0, (int) $db->value('SELECT COUNT(*) FROM cart_items WHERE product_id = ? AND custom_design_id IS NULL', [(int) $ordered['id']]));
+    $t->equals(null, \App\Services\CatalogService::product($ordered['slug']), 'hidden from the store');
+});
+
 $demo->remove();
 
 exit($t->finish());

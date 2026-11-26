@@ -87,7 +87,27 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Responsive & RTL (cart, checkout, tracking), header fits at ≥1200px, burger below | ✅ | Playwright 390/1100/1280/1440 px |
 | Real e-mail delivery | 🟡 | sandbox has no mail server: messages are queued and retried by cron; verify SMTP on the host |
 
-## Phase 5: Admin dashboard KPIs & charts, products, categories, collections, customers ⬜
+## Phase 5: Admin dashboard KPIs & charts, products, categories, collections, customers ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Dashboard KPIs from real data only (revenue today / month / total, trend vs previous month, outstanding balance, collected, orders by stage, customers, expenses, estimated profit with its formula shown) | ✅ | integration (figures recomputed in SQL; cancelled/returned orders excluded) + HTTP |
+| Estimated profit = sales HT − order cost − real shipping cost − expenses HT | ✅ | integration (adding a 1 200 TTC / 200 TVA expense lowers profit by exactly 1 000) |
+| Charts (Chart.js, self-hosted): 12-month sales, 12-month profit, orders by status, revenue by category, best sellers; one brand mark colour, tooltips, integer ticks for counts, data table under each chart, empty states, RTL axes | ✅ | HTTP (JSON matches DB) + Playwright screenshots |
+| Finance tiles/charts only with `finance.view` / `reports.view` | ✅ | HTTP (designer sees no profit data) |
+| Setup checklist, latest orders, low stock, recent activity, quick actions limited to existing routes + permissions, pending-migration alert | ✅ | HTTP |
+| Products: list with search, category/collection/type/status/flag filters, sorting, pagination, bulk activate/deactivate/feature/category/delete | ✅ | HTTP + Playwright (bulk bar) |
+| Product editor: tabs (general, price & stock, images, variants, options & related, Arabic & SEO), French decimal commas accepted, promo/date/panel validations, unique slug & SKU | ✅ | integration + HTTP |
+| Images: multi-upload (re-encoded, thumbnails), main image, reorder, delete only when no longer referenced | ✅ | HTTP (upload → main image) |
+| Variants: generation size × support × frame priced by the builder engine (rounded up to …9 DH), skip existing, edit/delete/default, product from-price synced | ✅ | integration + HTTP |
+| Duplicate (inactive copy with variants, maps, translations); soft delete keeps order history, frees slug/SKU, empties carts | ✅ | integration + HTTP |
+| Categories (tree with cycle protection) and collections (limited edition, date window): Arabic translation, image, SEO, drag-and-drop ordering, delete requires explicit detach when products exist | ✅ | HTTP |
+| Print options (supports, frames, sizes, borders, layouts, finishes) editable with prices; a change is reflected immediately in the builder price API | ✅ | HTTP |
+| Customers: list (spend, orders, guest/registered), profile (stats, orders, addresses, designs/photos count), create/edit B2B data (ICE), GDPR anonymisation (purges unordered photos, keeps financial records) | ✅ | HTTP |
+| Maintenance page: pending migrations + one-click update, demo install/remove, system info, cron status | ✅ | HTTP |
+| RBAC on every new route (designer: catalogue yes, customers/maintenance 403) | ✅ | HTTP |
+| Mobile 390 px and Arabic RTL: no horizontal overflow on all new admin pages, no JS errors | ✅ | Playwright |
+
 ## Phase 6: Orders, status workflow, production, artwork management, inventory ⬜
 ## Phase 7: Invoices, quotations, PDF (FR/AR), payments, finance ⬜
 ## Phase 8: Reports, SEO (sitemap, schema.org, OG), notifications, retention purge, backups, security review ⬜

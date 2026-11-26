@@ -1,7 +1,7 @@
 <?php
 /**
  * Reusable form field.
- * Vars: name, label, type='text', value='', required=false, help=null, attrs='', options=[] (select), col=null, placeholder=''
+ * Vars: name, label, type='text', value='', required=false, help=null, attrs='', form=null, options=[] (select), col=null, placeholder=''
  */
 $type ??= 'text';
 $value = old($name, $value ?? '');
@@ -9,6 +9,9 @@ $id = $id ?? 'f_' . preg_replace('/[^a-z0-9_]/i', '_', $name);
 $err = error($name);
 $required ??= false;
 $attrs ??= '';
+if (!empty($form)) {
+    $attrs = 'form="' . e($form) . '" ' . $attrs;
+}
 ?>
 <div class="mb-3">
     <?php if ($type !== 'checkbox'): ?>
@@ -24,7 +27,7 @@ $attrs ??= '';
         </select>
     <?php elseif ($type === 'checkbox'): ?>
         <div class="form-check form-switch">
-            <input type="hidden" name="<?= e($name) ?>" value="0">
+            <input type="hidden" name="<?= e($name) ?>" value="0"<?= !empty($form) ? ' form="' . e($form) . '"' : '' ?>>
             <input class="form-check-input<?= $err ? ' is-invalid' : '' ?>" type="checkbox" role="switch" id="<?= e($id) ?>" name="<?= e($name) ?>" value="1" <?= in_array($value, [true, 1, '1', 'on'], true) ? 'checked' : '' ?> <?= $attrs ?>>
             <label class="form-check-label" for="<?= e($id) ?>"><?= e($label) ?></label>
         </div>

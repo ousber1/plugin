@@ -8,6 +8,12 @@
 
 use App\Controllers\Admin\ActivityLogController;
 use App\Controllers\Admin\AuthController;
+use App\Controllers\Admin\CategoryController;
+use App\Controllers\Admin\CollectionController;
+use App\Controllers\Admin\CustomerController;
+use App\Controllers\Admin\MaintenanceController;
+use App\Controllers\Admin\OptionController;
+use App\Controllers\Admin\ProductController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\ProfileController;
 use App\Controllers\Admin\RoleController;
@@ -59,5 +65,62 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
         });
 
         $router->get('/activity-logs', [ActivityLogController::class, 'index'])->middleware('can:logs.view')->name('logs.index');
+
+        // ---------------------------------------------------------------- catalogue
+        $router->group(['middleware' => ['can:products.view,products.manage']], function ($router): void {
+            $router->get('/products', [ProductController::class, 'index'])->name('products.index');
+        });
+        $router->group(['middleware' => ['can:products.manage']], function ($router): void {
+            $router->get('/products/create', [ProductController::class, 'create'])->name('products.create');
+            $router->post('/products', [ProductController::class, 'store'])->name('products.store');
+            $router->post('/products/bulk', [ProductController::class, 'bulk'])->name('products.bulk');
+            $router->get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
+            $router->post('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+            $router->post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
+            $router->post('/products/{id}/delete', [ProductController::class, 'destroy'])->name('products.destroy');
+            $router->post('/products/{id}/images', [ProductController::class, 'uploadImages'])->name('products.images');
+            $router->post('/products/{id}/images/{imageId}', [ProductController::class, 'imageAction'])->name('products.image');
+            $router->post('/products/{id}/variants', [ProductController::class, 'saveVariants'])->name('products.variants');
+            $router->post('/products/{id}/variants/add', [ProductController::class, 'addVariant'])->name('products.variants.add');
+            $router->post('/products/{id}/variants/generate', [ProductController::class, 'generateVariants'])->name('products.variants.generate');
+            $router->get('/print-options', [OptionController::class, 'index'])->name('options.index');
+            $router->post('/print-options/materials', [OptionController::class, 'saveMaterial'])->name('options.materials.store');
+            $router->post('/print-options/materials/{id}', [OptionController::class, 'saveMaterial'])->name('options.materials.update');
+            $router->post('/print-options/frames', [OptionController::class, 'saveFrame'])->name('options.frames.store');
+            $router->post('/print-options/frames/{id}', [OptionController::class, 'saveFrame'])->name('options.frames.update');
+            $router->post('/print-options/options', [OptionController::class, 'saveOption'])->name('options.options.store');
+            $router->post('/print-options/options/{id}', [OptionController::class, 'saveOption'])->name('options.options.update');
+        });
+        foreach (['categories' => CategoryController::class, 'collections' => CollectionController::class] as $name => $controller) {
+            $router->group(['middleware' => ['can:' . $name . '.manage']], function ($router) use ($name, $controller): void {
+                $router->get('/' . $name, [$controller, 'index'])->name($name . '.index');
+                $router->get('/' . $name . '/create', [$controller, 'create'])->name($name . '.create');
+                $router->post('/' . $name, [$controller, 'store'])->name($name . '.store');
+                $router->post('/' . $name . '/reorder', [$controller, 'reorder'])->name($name . '.reorder');
+                $router->get('/' . $name . '/{id}/edit', [$controller, 'edit'])->name($name . '.edit');
+                $router->post('/' . $name . '/{id}', [$controller, 'update'])->name($name . '.update');
+                $router->post('/' . $name . '/{id}/delete', [$controller, 'destroy'])->name($name . '.destroy');
+            });
+        }
+
+        // ---------------------------------------------------------------- customers
+        $router->group(['middleware' => ['can:customers.view,customers.manage']], function ($router): void {
+            $router->get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+        });
+        $router->group(['middleware' => ['can:customers.manage']], function ($router): void {
+            $router->get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
+            $router->post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+            $router->get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
+            $router->post('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
+            $router->post('/customers/{id}/anonymize', [CustomerController::class, 'anonymize'])->name('customers.anonymize');
+        });
+        $router->get('/customers/{id}', [CustomerController::class, 'show'])->middleware('can:customers.view,customers.manage')->name('customers.show');
+
+        // ---------------------------------------------------------------- maintenance
+        $router->group(['middleware' => ['can:settings.manage']], function ($router): void {
+            $router->get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance');
+            $router->post('/maintenance/update', [MaintenanceController::class, 'update'])->name('maintenance.update');
+            $router->post('/maintenance/demo', [MaintenanceController::class, 'demo'])->name('maintenance.demo');
+        });
     });
 });

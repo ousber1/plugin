@@ -23,4 +23,6 @@ return [
     'made_in_morocco' => 'Conçu & imprimé au Maroc',
     'yes' => 'Oui',
     'no' => 'Non',
+    'create' => 'Créer',
+    'edit' => 'Modifier',
 ];

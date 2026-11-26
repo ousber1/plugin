@@ -49,6 +49,7 @@
     </div>
     <script src="<?= e(asset('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('js/app.js')) ?>"></script>
+    <script src="<?= e(asset('js/admin.js')) ?>"></script>
     <?= $this->section('scripts') ?>
 </body>
 </html>
