@@ -400,4 +400,7 @@ return [
     'nav_emails' => 'سجل البريد',
     'nav_content' => 'محتوى المتجر',
     'nav_newsletter' => 'النشرة البريدية',
+    'nav_payment_methods' => 'وسائل الدفع',
+    'nav_seo' => 'أدوات SEO',
+    'nav_tracking' => 'التتبع والبكسلات',
 ];

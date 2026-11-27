@@ -85,6 +85,7 @@ final class AuthController extends Controller
         }
         Auth::loginCustomer($id);
         ActivityLogger::log('customer.registered', 'customer', $id);
+        \App\Services\Tracking\TrackingService::queue('sign_up', ['method' => 'email', 'items' => []]);
         $this->flash('success', __('auth.welcome', ['name' => (string) $data['first_name']]));
         return $this->redirectIntended();
     }

@@ -53,7 +53,10 @@ $socials = array_filter([
     <div class="footer-bottom py-3">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
             <span>&copy; <?= date('Y') ?> <?= e($company) ?>. <?= e(__('common.rights')) ?></span>
-            <span><?= e(__('common.made_in_morocco')) ?></span>
+            <span>
+                <?php if (\App\Services\Tracking\TrackingService::enabled() !== [] && \App\Services\Tracking\TrackingService::consentRequired()): ?><a href="#" class="me-3" data-consent-open><?= e(__('consent.manage')) ?></a><?php endif; ?>
+                <?= e(__('common.made_in_morocco')) ?>
+            </span>
         </div>
     </div>
 </footer>

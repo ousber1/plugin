@@ -46,10 +46,12 @@ final class CheckoutController extends Controller
         $cart = CartService::current(false);
         $lines = CartService::lines($cart);
         $city = (string) old('city', $default['city'] ?? Session::get('cart_city', ''));
+        $totals = CheckoutCalculator::totals($cart, $lines, $city !== '' ? $city : null);
+        \App\Services\Tracking\TrackingService::event('begin_checkout', ['value' => \App\Helpers\Money::toCents((string) $totals['grand_total']) / 100, 'items' => \App\Services\Tracking\TrackingService::cartItems($lines)]);
         return $this->view('storefront/checkout/index', [
             'lines' => $lines,
-            'totals' => CheckoutCalculator::totals($cart, $lines, $city !== '' ? $city : null),
-            'methods' => PaymentRegistry::available(),
+            'totals' => $totals,
+            'methods' => PaymentRegistry::available((string) $totals['grand_total']),
             'cities' => ShippingService::cities(),
             'customer' => $customer,
             'addresses' => $addresses,
@@ -123,10 +125,17 @@ final class CheckoutController extends Controller
             throw new ValidationException($e->errors, $this->request->all());
         }
         $order = $result['order'];
+        // Meta Conversions API (server side, only with marketing consent); same event id as the browser pixel
+        \App\Services\Tracking\TrackingService::queuePurchase($order, \App\Services\Tracking\TrackingService::orderItems(OrderService::items((int) $order['id'])), $this->request);
         // this browser may view the confirmation page without the token in the URL
         $recent = (array) Session::get('recent_orders', []);
         $recent[$order['order_number']] = $result['token'];
         Session::put('recent_orders', array_slice($recent, -5, null, true));
+        // card payment: straight to the bank's secure page (the order exists already, unpaid until the bank confirms)
+        $method = PaymentRegistry::describe((int) $order['payment_method_id']);
+        if ($method !== null && (int) $method['is_online'] === 1) {
+            return $this->redirectRoute('payment.pay', ['number' => $order['order_number'], 'token' => $result['token']]);
+        }
         return $this->redirectRoute('checkout.confirmation', ['number' => $order['order_number']]);
     }
 
@@ -137,13 +146,55 @@ final class CheckoutController extends Controller
         if ($order === null) {
             throw new HttpException(404);
         }
-        $method = Database::instance()->fetch('SELECT code, name, instructions FROM payment_methods WHERE id = ?', [(int) $order['payment_method_id']]);
+        $method = PaymentRegistry::describe((int) $order['payment_method_id']);
+        $items = OrderService::items((int) $order['id']);
+        self::trackPurchase($order, $items);
         return $this->view('storefront/checkout/confirmation', [
             'order' => $order,
-            'items' => OrderService::items((int) $order['id']),
+            'payUrl' => self::payUrl($order, $method, (string) $token),
+            'items' => $items,
             'method' => $method,
             'trackUrl' => route('order.track.token', ['number' => $order['order_number'], 'token' => (string) $token]),
             'seo' => SeoService::page(__('checkout.thanks_title'), null, ['noindex' => true]),
         ]);
+    }
+
+    /**
+     * "Pay by card" link while an online-payment order still has a balance and its gateway works.
+     *
+     * @param array<string,mixed>      $order
+     * @param array<string,mixed>|null $method
+     */
+    public static function payUrl(array $order, ?array $method, string $token): ?string
+    {
+        if ($method === null || (int) $method['is_online'] !== 1 || $method['provider'] === null
+            || \App\Helpers\Money::toCents((string) $order['balance_due']) <= 0
+            || in_array((string) $order['status'], ['cancelled', 'returned'], true)
+            || PaymentRegistry::gateway((string) $method['provider']) === null) {
+            return null;
+        }
+        return route('payment.pay', ['number' => $order['order_number'], 'token' => $token]);
+    }
+
+    /**
+     * "purchase" analytics event, once per order and browser (reloading the page does not count twice).
+     *
+     * @param array<string,mixed>       $order
+     * @param list<array<string,mixed>> $items order_items rows
+     */
+    public static function trackPurchase(array $order, array $items): void
+    {
+        $tracked = (array) Session::get('tracked_orders', []);
+        if (in_array($order['order_number'], $tracked, true)) {
+            return;
+        }
+        \App\Services\Tracking\TrackingService::event('purchase', [
+            'order_id' => (string) $order['order_number'],
+            'value' => \App\Helpers\Money::toCents((string) $order['grand_total']) / 100,
+            'shipping' => \App\Helpers\Money::toCents((string) $order['shipping_total']) / 100,
+            'items' => \App\Services\Tracking\TrackingService::orderItems($items),
+        ], 'order-' . $order['order_number']);
+        $tracked[] = (string) $order['order_number'];
+        Session::put('tracked_orders', array_slice($tracked, -20));
     }
 }

@@ -14,8 +14,11 @@ use App\Core\Response;
  */
 final class CsrfMiddleware implements MiddlewareInterface
 {
-    /** Paths exempt from CSRF (e.g. future payment provider webhooks verified by signature). */
-    private const EXCEPT = ['/webhooks/'];
+    /**
+     * Paths exempt from CSRF: payment provider callbacks (authenticated by the provider's signature) and the
+     * bank's return to the shop (secret order token in the URL, read-only: it never changes anything).
+     */
+    private const EXCEPT = ['/webhooks/', '/payment-return/'];
 
     public function handle(Request $request, callable $next, string ...$params): Response
     {

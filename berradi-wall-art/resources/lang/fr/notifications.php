@@ -32,4 +32,6 @@ return [
     'retry_ok' => 'E-mail envoyé.',
     'retry_ko' => 'Échec de l’envoi : vérifiez la configuration SMTP.',
     'review_new' => 'Nouvel avis (:rating★) à modérer — :number',
+    'card_payment' => 'Paiement par carte reçu : :number (:amount)',
+    'card_payment_check' => 'Paiement par carte à vérifier : :number (:amount) ne correspond pas au reste à payer',
 ];

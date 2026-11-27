@@ -104,6 +104,13 @@ final class Browser
         return $this->request('POST', $path, $data, $files, $headers);
     }
 
+    /** Add a cookie to this browser's jar (as if set by the site's own JavaScript). */
+    public function setCookie(string $name, string $value): void
+    {
+        $host = (string) parse_url($this->base, PHP_URL_HOST);
+        file_put_contents($this->jar, $host . "\tFALSE\t/\tFALSE\t0\t" . $name . "\t" . $value . "\n", FILE_APPEND);
+    }
+
     public function token(): string
     {
         preg_match('/name="csrf-token" content="([a-f0-9]{64})"/', $this->body, $m);
@@ -300,7 +307,7 @@ $t->test('homepage shows real catalogue sections and JSON-LD', function (TestRun
     }
     $t->assert(!str_contains($b->body, 'Avis clients'), 'no review section without real reviews');
     $t->assert(!str_contains($b->body, 'Nos œuvres installées'), 'no gallery section without real installations');
-    $t->contains('"@type":"Organization"', $b->body);
+    $t->assert(str_contains($b->body, '"@type":"Organization"') || str_contains($b->body, '"@type":"Store"'), 'Organization (or Store when an address is set) schema');
     $t->contains('<link rel="canonical"', $b->body);
     $t->contains('property="og:title"', $b->body);
 });
@@ -1630,6 +1637,265 @@ $t->test('newsletter list, CSV export, unsubscribe; RBAC and Arabic on the new p
     }
     $o->get('/lang/ar');
     foreach (['/admin/shipping', '/admin/coupons', '/admin/reviews?status=all', '/admin/content', '/admin/content?tab=faqs', '/admin/newsletter'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+
+$t->section('v1.1: payment methods & CMI card payment, "Sur mon mur", SEO tools, tracking & consent');
+$cmiKey = 'TESTKEY|123';
+// the signing function is used as the bank would (pure function, no framework needed)
+require_once __DIR__ . '/../app/Services/Payments/PaymentGatewayInterface.php';
+require_once __DIR__ . '/../app/Services/Payments/CmiGateway.php';
+$t->test('payment methods page: FR/AR texts, limits, new offline method, used methods only deactivated', function (TestRunner $t) use ($o, $base, $q6, $pdo5, $p8): void {
+    $o->get('/admin/payment-methods');
+    $t->equals(200, $o->status);
+    $t->contains('Paiement à la livraison', $o->body);
+    $t->contains('PayPal n’accepte pas le dirham', $o->body);
+    $cod = (int) $q6("SELECT id FROM payment_methods WHERE code = 'cod'");
+    $o->post('/admin/payment-methods/' . $cod, ['name' => 'Paiement à la livraison', 'ar_name' => 'الدفع عند الاستلام', 'description' => 'Espèces au livreur.', 'max_order_amount' => '5', 'sort_order' => '1', 'is_active' => '1'], '/admin/payment-methods');
+    $t->equals('5.00', (string) $q6("SELECT max_order_amount FROM payment_methods WHERE id = {$cod}"));
+    $t->equals('الدفع عند الاستلام', (string) $q6("SELECT value FROM translations WHERE entity_type = 'payment_method' AND entity_id = {$cod} AND field = 'name'"));
+    $g = new Browser($base);
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $g->get('/checkout');
+    $t->assert(!str_contains($g->body, 'value="cod"'), 'cash on delivery hidden above its maximum');
+    $g->post('/checkout', ['full_name' => 'Test Limite', 'phone' => '0611111111', 'email' => 'limite@client.test', 'country' => 'MA', 'city' => 'Rabat', 'address' => '1 rue des Limites', 'payment_method' => 'cod', 'accept_terms' => '1'], '/checkout');
+    $t->equals(0, (int) $q6("SELECT COUNT(*) FROM orders WHERE customer_email = 'limite@client.test'"), 'refused on the server too');
+    $o->post('/admin/payment-methods/' . $cod, ['name' => 'Paiement à la livraison', 'ar_name' => 'الدفع عند الاستلام', 'max_order_amount' => '', 'sort_order' => '1', 'is_active' => '1'], '/admin/payment-methods');
+    $o->post('/admin/payment-methods', ['name' => 'Cash Plus / Wafacash', 'description' => 'Envoi au nom de la société.', 'instructions' => 'Envoyez le reçu par WhatsApp.', 'sort_order' => '5', 'is_active' => '1'], '/admin/payment-methods');
+    $new = (int) $q6("SELECT id FROM payment_methods WHERE code = 'cash_plus_wafacash'");
+    $t->assert($new > 0, 'code generated from the name');
+    $g->get('/checkout');
+    $t->contains('Cash Plus / Wafacash', $g->body);
+    $o->post('/admin/payment-methods/' . $new . '/delete', [], '/admin/payment-methods');
+    $t->equals(0, (int) $q6("SELECT COUNT(*) FROM payment_methods WHERE id = {$new}"), 'unused: deleted');
+    $o->post('/admin/payment-methods/' . $cod . '/delete', [], '/admin/payment-methods');
+    $t->equals(1, (int) $q6("SELECT COUNT(*) FROM payment_methods WHERE id = {$cod}"), 'used: kept');
+    $t->equals(0, (int) $q6("SELECT is_active FROM payment_methods WHERE id = {$cod}"), 'deactivated');
+    // the last active offline method cannot be switched off
+    $pdo5->exec("UPDATE payment_methods SET is_active = 0 WHERE is_online = 0 AND code <> 'bank_transfer'");
+    $bt = (int) $q6("SELECT id FROM payment_methods WHERE code = 'bank_transfer'");
+    $o->post('/admin/payment-methods/' . $bt, ['name' => 'Virement bancaire', 'sort_order' => '2'], '/admin/payment-methods');
+    $o->follow();
+    $t->contains('Gardez au moins un moyen de paiement hors ligne actif', $o->body);
+    $t->equals(1, (int) $q6("SELECT is_active FROM payment_methods WHERE id = {$bt}"));
+    $pdo5->exec("UPDATE payment_methods SET is_active = 1 WHERE code IN ('cod','manual')");
+});
+$t->test('CMI: cannot be activated without credentials; credentials stored encrypted and never shown', function (TestRunner $t) use ($o, $q6, $cmiKey): void {
+    $cmi = (int) $q6("SELECT id FROM payment_methods WHERE code = 'cmi'");
+    $o->post('/admin/payment-methods/' . $cmi, ['name' => 'Carte bancaire (CMI)', 'sort_order' => '4', 'is_active' => '1', 'test_mode' => '1'], '/admin/payment-methods');
+    $o->follow();
+    $t->contains('Renseignez les identifiants', $o->body);
+    $t->equals(0, (int) $q6("SELECT is_active FROM payment_methods WHERE id = {$cmi}"));
+    $o->post('/admin/payment-methods/' . $cmi, ['name' => 'Carte bancaire (CMI)', 'ar_name' => 'البطاقة البنكية', 'sort_order' => '4', 'is_active' => '1', 'test_mode' => '1', 'cfg_client_id' => '600000123', 'cfg_store_key' => $cmiKey], '/admin/payment-methods');
+    $t->equals(1, (int) $q6("SELECT is_active FROM payment_methods WHERE id = {$cmi}"));
+    $t->assert(!str_contains((string) $q6("SELECT config FROM payment_methods WHERE id = {$cmi}"), 'TESTKEY'), 'encrypted at rest');
+    $o->get('/admin/payment-methods');
+    $t->assert(!str_contains($o->body, 'TESTKEY'), 'store key never displayed');
+    $t->contains('600000123', $o->body);
+    $t->contains('/webhooks/payments/cmi', $o->body);
+    $t->contains('Mode test', $o->body);
+    // saving again with an empty secret field keeps the stored key
+    $o->post('/admin/payment-methods/' . $cmi, ['name' => 'Carte bancaire (CMI)', 'sort_order' => '4', 'is_active' => '1', 'test_mode' => '1', 'cfg_client_id' => '600000123', 'cfg_store_key' => ''], '/admin/payment-methods');
+    $t->equals(1, (int) $q6("SELECT is_active FROM payment_methods WHERE id = {$cmi}"), 'key kept');
+});
+$t->test('CMI card payment: signed form to the bank, signed callback records the payment once, tampering and replays refused', function (TestRunner $t) use ($base, $q6, $p8, $cmiKey): void {
+    $g = new Browser($base);
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $g->get('/checkout');
+    $t->contains('value="cmi"', $g->body);
+    $g->post('/checkout', ['full_name' => 'Yasmine Carte', 'phone' => '0677889900', 'email' => 'yasmine@client.test', 'country' => 'MA', 'city' => 'Rabat', 'address' => '12 avenue de France, Agdal', 'payment_method' => 'cmi', 'accept_terms' => '1'], '/checkout');
+    $t->assert(preg_match('#^/checkout/pay/(BWA-\d{4}-\d+)/([a-f0-9]{48})$#', $g->location(), $m) === 1, 'straight to the payment page: ' . $g->location());
+    [$_, $number, $token] = $m;
+    $g->get($g->location());
+    $t->equals(200, $g->status);
+    $t->contains('action="https://testpayment.cmi.co.ma/fim/est3Dgate"', $g->body);
+    $t->contains('https://testpayment.cmi.co.ma', $g->headers['content-security-policy'] ?? '', 'CSP allows posting to the bank');
+    preg_match_all('#<input type="hidden" name="([^"]+)" value="([^"]*)">#', $g->body, $mm, PREG_SET_ORDER);
+    $fields = [];
+    foreach ($mm as $f) { $fields[html_entity_decode($f[1])] = html_entity_decode($f[2], ENT_QUOTES); }
+    $hash = $fields['HASH']; unset($fields['HASH']);
+    $t->equals(\App\Services\Payments\CmiGateway::hash($fields, $cmiKey), $hash, 'form signed with the store key');
+    $order = ['id' => (int) $q6("SELECT id FROM orders WHERE order_number = '{$number}'"), 'total' => (string) $q6("SELECT grand_total FROM orders WHERE order_number = '{$number}'")];
+    $t->equals($order['total'], $fields['amount']);
+    $t->equals($number, $fields['oid']);
+    $t->contains('/payment-return/cmi/ok/' . $number . '/' . $token, $fields['okUrl']);
+    $t->equals('unpaid', (string) $q6("SELECT payment_status FROM orders WHERE id = {$order['id']}"));
+    // the bank's server-to-server callback
+    $cb = ['clientid' => '600000123', 'oid' => $number, 'amount' => $fields['amount'], 'currency' => '504', 'Response' => 'Approved', 'ProcReturnCode' => '00', 'TransId' => 'TX' . $order['id'], 'AuthCode' => 'AUTH42', 'MaskedPan' => '4111********1111', 'rnd' => 'r'];
+    $sign = function (array $p) use ($cmiKey) { $p['HASH'] = \App\Services\Payments\CmiGateway::hash($p, $cmiKey); return $p; };
+    $bank = new Browser($base);
+    $forged = $cb; $forged['HASH'] = 'AAAA';
+    $bank->request('POST', '/webhooks/payments/cmi', $forged);
+    $t->equals(400, $bank->status, 'bad signature');
+    $t->equals('FAILURE', trim($bank->body));
+    $cheap = $sign(array_merge($cb, ['amount' => '1.00']));
+    $cheap['amount'] = $fields['amount'];
+    $bank->request('POST', '/webhooks/payments/cmi', $cheap);
+    $t->equals(400, $bank->status, 'amount altered after signing');
+    $bank->request('POST', '/webhooks/payments/cmi', $sign(array_merge($cb, ['Response' => 'Declined', 'ProcReturnCode' => '05', 'TransId' => 'TXdeclined'])));
+    $t->equals('APPROVED', trim($bank->body), 'declined: acknowledged, nothing recorded');
+    $t->equals(0, (int) $q6("SELECT COUNT(*) FROM payments WHERE order_id = {$order['id']}"));
+    $bank->request('POST', '/webhooks/payments/cmi', $sign($cb));
+    $t->equals(200, $bank->status);
+    $t->equals('ACTION=POSTAUTH', trim($bank->body));
+    $t->assert(!isset($bank->headers['set-cookie']), 'no session for the bank');
+    $t->equals('paid', (string) $q6("SELECT payment_status FROM orders WHERE id = {$order['id']}"));
+    $t->equals('cmi:TX' . $order['id'], (string) $q6("SELECT provider_transaction_id FROM payments WHERE order_id = {$order['id']}"));
+    $bank->request('POST', '/webhooks/payments/cmi', $sign($cb));
+    $t->equals(1, (int) $q6("SELECT COUNT(*) FROM payments WHERE order_id = {$order['id']}"), 'retry is idempotent');
+    $t->assert((int) $q6("SELECT COUNT(*) FROM notifications WHERE event = 'payment.received' AND related_id = {$order['id']}") > 0, 'team alerted');
+    // the browser coming back from the bank (cross-site POST, no CSRF token, no session cookie replaced)
+    $back = new Browser($base);
+    $back->request('POST', '/payment-return/cmi/ok/' . $number . '/' . $token, ['oid' => $number, 'Response' => 'Approved']);
+    $t->equals(303, $back->status);
+    $t->equals('/track/' . $number . '/' . $token . '?payment=ok', $back->location());
+    $t->assert(!isset($back->headers['set-cookie']), 'session cookie untouched');
+    $back->get($back->location());
+    $t->contains('Votre paiement est confirmé', $back->body);
+    $t->assert(!str_contains($back->body, 'Payer par carte'), 'nothing left to pay');
+    $back->request('POST', '/payment-return/cmi/ok/' . $number . '/' . str_repeat('0', 48), []);
+    $t->equals(404, $back->status, 'wrong token');
+    $g->get('/checkout/pay/' . $number . '/' . $token);
+    $t->equals(302, $g->status, 'paid: pay page sends back to the order');
+});
+$t->test('"Sur mon mur" studio on product pages; camera allowed only there', function (TestRunner $t) use ($base, $p8): void {
+    $g = new Browser($base);
+    $g->get('/product/' . $p8);
+    $t->contains('data-wall-studio', $g->body);
+    $t->contains('js/wall-studio.js', $g->body);
+    $t->contains('data-ws-mode="camera"', $g->body);
+    $t->contains('camera=(self)', $g->headers['permissions-policy'] ?? '');
+    $g->get('/lang/ar');
+    $g->get('/product/' . $p8);
+    $t->contains('على جداري', $g->body);
+    $g->get('/lang/fr');
+    $g->get('/shop');
+    $t->contains('camera=()', $g->headers['permissions-policy'] ?? '');
+});
+$t->test('SEO tools: verification tags, robots rules, per-page titles (FR/AR), noindex, redirects and the 404 monitor', function (TestRunner $t) use ($o, $base, $q6): void {
+    $general = ['seo_meta_title' => 'BERRADI WALL ART — Tableaux personnalisés', 'seo_meta_description' => 'Toiles et cadres imprimés au Maroc.', 'seo_google_verification' => 'abcDEF123_-xyz', 'seo_twitter_site' => '@berradi',
+        'seo_business_type' => 'HomeGoodsStore', 'seo_opening_hours' => 'Mo-Fr 09:00-19:00, Sa 10:00-18:00', 'seo_geo_lat' => '33.5731', 'seo_geo_lng' => '-7.5898', 'seo_price_range' => '$$', 'seo_robots_extra' => "Disallow: /shop?sort=", 'seo_log_404' => '1'];
+    $o->post('/admin/seo/general', array_merge($general, ['seo_robots_extra' => "Disallow: /x\n<script>"]), '/admin/seo?tab=general');
+    $o->follow();
+    $t->contains('Chaque ligne doit commencer', $o->body);
+    $o->post('/admin/seo/general', array_merge($general, ['seo_opening_hours' => 'tous les jours']), '/admin/seo?tab=general');
+    $o->follow();
+    $t->contains('is-invalid', $o->body, 'opening hours format');
+    $o->post('/admin/seo/general', $general, '/admin/seo?tab=general');
+    $g = new Browser($base);
+    $g->get('/');
+    $t->contains('<meta name="google-site-verification" content="abcDEF123_-xyz">', $g->body);
+    $t->contains('<meta name="twitter:site" content="@berradi">', $g->body);
+    $t->contains('"openingHours":["Mo-Fr 09:00-19:00","Sa 10:00-18:00"]', $g->body);
+    $g->get('/robots.txt');
+    $t->contains('Disallow: /shop?sort=', $g->body);
+    $o->post('/admin/seo/pages', ['page' => '/collections', 'title_fr' => 'Collections de tableaux muraux | BERRADI', 'description_fr' => 'Nos séries de toiles.', 'title_ar' => 'مجموعات اللوحات الجدارية', 'description_ar' => '', 'noindex_ar' => '1'], '/admin/seo?tab=pages');
+    $g->get('/collections');
+    $t->contains('<title>Collections de tableaux muraux | BERRADI</title>', $g->body);
+    $t->contains('content="Nos séries de toiles."', $g->body);
+    $g->get('/collections?lang=ar');
+    $t->contains('<title>مجموعات اللوحات الجدارية</title>', $g->body);
+    $t->contains('<meta name="robots" content="noindex, follow">', $g->body);
+    $o->post('/admin/seo/pages', ['page' => '/offers', 'title_fr' => '', 'description_fr' => '', 'noindex_fr' => '1', 'title_ar' => '', 'description_ar' => '', 'noindex_ar' => '1'], '/admin/seo?tab=pages');
+    $g->get('/sitemap.xml');
+    $t->assert(!str_contains($g->body, '/offers</loc>'), 'noindex page left out of the sitemap');
+    // 404 monitor → redirect
+    $g->get('/ancienne-collection-2024');
+    $t->equals(404, $g->status);
+    $g->get('/ancienne-collection-2024');
+    $t->equals(2, (int) $q6("SELECT hits FROM seo_not_found WHERE path = '/ancienne-collection-2024'"));
+    $g->get('/wp-login.php');
+    $t->equals(0, (int) $q6("SELECT COUNT(*) FROM seo_not_found WHERE path LIKE '%wp-login%'"), 'bot probes not logged');
+    $o->get('/admin/seo?tab=not_found');
+    $t->contains('/ancienne-collection-2024', $o->body);
+    $o->post('/admin/seo/redirects', ['source_path' => '/ancienne-collection-2024', 'target_url' => '/ancienne-collection-2024/', 'status_code' => '301'], '/admin/seo?tab=redirects');
+    $o->follow();
+    $t->contains('différente de l’ancienne', $o->body);
+    $o->post('/admin/seo/redirects', ['source_path' => '/ancienne-collection-2024', 'target_url' => '/collections', 'status_code' => '301', 'note' => 'Refonte'], '/admin/seo?tab=redirects');
+    $g->get('/ancienne-collection-2024?utm_source=fb');
+    $t->equals(301, $g->status);
+    $t->equals('/collections?utm_source=fb', $g->location(), 'query string kept');
+    $t->equals(1, (int) $q6("SELECT hits FROM seo_redirects WHERE source_path = '/ancienne-collection-2024'"));
+    $o->post('/admin/seo/redirects', ['source_path' => '/autre', 'target_url' => '/ancienne-collection-2024', 'status_code' => '301'], '/admin/seo?tab=redirects');
+    $o->follow();
+    $t->contains('elle-même redirigée', $o->body, 'no redirect chains');
+    $g->get('/collections');
+    $t->equals(200, $g->status, 'live pages are never redirected');
+    $o->get('/admin/seo?tab=audit');
+    $t->equals(200, $o->status);
+    $t->contains('Score SEO', $o->body);
+    $o->get('/admin/seo?tab=pages');
+    $t->contains('data-serp-form', $o->body);
+});
+$t->test('tracking: IDs validated, tags only after consent, e-commerce events, CSP limited to enabled providers, Conversions API queued with consent', function (TestRunner $t) use ($o, $base, $q6, $p8): void {
+    $o->post('/admin/tracking', ['track_meta_pixel_id' => 'abc', 'track_consent_enabled' => '1'], '/admin/tracking');
+    $o->follow();
+    $t->contains('is-invalid', $o->body, 'bad pixel id');
+    $o->post('/admin/tracking', ['track_extra_hosts' => "javascript:alert(1)", 'track_consent_enabled' => '1'], '/admin/tracking');
+    $o->follow();
+    $t->contains('Adresse invalide', $o->body);
+    $o->post('/admin/tracking', ['track_ga4_id' => 'G-ABC123XYZ9', 'track_meta_pixel_id' => '123456789012345', 'track_tiktok_id' => 'CABCDEFGHIJ1234567890', 'track_meta_capi_token' => 'EAAGabcdefghijklmnopqrstuvwxyz0123', 'track_consent_enabled' => '1', 'track_privacy_url' => '/terms'], '/admin/tracking');
+    $t->equals('123456789012345', (string) $q6("SELECT setting_value FROM settings WHERE setting_key = 'track_meta_pixel_id'"));
+    $t->assert(!str_contains((string) $q6("SELECT setting_value FROM settings WHERE setting_key = 'track_meta_capi_token'"), 'EAAG'), 'token encrypted');
+    $o->get('/admin/tracking');
+    $t->assert(!str_contains($o->body, 'EAAGabcdef'), 'token never displayed');
+    $g = new Browser($base);
+    $g->get('/product/' . $p8);
+    $t->contains('id="bwa-tracking"', $g->body);
+    $t->contains('js/tracking.js', $g->body);
+    $t->contains('data-consent', $g->body, 'consent banner');
+    $t->contains('"view_item"', $g->body);
+    $t->assert(!str_contains($g->body, 'connect.facebook.net/en_US'), 'no vendor script in the HTML (loaded by tracking.js after consent)');
+    $csp = $g->headers['content-security-policy'] ?? '';
+    $t->contains('https://connect.facebook.net', $csp);
+    $t->contains('https://analytics.tiktok.com', $csp);
+    $t->assert(!str_contains($csp, 'sc-static.net') && !str_contains($csp, "'unsafe-inline' https://www.googletagmanager.com"), 'only enabled providers');
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '2'], '/product/' . $p8);
+    $g->get('/cart');
+    $t->contains('"add_to_cart"', $g->body);
+    $t->contains('"quantity":2', $g->body);
+    $g->get('/cart');
+    $t->assert(!str_contains($g->body, '"add_to_cart"'), 'fired once');
+    $g->get('/checkout');
+    $t->contains('"begin_checkout"', $g->body);
+    // order without consent: no server event; with marketing consent: Purchase queued with the pixel's event id
+    $g->post('/checkout', ['full_name' => 'Sans Consentement', 'phone' => '0600000001', 'email' => 'nocons@client.test', 'country' => 'MA', 'city' => 'Rabat', 'address' => '1 rue Sans Cookie', 'payment_method' => 'bank_transfer', 'accept_terms' => '1'], '/checkout');
+    $n1 = substr($g->location(), strlen('/order/confirmation/'));
+    $t->equals(0, (int) $q6("SELECT COUNT(*) FROM tracking_events e JOIN orders o ON o.id = e.order_id WHERE o.order_number = '{$n1}'"));
+    $g->get($g->location());
+    $t->contains('"purchase"', $g->body);
+    $t->contains('"order-' . $n1 . '"', $g->body, 'event id shared with the server');
+    $g->get('/order/confirmation/' . $n1);
+    $t->assert(!str_contains($g->body, '"purchase"'), 'reload does not count twice');
+    $c = new Browser($base);
+    $c->setCookie('bwa_consent', 'v1.a1.m1');
+    $c->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $c->post('/checkout', ['full_name' => 'Avec Consentement', 'phone' => '0600000002', 'email' => 'cons@client.test', 'country' => 'MA', 'city' => 'Rabat', 'address' => '2 rue Cookie', 'payment_method' => 'bank_transfer', 'accept_terms' => '1'], '/checkout');
+    $n2 = substr($c->location(), strlen('/order/confirmation/'));
+    $t->equals('order-' . $n2, (string) $q6("SELECT e.event_id FROM tracking_events e JOIN orders o ON o.id = e.order_id WHERE o.order_number = '{$n2}'"));
+    $g->get('/shop?q=lion');
+    $t->contains('"search_term":"lion"', $g->body);
+    // switching everything off: nothing left on the storefront
+    $o->post('/admin/tracking', ['track_consent_enabled' => '1'], '/admin/tracking');
+    $g->get('/');
+    $t->assert(!str_contains($g->body, 'bwa-tracking') && !str_contains($g->body, 'data-consent'), 'no tags, no banner');
+});
+$t->test('RBAC and Arabic on the v1.1 back-office pages', function (TestRunner $t) use ($o, $base): void {
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    foreach (['/admin/payment-methods', '/admin/seo', '/admin/tracking'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $o->get('/lang/ar');
+    foreach (['/admin/payment-methods', '/admin/seo', '/admin/seo?tab=pages', '/admin/seo?tab=redirects', '/admin/seo?tab=not_found', '/admin/seo?tab=audit', '/admin/tracking'] as $p) {
         $o->get($p);
         $t->equals(200, $o->status, $p);
         $t->contains('dir="rtl"', $o->body, $p);

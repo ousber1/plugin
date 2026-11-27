@@ -54,7 +54,7 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
                     <div class="gallery-stage">
                         <div class="gallery-views">
                             <button type="button" class="view-toggle active" data-view="art"><?= e(__('product.view_art')) ?></button>
-                            <?php if ($default !== null): ?><button type="button" class="view-toggle" data-view="room"><i class="bi bi-house me-1"></i><?= e(__('product.view_room')) ?></button><?php endif; ?>
+                            <?php if ($default !== null): ?><button type="button" class="view-toggle" data-open-wall aria-haspopup="dialog"><i class="bi bi-house me-1"></i><?= e(__('product.view_room')) ?></button><?php endif; ?>
                         </div>
                         <div class="stage-art" data-stage="art">
                             <span class="art-wall is-large">
@@ -65,25 +65,6 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
                                 <?php endif; ?>
                             </span>
                         </div>
-                        <?php if ($default !== null): ?>
-                            <div class="stage-room d-none" data-stage="room" aria-hidden="true">
-                                <div class="room-wall">
-                                    <div class="room-art <?= $effect ?>" data-room-art>
-                                        <?php if ($images !== []): ?><img src="<?= e(upload_url($images[0]['path'])) ?>" alt=""><?php endif; ?>
-                                    </div>
-                                    <svg class="room-sofa" viewBox="0 0 400 120" preserveAspectRatio="xMidYMax meet" role="presentation">
-                                        <rect x="20" y="30" width="360" height="60" rx="14" fill="#cfc6b8"/>
-                                        <rect x="0" y="45" width="50" height="60" rx="12" fill="#c3b9a9"/>
-                                        <rect x="350" y="45" width="50" height="60" rx="12" fill="#c3b9a9"/>
-                                        <rect x="40" y="60" width="320" height="40" rx="8" fill="#d8d0c3"/>
-                                        <rect x="40" y="100" width="8" height="20" fill="#6f6658"/>
-                                        <rect x="352" y="100" width="8" height="20" fill="#6f6658"/>
-                                    </svg>
-                                </div>
-                                <div class="room-floor"></div>
-                                <p class="room-note"><?= e(__('product.room_note')) ?></p>
-                            </div>
-                        <?php endif; ?>
                     </div>
                     <?php if (count($images) > 1): ?>
                         <div class="gallery-thumbs">
@@ -267,3 +248,9 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
         <?php endif; ?>
     </div>
 </section>
+<?php if ($default !== null): ?>
+    <?= $this->insert('storefront/product/wall_studio', ['p' => $p, 'effect' => $effect, 'artUrl' => $images !== [] ? upload_url($images[0]['path']) : '']) ?>
+    <?php $this->start('scripts'); ?>
+    <script src="<?= e(asset('js/wall-studio.js')) ?>"></script>
+    <?php $this->stop(); ?>
+<?php endif; ?>

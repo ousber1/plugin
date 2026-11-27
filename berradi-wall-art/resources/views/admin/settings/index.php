@@ -150,8 +150,7 @@ $f = function (string $name, string $type = 'text', array $extra = []) use ($val
 
             <?php elseif ($tab === 'seo'): ?>
                 <div class="row">
-                    <div class="col-12"><?= $f('seo_meta_title') ?></div>
-                    <div class="col-12"><?= $f('seo_meta_description', 'textarea', ['rows' => 2]) ?></div>
+                    <div class="col-12"><div class="alert alert-light border small"><i class="bi bi-search me-1"></i><?= e(__('seo_admin.moved_hint')) ?> <?php if (can('marketing.manage')): ?><a href="<?= e(route('admin.seo.index')) ?>"><?= e(__('admin.nav_seo')) ?></a><?php endif; ?></div></div>
                     <div class="col-md-8">
                         <label class="form-label"><?= e(__('settings.seo_og_image')) ?></label>
                         <input type="file" class="form-control<?= invalid('seo_og_image') ?>" name="seo_og_image" accept="image/png,image/jpeg,image/webp" data-preview="#ogPreview">

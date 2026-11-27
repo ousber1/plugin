@@ -62,6 +62,7 @@ What each run does (every task is idempotent: running it twice does no harm):
 | Expire quotations past their validity date | every run |
 | Retention purge: expired customer photos, finished orders' print files, old logs, read alerts, e-mail bodies, old carts (delays set on the Backups page) | every run |
 | Automatic database backup + rotation (`backup_auto`, `backup_keep`) | once a day |
+| Send queued server conversions (Meta Conversions API, 5 attempts) and forget 404s not seen for 180 days | every run |
 
 The Maintenance page shows the last run; the security check turns red after 2 hours without one.
 
@@ -73,7 +74,18 @@ Folders `storage/*` and `public/uploads` must be writable by PHP (755 on suPHP/L
 * Keep `APP_DEBUG=false` in production.
 * Back up the database and `storage/` + `public/uploads` regularly (cPanel → Backup, or JetBackup).
 
-## 10. Performance (OPcache)
+## 10. Card payments (CMI), camera and tracking: what the host must allow
+* **HTTPS is required** for card payments (the bank refuses plain http), for the camera of “Sur mon mur” (browsers
+  only open it on https) and recommended for tracking cookies. Enable AutoSSL first (§ 6).
+* **CMI**: give the bank the notification (callback) URL shown in *Finance → Payment methods*:
+  `https://your-domain/webhooks/payments/cmi`. It must be reachable from the internet (no password protection, no
+  maintenance mode on that path). Test with *Test mode* on, then switch it off. Nothing else to install.
+* **Meta Conversions API**: the cron sends events to `https://graph.facebook.com` with cURL. On most shared hosts
+  outgoing HTTPS is open; if *Suivi & pixels* shows “Network error”, ask the host to allow outgoing connections on port 443.
+* Firewalls such as ModSecurity sometimes block POSTs that contain `|` (the CMI signature). If CMI callbacks get a 403,
+  ask the host to whitelist `/webhooks/payments/cmi` and `/payment-return/`.
+
+## 11. Performance (OPcache)
 * cPanel → **Select PHP Version → Options**: keep `opcache.enable = On` (default on most hosts).
   `opcache.memory_consumption = 128` and `opcache.max_accelerated_files = 10000` are comfortable for this application.
 * *Maintenance → Update* resets OPcache after migrating, so new code is used at once. If you replace files without
@@ -84,7 +96,7 @@ Folders `storage/*` and `public/uploads` must be writable by PHP (755 on suPHP/L
   ~35 SQL queries. To check on your host, set `APP_DEBUG=true` **temporarily** and read the
   `X-Debug-Time` / `X-Debug-Queries` / `X-Debug-Slow` response headers in the browser's developer tools.
 
-## 11. Updating to a new version
+## 12. Updating to a new version
 1. **Back up**: *Maintenance → Backups → Back up now* and download the file; cPanel → Backup for the files.
 2. Optionally put the storefront in maintenance mode (*Settings → SEO & maintenance*): visitors get a 503 page, the back office keeps working.
 3. Extract the new ZIP **next to** the current folder (e.g. `berradi-wall-art-new`), then copy **from the old installation** into it:
@@ -102,7 +114,7 @@ Folders `storage/*` and `public/uploads` must be writable by PHP (755 on suPHP/L
 Rolling back: swap the folders back and restore the database backup in phpMyAdmin (migrations only add
 tables/columns, but restoring keeps both sides consistent).
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
@@ -115,6 +127,9 @@ tables/columns, but restoring keeps both sides consistent).
 | Uploads refused | Raise `upload_max_filesize` / `post_max_size`; folders `storage/` and `public/uploads` must be writable. |
 | PDF invoices in Arabic show boxes | The bundled DejaVu fonts in `vendor/dompdf` were removed: re-upload `vendor/` from the ZIP. |
 | Cron shows "never" | Wrong PHP path in the cron line: copy the path from cPanel → *Select PHP Version*, test with "Run" in the cron interface or look at the cron e-mail. |
+| Card payment stays “unpaid” although the customer paid | The bank could not reach the callback: check the URL given to CMI, HTTPS, and the firewall (§ 10). *Activity log* shows `payment.redirected`; a refused signature is written to `storage/logs`. |
+| “Sur mon mur” camera does not open | The site must be on https; the visitor must allow the camera; “Ma photo” always works. |
+| Pixels do not fire | Accept the cookie banner first (they only load with consent); check the IDs in *Suivi & pixels*; ad blockers also block them. |
 | Slow pages | Make sure OPcache is on; check `X-Debug-*` headers with debug temporarily on; a slow shared server may need a higher plan. |
 
 ## Without the installer (manual)

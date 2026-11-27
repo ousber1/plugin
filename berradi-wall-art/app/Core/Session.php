@@ -14,8 +14,21 @@ final class Session
     private static array $memory = [];
     private static bool $cli = false;
 
+    /**
+     * Paths called by outside servers or by a cross-site POST (payment provider callbacks and returns):
+     * they run with an in-memory session so they can never replace the visitor's session cookie.
+     */
+    public const STATELESS_PREFIXES = ['/webhooks/', '/payment-return/'];
+
     public static function start(Request $request): void
     {
+        foreach (self::STATELESS_PREFIXES as $prefix) {
+            if (!self::$started && str_starts_with($request->path(), $prefix)) {
+                self::$cli = true;
+                self::$started = true;
+                return;
+            }
+        }
         if (self::$started) {
             return;
         }

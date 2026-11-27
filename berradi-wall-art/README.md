@@ -15,16 +15,16 @@ No Node, Docker, Redis, queue workers or SSH required — a cron job every 15 mi
 
 | Area | What it does |
 |---|---|
-| Storefront | Home, shop with filters/sorting/search, categories, collections, best sellers, new arrivals, offers, product pages with variants, FAQ, contact, newsletter, order tracking — SEO (hreflang, sitemap, schema.org, Open Graph) |
+| Storefront | Home, shop with filters/sorting/search, categories, collections, best sellers, new arrivals, offers, product pages with variants and the **“Sur mon mur” studio** (room scenes, own photo, live camera with real-scale calibration), FAQ, contact, newsletter, order tracking — SEO (hreflang, sitemap, schema.org, Open Graph) |
 | Photo builder | Private photo upload, cropping per panel (1–5 panels), supports, frames, borders, finishes, live server-side pricing, print-quality (DPI) warnings, saved designs |
-| Checkout | Cart (guest or account), coupons, shipping by city/zone with free-shipping thresholds, VAT included or added, cash on delivery / bank transfer, account creation, confirmation and tracking e-mails |
+| Checkout | Cart (guest or account), coupons, shipping by city/zone with free-shipping thresholds, VAT included or added, payment methods configured in the back office (cash on delivery, bank transfer, custom offline methods, **CMI card payment** with signed callbacks), account creation, confirmation and tracking e-mails |
 | Customer area | Orders, invoices (PDF), designs, photos (delete now), addresses, profile |
 | Orders | Status workflow with history and customer e-mails, phone/WhatsApp orders, shipments with tracking and cash on delivery, offline payments and refunds, printable work order |
 | Artwork | Review of customer photos (DPI, crop, original), single-use proof links for the customer, print-ready files |
 | Production | One job per order line, ordered stages, kanban board, operators, machines, real costs; stock consumed at printing |
 | Stock & purchasing | Materials with weighted average cost, movements, physical counts, low-stock alerts, suppliers, purchases and supplier payments |
 | Documents & finance | Quotations (customer accepts online, converted to order), invoices and credit notes (numbered at issue, integrity hash, FR/AR PDF), expenses with receipts, finance overview, VAT position |
-| Marketing & content | Shipping zones and city rates, coupons, review moderation (verified purchases), banners, customer gallery (with consent), FAQ, newsletter list and export — all in French and Arabic |
+| Marketing & content | Shipping zones and city rates, coupons, review moderation (verified purchases), banners, customer gallery (with consent), FAQ, newsletter list and export — all in French and Arabic. **SEO tools** (per-page meta FR/AR, verification codes, local business schema, redirects, 404 monitor, catalogue audit) and **tracking** (GA4, GTM, Google Ads, Meta Pixel + Conversions API, TikTok, Snapchat, Pinterest, Clarity) behind a consent banner |
 | Management | Dashboard KPIs and charts, 10 reports with CSV export, team notifications, e-mail log, roles & permissions, activity log |
 | Operations | Web installer, one-click database updates, daily backups, data retention, security self-check, demo catalogue |
 
@@ -45,7 +45,7 @@ Updating an existing installation is described in the same guide (replace code, 
 | [docs/DEPLOYMENT_CPANEL.md](docs/DEPLOYMENT_CPANEL.md) | Installing, updating, cron, backups, troubleshooting |
 | [docs/SECURITY.md](docs/SECURITY.md) | Protections, data retention, operator checklist |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Developers: request lifecycle, folders, design decisions |
-| [docs/DATABASE.md](docs/DATABASE.md) | Schema (63 tables), statuses, seed data |
+| [docs/DATABASE.md](docs/DATABASE.md) | Schema (67 tables), statuses, seed data |
 | [docs/CHECKLIST.md](docs/CHECKLIST.md) | What was built and how each item was verified |
 | [CHANGELOG.md](CHANGELOG.md) | Versions |
 

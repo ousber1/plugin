@@ -63,6 +63,10 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->get('/settings/{tab?}', [SettingsController::class, 'edit'])->name('settings');
             $router->post('/settings/{tab}', [SettingsController::class, 'update'])->name('settings.update');
             $router->post('/settings-test-mail', [SettingsController::class, 'testMail'])->middleware('throttle:5,1')->name('settings.test_mail');
+            $router->get('/payment-methods', [\App\Controllers\Admin\PaymentMethodController::class, 'index'])->name('payment_methods.index');
+            $router->post('/payment-methods', [\App\Controllers\Admin\PaymentMethodController::class, 'save'])->name('payment_methods.store');
+            $router->post('/payment-methods/{id}', [\App\Controllers\Admin\PaymentMethodController::class, 'save'])->name('payment_methods.update');
+            $router->post('/payment-methods/{id}/delete', [\App\Controllers\Admin\PaymentMethodController::class, 'destroy'])->name('payment_methods.destroy');
         });
 
         $router->group(['middleware' => ['can:users.manage']], function ($router): void {
@@ -239,6 +243,21 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->post('/content/{type}', [ContentController::class, 'save'])->name('content.store');
             $router->post('/content/{type}/{id}', [ContentController::class, 'save'])->name('content.update');
             $router->post('/content/{type}/{id}/delete', [ContentController::class, 'destroy'])->name('content.destroy');
+        });
+        $router->group(['middleware' => ['can:marketing.manage']], function ($router): void {
+            $seo = \App\Controllers\Admin\SeoController::class;
+            $router->get('/seo', [$seo, 'index'])->name('seo.index');
+            $router->post('/seo/general', [$seo, 'general'])->name('seo.general');
+            $router->post('/seo/pages', [$seo, 'savePage'])->name('seo.pages');
+            $router->post('/seo/redirects', [$seo, 'saveRedirect'])->name('seo.redirects.store');
+            $router->post('/seo/redirects/{id}', [$seo, 'saveRedirect'])->name('seo.redirects.update');
+            $router->post('/seo/redirects/{id}/delete', [$seo, 'deleteRedirect'])->name('seo.redirects.destroy');
+            $router->post('/seo/not-found/clear', [$seo, 'clearNotFound'])->name('seo.not_found.clear');
+            $router->post('/seo/not-found/{id}/delete', [$seo, 'clearNotFound'])->name('seo.not_found.destroy');
+            $tr = \App\Controllers\Admin\TrackingController::class;
+            $router->get('/tracking', [$tr, 'index'])->name('tracking.index');
+            $router->post('/tracking', [$tr, 'save'])->name('tracking.save');
+            $router->post('/tracking/test', [$tr, 'test'])->middleware('throttle:5,1')->name('tracking.test');
         });
         $router->group(['middleware' => ['can:newsletter.manage']], function ($router): void {
             $router->get('/newsletter', [NewsletterController::class, 'index'])->name('newsletter.index');

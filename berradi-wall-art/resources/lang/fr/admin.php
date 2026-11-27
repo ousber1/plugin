@@ -400,4 +400,7 @@ return [
     'nav_emails' => 'Journal des e-mails',
     'nav_content' => 'Contenu boutique',
     'nav_newsletter' => 'Newsletter',
+    'nav_payment_methods' => 'Moyens de paiement',
+    'nav_seo' => 'Outils SEO',
+    'nav_tracking' => 'Suivi & pixels',
 ];

@@ -11,6 +11,12 @@
                 <div class="card-bwa mb-4">
                     <div class="card-header"><?= e(__('checkout.next_steps')) ?></div>
                     <div class="card-body">
+                        <?php if (!empty($payUrl)): ?>
+                            <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <span><?= e(__('payment.balance_due', ['amount' => money((string) $order['balance_due'])])) ?></span>
+                                <a class="btn btn-bwa btn-sm" href="<?= e($payUrl) ?>"><i class="bi bi-credit-card me-1"></i><?= e(__('payment.pay_now')) ?></a>
+                            </div>
+                        <?php endif; ?>
                         <?php if (($method['code'] ?? '') === 'bank_transfer'): ?>
                             <div class="alert alert-info">
                                 <strong><?= e(__('checkout.bank_title')) ?></strong><br>

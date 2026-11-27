@@ -27,7 +27,11 @@ final class SitemapService
             ['/about', '0.5', 'monthly'], ['/contact', '0.5', 'monthly'], ['/faq', '0.5', 'monthly'], ['/terms', '0.3', 'yearly'],
         ];
         $latest = (string) ($db->value('SELECT MAX(COALESCE(updated_at, created_at)) FROM products WHERE is_active = 1 AND deleted_at IS NULL') ?? '');
+        $hidden = SeoPages::noindexPaths();
         foreach ($static as [$path, $prio, $freq]) {
+            if (in_array($path, $hidden, true)) {
+                continue; // set to noindex in SEO → Pages
+            }
             $out[] = ['path' => $path, 'lastmod' => in_array($path, ['/', '/shop'], true) && $latest !== '' ? $latest : null, 'priority' => $prio, 'changefreq' => $freq];
         }
         foreach ($db->fetchAll('SELECT slug, COALESCE(updated_at, created_at) AS m FROM categories WHERE is_active = 1 ORDER BY sort_order, id') as $c) {
@@ -109,8 +113,28 @@ final class SitemapService
         }
         // the administration path is deliberately not listed (it may be a private word); its pages send X-Robots-Tag: noindex
         $lines[] = 'Allow: /uploads/';
+        // owner's additional rules (SEO → General), validated line by line when saved
+        foreach (self::extraRobotsLines((string) setting('seo_robots_extra', '')) as $l) {
+            $lines[] = $l;
+        }
         $lines[] = '';
         $lines[] = 'Sitemap: ' . absolute_url('sitemap.xml');
         return implode("\n", $lines) . "\n";
+    }
+
+    /** Only well-formed robots.txt directives are kept. @return list<string> */
+    public static function extraRobotsLines(string $text): array
+    {
+        $out = [];
+        foreach (preg_split('/\R/', $text) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            if (preg_match('#^(User-agent|Disallow|Allow|Crawl-delay|Sitemap)\s*:\s*[^\s].{0,250}$#i', $line)) {
+                $out[] = $line;
+            }
+        }
+        return array_slice($out, 0, 100);
     }
 }

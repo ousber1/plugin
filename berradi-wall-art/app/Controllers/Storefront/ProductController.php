@@ -26,6 +26,18 @@ final class ProductController extends Controller
             $seen[] = (int) $product['id'];
             Session::put('viewed_products', array_slice($seen, -100));
         }
+        // "Sur mon mur" pro mode: the camera may be used by this page only (never by embedded third parties)
+        \App\Services\Csp::allowFeature('camera');
+        $v = null;
+        foreach ($product['variants'] as $cand) {
+            if ($v === null || (int) $cand['is_default'] === 1) {
+                $v = $cand;
+            }
+        }
+        \App\Services\Tracking\TrackingService::event('view_item', ['items' => [\App\Services\Tracking\TrackingService::item(
+            (string) $product['id'], (string) $product['title'], (string) ($v['effective_price'] ?? $product['base_price'] ?? '0'), 1,
+            (string) ($product['category']['name'] ?? ''), (string) ($v['name'] ?? '')
+        )]]);
         $crumbs = [[__('nav.home'), '/'], [__('nav.shop'), '/shop']];
         if ($product['category']) {
             $crumbs[] = [$product['category']['name'], '/shop/category/' . $product['category']['slug']];

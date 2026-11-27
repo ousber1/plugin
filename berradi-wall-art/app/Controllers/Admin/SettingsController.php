@@ -96,8 +96,6 @@ final class SettingsController extends Controller
                 'admin_notification_email' => 'nullable|email',
             ],
             'seo' => [
-                'seo_meta_title' => 'nullable|max:191',
-                'seo_meta_description' => 'nullable|max:320',
                 'maintenance_mode' => 'nullable|boolean',
             ],
         ];

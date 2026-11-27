@@ -28,6 +28,21 @@
                     <span class="small text-muted-bwa"><?= e(__('track.placed_on', ['date' => format_date($order['placed_at'])])) ?></span>
                 </div>
                 <div class="card-body">
+                    <?php if (!empty($paymentResult)): ?>
+                        <?php if ($paymentResult === 'ok' && (float) $order['balance_due'] <= 0): ?>
+                            <div class="alert alert-success"><i class="bi bi-check-circle me-1"></i><?= e(__('payment.back_paid')) ?></div>
+                        <?php elseif ($paymentResult === 'ok'): ?>
+                            <div class="alert alert-info"><i class="bi bi-hourglass-split me-1"></i><?= e(__('payment.back_pending')) ?></div>
+                        <?php else: ?>
+                            <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i><?= e(__('payment.back_failed')) ?></div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    <?php if (!empty($payUrl)): ?>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 p-3 border rounded">
+                            <span class="small"><?= e(__('payment.balance_due', ['amount' => money((string) $order['balance_due'])])) ?></span>
+                            <a class="btn btn-bwa btn-sm" href="<?= e($payUrl) ?>"><i class="bi bi-credit-card me-1"></i><?= e(__('payment.pay_now')) ?></a>
+                        </div>
+                    <?php endif; ?>
                     <?= $this->insert('storefront/partials/order_timeline', ['order' => $order]) ?>
                     <?php if (!in_array($order['status'], ['cancelled', 'returned', 'delivered'], true) && $order['estimated_delivery_max']): ?>
                         <p class="small mt-2 mb-0"><i class="bi bi-truck me-1 text-gold"></i><?= e(__('cart.delivery_between', ['min' => format_date($order['estimated_delivery_min']), 'max' => format_date($order['estimated_delivery_max'])])) ?></p>

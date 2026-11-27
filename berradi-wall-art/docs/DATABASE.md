@@ -1,6 +1,6 @@
 # Database schema
 
-MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 63 tables (incl. `migrations`) · 109 foreign keys.
+MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 67 tables (incl. `migrations`) · 111 foreign keys.
 Source of truth: `database/migrations/*.php`. A single importable file is generated with
 `php bin/console schema:dump` → `database/schema.sql`.
 
@@ -16,6 +16,8 @@ Money: `DECIMAL(12,2)` (unit costs `DECIMAL(12,4)`, quantities `DECIMAL(14,3)`, 
 | 000006 documents_payments | `document_sequences`, `quotations`, `quotation_items`, `invoices` (+ credit notes), `invoice_items`, `payments` (payments & refunds, provider tx id unique) |
 | 000007 production_finance | `production_jobs`, `production_tasks` (10 workflow stages), `purchases`, `purchase_items`, `supplier_payments`, `stock_movements`, `expenses` |
 | 000008 marketing_content | `reviews`, `newsletter_subscribers`, `banners`, `gallery_items`, `faqs`, `campaigns`, `campaign_products` |
+| 000009 document_access | secret-link hashes on `quotations` / `invoices`, invoice `sent_at` |
+| 000010 payments_seo_tracking (v1.1) | `payment_methods` + `min_order_amount`, `max_order_amount`, `test_mode`; `seo_pages` (title / description / noindex per page and language), `seo_redirects` (301/302 with hit counter), `seo_not_found` (404 monitor), `tracking_events` (Meta Conversions API queue, unique per event id) |
 
 ## Order statuses (`orders.status`)
 `new`, `awaiting_confirmation`, `confirmed`, `awaiting_artwork_approval`, `approved_for_production`,
@@ -27,6 +29,6 @@ Every change is written to `order_status_history`.
 `quality_control` → `package` → `ship`.
 
 ## Seed data (idempotent)
-7 roles + 40 permissions, 65 default settings, 5 payment methods (online ones inactive), 4 Moroccan
+7 roles + 40 permissions, default settings (company, taxes, shipping, mail, SEO, tracking — all trackers empty), 5 payment methods with Arabic texts (online ones inactive), 4 Moroccan
 shipping zones with city rates, 13 categories (FR + AR), 5 print substrates, 6 frames, 17 builder options.
 Prices are editable starting defaults. No fake orders, customers or statistics are ever seeded.

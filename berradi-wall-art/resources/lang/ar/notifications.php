@@ -32,4 +32,6 @@ return [
     'retry_ok' => 'تم إرسال البريد.',
     'retry_ko' => 'فشل الإرسال: تحقق من إعدادات SMTP.',
     'review_new' => 'رأي جديد (:rating★) للمراجعة — :number',
+    'card_payment' => 'دفعة بالبطاقة: :number (:amount)',
+    'card_payment_check' => 'دفعة بالبطاقة يجب التحقق منها: :number (:amount) لا تطابق المبلغ المتبقي',
 ];

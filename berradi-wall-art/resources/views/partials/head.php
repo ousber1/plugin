@@ -7,6 +7,9 @@ $siteName = (string) setting('company_name', 'BERRADI WALL ART');
 $seo = is_array($seo ?? null) ? $seo : [];
 $rawTitle = (string) ($seo['title'] ?? $title ?? '');
 $pageTitle = $rawTitle !== '' ? $rawTitle . ' — ' . $siteName : (string) setting('seo_meta_title', $siteName);
+if (!empty($seo['title_exact'])) {
+    $pageTitle = (string) $seo['title_exact']; // set word for word in SEO → Pages
+}
 $description = (string) ($seo['description'] ?? $metaDescription ?? setting('seo_meta_description', ''));
 $robotsNo = !empty($seo['noindex']) || !empty($noindex);
 ?>
@@ -30,7 +33,7 @@ $robotsNo = !empty($seo['noindex']) || !empty($noindex);
 <?php if ($seo !== []): ?>
 <meta property="og:site_name" content="<?= e($siteName) ?>">
 <meta property="og:type" content="<?= e($seo['og_type'] ?? 'website') ?>">
-<meta property="og:title" content="<?= e($rawTitle !== '' ? $rawTitle : $pageTitle) ?>">
+<meta property="og:title" content="<?= e(!empty($seo['title_exact']) ? $pageTitle : ($rawTitle !== '' ? $rawTitle : $pageTitle)) ?>">
 <meta property="og:locale" content="<?= locale() === 'ar' ? 'ar_MA' : 'fr_MA' ?>">
 <meta property="og:locale:alternate" content="<?= locale() === 'ar' ? 'fr_MA' : 'ar_MA' ?>">
 <?php if ($description !== ''): ?><meta property="og:description" content="<?= e($description) ?>"><?php endif; ?>
@@ -42,6 +45,18 @@ $robotsNo = !empty($seo['noindex']) || !empty($noindex);
 <script type="application/ld+json"><?= \App\Services\SeoService::encode($ld) ?></script>
 <?php endforeach; ?>
 <?php endif; ?>
+<?php if ($seo !== [] && empty($seo['noindex'])):
+    // search engine / social network ownership checks (SEO → General)
+    foreach (['google-site-verification' => 'seo_google_verification', 'msvalidate.01' => 'seo_bing_verification', 'yandex-verification' => 'seo_yandex_verification',
+        'p:domain_verify' => 'seo_pinterest_verification', 'facebook-domain-verification' => 'seo_facebook_verification'] as $metaName => $key):
+        $code = trim((string) setting($key, ''));
+        if ($code !== '' && preg_match('/^[A-Za-z0-9_\-=.]{4,100}$/', $code)): ?>
+<meta name="<?= e($metaName) ?>" content="<?= e($code) ?>">
+<?php endif; endforeach;
+    $twitter = ltrim(trim((string) setting('seo_twitter_site', '')), '@');
+    if ($twitter !== '' && preg_match('/^[A-Za-z0-9_]{1,15}$/', $twitter)): ?>
+<meta name="twitter:site" content="@<?= e($twitter) ?>">
+<?php endif; endif; ?>
 <meta name="theme-color" content="#171717">
 <link rel="icon" href="<?= e(url('favicon.svg')) ?>" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">

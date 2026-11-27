@@ -4,6 +4,50 @@ All notable changes to BERRADI WALL ART. Versions follow [semantic versioning](h
 Database changes are applied by *Maintenance → Update* (or `php bin/console migrate`); they only add tables,
 columns and indexes.
 
+## [1.1.0] — 2026-11-27
+
+Database update: migration `000010` (run *Maintenance → Update*). Nothing changes on the storefront until you
+configure it: no tracking ID is set and card payment stays off until CMI credentials are entered.
+
+### Payment methods (back office)
+- New page *Finance → Payment methods*: names, descriptions and instructions in French and Arabic, order, active
+  state, minimum / maximum order amount per method (e.g. cash on delivery up to 3 000 DH), new offline methods
+  (Cash Plus, cheque…); methods already used are deactivated, never deleted; one offline method always stays active.
+- **Card payment with CMI** (3-D Secure hosted page, hash v3): credentials encrypted, test / live mode, notification
+  URL shown; the order is marked paid only by CMI's signed server callback (tampering, other merchant, other currency
+  and replays refused); team alert; "Pay by card" from the order tracking page if the payment failed.
+- PayPal explained as unavailable (it does not accept MAD). Arabic texts for the default payment methods.
+
+### "Sur mon mur" studio (product pages)
+- Full-screen studio with three modes: **Creative** (5 rooms drawn to real scale, wall colours incl. a custom one,
+  floors, day / evening light), **My photo** and **Camera (pro)** (live rear camera, level indicator, capture).
+- Real size everywhere: sizes switch live (in sync with the product form), multi-panel artworks, frames; on photos,
+  visible-wall-width slider or **calibration with a reference object** (A4 sheet, door).
+- Drag with finger, mouse or keyboard; download or share the composed image with the size caption.
+- Everything stays on the visitor's device; `camera=(self)` only on product pages.
+
+### SEO tools
+- *Marketing → SEO tools*: default title/description with live Google preview and length counters; verification
+  codes (Google, Bing, Yandex, Pinterest, Facebook domain), X/Twitter account; local-business schema (type,
+  opening hours, GPS, price range); extra robots.txt rules.
+- Per-page titles, descriptions and noindex in French and Arabic for the fixed pages (noindex pages leave the sitemap).
+- 301/302 redirects (only for URLs that would be 404, query string kept, no chains) and a **404 monitor** with
+  one-click redirect.
+- Catalogue **SEO audit** with score and fixes per product / category / collection; Google preview on the product form.
+
+### Tracking & pixels
+- *Marketing → Tracking & pixels*: Google Analytics 4, Google Tag Manager, Google Ads (purchase conversion),
+  Meta Pixel, TikTok, Snapchat, Pinterest, Microsoft Clarity — IDs validated.
+- **Consent banner** (analytics / advertising, law 09-08 / CNDP); nothing loads before consent; no inline script.
+- E-commerce events for every provider: view_item, add_to_cart, begin_checkout, purchase (once per order),
+  search, generate_lead, sign_up, WhatsApp/phone contact.
+- **Meta Conversions API** (server side, consent required, hashed customer data, same event id as the pixel),
+  sent by the cron with retries; test button.
+- Content-Security-Policy now built per response: only the hosts of the enabled tags are allowed.
+
+### Fixes
+- Validation rules may contain `|` inside a regular expression when written as an array (used by the new forms).
+
 ## [1.0.0] — 2026-11-27
 
 First production release. Built in nine phases; each phase below was tested end to end before the next one.

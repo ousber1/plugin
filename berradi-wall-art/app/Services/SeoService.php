@@ -14,6 +14,9 @@ use App\Helpers\Str;
  */
 final class SeoService
 {
+    /** schema.org types offered in SEO → General (Store and its subtypes are LocalBusiness). */
+    public const BUSINESS_TYPES = ['Organization', 'Store', 'HomeGoodsStore', 'ArtGallery', 'LocalBusiness'];
+
     /**
      * @param array<string,mixed> $extra keys: image (public upload path), type, noindex, canonical (path), jsonLd (list)
      * @return array<string,mixed>
@@ -30,8 +33,23 @@ final class SeoService
         $desc = $description !== null && trim($description) !== ''
             ? Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags($description)) ?? ''), 300)
             : (string) setting('seo_meta_description', '');
+        // owner's overrides for the fixed pages (SEO → Pages), per language
+        $override = isset($extra['canonical']) && empty($extra['noindex']) ? \App\Services\Seo\SeoPages::override((string) $extra['canonical'], locale()) : null;
+        $exactTitle = null;
+        if ($override !== null) {
+            if (($override['meta_title'] ?? '') !== '' && $override['meta_title'] !== null) {
+                $exactTitle = (string) $override['meta_title'];
+            }
+            if (($override['meta_description'] ?? '') !== '' && $override['meta_description'] !== null) {
+                $desc = (string) $override['meta_description'];
+            }
+            if ((int) $override['noindex'] === 1) {
+                $extra['noindex'] = true;
+            }
+        }
         return [
             'title' => $title,
+            'title_exact' => $exactTitle,
             'description' => $desc,
             'canonical' => $canonical,
             'og_type' => $extra['type'] ?? 'website',
@@ -84,6 +102,36 @@ final class SeoService
         }
         if ((string) setting('company_phone', '') !== '') {
             $org['contactPoint'] = ['@type' => 'ContactPoint', 'telephone' => (string) setting('company_phone'), 'contactType' => 'customer service', 'areaServed' => 'MA', 'availableLanguage' => ['French', 'Arabic']];
+        }
+        // local business (Google Maps / local results): only with a real address
+        $type = (string) setting('seo_business_type', 'Store');
+        $street = trim((string) setting('company_address', ''));
+        if (in_array($type, self::BUSINESS_TYPES, true) && $type !== 'Organization' && $street !== '') {
+            $org['@type'] = $type;
+            $org['address'] = array_filter([
+                '@type' => 'PostalAddress',
+                'streetAddress' => $street,
+                'addressLocality' => (string) setting('company_city', ''),
+                'addressCountry' => (string) setting('company_country', 'MA') ?: 'MA',
+            ]);
+            if ((string) setting('company_phone', '') !== '') {
+                $org['telephone'] = (string) setting('company_phone');
+            }
+            if ($logo !== '') {
+                $org['image'] = absolute_url('uploads/' . $logo);
+            }
+            $lat = (string) setting('seo_geo_lat', '');
+            $lng = (string) setting('seo_geo_lng', '');
+            if (is_numeric($lat) && is_numeric($lng)) {
+                $org['geo'] = ['@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng];
+            }
+            $hours = array_values(array_filter(array_map('trim', explode(',', (string) setting('seo_opening_hours', '')))));
+            if ($hours !== []) {
+                $org['openingHours'] = $hours;
+            }
+            if ((string) setting('seo_price_range', '') !== '') {
+                $org['priceRange'] = (string) setting('seo_price_range');
+            }
         }
         return $org;
     }

@@ -156,7 +156,22 @@ final class App
             };
             $response = $this->pipe($request, $pipeline, $core);
         } catch (Throwable $e) {
-            $response = $this->renderException($e, $request);
+            $response = null;
+            // SEO: a "not found" public page may have been moved (redirect), otherwise it is listed in the 404 monitor
+            if ($e instanceof HttpException && $e->status === 404 && in_array($request->method(), ['GET', 'HEAD'], true) && $this->isInstalled()) {
+                $redirect = \App\Services\Seo\RedirectService::match($request->path());
+                if ($redirect !== null) {
+                    $target = $redirect['target'];
+                    $query = (string) ($request->server('QUERY_STRING') ?? '');
+                    if (str_starts_with($target, '/')) {
+                        $target = rtrim($request->basePath(), '/') . $target . ($query !== '' && !str_contains($target, '?') ? '?' . $query : '');
+                    }
+                    $response = Response::redirect($target, $redirect['status']);
+                } else {
+                    \App\Services\Seo\RedirectService::logNotFound($request->path(), $request->header('Referer'));
+                }
+            }
+            $response ??= $this->renderException($e, $request);
         }
         if (Config::get('app.debug')) {
             $db = Database::hasInstance() ? Database::instance() : null;

@@ -195,3 +195,24 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Release ZIP contents: `vendor/` (Dompdf with fonts, PHPMailer, optimized autoloader), installation notes; no `.env`, lock file, tests, logs, customer files or backups | ✅ | archive listing |
 | Release ZIP works as shipped: extracted, test harness and router placed **inside** the extracted copy, fresh database → full HTTP suite (installer → orders → invoices/PDF → Phase 9 modules) | ✅ | 96/96 tests, 666 assertions, no application error |
 | Final browser sweep on the packaged install: 25 storefront + back-office pages × FR/AR × 390/1280 px | ✅ | Playwright: 104 loads, no HTTP/JS error, no overflow, correct `dir` |
+
+## v1.1: payment methods & CMI, “Sur mon mur” studio, SEO tools, tracking & consent ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Payment methods page: FR/AR texts, order, active, min/max order amount (hidden at checkout and refused by the server outside the limits), custom offline methods, used methods deactivated not deleted, last offline method protected | ✅ | HTTP |
+| CMI hash v3 equals an independent implementation; callback refused when tampered, other merchant id, other currency; declined = acknowledged without payment | ✅ | integration |
+| CMI end to end: cannot activate without credentials; store key encrypted and never displayed; checkout → signed form to the test gateway (CSP `form-action` allows it); signed callback → `ACTION=POSTAUTH`, order paid, team alert; forged / altered callbacks 400 `FAILURE`; replay idempotent; bank return without CSRF, 303 to tracking, no session cookie set; wrong token 404 | ✅ | HTTP |
+| “Sur mon mur”: creative scenes at real scale (30 cm artwork = 80 px on a 955 px / 360 cm wall), size chips in sync with the product form, drag, evening light, download | ✅ | Playwright (1366 px FR, 390 px AR) |
+| Own photo + calibration: an A4 sheet 212 px wide in a 1600 px photo gives 158 cm of visible wall (expected 158) | ✅ | Playwright |
+| Camera (fake device): live 1920×1080 video, capture, camera released after capture, export of the captured image | ✅ | Playwright (Chromium fake media stream) |
+| `Permissions-Policy: camera=(self)` only on product pages | ✅ | HTTP + integration |
+| SEO general: verification metas, X account, local-business schema with opening hours, robots.txt additions validated | ✅ | HTTP |
+| Per-page title/description/noindex FR/AR applied (exact title), noindex pages leave the sitemap | ✅ | integration + HTTP |
+| Redirects: only for 404 URLs, query string kept, hit counter, no self-redirect / chain / protocol-relative target; 404 monitor ignores bot probes | ✅ | integration + HTTP |
+| SEO audit: score and issues (long title, missing meta description…), Google preview with live counters | ✅ | integration + Playwright |
+| Tracking: IDs validated, CSP only for enabled providers, nothing in the HTML before consent, banner, events view_item / add_to_cart (once) / begin_checkout / purchase (once, event id `order-…`) / search | ✅ | HTTP |
+| Consent: analytics-only consent loads GA4 and not the Meta pixel | ✅ | Playwright |
+| Meta Conversions API: queued only with advertising consent, hashed data, one event per order, cron sender with retries, token masked in errors | ✅ | integration (sender replaced by a stub: no request to Meta from the test environment) |
+| RBAC (designer 403) and Arabic RTL on the new back-office pages; 390/1280 px FR/AR without overflow or JS errors | ✅ | HTTP + Playwright |
+| Not verified against the real services (no credentials in the test environment): a live CMI test-gateway payment, real delivery of pixel and Conversions API events to Google/Meta/TikTok | 🟡 | to do with the merchant's test credentials (see DEPLOYMENT_CPANEL § 10) |

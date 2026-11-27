@@ -46,12 +46,25 @@ final class CartController extends Controller
     {
         $qty = max(1, $this->request->int('quantity', 1));
         $design = $this->request->str('design');
-        if ($design !== '') {
-            return $this->done(CartService::addDesign($design, $qty), __('cart.added'));
-        }
         $productId = $this->request->int('product_id');
         $variantId = $this->request->int('variant_id');
-        return $this->done(CartService::addProduct($productId, $variantId > 0 ? $variantId : null, $qty), __('cart.added'));
+        $result = $design !== '' ? CartService::addDesign($design, $qty) : CartService::addProduct($productId, $variantId > 0 ? $variantId : null, $qty);
+        if ($result['ok']) {
+            // analytics: the line just added (fired on the next page)
+            $cart = CartService::current(false);
+            foreach ($cart !== null ? CartService::lines($cart) : [] as $l) {
+                if (($design !== '' && $l['kind'] === 'design' && ($l['design_uuid'] ?? '') === $design)
+                    || ($design === '' && $l['kind'] === 'product' && $l['product_id'] === $productId && ($variantId <= 0 || $l['variant_id'] === $variantId))) {
+                    $item = \App\Services\Tracking\TrackingService::cartItems([$l])[0] ?? null;
+                    if ($item !== null) {
+                        $item['quantity'] = $qty;
+                        \App\Services\Tracking\TrackingService::queue('add_to_cart', ['items' => [$item]]);
+                    }
+                    break;
+                }
+            }
+        }
+        return $this->done($result, __('cart.added'));
     }
 
     public function update(string $id): Response

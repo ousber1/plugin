@@ -12,10 +12,16 @@
         <?= $this->section('content') ?>
     </main>
     <?= $this->insert('partials/storefront_footer') ?>
+    <?php $tracking = \App\Services\Tracking\TrackingService::pageConfig(); ?>
+    <?php if ($tracking !== null): ?>
+        <script type="application/json" id="bwa-tracking"><?= json_encode($tracking, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+        <?php if ($tracking['consentRequired']): ?><?= $this->insert('partials/consent_banner') ?><?php endif; ?>
+    <?php endif; ?>
     <script src="<?= e(asset('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
     <script src="<?= e(asset('js/app.js')) ?>"></script>
     <script src="<?= e(asset('js/storefront.js')) ?>"></script>
     <script src="<?= e(asset('js/checkout.js')) ?>"></script>
+    <?php if ($tracking !== null): ?><script src="<?= e(asset('js/tracking.js')) ?>"></script><?php endif; ?>
     <?= $this->section('scripts') ?>
 </body>
 </html>

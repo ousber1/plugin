@@ -1548,6 +1548,144 @@ $t->test('grouped monthly dashboard and cash-flow queries equal the per-month ca
     $t->equals($lines, (string) $p['totals']['revenue'], 'products report covers every line');
 });
 
+$t->section('v1.1: payment methods & CMI, SEO tools, tracking & consent');
+$t->test('CMI hash v3 matches an independent implementation; callback verification rejects tampering', function (TestRunner $t): void {
+    $gw = new \App\Services\Payments\CmiGateway(['client_id' => '600000123', 'store_key' => 'TEST|KEY\\1'], true);
+    $t->assert($gw->isConfigured());
+    $t->equals(\App\Services\Payments\CmiGateway::TEST_URL, $gw->gatewayUrl());
+    // independent reference: sort names case-insensitively, skip hash/encoding, escape \ and |, join with |, + store key, sha512, base64(raw)
+    $params = ['oid' => 'BWA-2026-000001', 'amount' => '450.00', 'clientid' => '600000123', 'Currency' => '504', 'BillToName' => 'A|B\\C', 'encoding' => 'UTF-8', 'rnd' => 'x1'];
+    $keys = array_keys($params);
+    usort($keys, fn ($a, $b) => strnatcasecmp($a, $b));
+    $esc = fn ($v) => str_replace(['\\', '|'], ['\\\\', '\\|'], $v);
+    $plain = '';
+    foreach ($keys as $k) {
+        if (!in_array(strtolower($k), ['hash', 'encoding'], true)) {
+            $plain .= $esc($params[$k]) . '|';
+        }
+    }
+    $plain .= $esc('TEST|KEY\\1');
+    $t->equals(base64_encode(hash('sha512', $plain, true)), \App\Services\Payments\CmiGateway::hash($params, 'TEST|KEY\\1'));
+
+    $cb = ['clientid' => '600000123', 'oid' => 'BWA-2026-000001', 'amount' => '450.00', 'currency' => '504', 'Response' => 'Approved', 'ProcReturnCode' => '00', 'TransId' => 'T123', 'AuthCode' => 'A1', 'MaskedPan' => '4111***1111'];
+    $cb['HASH'] = \App\Services\Payments\CmiGateway::hash($cb, 'TEST|KEY\\1');
+    $req = fn (array $post) => new \App\Core\Request([], $post, ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/webhooks/payments/cmi', 'REMOTE_ADDR' => '1.2.3.4']);
+    $ok = $gw->verifyCallback($req($cb));
+    $t->assert($ok['verified'] && $ok['approved'], 'signed approved callback');
+    $t->equals('450.00', $ok['amount']);
+    $t->equals('cmi:T123', $ok['transaction_id']);
+    $t->equals('ACTION=POSTAUTH', $gw->reply(true, true));
+    $tampered = $cb; $tampered['amount'] = '1.00';
+    $t->assert(!$gw->verifyCallback($req($tampered))['verified'], 'amount changed after signing');
+    $t->equals('FAILURE', $gw->reply(false, false));
+    $declined = array_merge($cb, ['Response' => 'Declined', 'ProcReturnCode' => '05']);
+    unset($declined['HASH']);
+    $declined['HASH'] = \App\Services\Payments\CmiGateway::hash($declined, 'TEST|KEY\\1');
+    $d = $gw->verifyCallback($req($declined));
+    $t->assert($d['verified'] && !$d['approved'], 'declined is verified but not approved');
+    $euro = array_merge($cb, ['currency' => '978']);
+    unset($euro['HASH']);
+    $euro['HASH'] = \App\Services\Payments\CmiGateway::hash($euro, 'TEST|KEY\\1');
+    $t->assert(!$gw->verifyCallback($req($euro))['verified'], 'only dirhams');
+    $other = new \App\Services\Payments\CmiGateway(['client_id' => '600000999', 'store_key' => 'TEST|KEY\\1'], true);
+    $t->assert(!$other->verifyCallback($req($cb))['verified'], 'another merchant id');
+});
+$t->test('payment methods: limits, encrypted credentials, online method offered only when configured and active', function (TestRunner $t) use ($db): void {
+    $R = \App\Services\Payments\PaymentRegistry::class;
+    $t->assert($R::withinLimits(['min_order_amount' => null, 'max_order_amount' => '3000.00'], '2999.99'));
+    $t->assert(!$R::withinLimits(['min_order_amount' => null, 'max_order_amount' => '3000.00'], '3000.01'));
+    $t->assert(!$R::withinLimits(['min_order_amount' => '100.00', 'max_order_amount' => null], '99.99'));
+    $enc = $R::encryptConfig(['client_id' => '600000123', 'store_key' => 's3cret']);
+    $t->assert(!str_contains((string) $enc, 's3cret'), 'stored encrypted');
+    $t->equals(['client_id' => '600000123', 'store_key' => 's3cret'], $R::decryptConfig($enc));
+    $t->equals([], $R::decryptConfig('garbage'), 'damaged config = not configured');
+    $codes = fn () => array_column($R::available(), 'code');
+    $t->assert(!in_array('cmi', $codes(), true), 'not configured');
+    $db->query("UPDATE payment_methods SET is_active = 1, config = ?, test_mode = 1 WHERE code = 'cmi'", [$enc]);
+    $t->assert(in_array('cmi', $codes(), true), 'configured + active');
+    $db->query("UPDATE payment_methods SET is_active = 0 WHERE code = 'cmi'");
+    $t->assert(!in_array('cmi', $codes(), true), 'inactive');
+    $t->assert($R::gateway('paypal') === null, 'no PayPal integration (MAD unsupported)');
+    $db->query("UPDATE payment_methods SET max_order_amount = '500.00' WHERE code = 'cod'");
+    $t->assert(!in_array('cod', array_column($R::available('800.00'), 'code'), true), 'cash on delivery hidden above its limit');
+    $t->assert(in_array('cod', array_column($R::available('400.00'), 'code'), true));
+    $db->query("UPDATE payment_methods SET max_order_amount = NULL WHERE code = 'cod'");
+    $db->query("UPDATE payment_methods SET config = NULL WHERE code = 'cmi'");
+});
+$t->test('CSP additions accept only https hosts; camera allowed only when a page asks for it', function (TestRunner $t): void {
+    \App\Services\Csp::reset();
+    $t->assert(str_contains(\App\Services\Csp::permissions(), 'camera=()'));
+    \App\Services\Csp::allowFeature('camera');
+    $t->assert(str_contains(\App\Services\Csp::permissions(), 'camera=(self)'));
+    \App\Services\Csp::allow('form-action', 'https://testpayment.cmi.co.ma');
+    $t->assert(str_contains(\App\Services\Csp::policy(), "form-action 'self' https://testpayment.cmi.co.ma"));
+    $threw = false;
+    try { \App\Services\Csp::allow('script-src', "'unsafe-inline'"); } catch (\InvalidArgumentException) { $threw = true; }
+    $t->assert($threw, 'keywords refused');
+    \App\Services\Csp::reset();
+});
+$t->test('redirects, robots additions and per-page SEO overrides', function (TestRunner $t): void {
+    $Rd = \App\Services\Seo\RedirectService::class;
+    $t->equals('/ancienne-page', $Rd::normalize('/Ancienne-Page/?x=1'));
+    $t->assert($Rd::validTarget('/a', '/shop'));
+    $t->assert($Rd::validTarget('/a', 'https://exemple.ma/x'));
+    $t->assert(!$Rd::validTarget('/a', '/A/'), 'not to itself');
+    $t->assert(!$Rd::validTarget('/a', '//evil.com'), 'no protocol-relative');
+    $t->assert(!$Rd::validTarget('/a', 'javascript:alert(1)'));
+    $t->equals(['Disallow: /shop?sort=', 'Crawl-delay: 5'], \App\Services\Seo\SitemapService::extraRobotsLines("Disallow: /shop?sort=\nnot a rule\nCrawl-delay: 5\n"));
+    \App\Services\Seo\SeoPages::save('/faq', ['fr' => ['meta_title' => 'FAQ tableaux personnalisés au Maroc', 'meta_description' => 'Toutes les réponses.', 'noindex' => false], 'ar' => ['meta_title' => '', 'meta_description' => '', 'noindex' => true]]);
+    $seo = \App\Services\SeoService::page('FAQ', 'texte', ['canonical' => '/faq']);
+    $t->equals('FAQ tableaux personnalisés au Maroc', $seo['title_exact']);
+    $t->equals('Toutes les réponses.', $seo['description']);
+    $t->assert(!in_array('/faq', \App\Services\Seo\SeoPages::noindexPaths(), true), 'noindex in one language only');
+    \App\Services\Seo\SeoPages::save('/faq', ['fr' => ['meta_title' => '', 'meta_description' => '', 'noindex' => false], 'ar' => ['meta_title' => '', 'meta_description' => '', 'noindex' => false]]);
+    $t->equals(0, (int) \App\Core\Database::instance()->value("SELECT COUNT(*) FROM seo_pages WHERE page_key = '/faq'"), 'empty override removed');
+});
+$t->test('SEO audit flags real problems and scores the catalogue', function (TestRunner $t) use ($db): void {
+    $a = \App\Services\Seo\SeoAudit::run();
+    $t->assert($a['summary']['items'] > 0);
+    $t->assert($a['summary']['score'] >= 0 && $a['summary']['score'] <= 100);
+    $p = $db->fetch('SELECT id, title FROM products WHERE is_active = 1 AND deleted_at IS NULL ORDER BY id LIMIT 1');
+    $db->query("UPDATE products SET seo_title = ?, seo_description = NULL WHERE id = ?", [str_repeat('Toile ', 15), (int) $p['id']]);
+    $item = array_values(array_filter(\App\Services\Seo\SeoAudit::run()['items'], fn ($i) => $i['type'] === 'product' && $i['id'] === (int) $p['id']))[0];
+    $t->assert(in_array('title_long', $item['issues'], true), 'long title');
+    $t->assert(in_array('no_meta_description', $item['issues'], true), 'no meta description');
+    $db->query('UPDATE products SET seo_title = NULL WHERE id = ?', [(int) $p['id']]);
+});
+$t->test('consent cookie, Meta Conversions API queued only with consent, sent by cron with the token masked in errors', function (TestRunner $t) use ($db): void {
+    $T = \App\Services\Tracking\TrackingService::class;
+    $req = fn (?string $c) => new \App\Core\Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/', 'REMOTE_ADDR' => '10.1.1.1', 'HTTP_USER_AGENT' => 'UA'], [], $c !== null ? ['bwa_consent' => $c] : []);
+    $t->equals(['analytics' => false, 'marketing' => false, 'given' => false], $T::consent($req(null)));
+    $t->equals(['analytics' => true, 'marketing' => false, 'given' => true], $T::consent($req('v1.a1.m0')));
+    $t->equals(false, $T::consent($req('v1.a1.m9'))['given'], 'malformed');
+    \App\Services\SettingsService::set('track_meta_pixel_id', '123456789012345', 'tracking');
+    \App\Services\SettingsService::set('track_meta_capi_token', 'EAAGtesttoken1234567890', 'tracking', 'encrypted');
+    \App\Services\SettingsService::set('track_ga4_id', 'not-an-id', 'tracking');
+    $t->equals(['meta' => '123456789012345'], $T::enabled(), 'invalid IDs ignored');
+    $order = $db->fetch('SELECT * FROM orders ORDER BY id DESC LIMIT 1');
+    $items = $T::orderItems($db->fetchAll('SELECT * FROM order_items WHERE order_id = ?', [(int) $order['id']]));
+    $db->query('DELETE FROM tracking_events');
+    $t->assert(!$T::queuePurchase($order, $items, $req('v1.a1.m0')), 'no marketing consent: nothing sent');
+    $t->assert($T::queuePurchase($order, $items, $req('v1.a1.m1')));
+    $t->assert($T::queuePurchase($order, $items, $req('v1.a1.m1')) && (int) $db->value('SELECT COUNT(*) FROM tracking_events') === 1, 'same event id once');
+    $payload = json_decode((string) $db->value('SELECT payload FROM tracking_events LIMIT 1'), true);
+    $t->equals('order-' . $order['order_number'], $payload['event_id']);
+    $t->assert(!str_contains(json_encode($payload), (string) $order['customer_phone']), 'phone hashed');
+    $t->equals(hash('sha256', 'ma'), $payload['user_data']['country'][0]);
+    $calls = [];
+    $fail = function (string $url, array $body) use (&$calls): array { $calls[] = $url; return ['status' => 400, 'body' => 'bad token EAAGtesttoken1234567890']; };
+    $t->equals(0, $T::sendQueued(10, $fail));
+    $row = $db->fetch('SELECT * FROM tracking_events LIMIT 1');
+    $t->equals('queued', $row['status']);
+    $t->assert(!str_contains((string) $row['last_error'], 'EAAGtesttoken'), 'token masked in the log');
+    $t->assert(str_contains($calls[0], 'graph.facebook.com/v19.0/123456789012345/events'));
+    $t->equals(1, $T::sendQueued(10, fn () => ['status' => 200, 'body' => '{"events_received":1}']));
+    $t->equals('sent', (string) $db->value('SELECT status FROM tracking_events LIMIT 1'));
+    foreach (['track_meta_pixel_id', 'track_ga4_id'] as $k) { \App\Services\SettingsService::set($k, '', 'tracking'); }
+    \App\Services\SettingsService::set('track_meta_capi_token', '', 'tracking', 'encrypted');
+    $t->equals([], $T::enabled());
+});
+
 $demo->remove();
 
 exit($t->finish());

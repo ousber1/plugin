@@ -44,12 +44,13 @@ final class TrackingController extends Controller
             $this->flash('danger', __('track.not_found'));
             return $this->redirectRoute('order.track');
         }
-        return $this->show($order);
+        return $this->show($order, $token);
     }
 
     /** @param array<string,mixed> $order */
-    private function show(array $order): Response
+    private function show(array $order, ?string $token = null): Response
     {
+        $paymentResult = in_array($this->request->query('payment'), ['ok', 'fail'], true) ? (string) $this->request->query('payment') : null;
         $shipments = Database::instance()->fetchAll(
             'SELECT courier, tracking_number, tracking_url, status, shipped_at, delivered_at FROM shipments WHERE order_id = ? ORDER BY id DESC',
             [(int) $order['id']]
@@ -58,6 +59,8 @@ final class TrackingController extends Controller
             'order' => $order,
             'history' => OrderService::history((int) $order['id']),
             'shipments' => $shipments,
+            'payUrl' => $token !== null ? CheckoutController::payUrl($order, \App\Services\Payments\PaymentRegistry::describe((int) $order['payment_method_id']), $token) : null,
+            'paymentResult' => $paymentResult,
             'seo' => SeoService::page(__('track.title'), null, ['noindex' => true]),
         ]);
     }

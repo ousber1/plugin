@@ -14,10 +14,13 @@ dans `ADMIN_PATH`). Chaque membre de l'équipe ne voit que les menus autorisés 
 3. **Paramètres → Taxes** : TVA 20 % et « prix TTC » (par défaut), libellé TVA.
 4. **Paramètres → Livraison** : tarif par défaut, seuil de livraison gratuite, délais. Les tarifs par ville sont
    dans **Livraison** (§ 11).
-5. **Supports & cadres** : vérifiez vos prix au m², prix minimum, coût de revient, et prix des cadres au mètre.
+5. **Moyens de paiement** : vérifiez les textes FR/AR, le plafond éventuel du paiement à la livraison et, si vous avez
+   un contrat CMI, configurez le paiement par carte (§ 12). Puis **Outils SEO** (vérification Google) et **Suivi &
+   pixels** (§ 14 et 15).
+6. **Supports & cadres** : vérifiez vos prix au m², prix minimum, coût de revient, et prix des cadres au mètre.
    Ces prix alimentent le configurateur photo et la génération des variantes.
-6. **Équipe** : créez un compte par personne avec le bon rôle (voir § 13). Ne partagez jamais un compte.
-7. **Maintenance** : si vous aviez installé le catalogue de démonstration, supprimez-le avant l'ouverture.
+7. **Équipe** : créez un compte par personne avec le bon rôle (voir § 17). Ne partagez jamais un compte.
+8. **Maintenance** : si vous aviez installé le catalogue de démonstration, supprimez-le avant l'ouverture.
    Consultez le **Contrôle de sécurité** en bas de la page : tous les points doivent être verts.
 
 ---
@@ -75,7 +78,7 @@ Sur la fiche d'un visuel :
 * Quand tous les visuels d'une commande sont validés, elle passe seule en production.
 
 Les photos des clients sont privées : chaque téléchargement de l'original est journalisé. Elles sont supprimées
-automatiquement après le délai de conservation (§ 12).
+automatiquement après le délai de conservation (§ 16).
 
 ---
 
@@ -218,7 +221,105 @@ Menu **Newsletter** : inscrits (avec leur consentement, la langue et la date) et
 
 ---
 
-## 12. Sauvegardes, conservation des données, clients
+## 12. Moyens de paiement et paiement par carte (CMI)
+
+Menu **Finance → Moyens de paiement** (Super Admin et Administrator).
+
+* Chaque moyen a un nom, une description (affichée au moment de payer) et des instructions (affichées après la
+  commande), **en français et en arabe**. L'ordre d'affichage se règle avec « Ordre ».
+* **Montant min. / max.** : par exemple, le paiement à la livraison seulement jusqu'à 3 000 DH. Au-delà, le client ne
+  le voit plus (et le serveur le refuse aussi).
+* **Ajouter un moyen de paiement** : pour un mode hors ligne (Cash Plus, chèque, paiement en agence…). Un moyen déjà
+  utilisé par une commande ne se supprime pas : il est désactivé. Au moins un moyen hors ligne reste toujours actif.
+* Le RIB affiché pour le virement vient des **Paramètres → Entreprise**.
+
+### Paiement par carte bancaire (CMI)
+1. Signez le contrat e-commerce avec votre banque : elle vous donne l'**identifiant marchand (clientid)** et la
+   **clé de magasin (store key)**, et vous demande l'**adresse de notification** affichée sur la page (…/webhooks/payments/cmi).
+2. Dans « Carte bancaire (CMI) » : saisissez les deux identifiants, laissez **Mode test** coché, activez, enregistrez.
+   La clé est chiffrée et n'est plus jamais affichée (laisser le champ vide la conserve).
+3. Faites une commande de test avec les cartes de test fournies par le CMI. Quand tout fonctionne, décochez Mode test.
+
+Pour le client : après « Commander », il arrive sur la page sécurisée du CMI (code 3-D Secure de sa banque). Ses
+données de carte ne passent jamais par votre site. **La commande n'est marquée « payée » que lorsque le CMI envoie
+sa confirmation signée** directement à votre serveur ; vous êtes prévenu par la cloche. Si le paiement échoue,
+le client peut réessayer depuis son suivi de commande (« Payer par carte »).
+
+PayPal n'est pas proposé : PayPal n'accepte pas le dirham marocain.
+
+---
+
+## 13. « Sur mon mur » (aperçu du tableau chez le client)
+
+Sur chaque fiche produit, le bouton **Sur mon mur** ouvre un studio plein écran, à taille réelle :
+
+* **Créatif** : salon, chambre, bureau, salle à manger ou entrée dessinés à l'échelle (canapé de 2,20 m…), couleur du
+  mur (ou sa propre couleur), sol, lumière de jour ou de soirée.
+* **Ma photo** : le client choisit une photo de son mur.
+* **Caméra (pro)** : la caméra du téléphone filme le mur en direct avec le tableau, un indicateur de niveau aide à tenir
+  le téléphone droit, puis « Capturer ».
+* **Taille réelle** : sur une photo, le client indique la largeur de mur visible, ou mieux, **mesure un objet connu**
+  (une feuille A4 collée au mur, une porte de 204 cm) en plaçant deux points : le tableau apparaît alors exactement
+  à sa taille.
+* Il change de taille directement dans le studio (la fiche produit suit), déplace le tableau du doigt, puis
+  **télécharge l'image** ou la **partage** (WhatsApp…).
+
+Les photos et la caméra restent sur l'appareil du client : rien n'est envoyé au site. La caméra demande une
+connexion **https** (voir le guide d'installation).
+
+---
+
+## 14. Outils SEO
+
+Menu **Marketing → Outils SEO** :
+
+* **Général** : titre et description par défaut (avec l'aperçu Google et le compteur de caractères : vert = bonne
+  longueur, rouge = trop long), codes de vérification **Google Search Console**, Bing, Yandex, Pinterest, domaine
+  Facebook (collez seulement le code), compte X/Twitter, **entreprise locale** (type, horaires
+  « Mo-Fr 09:00-19:00, Sa 10:00-18:00 », coordonnées GPS, gamme de prix — utilise l'adresse de l'entreprise),
+  règles supplémentaires du **robots.txt**. Déclarez le plan du site (…/sitemap.xml) dans Search Console.
+* **Pages** : titre et description de l'accueil, de la boutique, des collections, du configurateur, de la FAQ… en
+  français et en arabe, avec aperçu Google. Le titre saisi est utilisé tel quel. « Ne pas indexer » retire la page de
+  Google et du plan du site. Les produits, catégories et collections ont leurs propres champs SEO (onglet « Arabe & SEO »).
+* **Redirections** : quand une adresse change (produit renommé, ancienne page), redirigez l'ancienne vers la nouvelle
+  en **301** pour garder le référencement. Une page qui existe n'est jamais redirigée.
+* **Erreurs 404** : les adresses demandées qui n'existent pas, les plus visitées en premier, avec leur provenance.
+  « Rediriger » prépare la redirection en un clic.
+* **Audit** : note SEO du catalogue et liste des corrections par produit / catégorie / collection (titre trop court ou
+  trop long, méta-description manquante, version arabe manquante, images sans texte alternatif, titres en double…),
+  avec un bouton « Modifier ».
+
+---
+
+## 15. Suivi & pixels publicitaires
+
+Menu **Marketing → Suivi & pixels**. Collez seulement les identifiants (le format est vérifié) :
+
+| Outil | Où trouver l'identifiant |
+|---|---|
+| Google Analytics 4 | Admin → Flux de données → ID de mesure `G-…` |
+| Google Tag Manager | Conteneur `GTM-…` |
+| Microsoft Clarity | Paramètres → ID du projet |
+| Meta Pixel (Facebook / Instagram) | Gestionnaire d'événements → ID du pixel (chiffres) |
+| TikTok Pixel | Ads Manager → Outils → Événements |
+| Google Ads | ID `AW-…` + étiquette de la conversion « Achat » |
+| Snap Pixel, Pinterest Tag | Leur gestionnaire d'événements |
+
+* **Bandeau cookies** (activé par défaut, recommandé par la loi 09-08 / CNDP) : les outils de mesure attendent
+  l'accord « Mesure d'audience », les pixels publicitaires l'accord « Publicité ». Le client peut changer d'avis via
+  « Gérer les cookies » en bas de page. Sans aucun identifiant, rien n'est chargé et aucun bandeau n'apparaît.
+* **Événements envoyés automatiquement** à chaque outil : vue d'un produit, ajout au panier, début de commande,
+  **commande passée avec son montant** (une seule fois par commande), recherche, message de contact, création de
+  compte, clic WhatsApp / téléphone. Vous pouvez donc créer vos audiences et mesurer vos campagnes sans réglage technique.
+* **Meta Conversions API** : ajoutez le jeton d'accès (Gestionnaire d'événements → Paramètres) pour que chaque
+  commande soit aussi envoyée depuis le serveur, même si le client utilise un bloqueur de publicité — uniquement s'il a
+  accepté la publicité. Le bouton « Envoyer un événement de test » vérifie la connexion (avec un code de test).
+* **Domaines supplémentaires** (avancé) : si vous ajoutez dans Google Tag Manager un autre outil (Hotjar…), indiquez
+  ici son adresse https:// pour que la sécurité du site l'autorise.
+
+---
+
+## 16. Sauvegardes, conservation des données, clients
 
 * **Sauvegardes** : sauvegarde automatique chaque nuit (avec la tâche cron) et bouton « Sauvegarder
   maintenant ». Téléchargez régulièrement une sauvegarde sur un support sûr. Restauration : phpMyAdmin → Importer.
@@ -230,13 +331,13 @@ Menu **Newsletter** : inscrits (avec leur consentement, la langue et la date) et
 
 ---
 
-## 13. Rôles de l'équipe
+## 17. Rôles de l'équipe
 
 | Rôle | Accès principal |
 |---|---|
 | Super Admin | Tout (1 à 3 personnes maximum) |
 | Administrator | Tout sauf la gestion des rôles |
-| Sales Manager | Commandes, clients, devis, paiements (lecture), codes promo, avis, contenu boutique, newsletter, zones de livraison, expéditions, rapports |
+| Sales Manager | Commandes, clients, devis, paiements (lecture), codes promo, avis, contenu boutique, newsletter, outils SEO, suivi & pixels, zones de livraison, expéditions, rapports |
 | Designer | Catalogue, visuels clients (validation), production (lecture) |
 | Production Manager | Production, visuels, stock, achats, fournisseurs, expéditions |
 | Accountant | Factures, paiements, dépenses, finances, rapports, achats |
@@ -247,7 +348,7 @@ Les rôles se modifient dans **Rôles & droits**. Désactivez le compte d'une pe
 
 ---
 
-## 14. En cas de problème
+## 18. En cas de problème
 
 * **Les e-mails ne partent pas** : **Journal des e-mails** (statut, erreur, bouton « Renvoyer ») et vérifiez le SMTP.
 * **Une alerte « cron » dans le contrôle de sécurité** : la tâche planifiée ne tourne pas (voir le guide

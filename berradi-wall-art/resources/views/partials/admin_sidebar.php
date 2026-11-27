@@ -33,6 +33,7 @@ $sections = [
     'admin.nav_finance' => [
         ['admin.finance.index', 'bi-bank', 'admin.nav_finance_overview', 'finance.view'],
         ['admin.expenses.index', 'bi-wallet2', 'admin.nav_expenses', 'expenses.manage'],
+        ['admin.payment_methods.index', 'bi-credit-card-2-front', 'admin.nav_payment_methods', 'settings.manage'],
         ['admin.reports.index', 'bi-graph-up', 'admin.nav_reports', 'reports.view'],
     ],
     'admin.nav_marketing' => [
@@ -40,6 +41,8 @@ $sections = [
         ['admin.reviews.index', 'bi-star', 'admin.nav_reviews', 'reviews.manage'],
         ['admin.content.index', 'bi-easel', 'admin.nav_content', 'marketing.manage'],
         ['admin.newsletter.index', 'bi-envelope-heart', 'admin.nav_newsletter', 'newsletter.manage'],
+        ['admin.seo.index', 'bi-search', 'admin.nav_seo', 'marketing.manage'],
+        ['admin.tracking.index', 'bi-broadcast', 'admin.nav_tracking', 'marketing.manage'],
     ],
     'admin.nav_system' => [
         ['admin.settings', 'bi-gear', 'admin.nav_settings', 'settings.manage'],

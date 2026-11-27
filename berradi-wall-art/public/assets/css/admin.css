@@ -158,3 +158,22 @@ html[dir="rtl"] .prod-col-head { letter-spacing: 0; font-size: .85rem; }
 .notif-menu { width: min(340px, 92vw); max-height: 70vh; overflow-y: auto; }
 .notif-item { border-bottom: 1px solid #F0EDE7; padding: .55rem 1rem; white-space: normal; }
 .notif-item.is-unread { background: var(--bwa-gold-tint); }
+
+/* SEO tools: Google result preview, audit */
+.serp-preview { font-family: Arial, sans-serif; background: #fff; border: 1px solid var(--bwa-line); border-radius: 8px; padding: .7rem .9rem; margin-top: .6rem; max-width: 640px; }
+.serp-preview .serp-url { font-size: .78rem; color: #4d5156; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.serp-preview .serp-title { font-size: 1.1rem; line-height: 1.3; color: #1a0dab; margin: .15rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.serp-preview .serp-desc { font-size: .84rem; color: #4d5156; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.serp-preview.serp-sm { padding: .5rem .7rem; margin-top: .3rem; }
+.serp-preview.serp-sm .serp-title { font-size: .98rem; }
+.serp-count { font-weight: 400; font-size: .74rem; color: var(--bwa-muted); }
+.serp-count.is-ok { color: var(--bwa-success); }
+.serp-count.is-over { color: var(--bwa-danger); font-weight: 600; }
+.audit-score { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: 0 0 46px; color: #fff; }
+.audit-score.is-good { background: var(--bwa-success); }
+.audit-score.is-mid { background: var(--bwa-warning); }
+.audit-score.is-bad { background: var(--bwa-danger); }
+.audit-issues { padding-inline-start: 1.1rem; font-size: .82rem; color: var(--bwa-text); }
+.tracking-provider { display: flex; align-items: center; gap: .5rem; }
+.tracking-provider .dot { width: 8px; height: 8px; border-radius: 50%; background: #CFCAC2; flex: 0 0 8px; }
+.tracking-provider .dot.is-on { background: var(--bwa-success); }

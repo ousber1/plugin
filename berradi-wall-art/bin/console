@@ -107,6 +107,9 @@ try {
             $expired = \App\Services\Finance\QuotationService::expireDue();
             $alerts = \App\Services\Notifications\StaffNotifier::dailyChecks();
             $retention = \App\Services\System\RetentionService::run();
+            $retention['seo_404'] = \App\Services\Seo\RedirectService::purge(180);
+            // server-side conversions (Meta Conversions API), only queued with the visitor's marketing consent
+            $capi = \App\Services\Tracking\TrackingService::sendQueued(50);
             try {
                 $backup = \App\Services\System\BackupService::daily();
             } catch (\Throwable $e) {
@@ -117,7 +120,7 @@ try {
             $abandoned = $db->query("UPDATE carts c SET c.status = 'abandoned' WHERE c.status = 'active' AND c.last_activity_at < NOW() - INTERVAL 1 DAY
                 AND EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = c.id)")->rowCount();
             \App\Services\SettingsService::set('last_cron_run', date('Y-m-d H:i:s'), 'general', 'string');
-            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed, {$mails} queued e-mails sent, {$abandoned} carts marked abandoned, {$expired} quotations expired, {$alerts} team alerts, retention " . json_encode($retention) . ($backup ? ", backup {$backup}" : '') . '.');
+            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed, {$mails} queued e-mails sent, {$abandoned} carts marked abandoned, {$expired} quotations expired, {$alerts} team alerts, {$capi} server conversions sent, retention " . json_encode($retention) . ($backup ? ", backup {$backup}" : '') . '.');
             break;
         case 'demo:install':
             $counts = (new \App\Services\Demo\DemoCatalog(Database::instance(), $app->publicPath(), $app->basePath()))->install();

@@ -25,4 +25,5 @@ return [
     'no' => 'Non',
     'create' => 'Créer',
     'edit' => 'Modifier',
+    'delete' => 'Supprimer',
 ];

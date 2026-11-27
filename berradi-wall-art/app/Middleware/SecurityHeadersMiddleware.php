@@ -18,15 +18,10 @@ final class SecurityHeadersMiddleware implements MiddlewareInterface
         $response->header('X-Content-Type-Options', 'nosniff');
         $response->header('X-Frame-Options', 'SAMEORIGIN');
         $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        $response->header('Permissions-Policy', \App\Services\Csp::permissions());
         $response->header('Cross-Origin-Opener-Policy', 'same-origin');
-        $response->header(
-            'Content-Security-Policy',
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            . "font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; "
-            . "frame-src https://www.google.com https://maps.google.com; frame-ancestors 'self'; base-uri 'self'; "
-            . "form-action 'self'; object-src 'none'"
-        );
+        // default: this site only; pages add the outside hosts they really need (payment gateway, enabled tags)
+        $response->header('Content-Security-Policy', \App\Services\Csp::policy());
         if ($request->isSecure()) {
             $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }

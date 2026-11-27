@@ -176,5 +176,30 @@
                 });
             });
         });
+
+        // ------------------------------------------------ SEO: live Google preview + length counters
+        document.querySelectorAll('[data-serp-form]').forEach(function (box) {
+            const title = box.querySelector('[data-serp-title]');
+            const desc = box.querySelector('[data-serp-desc]');
+            const counters = box.querySelectorAll('.serp-count');
+            const outT = box.querySelector('[data-serp-title-out]');
+            const outD = box.querySelector('[data-serp-desc-out]');
+            const count = function (el, counter, min) {
+                if (!el || !counter) return;
+                const n = el.value.trim().length;
+                const max = parseInt(counter.getAttribute('data-max') || '60', 10);
+                counter.textContent = n ? n + ' / ' + max : '';
+                counter.classList.toggle('is-over', n > max);
+                counter.classList.toggle('is-ok', n >= min && n <= max);
+            };
+            const update = function () {
+                count(title, counters[0], 30);
+                count(desc, counters[1], 70);
+                if (outT && title) outT.textContent = title.value.trim() || title.getAttribute('placeholder') || '';
+                if (outD && desc) outD.textContent = desc.value.trim() || desc.getAttribute('placeholder') || '';
+            };
+            [title, desc].forEach(function (el) { if (el) el.addEventListener('input', update); });
+            update();
+        });
     });
 })();

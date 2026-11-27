@@ -71,7 +71,10 @@ $router->get('/artwork/{token}/preview', [\App\Controllers\Storefront\ArtworkPro
 $router->post('/artwork/{token}', [\App\Controllers\Storefront\ArtworkProofController::class, 'respond'])->middleware('throttle:10,10')->name('artwork.proof.respond');
 $router->get('/track/{number}/{token}', [TrackingController::class, 'token'])->name('order.track.token');
 // online payment providers (inactive until a gateway is implemented & configured; CSRF-exempt, signature-verified)
-$router->post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])->name('payments.webhook');
+$router->post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])->middleware('throttle:60,1')->name('payments.webhook');
+// card payment: signed form to the bank, and the bank's return (informative only, never marks an order paid)
+$router->get('/checkout/pay/{number}/{token}', [\App\Controllers\Storefront\PaymentController::class, 'pay'])->middleware('throttle:20,10')->name('payment.pay');
+$router->match(['GET', 'POST'], '/payment-return/{provider}/{result}/{number}/{token}', [\App\Controllers\Storefront\PaymentController::class, 'returned'])->name('payment.return');
 
 // pages
 $router->get('/about', [PageController::class, 'about'])->name('page.about');

@@ -254,9 +254,11 @@ foreach (\App\Services\CatalogService::TYPES as $t) {
     <div class="tab-pane fade" id="seo" role="tabpanel">
         <div class="row g-4">
             <div class="col-lg-6">
-                <div class="admin-card h-100"><div class="card-header"><h2>SEO (FR)</h2></div><div class="card-body">
-                    <?= $this->insert('partials/field', ['name' => 'seo_title', 'label' => __('settings.seo_meta_title'), 'value' => $v('seo_title'), 'help' => __('admin.seo_title_help'), 'form' => 'product-form', 'attrs' => 'maxlength="191"']) ?>
-                    <?= $this->insert('partials/field', ['name' => 'seo_description', 'label' => __('settings.seo_meta_description'), 'type' => 'textarea', 'rows' => 3, 'value' => $v('seo_description'), 'form' => 'product-form', 'attrs' => 'maxlength="320"']) ?>
+                <div class="admin-card h-100"><div class="card-header"><h2>SEO (FR)</h2></div><div class="card-body" data-serp-form>
+                    <div class="small mb-1"><?= e(__('seo_admin.title')) ?> <span class="serp-count" data-max="60"></span> · <?= e(__('seo_admin.description')) ?> <span class="serp-count" data-max="160"></span></div>
+                    <?= $this->insert('partials/field', ['name' => 'seo_title', 'label' => __('settings.seo_meta_title'), 'value' => $v('seo_title'), 'help' => __('admin.seo_title_help'), 'form' => 'product-form', 'attrs' => 'maxlength="191" data-serp-title']) ?>
+                    <?= $this->insert('partials/field', ['name' => 'seo_description', 'label' => __('settings.seo_meta_description'), 'type' => 'textarea', 'rows' => 3, 'value' => $v('seo_description'), 'form' => 'product-form', 'attrs' => 'maxlength="320" data-serp-desc']) ?>
+                    <div class="serp-preview" dir="ltr"><div class="serp-url"><?= e(absolute_url('product/' . ($v('slug') ?: '…'))) ?></div><div class="serp-title" data-serp-title-out><?= e($v('seo_title') ?: $v('title')) ?></div><div class="serp-desc" data-serp-desc-out><?= e($v('seo_description')) ?></div></div>
                 </div></div>
             </div>
             <div class="col-lg-6">

@@ -3,6 +3,17 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
+        // ------------------------------------------------ payment: send the signed form to the bank once
+        const autopost = document.querySelector('form[data-autopost]');
+        if (autopost) {
+            // only automatically the first time (coming back with the browser's Back button shows the button instead)
+            let first = true;
+            try {
+                first = !sessionStorage.getItem('bwa-posted-' + location.pathname);
+                sessionStorage.setItem('bwa-posted-' + location.pathname, '1');
+            } catch (e) { first = true; }
+            if (first) setTimeout(function () { autopost.submit(); }, 600);
+        }
         // ------------------------------------------------ auto-submit filters
         document.querySelectorAll('form[data-autosubmit]').forEach(function (form) {
             form.querySelectorAll('select, input[type="radio"]').forEach(function (el) {
@@ -23,10 +34,10 @@
                     if (roomImg) roomImg.src = btn.getAttribute('data-thumb');
                 });
             });
-            gallery.querySelectorAll('.view-toggle').forEach(function (btn) {
+            gallery.querySelectorAll('.view-toggle[data-view]').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     const view = btn.getAttribute('data-view');
-                    gallery.querySelectorAll('.view-toggle').forEach(function (b) { b.classList.toggle('active', b === btn); });
+                    gallery.querySelectorAll('.view-toggle[data-view]').forEach(function (b) { b.classList.toggle('active', b === btn); });
                     gallery.querySelectorAll('[data-stage]').forEach(function (s) {
                         s.classList.toggle('d-none', s.getAttribute('data-stage') !== view);
                     });
@@ -99,6 +110,7 @@
                 if (!match) return;
 
                 variantInput.value = String(match.id);
+                document.dispatchEvent(new CustomEvent('bwa:variant', { detail: match }));
                 if (priceEl) priceEl.textContent = match.price;
                 if (regularEl) {
                     regularEl.textContent = match.regular;

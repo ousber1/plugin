@@ -98,6 +98,7 @@ final class PageController extends Controller
         ActivityLogger::log('contact.message', 'notification', $id, (string) $data['email']);
         \App\Services\Notifications\StaffNotifier::notify('contact_received', 'customers.view',
             __('notifications.contact', ['name' => $data['name'], 'subject' => $subjectLabel]), 'notifications/emails/' . $id, 'notification', $id);
+        \App\Services\Tracking\TrackingService::queue('generate_lead', ['items' => []]);
         $this->flash('success', __('pages.contact_sent'));
         return $this->redirectRoute('page.contact');
     }

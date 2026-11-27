@@ -49,7 +49,7 @@ final class OrderService
             CartService::removeCoupon();
             throw new ValidationException(['coupon' => $totals['coupon_error']]);
         }
-        $method = PaymentRegistry::find($d['payment_method']);
+        $method = PaymentRegistry::find($d['payment_method'], (string) $totals['grand_total']);
         if ($method === null) {
             throw new ValidationException(['payment_method' => __('checkout.payment_invalid')]);
         }

@@ -57,6 +57,9 @@ final class ShopController extends Controller
     public function index(): Response
     {
         $q = trim((string) $this->request->query('q', ''));
+        if ($q !== '' && (int) $this->request->query('page', 1) <= 1) {
+            \App\Services\Tracking\TrackingService::event('search', ['search_term' => mb_substr($q, 0, 100), 'items' => []]);
+        }
         return $this->render([
             'heading' => $q !== '' ? __('shop.search_results', ['q' => $q]) : __('shop.title'),
             'intro' => $q !== '' ? null : __('shop.intro'),
