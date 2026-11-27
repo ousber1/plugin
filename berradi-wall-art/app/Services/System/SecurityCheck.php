@@ -53,6 +53,8 @@ final class SecurityCheck
         $add('backup', $latest !== null && $latest['time'] > time() - 2 * 86400 ? 'ok' : 'warn', $latest !== null ? date('Y-m-d H:i', $latest['time']) : '');
         $add('mail', (string) setting('mail_driver', 'mail') === 'smtp' && (string) setting('mail_host', '') !== '' ? 'ok' : 'warn', (string) setting('mail_driver', 'mail'));
         $add('demo', (int) $db->value("SELECT COUNT(*) FROM products WHERE sku LIKE 'DEMO-%' AND deleted_at IS NULL") === 0 ? 'ok' : 'warn');
+        // a robots.txt file left in the web root by an older version hides the generated one (and the sitemap link)
+        $add('robots_file', is_file(public_path('robots.txt')) ? 'warn' : 'ok');
         return $c;
     }
 }

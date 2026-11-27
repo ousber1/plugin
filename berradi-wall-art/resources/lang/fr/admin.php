@@ -398,4 +398,6 @@ return [
     'nav_finance_overview' => 'Vue financière',
     'nav_backups' => 'Sauvegardes',
     'nav_emails' => 'Journal des e-mails',
+    'nav_content' => 'Contenu boutique',
+    'nav_newsletter' => 'Newsletter',
 ];

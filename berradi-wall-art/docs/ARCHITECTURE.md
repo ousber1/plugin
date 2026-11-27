@@ -119,3 +119,29 @@ Production (Phase 6) prints from the untouched original using the stored crop `{
   by `ArabicShaper`, since Dompdf has no bidi support; Arabic documents also emit table columns right-to-left.
   Issued PDFs are archived under `storage/invoices/YYYY/` (deny-all) and served only through authorised routes.
 * **Customer links** — quotations and invoices e-mailed with a 64-hex secret; only its SHA-256 is stored.
+
+## Performance (Phase 9)
+
+Measured with a synthetic data set of 20 000 orders (≈ 60 000 lines, payments, shipments) on MariaDB 10.11 / PHP 8.3,
+using the debug headers below. Targets for shared hosting: < 300 ms PHP time and < 50 queries per page.
+
+* **Grouped queries instead of loops** — `DashboardStats::monthly()` and `FinanceStats::cashflow()` used to run one set
+  of sums per month (12 × N queries). They now run one `GROUP BY DATE_FORMAT(…, '%Y-%m')` query per measure and fill
+  the months in PHP. Dashboard: 90 → 33 queries; finance page: 189 → 25. A Phase 9 integration test asserts that the
+  grouped results equal the old per-month sums.
+* **Aggregate, then join** — the products report groups order lines on a key
+  (`product_id`, or the title for deleted products / `custom` for builder lines) before joining `products`
+  (166 → 134 ms at 20 000 orders). A rewrite of the sales report was measured slower and was not kept.
+* **Indexes** — the heavy list filters and report ranges use composite indexes (plans checked with `EXPLAIN`):
+  orders `(status, placed_at)` and `(placed_at)`, payments `(status, paid_at)`, invoices `(status, issue_date)` and
+  `(order_id, invoice_type, status)`, quotations `(status, issue_date)` and `(status, valid_until)`.
+* **Caching** — settings are loaded with one query and kept for the request; the sitemap is cached for one hour
+  and rebuilt on catalogue changes; Dompdf font metrics are cached in `storage/cache`.
+* **HTTP** — versioned asset URLs (`?v=mtime`) with `Cache-Control: max-age=31536000, immutable`, images 30 days,
+  gzip for HTML/CSS/JS/JSON/SVG/XML; `loading="lazy"` and `decoding="async"` on catalogue images.
+* **OPcache** — the code has no runtime code generation, so OPcache gives the full benefit; *Maintenance → Update*
+  calls `opcache_reset()`.
+
+**Debug profiling** — with `APP_DEBUG=true`, `Database` counts queries and records those slower than 5 ms;
+`App::handle()` adds `X-Debug-Time` (ms), `X-Debug-Queries`, `X-Debug-Repeated` (same SQL run more than once —
+the N+1 signal) and `X-Debug-Slow` to every response. Nothing is recorded when debug is off.

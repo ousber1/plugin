@@ -244,8 +244,8 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
                                 <div class="col-md-6">
                                     <div class="review-card">
                                         <?= $this->insert('storefront/partials/stars', ['rating' => (float) $r['rating']]) ?>
-                                        <?php if (!empty($r['title'])): ?><h3 class="h6 mt-2 mb-1"><?= e($r['title']) ?></h3><?php endif; ?>
-                                        <p class="mb-2"><?= e($r['body']) ?></p>
+                                        <?php if (!empty($r['title'])): ?><h3 class="h6 mt-2 mb-1" dir="auto"><?= e($r['title']) ?></h3><?php endif; ?>
+                                        <p class="mb-2" dir="auto"><?= e($r['body']) ?></p>
                                         <div class="small text-muted-bwa">
                                             <?= e($r['author_name']) ?><?= $r['author_city'] ? ' · ' . e($r['author_city']) : '' ?> · <?= e(format_date($r['created_at'])) ?>
                                             <?php if ((int) $r['is_verified_purchase'] === 1): ?><span class="ms-2 text-success"><i class="bi bi-patch-check"></i> <?= e(__('product.verified')) ?></span><?php endif; ?>

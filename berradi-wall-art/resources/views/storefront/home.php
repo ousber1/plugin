@@ -207,7 +207,7 @@ $arrow = is_rtl() ? 'left' : 'right';
                     <div class="col-md-6 col-lg-4">
                         <figure class="review-card h-100 mb-0">
                             <?= $this->insert('storefront/partials/stars', ['rating' => (float) $r['rating']]) ?>
-                            <blockquote class="mt-3 mb-3"><?= e($r['body']) ?></blockquote>
+                            <blockquote class="mt-3 mb-3" dir="auto"><?= e($r['body']) ?></blockquote>
                             <figcaption class="small text-muted-bwa">
                                 <strong class="text-dark"><?= e($r['author_name']) ?></strong><?= $r['author_city'] ? ' · ' . e($r['author_city']) : '' ?>
                                 <?php if (!empty($r['product_slug'])): ?><br><a href="<?= e(route('product.show', ['slug' => $r['product_slug']])) ?>"><?= e($r['product_title']) ?></a><?php endif; ?>

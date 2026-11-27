@@ -105,6 +105,7 @@ $router->group(['prefix' => '/account'], function ($router): void {
         $router->get('/orders', [CustomerOrderController::class, 'index'])->name('customer.orders');
         $router->get('/orders/{number}', [CustomerOrderController::class, 'show'])->name('customer.orders.show');
         $router->post('/orders/{number}/cancel', [CustomerOrderController::class, 'cancel'])->name('customer.orders.cancel');
+        $router->post('/orders/{number}/review', [CustomerOrderController::class, 'review'])->middleware('throttle:10,60')->name('customer.orders.review');
         $router->get('/invoices/{id}', [\App\Controllers\Storefront\DocumentController::class, 'customerInvoice'])->name('customer.invoices.download');
         $router->get('/addresses', [AddressController::class, 'index'])->name('customer.addresses');
         $router->post('/addresses', [AddressController::class, 'store'])->name('customer.addresses.store');

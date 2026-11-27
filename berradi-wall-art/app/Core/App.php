@@ -154,10 +154,27 @@ final class App
                 $request->setRouteParams($params);
                 return $this->runRoute($route, $request, $params);
             };
-            return $this->pipe($request, $pipeline, $core);
+            $response = $this->pipe($request, $pipeline, $core);
         } catch (Throwable $e) {
-            return $this->renderException($e, $request);
+            $response = $this->renderException($e, $request);
         }
+        if (Config::get('app.debug')) {
+            $db = Database::hasInstance() ? Database::instance() : null;
+            $response->header('X-Debug-Time', number_format((microtime(true) - (float) ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true))) * 1000, 1) . 'ms');
+            if ($db !== null) {
+                $response->header('X-Debug-Queries', $db->queryCount . ' (' . number_format($db->queryMs, 1) . 'ms)');
+                if ($db->slow !== []) {
+                    usort($db->slow, fn ($a, $b) => $b[0] <=> $a[0]);
+                    $response->header('X-Debug-Slow', substr((string) json_encode(array_slice($db->slow, 0, 3), JSON_UNESCAPED_SLASHES), 0, 900));
+                }
+                $dup = array_filter($db->queryLog, fn ($n) => $n > 3);
+                if ($dup !== []) {
+                    arsort($dup);
+                    $response->header('X-Debug-Repeated', substr((string) json_encode(array_slice($dup, 0, 3, true), JSON_UNESCAPED_SLASHES), 0, 900));
+                }
+            }
+        }
+        return $response;
     }
 
     /**

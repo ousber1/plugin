@@ -31,4 +31,5 @@ return [
     'retry' => 'Renvoyer maintenant',
     'retry_ok' => 'E-mail envoyé.',
     'retry_ko' => 'Échec de l’envoi : vérifiez la configuration SMTP.',
+    'review_new' => 'Nouvel avis (:rating★) à modérer — :number',
 ];

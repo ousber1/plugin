@@ -39,4 +39,6 @@ return [
     'fix_mail' => 'اضبط SMTP لتحسين التوصيل.',
     'demo' => 'لا منتجات تجريبية',
     'fix_demo' => 'احذف كتالوج العرض.',
+    'robots_file' => 'ملف robots.txt يُنشأ تلقائياً',
+    'fix_robots_file' => 'احذف الملف public/robots.txt المتبقي من نسخة سابقة.',
 ];

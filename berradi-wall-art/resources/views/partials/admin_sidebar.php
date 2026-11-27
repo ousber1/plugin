@@ -38,6 +38,8 @@ $sections = [
     'admin.nav_marketing' => [
         ['admin.coupons.index', 'bi-ticket-perforated', 'admin.nav_coupons', 'coupons.manage'],
         ['admin.reviews.index', 'bi-star', 'admin.nav_reviews', 'reviews.manage'],
+        ['admin.content.index', 'bi-easel', 'admin.nav_content', 'marketing.manage'],
+        ['admin.newsletter.index', 'bi-envelope-heart', 'admin.nav_newsletter', 'newsletter.manage'],
     ],
     'admin.nav_system' => [
         ['admin.settings', 'bi-gear', 'admin.nav_settings', 'settings.manage'],

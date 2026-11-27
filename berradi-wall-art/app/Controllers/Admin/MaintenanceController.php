@@ -62,6 +62,10 @@ final class MaintenanceController extends Controller
             $done = $m->migrate();
             $m->seed();
             SettingsService::flush();
+            // new PHP files must be picked up at once, not after the host's OPcache revalidation delay
+            if (function_exists('opcache_reset') && filter_var(ini_get('opcache.enable'), FILTER_VALIDATE_BOOL)) {
+                @opcache_reset();
+            }
         } catch (\Throwable $e) {
             \App\Core\Logger::error('Update failed: ' . $e->getMessage());
             $this->flash('danger', __('admin.update_failed') . ' ' . $e->getMessage());

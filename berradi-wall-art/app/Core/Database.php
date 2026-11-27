@@ -58,6 +58,11 @@ final class Database
         return self::$instance;
     }
 
+    public static function hasInstance(): bool
+    {
+        return self::$instance !== null;
+    }
+
     public static function setInstance(?Database $db): void
     {
         self::$instance = $db;
@@ -68,9 +73,23 @@ final class Database
         return $this->pdo;
     }
 
+    /** Queries run by this request and their total time (ms), for the debug header and profiling. */
+    public int $queryCount = 0;
+    public float $queryMs = 0.0;
+    /** @var array<string,int> normalized SQL => count (debug only, to spot N+1 patterns) */
+    public array $queryLog = [];
+    /** @var list<array{0:float,1:string}> slowest queries (debug only) */
+    public array $slow = [];
+
     /** @param array<int|string,mixed> $params */
     public function query(string $sql, array $params = []): PDOStatement
     {
+        $t0 = hrtime(true);
+        $this->queryCount++;
+        if (Config::get('app.debug')) {
+            $key = substr((string) preg_replace('/\s+/', ' ', $sql), 0, 160);
+            $this->queryLog[$key] = ($this->queryLog[$key] ?? 0) + 1;
+        }
         $stmt = $this->pdo->prepare($sql);
         foreach ($params as $key => $value) {
             $param = is_int($key) ? $key + 1 : (str_starts_with((string) $key, ':') ? $key : ':' . $key);
@@ -83,6 +102,11 @@ final class Database
             $stmt->bindValue($param, $value, $type);
         }
         $stmt->execute();
+        $ms = (hrtime(true) - $t0) / 1e6;
+        $this->queryMs += $ms;
+        if ($ms > 5 && Config::get('app.debug')) {
+            $this->slow[] = [round($ms, 1), substr((string) preg_replace('/\s+/', ' ', $sql), 0, 140)];
+        }
         return $stmt;
     }
 

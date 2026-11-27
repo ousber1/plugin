@@ -1524,6 +1524,30 @@ $t->test('customer data export and security self-check', function (TestRunner $t
     $t->assert(in_array($checks['debug'], ['ok', 'fail'], true));
 });
 
+
+$t->section('Phase 9: performance refactors keep identical figures');
+$t->test('grouped monthly dashboard and cash-flow queries equal the per-month calculations', function (TestRunner $t): void {
+    $S = \App\Services\Admin\DashboardStats::class;
+    foreach ($S::monthly(12) as $row) {
+        $from = $row['month'] . '-01';
+        $to = date('Y-m-01', strtotime($from . ' +1 month'));
+        $s = $S::sales($from, $to);
+        $t->equals($s['sales'], $row['sales'], 'sales ' . $row['month']);
+        $t->equals($s['orders'], $row['orders'], 'orders ' . $row['month']);
+        $t->equals($S::profit($from, $to)['profit'], $row['profit'], 'profit ' . $row['month']);
+    }
+    $F = \App\Services\Finance\FinanceStats::class;
+    foreach ($F::cashflow(12) as $row) {
+        $from = $row['month'] . '-01';
+        $sum = $F::summary($from, date('Y-m-01', strtotime($from . ' +1 month')));
+        $t->equals($sum['cash_in'], $row['in'], 'cash in ' . $row['month']);
+        $t->equals($sum['cash_out'], $row['out'], 'cash out ' . $row['month']);
+    }
+    $p = \App\Services\Reports\ReportService::run('products', date('Y-01-01'), date('Y-m-d', strtotime('+1 day')));
+    $lines = \App\Helpers\Money::normalize((string) \App\Core\Database::instance()->value("SELECT COALESCE(SUM(oi.line_total),0) FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.status NOT IN ('cancelled','returned') AND o.placed_at >= ?", [date('Y-01-01')]));
+    $t->equals($lines, (string) $p['totals']['revenue'], 'products report covers every line');
+});
+
 $demo->remove();
 
 exit($t->finish());

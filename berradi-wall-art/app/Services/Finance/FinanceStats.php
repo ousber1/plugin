@@ -100,13 +100,20 @@ final class FinanceStats
     /** Monthly cash in / out (last N months). @return list<array{month:string,in:string,out:string,net:string}> */
     public static function cashflow(int $months = 12): array
     {
-        $out = [];
         $start = date('Y-m-01', strtotime(date('Y-m-01') . ' -' . ($months - 1) . ' months'));
+        $end = date('Y-m-01', strtotime($start . " +{$months} months"));
+        $db = Database::instance();
+        $col = fn (string $sql) => array_column($db->fetchAll($sql, [$start, $end]), 'v', 'm');
+        $in = $col("SELECT DATE_FORMAT(paid_at, '%Y-%m') AS m, SUM(amount) AS v FROM payments WHERE status = 'confirmed' AND payment_type = 'payment' AND paid_at >= ? AND paid_at < ? GROUP BY m");
+        $refunds = $col("SELECT DATE_FORMAT(paid_at, '%Y-%m') AS m, SUM(amount) AS v FROM payments WHERE status = 'confirmed' AND payment_type = 'refund' AND paid_at >= ? AND paid_at < ? GROUP BY m");
+        $exp = $col("SELECT DATE_FORMAT(expense_date, '%Y-%m') AS m, SUM(amount) AS v FROM expenses WHERE expense_date >= ? AND expense_date < ? GROUP BY m");
+        $sup = $col("SELECT DATE_FORMAT(paid_at, '%Y-%m') AS m, SUM(amount) AS v FROM supplier_payments WHERE paid_at >= ? AND paid_at < ? GROUP BY m");
+        $out = [];
         for ($i = 0; $i < $months; $i++) {
-            $f = date('Y-m-01', strtotime($start . " +{$i} months"));
-            $t = date('Y-m-01', strtotime($f . ' +1 month'));
-            $s = self::summary($f, $t);
-            $out[] = ['month' => substr($f, 0, 7), 'in' => $s['cash_in'], 'out' => $s['cash_out'], 'net' => $s['net_cash']];
+            $m = date('Y-m', strtotime($start . " +{$i} months"));
+            $cashIn = Money::normalize((string) ($in[$m] ?? 0));
+            $cashOut = Money::add(Money::normalize((string) ($exp[$m] ?? 0)), Money::normalize((string) ($sup[$m] ?? 0)), Money::normalize((string) ($refunds[$m] ?? 0)));
+            $out[] = ['month' => $m, 'in' => $cashIn, 'out' => $cashOut, 'net' => Money::sub($cashIn, $cashOut)];
         }
         return $out;
     }

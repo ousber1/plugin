@@ -22,6 +22,11 @@ use App\Controllers\Admin\PurchaseController;
 use App\Controllers\Admin\SupplierController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CategoryController;
+use App\Controllers\Admin\ContentController;
+use App\Controllers\Admin\CouponController;
+use App\Controllers\Admin\NewsletterController;
+use App\Controllers\Admin\ReviewController;
+use App\Controllers\Admin\ShippingController;
 use App\Controllers\Admin\CollectionController;
 use App\Controllers\Admin\CustomerController;
 use App\Controllers\Admin\MaintenanceController;
@@ -209,6 +214,36 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->post('/backups/{name}/delete', [BackupController::class, 'destroy'])->name('backups.destroy');
         });
         $router->get('/customers/{id}/export', [CustomerController::class, 'export'])->middleware('can:customers.manage')->name('customers.export');
+
+        // ---------------------------------------------------------------- shipping & marketing
+        $router->group(['middleware' => ['can:shipping.manage']], function ($router): void {
+            $router->get('/shipping', [ShippingController::class, 'index'])->name('shipping.index');
+            $router->post('/shipping/zones', [ShippingController::class, 'saveZone'])->name('shipping.zones.store');
+            $router->post('/shipping/zones/{id}', [ShippingController::class, 'saveZone'])->name('shipping.zones.update');
+            $router->post('/shipping/rates', [ShippingController::class, 'saveRate'])->name('shipping.rates.store');
+            $router->post('/shipping/rates/{id}', [ShippingController::class, 'saveRate'])->name('shipping.rates.update');
+            $router->post('/shipping/rates/{id}/delete', [ShippingController::class, 'deleteRate'])->name('shipping.rates.destroy');
+        });
+        $router->group(['middleware' => ['can:coupons.manage']], function ($router): void {
+            $router->get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
+            $router->post('/coupons', [CouponController::class, 'save'])->name('coupons.store');
+            $router->post('/coupons/{id}', [CouponController::class, 'save'])->name('coupons.update');
+            $router->post('/coupons/{id}/delete', [CouponController::class, 'destroy'])->name('coupons.destroy');
+        });
+        $router->group(['middleware' => ['can:reviews.manage']], function ($router): void {
+            $router->get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+            $router->post('/reviews/{id}', [ReviewController::class, 'action'])->name('reviews.action');
+        });
+        $router->group(['middleware' => ['can:marketing.manage']], function ($router): void {
+            $router->get('/content', [ContentController::class, 'index'])->name('content.index');
+            $router->post('/content/{type}', [ContentController::class, 'save'])->name('content.store');
+            $router->post('/content/{type}/{id}', [ContentController::class, 'save'])->name('content.update');
+            $router->post('/content/{type}/{id}/delete', [ContentController::class, 'destroy'])->name('content.destroy');
+        });
+        $router->group(['middleware' => ['can:newsletter.manage']], function ($router): void {
+            $router->get('/newsletter', [NewsletterController::class, 'index'])->name('newsletter.index');
+            $router->post('/newsletter/{id}/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+        });
 
         // ---------------------------------------------------------------- orders
         $router->get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');

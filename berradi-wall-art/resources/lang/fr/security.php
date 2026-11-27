@@ -39,4 +39,6 @@ return [
     'fix_mail' => 'Configurez SMTP (Paramètres > E-mail) pour une meilleure délivrabilité.',
     'demo' => 'Pas de produits de démonstration',
     'fix_demo' => 'Supprimez le catalogue de démonstration (Maintenance).',
+    'robots_file' => 'robots.txt généré automatiquement',
+    'fix_robots_file' => 'Supprimez le fichier public/robots.txt laissé par une ancienne version.',
 ];

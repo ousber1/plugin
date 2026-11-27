@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'tab_banners' => 'Bannières',
+    'tab_gallery' => 'Galerie clients',
+    'tab_faqs' => 'FAQ',
+    'help_banners' => 'Grande bannière d’accueil (hero) et bandeaux promotionnels, avec dates de début et de fin facultatives.',
+    'help_gallery' => 'Photos d’intérieurs de vos clients. Publiées seulement si le consentement écrit du client est coché.',
+    'help_faqs' => 'Questions affichées sur la page FAQ (avec données structurées pour Google).',
+    'add_banners' => 'Ajouter une bannière',
+    'add_gallery' => 'Ajouter une photo',
+    'add_faqs' => 'Ajouter une question',
+    'pos_hero' => 'Accueil : grande bannière (3 max.)',
+    'pos_promo' => 'Accueil : bandeau promo (2 max.)',
+    'link' => 'Lien (/shop ou https://…)',
+    'err_image' => 'Une image est obligatoire.',
+    'no_consent' => 'Sans consentement : non publié',
+    'position' => 'Emplacement',
+    'title' => 'Titre',
+    'subtitle' => 'Sous-titre',
+    'button' => 'Texte du bouton',
+    'product' => 'Produit associé',
+    'consent' => 'Consentement écrit du client obtenu',
+    'question' => 'Question',
+    'answer' => 'Réponse',
+];

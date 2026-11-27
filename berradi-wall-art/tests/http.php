@@ -1516,4 +1516,125 @@ $t->test('maintenance shows the security self-check; RBAC on Phase 8 pages; Arab
     $o->get('/lang/fr');
 });
 
+$t->section('Shipping, coupons, reviews, content & newsletter back office (Phase 9)');
+$t->test('shipping: new zone + city rate drives the cart estimate; duplicate city (accents ignored) refused', function (TestRunner $t) use ($o, $base, $q6, $p8): void {
+    $o->post('/admin/shipping/zones', ['name' => 'Moyen Atlas', 'default_price' => '50', 'min_days' => '2', 'max_days' => '4', 'is_active' => '1'], '/admin/shipping');
+    $zone = (string) $q6("SELECT id FROM shipping_zones WHERE name = 'Moyen Atlas'");
+    $t->assert($zone !== '', 'zone created');
+    $o->post('/admin/shipping/rates', ['shipping_zone_id' => $zone, 'city' => 'Ifrane', 'price' => '55,00', 'free_shipping_threshold' => '', 'min_days' => '2', 'max_days' => '4', 'is_active' => '1'], '/admin/shipping');
+    $t->equals('55.00', (string) $q6("SELECT price FROM shipping_rates WHERE city = 'Ifrane'"));
+    $existing = (string) $q6('SELECT city FROM shipping_rates WHERE id <> (SELECT id FROM shipping_rates WHERE city = \'Ifrane\') ORDER BY id LIMIT 1');
+    $o->post('/admin/shipping/rates', ['shipping_zone_id' => $zone, 'city' => mb_strtoupper(strtr($existing, ['è' => 'e', 'é' => 'e'])), 'price' => '10', 'min_days' => '1', 'max_days' => '2', 'is_active' => '1'], '/admin/shipping');
+    $o->follow();
+    $t->contains('a déjà un tarif', $o->body);
+    $g = new Browser($base);
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $g->get('/cart');
+    $g->json('/cart/shipping', ['city' => 'ifrane']);
+    $t->equals('55,00 DH', $g->data()['shipping'] ?? null, 'rate applied');
+});
+$t->test('coupons: create, validation, customer applies it in the cart; used code can only be deactivated', function (TestRunner $t) use ($o, $base, $q6, $p8): void {
+    $o->post('/admin/coupons', ['code' => 'ete15', 'discount_type' => 'percent', 'discount_value' => '150', 'is_active' => '1'], '/admin/coupons');
+    $o->follow();
+    $t->contains('Pourcentage entre 0 et 100', $o->body);
+    $o->post('/admin/coupons', ['code' => 'ete15', 'description' => 'Soldes d’été', 'discount_type' => 'percent', 'discount_value' => '15', 'max_discount_amount' => '200', 'usage_limit' => '100', 'is_active' => '1'], '/admin/coupons');
+    $t->equals('ETE15', (string) $q6("SELECT code FROM coupons WHERE code = 'ETE15'"));
+    $o->post('/admin/coupons', ['code' => 'Ete15', 'discount_type' => 'fixed', 'discount_value' => '10', 'is_active' => '1'], '/admin/coupons');
+    $o->follow();
+    $t->contains('existe déjà', $o->body);
+    $g = new Browser($base);
+    $pid = (string) $q6("SELECT id FROM products WHERE slug = '{$p8}'");
+    $g->post('/cart/add', ['product_id' => $pid, 'variant_id' => (string) $q6("SELECT id FROM product_variants WHERE product_id = {$pid} AND is_active = 1 ORDER BY price LIMIT 1"), 'quantity' => '1'], '/product/' . $p8);
+    $g->post('/cart/coupon', ['code' => 'ete15'], '/cart');
+    $g->get('/cart');
+    $t->contains('ETE15', $g->body, 'applied');
+    $used = (string) $q6("SELECT c.id FROM coupons c JOIN coupon_redemptions r ON r.coupon_id = c.id LIMIT 1");
+    if ($used !== '') {
+        $o->post('/admin/coupons/' . $used . '/delete', [], '/admin/coupons');
+        $t->equals(1, (int) $q6("SELECT COUNT(*) FROM coupons WHERE id = {$used}"), 'kept');
+        $t->equals(0, (int) $q6("SELECT is_active FROM coupons WHERE id = {$used}"), 'deactivated');
+    }
+});
+$t->test('reviews: a delivered customer reviews a product, moderation publishes it on the product page', function (TestRunner $t) use ($o, $base, $q6, $pdo5): void {
+    $salma = (string) $q6("SELECT id FROM customers WHERE email = 'salma@client.test'");
+    $prod = $pdo5->query("SELECT p.id, p.slug, p.title FROM products p WHERE p.is_active = 1 AND p.deleted_at IS NULL AND p.is_customizable = 0 AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) ORDER BY p.id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    $o->post('/admin/orders', ['source' => 'phone', 'full_name' => 'Salma Alaoui', 'phone' => '0612345678', 'email' => 'salma@client.test', 'city' => 'Rabat', 'address' => '1 rue Test', 'locale' => 'fr', 'shipping' => '0',
+        'lines' => [['product' => $prod['id'] . ':' . $q6("SELECT id FROM product_variants WHERE product_id = {$prod['id']} AND is_active = 1 LIMIT 1"), 'quantity' => '1', 'unit_price' => '']]], '/admin/orders/create');
+    $oid = (int) substr($o->location(), strlen('/admin/orders/'));
+    $number = (string) $q6("SELECT order_number FROM orders WHERE id = {$oid}");
+    $c = new Browser($base);
+    $c->post('/account/login', ['email' => 'salma@client.test', 'password' => 'Client2026'], '/account/login');
+    $c->post('/account/orders/' . $number . '/review', ['product_id' => (string) $prod['id'], 'rating' => '5', 'body' => 'Superbe qualité'], '/account/orders/' . $number);
+    $t->equals(404, $c->status, 'not delivered yet: no review');
+    $pdo5->exec("UPDATE orders SET status = 'delivered', delivered_at = NOW() WHERE id = {$oid}");
+    $c->get('/account/orders/' . $number);
+    $t->contains('Donnez votre avis', $c->body);
+    $c->post('/account/orders/' . $number . '/review', ['product_id' => (string) $prod['id'], 'rating' => '4', 'title' => 'Très belle toile', 'body' => 'Couleurs fidèles, emballage soigné, livrée en 3 jours.'], '/account/orders/' . $number);
+    $rid = (string) $q6("SELECT id FROM reviews WHERE order_id = {$oid}");
+    $t->assert($rid !== '', 'stored');
+    $t->equals('0', (string) $q6("SELECT is_approved FROM reviews WHERE id = {$rid}"), 'pending moderation');
+    $t->equals('1', (string) $q6("SELECT is_verified_purchase FROM reviews WHERE id = {$rid}"));
+    $c->post('/account/orders/' . $number . '/review', ['product_id' => (string) $prod['id'], 'rating' => '1', 'body' => 'Deuxième avis interdit'], '/account/orders/' . $number);
+    $t->equals(404, $c->status, 'one review per product and order');
+    $g = new Browser($base);
+    $g->get('/product/' . $prod['slug']);
+    $t->assert(!str_contains($g->body, 'Couleurs fidèles'), 'not published before moderation');
+    $o->get('/admin/reviews');
+    $t->contains('Couleurs fidèles', $o->body);
+    $o->post('/admin/reviews/' . $rid, ['action' => 'approve'], '/admin/reviews');
+    $g->get('/product/' . $prod['slug']);
+    $t->contains('Couleurs fidèles', $g->body, 'published');
+});
+$t->test('content: FAQ in French and Arabic, banner with image, gallery hidden without consent', function (TestRunner $t) use ($o, $base, $q6, $jpeg, $mkJpeg): void {
+    $o->post('/admin/content/faqs', ['question' => 'Puis-je choisir la taille exacte ?', 'answer' => 'Oui, au centimètre près dans le configurateur.', 'ar_question' => 'هل يمكنني اختيار المقاس بالضبط؟', 'ar_answer' => 'نعم، بالسنتيمتر في أداة التخصيص.', 'sort_order' => '1', 'is_active' => '1'], '/admin/content?tab=faqs');
+    $g = new Browser($base);
+    $g->get('/faq');
+    $t->contains('Puis-je choisir la taille exacte', $g->body);
+    $g->get('/faq?lang=ar');
+    $t->contains('هل يمكنني اختيار المقاس بالضبط', $g->body);
+    $o->post('/admin/content/banners', ['position' => 'hero', 'title' => 'Collection Ramadan', 'link_url' => 'javascript:alert(1)', 'is_active' => '1'], '/admin/content', ['image' => [$mkJpeg(2000, 900), 'image/jpeg', 'b.jpg']]);
+    $o->follow();
+    $t->assert(str_contains($o->body, 'is-invalid') || str_contains($o->body, 'alert-danger'), 'unsafe link refused');
+    $o->post('/admin/content/banners', ['position' => 'hero', 'title' => 'Collection Ramadan', 'subtitle' => 'Nouvelles toiles', 'button_text' => 'Découvrir', 'link_url' => '/collections', 'sort_order' => '0', 'is_active' => '1'], '/admin/content', ['image' => [$mkJpeg(2000, 900), 'image/jpeg', 'b.jpg']]);
+    $t->assert((int) $q6("SELECT COUNT(*) FROM banners WHERE title = 'Collection Ramadan'") === 1, 'banner saved');
+    $g->get('/lang/fr');
+    $g->get('/');
+    $t->contains('Collection Ramadan', $g->body, 'shown on the home page');
+    $o->post('/admin/content/gallery', ['title' => 'Salon à Casablanca', 'city' => 'Casablanca', 'is_active' => '1'], '/admin/content', ['image' => [$mkJpeg(1200, 900), 'image/jpeg', 'g.jpg']]);
+    $t->equals(0, (int) $q6("SELECT customer_consent FROM gallery_items WHERE title = 'Salon à Casablanca'"));
+    $g->get('/');
+    $t->assert(!str_contains($g->body, 'Salon à Casablanca'), 'not published without consent');
+});
+$t->test('newsletter list, CSV export, unsubscribe; RBAC and Arabic on the new pages', function (TestRunner $t) use ($o, $base, $q6): void {
+    $g = new Browser($base);
+    $g->get('/');
+    $g->request('POST', '/newsletter', ['email' => 'amina.news@client.test', 'consent' => '1', '_token' => $g->token()], [], ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+    $o->get('/admin/newsletter');
+    $t->equals(200, $o->status);
+    $t->contains('amina.news@client.test', $o->body);
+    $t->assert(!str_contains($o->body, 'fan@client.test'), 'unsubscribed addresses are in their own tab');
+    $o->get('/admin/newsletter?status=unsubscribed');
+    $t->contains('fan@client.test', $o->body);
+    $o->get('/admin/newsletter?export=csv');
+    $t->contains('text/csv', $o->headers['content-type'] ?? '');
+    $t->contains('amina.news@client.test', $o->body);
+    $sid = (string) $q6("SELECT id FROM newsletter_subscribers WHERE email = 'amina.news@client.test'");
+    $o->post('/admin/newsletter/' . $sid . '/unsubscribe', [], '/admin/newsletter');
+    $t->equals('unsubscribed', (string) $q6("SELECT status FROM newsletter_subscribers WHERE id = {$sid}"));
+    $d = new Browser($base);
+    $d->post('/admin/login', ['email' => 'designer@berradi.test', 'password' => 'Design2026'], '/admin/login');
+    foreach (['/admin/shipping', '/admin/coupons', '/admin/reviews', '/admin/content', '/admin/newsletter'] as $p) {
+        $d->get($p);
+        $t->equals(403, $d->status, $p);
+    }
+    $o->get('/lang/ar');
+    foreach (['/admin/shipping', '/admin/coupons', '/admin/reviews?status=all', '/admin/content', '/admin/content?tab=faqs', '/admin/newsletter'] as $p) {
+        $o->get($p);
+        $t->equals(200, $o->status, $p);
+        $t->contains('dir="rtl"', $o->body, $p);
+    }
+    $o->get('/lang/fr');
+});
+
 exit($t->finish());

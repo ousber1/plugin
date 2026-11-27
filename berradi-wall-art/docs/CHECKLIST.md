@@ -172,4 +172,23 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Security review: SQL/XSS/CSRF/session/upload/redirect/host-header audit; **fixed** look-alike-referrer open redirect; `docs/SECURITY.md`; live security self-check on the Maintenance page | ✅ | HTTP (redirect test) + review |
 | RBAC on reports, backups and e-mail log (designer 403); mobile 390 px and RTL without overflow or JS errors | ✅ | HTTP + Playwright |
 
-## Phase 9: Optimization, documentation, final ZIP package ⬜
+## Phase 9: Optimization, back-office completion, documentation, final ZIP package ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Debug profiling headers (time, query count, repeated SQL, slow queries) only when `APP_DEBUG=true` | ✅ | measured on 20 000 synthetic orders |
+| Dashboard monthly series and finance cash flow as grouped queries (90 → 33 and 189 → 25 queries), products report aggregated before join | ✅ | integration (grouped results = per-month sums; report total = line sum) |
+| Every back-office page under ~200 ms PHP time on 20 000 orders; list/report filters use indexes | ✅ | debug headers + `EXPLAIN` |
+| Static assets: 1-year immutable cache for versioned files, 30 days for images, gzip, WOFF2/WebP types | ✅ | `public/.htaccess` (Apache modules guarded by `IfModule`) |
+| Shipping zones and city rates CRUD; accent/case-insensitive duplicate refused; new city rate used by the cart estimate | ✅ | HTTP |
+| Coupons CRUD with validation (percent ≤ 100, unique code case-insensitive); customer applies it; used coupons deactivated, not deleted | ✅ | HTTP |
+| Customer reviews: delivered orders only, one per product and order, verified purchase, hidden until approved, then shown on the product page; staff alert | ✅ | HTTP |
+| Store content: banners (safe links only — `javascript:` refused), customer gallery published only with consent, FAQ in FR + AR on the public FAQ page | ✅ | HTTP |
+| Newsletter: subscribers / unsubscribed tabs, CSV export, unsubscribe | ✅ | HTTP |
+| **Fixed**: a regex validation rule containing `|` was split into two rules (500 on banner save) — array rule syntax | ✅ | HTTP (test failed before the fix) |
+| RBAC on the five new pages (designer 403); Arabic RTL rendering | ✅ | HTTP |
+| Mobile 390 px and desktop, FR and AR, new pages: no overflow, no JS errors (**fixed** newsletter toolbar and shipping rate form overflow; `dir="auto"` on user text) | ✅ | Playwright |
+| *Maintenance → Update* resets OPcache; security check warns about a leftover static `robots.txt` | ✅ | lint + HTTP (maintenance page) |
+| Documentation: README, CHANGELOG, user guide (FR) incl. new modules, cPanel deployment (update procedure, cron duties, OPcache, troubleshooting), architecture performance notes | ✅ | review against the code (each documented behaviour checked in the source) |
+| `bin/build-release.sh`: git archive → no-dev Composer → trimmed vendor → lint → ZIP with installation notes | ✅ | see release verification below |
+| Version 1.0.0 | ✅ | `config/app.php` |

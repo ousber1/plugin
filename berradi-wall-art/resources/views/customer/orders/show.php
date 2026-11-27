@@ -19,6 +19,19 @@
                             <div class="card-header"><?= e(__('account.items')) ?></div>
                             <div class="card-body">
                                 <?= $this->insert('storefront/partials/order_items', ['items' => $items]) ?>
+                                <?php foreach ($reviewable as $rv): ?>
+                                    <form method="post" action="<?= e(route('customer.orders.review', ['number' => $order['order_number']])) ?>" class="border-top pt-3 mt-3" novalidate>
+                                        <?= csrf_field() ?><input type="hidden" name="product_id" value="<?= (int) $rv['product_id'] ?>">
+                                        <p class="fw-semibold mb-2"><?= e(__('reviews.review_title', ['title' => $rv['title']])) ?></p>
+                                        <div class="d-flex flex-wrap gap-3 mb-2" role="radiogroup" aria-label="<?= e(__('reviews.rating')) ?>">
+                                            <?php for ($i = 5; $i >= 1; $i--): ?><label class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="rating" value="<?= $i ?>" <?= $i === 5 ? 'checked' : '' ?>> <span class="text-gold"><?= str_repeat('★', $i) ?></span></label><?php endfor; ?>
+                                        </div>
+                                        <input class="form-control mb-2" name="title" maxlength="191" placeholder="<?= e(__('reviews.title_ph')) ?>" aria-label="<?= e(__('reviews.title_ph')) ?>">
+                                        <textarea class="form-control mb-2" name="body" rows="3" maxlength="3000" placeholder="<?= e(__('reviews.body_ph')) ?>" aria-label="<?= e(__('reviews.your_review')) ?>" required></textarea>
+                                        <button class="btn btn-outline-bwa btn-sm" type="submit"><?= e(__('reviews.send')) ?></button>
+                                        <span class="small text-muted-bwa ms-2"><?= e(__('reviews.moderated')) ?></span>
+                                    </form>
+                                <?php endforeach; ?>
                                 <?= $this->insert('storefront/partials/order_totals', ['order' => $order]) ?>
                             </div>
                         </div>

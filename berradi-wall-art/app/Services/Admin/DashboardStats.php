@@ -129,13 +129,36 @@ final class DashboardStats
     public static function monthly(int $months = 12, ?string $today = null): array
     {
         $start = date('Y-m-01', strtotime(date('Y-m-01', strtotime($today ?? 'now')) . ' -' . ($months - 1) . ' months'));
+        $end = date('Y-m-01', strtotime($start . " +{$months} months"));
+        $db = self::db();
+        // one grouped query per measure (instead of one query per month and measure)
+        $by = fn (array $rows, string $k) => array_column($rows, $k, 'm');
+        $sales = $db->fetchAll(
+            "SELECT DATE_FORMAT(o.placed_at, '%Y-%m') AS m, COALESCE(SUM(grand_total), 0) AS ttc, COALESCE(SUM(grand_total - tax_total), 0) AS ht,
+                    COALESCE(SUM(cost_total), 0) AS cost, COUNT(*) AS n
+             FROM orders o WHERE " . self::active() . ' AND o.placed_at >= ? AND o.placed_at < ? GROUP BY m',
+            [$start, $end]
+        );
+        $ship = $by($db->fetchAll(
+            "SELECT DATE_FORMAT(o.placed_at, '%Y-%m') AS m, COALESCE(SUM(s.shipping_cost), 0) AS v FROM shipments s JOIN orders o ON o.id = s.order_id
+             WHERE " . self::active() . ' AND o.placed_at >= ? AND o.placed_at < ? GROUP BY m',
+            [$start, $end]
+        ), 'v');
+        $exp = $by($db->fetchAll(
+            "SELECT DATE_FORMAT(expense_date, '%Y-%m') AS m, COALESCE(SUM(amount - tax_amount), 0) AS v FROM expenses WHERE expense_date >= ? AND expense_date < ? GROUP BY m",
+            [$start, $end]
+        ), 'v');
+        $s = [];
+        foreach ($sales as $r) {
+            $s[$r['m']] = $r;
+        }
         $out = [];
         for ($i = 0; $i < $months; $i++) {
-            $from = date('Y-m-01', strtotime($start . " +{$i} months"));
-            $to = date('Y-m-01', strtotime($from . ' +1 month'));
-            $s = self::sales($from, $to);
-            $p = self::profit($from, $to);
-            $out[] = ['month' => substr($from, 0, 7), 'sales' => $s['sales'], 'sales_ht' => $s['sales_ht'], 'orders' => $s['orders'], 'profit' => $p['profit']];
+            $m = date('Y-m', strtotime($start . " +{$i} months"));
+            $r = $s[$m] ?? ['ttc' => 0, 'ht' => 0, 'cost' => 0, 'n' => 0];
+            $ht = Money::normalize((string) $r['ht']);
+            $profit = Money::sub(Money::sub(Money::sub($ht, Money::normalize((string) $r['cost'])), Money::normalize((string) ($ship[$m] ?? 0))), Money::normalize((string) ($exp[$m] ?? 0)));
+            $out[] = ['month' => $m, 'sales' => Money::normalize((string) $r['ttc']), 'sales_ht' => $ht, 'orders' => (int) $r['n'], 'profit' => $profit];
         }
         return $out;
     }

@@ -96,12 +96,18 @@ final class ReportService
             'product' => $r['title'], 'sku' => (string) $r['sku'], 'qty' => (int) $r['qty'], 'orders' => (int) $r['orders'],
             'revenue' => self::money($r['revenue']), 'cost' => self::money($r['cost']), 'margin' => Money::sub(self::money($r['revenue']), self::money($r['cost'])),
         ], self::db()->fetchAll(
-            "SELECT COALESCE(p.title, CASE WHEN oi.custom_design_id IS NOT NULL THEN ? ELSE oi.title END) AS title,
-                    CASE WHEN oi.custom_design_id IS NOT NULL THEN 'CUSTOM' ELSE COALESCE(p.sku, oi.sku) END AS sku,
-                    SUM(oi.quantity) AS qty, COUNT(DISTINCT o.id) AS orders, SUM(oi.line_total) AS revenue, SUM(oi.unit_cost * oi.quantity) AS cost
-             FROM order_items oi JOIN orders o ON o.id = oi.order_id LEFT JOIN products p ON p.id = oi.product_id AND oi.custom_design_id IS NULL
-             WHERE " . self::ACTIVE . " AND o.placed_at >= ? AND o.placed_at < ?
-             GROUP BY title, sku ORDER BY revenue DESC LIMIT 200",
+            // aggregate on the narrow grouping key first, then fetch names (fast on large order histories)
+            "SELECT CASE WHEN g.k = 'custom' THEN ? ELSE COALESCE(p.title, g.title) END AS title,
+                    CASE WHEN g.k = 'custom' THEN 'CUSTOM' ELSE COALESCE(p.sku, g.sku) END AS sku, g.qty, g.orders, g.revenue, g.cost
+             FROM (
+                SELECT IF(oi.custom_design_id IS NOT NULL, 'custom', COALESCE(CAST(oi.product_id AS CHAR), CONCAT('t:', oi.title))) AS k,
+                       MIN(oi.product_id) AS pid, MIN(oi.title) AS title, MIN(oi.sku) AS sku,
+                       SUM(oi.quantity) AS qty, COUNT(DISTINCT oi.order_id) AS orders, SUM(oi.line_total) AS revenue, SUM(oi.unit_cost * oi.quantity) AS cost
+                FROM order_items oi JOIN orders o ON o.id = oi.order_id
+                WHERE " . self::ACTIVE . " AND o.placed_at >= ? AND o.placed_at < ?
+                GROUP BY k
+             ) g LEFT JOIN products p ON p.id = g.pid AND g.k <> 'custom'
+             ORDER BY g.revenue DESC LIMIT 200",
             [__('reports.custom_designs'), $from, $to]
         ));
         return [
