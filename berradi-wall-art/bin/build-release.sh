@@ -31,14 +31,12 @@ fi
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 PKG="$WORK/$NAME"
-mkdir -p "$PKG" "$OUT_DIR"
+mkdir -p "$WORK/src" "$OUT_DIR"
 
 # 1. committed files of this project only (works whether the project is the repo root or a sub-folder)
 PREFIX="$(git rev-parse --show-prefix)"
-git archive --format=tar HEAD "${PREFIX:-.}" | tar -x -C "$WORK"
-if [ -n "$PREFIX" ]; then
-  rm -rf "$PKG" && mv "$WORK/${PREFIX%/}" "$PKG"
-fi
+git -C "$(git rev-parse --show-toplevel)" archive --format=tar HEAD ${PREFIX:+"$PREFIX"} | tar -x -C "$WORK/src"
+mv "$WORK/src/${PREFIX%/}" "$PKG"
 
 # 2. development-only files
 rm -rf "$PKG/tests" "$PKG/.github" "$PKG/.devcontainer" "$PKG/.vscode" "$PKG/.idea" "$PKG/dist" \

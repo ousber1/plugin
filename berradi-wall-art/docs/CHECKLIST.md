@@ -192,3 +192,6 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Documentation: README, CHANGELOG, user guide (FR) incl. new modules, cPanel deployment (update procedure, cron duties, OPcache, troubleshooting), architecture performance notes | ✅ | review against the code (each documented behaviour checked in the source) |
 | `bin/build-release.sh`: git archive → no-dev Composer → trimmed vendor → lint → ZIP with installation notes | ✅ | see release verification below |
 | Version 1.0.0 | ✅ | `config/app.php` |
+| Release ZIP contents: `vendor/` (Dompdf with fonts, PHPMailer, optimized autoloader), installation notes; no `.env`, lock file, tests, logs, customer files or backups | ✅ | archive listing |
+| Release ZIP works as shipped: extracted, test harness and router placed **inside** the extracted copy, fresh database → full HTTP suite (installer → orders → invoices/PDF → Phase 9 modules) | ✅ | 96/96 tests, 666 assertions, no application error |
+| Final browser sweep on the packaged install: 25 storefront + back-office pages × FR/AR × 390/1280 px | ✅ | Playwright: 104 loads, no HTTP/JS error, no overflow, correct `dir` |
