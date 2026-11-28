@@ -19,7 +19,7 @@ final class ShopController extends Controller
     private function filters(): array
     {
         $f = [];
-        foreach (['q', 'type', 'min', 'max', 'sort', 'flag', 'category'] as $k) {
+        foreach (['q', 'type', 'min', 'max', 'sort', 'flag', 'category', 'for', 'occasion'] as $k) {
             $v = $this->request->query($k);
             if (is_string($v) && trim($v) !== '') {
                 $f[$k] = mb_substr(trim($v), 0, 100);
@@ -34,7 +34,7 @@ final class ShopController extends Controller
         $filters = array_merge($this->filters(), $fixed);
         $products = CatalogService::listing($filters, 24);
         $categories = CatalogService::categories();
-        $noindex = count(array_diff_key($filters, array_flip(['category', 'flag', 'family']))) > 0;
+        $noindex = count(array_diff_key($filters, array_flip(['category', 'flag', 'family', 'for', 'occasion']))) > 0;
         $seo = SeoService::page(
             (string) ($context['seo_title'] ?? $context['heading']),
             $context['seo_description'] ?? $context['intro'] ?? null,
@@ -155,6 +155,38 @@ final class ShopController extends Controller
             'action' => url(ltrim($paths[$family], '/')),
             'canonical' => $paths[$family],
             'breadcrumbs' => [[__('nav.home'), '/'], [__('universe.' . $family . '_title'), null]],
+            'landing' => $family,
         ], ['family' => $family]);
+    }
+
+    /** "Cadeaux pour Maman…" */
+    public function recipient(string $slug): Response
+    {
+        return $this->tagPage('recipient', 'for', $slug, '/gifts-for/');
+    }
+
+    /** "Cadeaux d'anniversaire…" */
+    public function occasion(string $slug): Response
+    {
+        return $this->tagPage('occasion', 'occasion', $slug, '/occasion/');
+    }
+
+    private function tagPage(string $type, string $filterKey, string $slug, string $prefix): Response
+    {
+        $tag = \App\Services\Catalog\Tags::find($type, $slug);
+        if ($tag === null) {
+            throw new \App\Core\HttpException(404);
+        }
+        $title = __('gifts.' . $type . '_title', ['name' => $tag['name']]);
+        return $this->render([
+            'heading' => $title,
+            'intro' => __('gifts.' . $type . '_intro', ['name' => mb_strtolower($tag['name'])]),
+            'eyebrow' => __('universe.eyebrow'),
+            'action' => url(ltrim($prefix . $slug, '/')),
+            'canonical' => $prefix . $slug,
+            'breadcrumbs' => [[__('nav.home'), '/'], [__('universe.gift_title'), '/personalized-gifts'], [$title, null]],
+            'landing' => 'gift',
+            'activeTag' => $tag,
+        ], [$filterKey => $slug]);
     }
 }

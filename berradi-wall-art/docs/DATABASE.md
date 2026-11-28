@@ -1,6 +1,6 @@
 # Database schema
 
-MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 70 tables (incl. `migrations`) · 116 foreign keys.
+MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 72 tables (incl. `migrations`) · 118 foreign keys.
 Source of truth: `database/migrations/*.php`. A single importable file is generated with
 `php bin/console schema:dump` → `database/schema.sql`.
 
@@ -19,6 +19,7 @@ Money: `DECIMAL(12,2)` (unit costs `DECIMAL(12,4)`, quantities `DECIMAL(14,3)`, 
 | 000009 document_access | secret-link hashes on `quotations` / `invoices`, invoice `sent_at` |
 | 000011 print_shop_products (v1.2) | `products.product_type` + gift / laser families, `option1_name`, `option2_name`, `requires_proof`, `min_qty`, `max_qty`, `production_days`; `product_variants.option1/option2/color_hex`; `product_personalization_fields` (text, message, photo, font, choice, date — extra price, printed area), `product_price_tiers` (quantity breaks), `product_components` (bill of materials per product / variant); production stages `engrave`, `press`, `assemble`; `machines.work_width_mm/work_height_mm/power_w`; stock categories `blank`, `wood`, `acrylic`, `leather`, `sublimation`, `textile`; `order_customizations.field_key` |
 | 000010 payments_seo_tracking (v1.1) | `payment_methods` + `min_order_amount`, `max_order_amount`, `test_mode`; `seo_pages` (title / description / noindex per page and language), `seo_redirects` (301/302 with hit counter), `seo_not_found` (404 monitor), `tracking_events` (Meta Conversions API queue, unique per event id) |
+| 000012 gift_tags (v1.3) | `product_tags` (recipient / occasion, slug, icon, order), `product_tag_map` (product ↔ tag) |
 
 ## Order statuses (`orders.status`)
 `new`, `awaiting_confirmation`, `confirmed`, `awaiting_artwork_approval`, `approved_for_production`,

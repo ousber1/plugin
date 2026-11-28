@@ -7,6 +7,8 @@ foreach (\App\Services\CatalogService::SORTS as $s) {
 $activeFilters = array_diff_key($filters, $fixed, ['sort' => 1]);
 $query = fn (array $override) => $action . '?' . http_build_query(array_filter(array_merge(array_diff_key($filters, $fixed), $override), fn ($v) => $v !== null && $v !== ''));
 ?>
+<?php $isLanding = !empty($landing); ?>
+<?php if (!$isLanding || !empty($activeTag)): ?>
 <section class="page-hero<?= !empty($heroImage) ? ' has-image' : '' ?>">
     <?php if (!empty($heroImage)): ?><img src="<?= e(upload_url($heroImage)) ?>" alt="" class="page-hero-bg"><?php endif; ?>
     <div class="container position-relative">
@@ -16,15 +18,18 @@ $query = fn (array $override) => $action . '?' . http_build_query(array_filter(a
         <?php if (!empty($intro)): ?><p class="page-lead"><?= e($intro) ?></p><?php endif; ?>
     </div>
 </section>
+<?php endif; ?>
+<?php if ($isLanding): ?><?= $this->insert('storefront/shop/landing_top', ['landing' => $landing, 'heading' => $heading, 'intro' => $intro ?? '', 'activeTag' => $activeTag ?? null]) ?><?php endif; ?>
 
-<section class="section-sm pt-4">
+
+<section class="section-sm pt-4" id="products">
     <div class="container">
         <div class="row g-4">
-            <aside class="col-lg-3">
-                <button class="btn btn-outline-bwa w-100 d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#shopFilters" aria-expanded="false" aria-controls="shopFilters">
+            <aside class="<?= $isLanding ? 'col-12' : 'col-lg-3' ?>">
+                <button class="btn btn-outline-bwa <?= $isLanding ? 'btn-sm' : 'w-100 d-lg-none' ?> mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#shopFilters" aria-expanded="false" aria-controls="shopFilters">
                     <i class="bi bi-sliders me-1"></i><?= e(__('shop.filters')) ?><?= $activeFilters ? ' (' . count($activeFilters) . ')' : '' ?>
                 </button>
-                <div class="collapse d-lg-block" id="shopFilters">
+                <div class="collapse<?= $isLanding ? '' : ' d-lg-block' ?>" id="shopFilters">
                     <form method="get" action="<?= e($action) ?>" class="shop-filters" data-autosubmit>
                         <?php if (isset($filters['sort'])): ?><input type="hidden" name="sort" value="<?= e($filters['sort']) ?>"><?php endif; ?>
                         <div class="filter-block">
@@ -60,6 +65,15 @@ $query = fn (array $override) => $action . '?' . http_build_query(array_filter(a
                                 </ul>
                             </div>
                         <?php endif; ?>
+                        <?php foreach (['for' => 'recipient', 'occasion' => 'occasion'] as $fk => $tt): if (isset($fixed[$fk])) continue; $tagList = array_values(array_filter(\App\Services\Catalog\Tags::all($tt), fn ($x) => $x['product_count'] > 0)); if ($tagList === []) continue; ?>
+                            <div class="filter-block">
+                                <label class="filter-title" for="f<?= $fk ?>"><?= e(__('gifts.filter_' . $tt)) ?></label>
+                                <select id="f<?= $fk ?>" name="<?= $fk ?>" class="form-select">
+                                    <option value=""><?= e(__('gifts.all')) ?></option>
+                                    <?php foreach ($tagList as $tg): ?><option value="<?= e($tg['slug']) ?>" <?= ($filters[$fk] ?? '') === $tg['slug'] ? 'selected' : '' ?>><?= e($tg['name']) ?></option><?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php endforeach; ?>
                         <div class="filter-block">
                             <span class="filter-title"><?= e(__('shop.product_type')) ?></span>
                             <select name="type" class="form-select">
@@ -95,7 +109,7 @@ $query = fn (array $override) => $action . '?' . http_build_query(array_filter(a
                     </form>
                 </div>
             </aside>
-            <div class="col-lg-9">
+            <div class="<?= $isLanding ? 'col-12' : 'col-lg-9' ?>">
                 <div class="shop-toolbar">
                     <span class="text-muted-bwa small"><?= e(__('shop.count', ['count' => $products->total])) ?></span>
                     <form method="get" action="<?= e($action) ?>" class="d-flex align-items-center gap-2" data-autosubmit>
@@ -115,6 +129,8 @@ $query = fn (array $override) => $action . '?' . http_build_query(array_filter(a
                                 'min' => __('shop.min') . ' ' . $v,
                                 'max' => __('shop.max') . ' ' . $v,
                                 'category' => (array_values(array_filter($categories, fn ($c) => $c['slug'] === $v))[0]['name'] ?? $v),
+                                'for' => (\App\Services\Catalog\Tags::find('recipient', (string) $v)['name'] ?? $v),
+                                'occasion' => (\App\Services\Catalog\Tags::find('occasion', (string) $v)['name'] ?? $v),
                                 default => '« ' . $v . ' »',
                             }; ?>
                             <a class="filter-chip" href="<?= e($query([$k => null, 'page' => null])) ?>"><?= e($label) ?> <i class="bi bi-x"></i></a>
@@ -128,10 +144,11 @@ $query = fn (array $override) => $action . '?' . http_build_query(array_filter(a
                         <?php if ($activeFilters): ?><a class="btn btn-outline-bwa" href="<?= e($action) ?>"><?= e(__('shop.reset')) ?></a><?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <?= $this->insert('storefront/partials/product_grid', ['items' => $products->items, 'rowClass' => 'row-cols-2 row-cols-md-3']) ?>
+                    <?= $this->insert('storefront/partials/product_grid', ['items' => $products->items, 'rowClass' => $isLanding ? 'row-cols-2 row-cols-md-3 row-cols-xl-4' : 'row-cols-2 row-cols-md-3']) ?>
                     <?php if ($products->hasPages()): ?><div class="d-flex justify-content-center mt-5"><?= $products->links() ?></div><?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </section>
+<?php if ($isLanding): ?><?= $this->insert('storefront/shop/landing_bottom', ['landing' => $landing]) ?><?php endif; ?>

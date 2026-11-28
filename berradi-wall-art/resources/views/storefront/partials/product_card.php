@@ -21,7 +21,8 @@ $effect = match ($p['product_type']) {
             <?php if ($p['on_sale']): ?><span class="pbadge is-sale">-<?= (int) $p['discount_percent'] ?>%</span><?php endif; ?>
             <?php if ((int) $p['is_new'] === 1): ?><span class="pbadge"><?= e(__('shop.badge_new')) ?></span><?php endif; ?>
             <?php if ((int) $p['is_best_seller'] === 1): ?><span class="pbadge is-dark"><?= e(__('shop.badge_best')) ?></span><?php endif; ?>
-            <?php if ((int) $p['is_customizable'] === 1): ?><span class="pbadge is-gold"><i class="bi bi-camera"></i></span><?php endif; ?>
+            <?php if ((int) $p['is_customizable'] === 1 || (int) ($p['perso_photo'] ?? 0) > 0): ?><span class="pbadge is-gold" title="<?= e(__('gifts.badge_photo')) ?>"><i class="bi bi-camera"></i> <?= e(__('gifts.badge_photo')) ?></span>
+            <?php elseif ((int) ($p['perso_count'] ?? 0) > 0): ?><span class="pbadge is-gold"><i class="bi bi-pencil"></i> <?= e(__('gifts.badge_text')) ?></span><?php endif; ?>
         </span>
         <?php if ($p['out_of_stock']): ?><span class="product-soldout"><?= e(__('shop.out_of_stock')) ?></span><?php endif; ?>
     </a>
@@ -39,5 +40,21 @@ $effect = match ($p['product_type']) {
                 <span>(<?= (int) $p['review_count'] ?>)</span>
             </div>
         <?php endif; ?>
+        <?php
+        $router = app()->router();
+        $personal = (int) ($p['perso_count'] ?? 0) > 0 || (int) $p['is_customizable'] === 1;
+        ?>
+        <div class="product-cta">
+            <?php if ($p['out_of_stock']): ?>
+                <a class="btn btn-outline-bwa btn-sm w-100" href="<?= e($url) ?>"><?= e(__('gifts.see_product')) ?></a>
+            <?php elseif ($personal): ?>
+                <a class="btn btn-bwa btn-sm w-100" href="<?= e((int) $p['is_customizable'] === 1 && $router->has('builder.index') ? route('builder.index', ['product' => $p['slug']]) : $url) ?>"><i class="bi bi-pencil-square me-1"></i><?= e(__('gifts.personalize')) ?></a>
+            <?php elseif ((int) ($p['variant_count'] ?? 1) > 0 || !$router->has('cart.add')): ?>
+                <a class="btn btn-outline-bwa btn-sm w-100" href="<?= e($url) ?>"><?= e(__('gifts.choose')) ?></a>
+            <?php else: ?>
+                <form method="post" action="<?= e(route('cart.add')) ?>"><?= csrf_field() ?><input type="hidden" name="product_id" value="<?= (int) $p['id'] ?>"><input type="hidden" name="quantity" value="1">
+                    <button class="btn btn-bwa btn-sm w-100" type="submit"><i class="bi bi-basket me-1"></i><?= e(__('gifts.add_to_basket')) ?></button></form>
+            <?php endif; ?>
+        </div>
     </div>
 </article>

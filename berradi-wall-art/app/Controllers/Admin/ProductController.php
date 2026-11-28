@@ -108,6 +108,9 @@ final class ProductController extends Controller
             'stockItems' => $db->fetchAll('SELECT id, sku, name, unit FROM materials WHERE is_active = 1 ORDER BY category, name'),
             'variantAr' => $id ? \App\Services\Admin\ProductExtras::variantTranslations($id) : [],
             'laserBed' => \App\Services\Admin\ProductExtras::laserBed(),
+            'recipientTags' => \App\Services\Catalog\Tags::all('recipient', false),
+            'occasionTags' => \App\Services\Catalog\Tags::all('occasion', false),
+            'selTags' => $id ? \App\Services\Catalog\Tags::forProduct($id) : [],
         ];
     }
 
@@ -222,6 +225,7 @@ final class ProductController extends Controller
     {
         [$row, $ar, $m, $f, $r] = $this->validated(null);
         $id = CatalogAdmin::saveProduct(null, $row, $ar, $m, $f, $r);
+        \App\Services\Catalog\Tags::saveForProduct($id, $this->tagIds());
         $this->storeUploadedImages($id);
         $this->flash('success', __('admin.product_created'));
         return $this->redirectRoute('admin.products.edit', ['id' => $id]);
@@ -232,6 +236,7 @@ final class ProductController extends Controller
         $p = $this->find($id);
         [$row, $ar, $m, $f, $r] = $this->validated((int) $p['id']);
         CatalogAdmin::saveProduct((int) $p['id'], $row, $ar, $m, $f, $r);
+        \App\Services\Catalog\Tags::saveForProduct((int) $p['id'], $this->tagIds());
         $this->storeUploadedImages((int) $p['id']);
         $this->flash('success', __('common.saved'));
         return $this->redirect(route('admin.products.edit', ['id' => $p['id']]) . '#' . $this->request->str('tab', 'general'));
@@ -512,5 +517,12 @@ final class ProductController extends Controller
             }
         }
         return $out;
+    }
+
+    /** @return list<int> recipient / occasion tags ticked on the form */
+    private function tagIds(): array
+    {
+        $v = $this->request->input('tags', []);
+        return is_array($v) ? array_values(array_filter(array_map('intval', $v), fn ($i) => $i > 0)) : [];
     }
 }

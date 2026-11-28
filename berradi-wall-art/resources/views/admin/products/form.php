@@ -79,6 +79,18 @@ foreach (\App\Services\CatalogService::TYPES as $t) {
                     </div>
                     <?= $this->insert('partials/field', ['name' => 'sort_order', 'label' => __('admin.sort_order'), 'type' => 'number', 'value' => $v('sort_order', 0), 'form' => 'product-form']) ?>
                 </div></div>
+                <?php $oldTags = old('tags', null); $selected = is_array($oldTags) ? array_map('intval', $oldTags) : $selTags; ?>
+                <div class="admin-card mt-3"><div class="card-body">
+                    <?php foreach (['recipient' => $recipientTags, 'occasion' => $occasionTags] as $tt => $list): if ($list === []) continue; ?>
+                        <span class="filter-title"><?= e(__('gifts.admin_' . $tt)) ?></span>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <?php foreach ($list as $tg): ?>
+                                <label class="chip chip-sm"><input type="checkbox" name="tags[]" value="<?= (int) $tg['id'] ?>" form="product-form" <?= in_array((int) $tg['id'], $selected, true) ? 'checked' : '' ?>><span><?= e($tg['name']) ?></span></label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="form-text"><?= e(__('gifts.admin_tags_help')) ?></div>
+                </div></div>
             </div>
         </div>
     </div>

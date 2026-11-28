@@ -119,4 +119,22 @@ final class ContentController extends Controller
         $this->flash('success', __('common.deleted'));
         return $this->redirect(route('admin.content.index', ['tab' => $type]));
     }
+
+    /** Announcement strip under the header (two messages, FR / AR, optional link). */
+    public function announcements(): Response
+    {
+        $rules = [];
+        foreach ([1, 2] as $n) {
+            $rules["promo_bar_{$n}_text"] = 'nullable|max:120';
+            $rules["promo_bar_{$n}_text_ar"] = 'nullable|max:120';
+            $rules["promo_bar_{$n}_link"] = ['nullable', 'max:255', 'regex:/^(\/[^\s]*|https:\/\/[^\s]+)$/'];
+        }
+        $d = $this->validate($rules, ['promo_bar_1_link' => __('content.link'), 'promo_bar_2_link' => __('content.link')]);
+        foreach (array_keys($rules) as $k) {
+            \App\Services\SettingsService::set($k, trim((string) ($d[$k] ?? '')), 'content');
+        }
+        ActivityLogger::log('content.announcements_saved');
+        $this->flash('success', __('common.saved'));
+        return $this->redirect(route('admin.content.index') . '#announcements');
+    }
 }

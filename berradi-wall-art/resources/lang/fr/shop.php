@@ -18,7 +18,7 @@ return [
     'filters' => 'Filtres',
     'apply' => 'Appliquer',
     'reset' => 'Réinitialiser',
-    'count' => ':count œuvre(s)',
+    'count' => ':count produit(s)',
     'sort_by' => 'Trier par',
     'sort_featured' => 'Sélection',
     'sort_newest' => 'Nouveautés',

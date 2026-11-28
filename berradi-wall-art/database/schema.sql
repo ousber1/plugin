@@ -1,4 +1,4 @@
--- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-28 13:18
+-- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-28 13:48
 -- Optional: import with phpMyAdmin, then run the web installer anyway: it detects the
 -- migrations already applied and only inserts the default data (roles, settings...).
 
@@ -1500,5 +1500,32 @@ ALTER TABLE materials
 ALTER TABLE order_customizations ADD COLUMN field_key VARCHAR(40) NULL COMMENT 'personalisation field of a gift' AFTER panel_index;
 
 INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000011_print_shop_products', 1);
+
+-- 2026_01_01_000012_gift_tags
+CREATE TABLE IF NOT EXISTS product_tags (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag_type ENUM('recipient','occasion') NOT NULL,
+    slug VARCHAR(80) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    icon VARCHAR(40) NULL COMMENT 'Bootstrap icon name',
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_product_tags_slug (tag_type, slug),
+    KEY idx_product_tags_type (tag_type, is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS product_tag_map (
+    product_id INT UNSIGNED NOT NULL,
+    tag_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (product_id, tag_id),
+    KEY idx_ptm_tag (tag_id),
+    CONSTRAINT fk_ptm_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_ptm_tag FOREIGN KEY (tag_id) REFERENCES product_tags (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000012_gift_tags', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;

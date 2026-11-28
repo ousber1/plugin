@@ -57,7 +57,9 @@ final class CatalogService
                        " . self::displaySql() . " AS display_price,
                        COALESCE(v.min_regular, p.selling_price) AS compare_price,
                        c.name AS category_name, c.slug AS category_slug,
-                       COALESCE(r.avg_rating, 0) AS avg_rating, COALESCE(r.review_count, 0) AS review_count
+                       COALESCE(r.avg_rating, 0) AS avg_rating, COALESCE(r.review_count, 0) AS review_count,
+                       (SELECT COUNT(*) FROM product_personalization_fields pf WHERE pf.product_id = p.id) AS perso_count,
+                       (SELECT COUNT(*) FROM product_personalization_fields pf WHERE pf.product_id = p.id AND pf.field_type = 'photo') AS perso_photo
                 FROM products p
                 LEFT JOIN categories c ON c.id = p.category_id
                 LEFT JOIN (
@@ -142,7 +144,14 @@ final class CatalogService
             $w[] = 'p.collection_id = :col';
             $params['col'] = (int) $f['collection'];
         }
-        // universes: wall art / personalised gifts / laser (Catalog\ProductFamily)
+        // shop by recipient / occasion (Catalog\Tags)
+        foreach (['for' => 'recipient', 'occasion' => 'occasion'] as $fk => $tagType) {
+            if (!empty($f[$fk]) && preg_match('/^[a-z0-9-]{1,80}$/', (string) $f[$fk])) {
+                $w[] = "EXISTS (SELECT 1 FROM product_tag_map ptm JOIN product_tags pt ON pt.id = ptm.tag_id WHERE ptm.product_id = p.id AND pt.tag_type = '{$tagType}' AND pt.slug = :tag_{$fk})";
+                $params['tag_' . $fk] = (string) $f[$fk];
+            }
+        }
+                // universes: wall art / personalised gifts / laser (Catalog\ProductFamily)
         if (!empty($f['family']) && isset(Catalog\ProductFamily::FAMILIES[$f['family']])) {
             $types = Catalog\ProductFamily::FAMILIES[$f['family']];
             $w[] = "p.product_type IN ('" . implode("','", $types) . "')"; // constants, not user input
@@ -539,5 +548,18 @@ final class CatalogService
             }
         }
         return $out;
+    }
+
+    /** Photos of a universe's products for landing-page collages. @return list<string> */
+    public static function familyImages(string $family, int $limit = 5): array
+    {
+        if (!isset(Catalog\ProductFamily::FAMILIES[$family])) {
+            return [];
+        }
+        $in = "'" . implode("','", Catalog\ProductFamily::FAMILIES[$family]) . "'";
+        return array_column(Database::instance()->fetchAll(
+            "SELECT main_image FROM products WHERE product_type IN ({$in}) AND is_active = 1 AND deleted_at IS NULL AND main_image IS NOT NULL
+             ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT " . max(1, min(12, $limit))
+        ), 'main_image');
     }
 }

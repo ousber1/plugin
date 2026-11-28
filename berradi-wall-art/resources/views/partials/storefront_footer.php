@@ -50,6 +50,15 @@ $socials = array_filter([
             </div>
         </div>
     </div>
+    <?php $payMethods = \App\Core\App::instance()->isInstalled() ? \App\Services\Payments\PaymentRegistry::available() : []; ?>
+    <?php if ($payMethods !== []): ?>
+        <div class="container footer-pay">
+            <span class="fp-label"><?= e(__('gifts.payment_methods')) ?></span>
+            <?php foreach ($payMethods as $pm): ?>
+                <span class="fp-chip"><i class="bi <?= (int) $pm['is_online'] ? 'bi-credit-card' : ($pm['code'] === 'cod' ? 'bi-cash-stack' : ($pm['code'] === 'bank_transfer' ? 'bi-bank' : 'bi-wallet2')) ?>"></i><?= e($pm['name']) ?></span>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
     <div class="footer-bottom py-3">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
             <span>&copy; <?= date('Y') ?> <?= e($company) ?>. <?= e(__('common.rights')) ?></span>

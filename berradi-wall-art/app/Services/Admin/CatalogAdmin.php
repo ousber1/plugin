@@ -136,12 +136,28 @@ final class CatalogAdmin
             foreach ($db->fetchAll('SELECT path, thumb_path, alt, sort_order FROM product_images WHERE product_id = ?', [$id]) as $img) {
                 $db->insert('product_images', $img + ['product_id' => $newId]);
             }
+            $variantMap = [];
             foreach ($db->fetchAll('SELECT * FROM product_variants WHERE product_id = ?', [$id]) as $v) {
+                $oldVid = (int) $v['id'];
                 unset($v['id'], $v['created_at'], $v['updated_at']);
                 $v['product_id'] = $newId;
                 $v['sku'] = self::uniqueSku('product_variants', $v['sku'] . '-C');
-                $db->insert('product_variants', $v);
+                $variantMap[$oldVid] = $db->insert('product_variants', $v);
+                $db->query("INSERT INTO translations (entity_type, entity_id, locale, field, value) SELECT entity_type, ?, locale, field, value FROM translations WHERE entity_type = 'product_variant' AND entity_id = ?", [$variantMap[$oldVid], $oldVid]);
             }
+            // gifts & laser: personalisation fields (with their Arabic texts), price breaks, bill of materials, tags
+            foreach ($db->fetchAll('SELECT * FROM product_personalization_fields WHERE product_id = ?', [$id]) as $f) {
+                $oldFid = (int) $f['id'];
+                unset($f['id'], $f['created_at'], $f['updated_at']);
+                $newFid = $db->insert('product_personalization_fields', ['product_id' => $newId] + $f);
+                $db->query("INSERT INTO translations (entity_type, entity_id, locale, field, value) SELECT entity_type, ?, locale, field, value FROM translations WHERE entity_type = 'personalization_field' AND entity_id = ?", [$newFid, $oldFid]);
+            }
+            $db->query('INSERT INTO product_price_tiers (product_id, min_qty, discount_percent) SELECT ?, min_qty, discount_percent FROM product_price_tiers WHERE product_id = ?', [$newId, $id]);
+            foreach ($db->fetchAll('SELECT * FROM product_components WHERE product_id = ?', [$id]) as $c) {
+                $db->insert('product_components', ['product_id' => $newId, 'product_variant_id' => $c['product_variant_id'] !== null ? ($variantMap[(int) $c['product_variant_id']] ?? null) : null,
+                    'material_id' => (int) $c['material_id'], 'quantity' => $c['quantity']]);
+            }
+            $db->query('INSERT INTO product_tag_map (product_id, tag_id) SELECT ?, tag_id FROM product_tag_map WHERE product_id = ?', [$newId, $id]);
             $db->query('INSERT INTO product_material_map (product_id, product_material_id, price_adjustment) SELECT ?, product_material_id, price_adjustment FROM product_material_map WHERE product_id = ?', [$newId, $id]);
             $db->query('INSERT INTO product_frame_map (product_id, frame_id) SELECT ?, frame_id FROM product_frame_map WHERE product_id = ?', [$newId, $id]);
             $db->query('INSERT INTO product_option_map (product_id, customization_option_id) SELECT ?, customization_option_id FROM product_option_map WHERE product_id = ?', [$newId, $id]);

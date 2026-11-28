@@ -251,6 +251,7 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->post('/content/{type}', [ContentController::class, 'save'])->name('content.store');
             $router->post('/content/{type}/{id}', [ContentController::class, 'save'])->name('content.update');
             $router->post('/content/{type}/{id}/delete', [ContentController::class, 'destroy'])->name('content.destroy');
+            $router->post('/content-announcements', [ContentController::class, 'announcements'])->name('content.announcements');
         });
         $router->group(['middleware' => ['can:marketing.manage']], function ($router): void {
             $seo = \App\Controllers\Admin\SeoController::class;

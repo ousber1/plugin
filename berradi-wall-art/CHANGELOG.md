@@ -4,6 +4,36 @@ All notable changes to BERRADI WALL ART. Versions follow [semantic versioning](h
 Database changes are applied by *Maintenance → Update* (or `php bin/console migrate`); they only add tables,
 columns and indexes.
 
+## [1.3.0] — 2026-11-28
+
+Gift-shop storefront: a header and navigation built like the big personalised-gift shops, in BERRADI's own
+colours and wording. Database update: migration `000012` + seed data (run *Maintenance → Update*). Products,
+orders and prices are unchanged.
+
+### Header & navigation
+- New header: large search bar, account / order tracking / basket (with count) icons, and a category bar.
+- **Mega menus** for each universe (wall art, personalised gifts, laser): "Je cherche…" picture tiles, all
+  categories, "Pour qui ?" and "Par occasion" columns. Built automatically from categories that have products and
+  photos — nothing to maintain. On phones it becomes an accordion menu.
+- **Announcement strip** (two messages under the menu, FR / AR, optional link): *Contenu boutique → Bandeau d'annonces*.
+
+### Recipients & occasions
+- 12 recipients (Maman, Papa, Femme, Mari, Couple, Grands-parents, Enfants, Bébé, Amis, Collègues, Enseignants)
+  and 12 occasions (Anniversaire, Mariage, Naissance, Fête des mères / pères, Aïd, Ramadan, Saint-Valentin,
+  Diplôme, Entreprise, Crémaillère, Merci), in French and Arabic.
+- Tick them on each product (*Produits → produit → « Pour qui ? / Occasions »*); the gift templates are tagged already.
+- Pages `/gifts-for/{slug}` and `/occasion/{slug}`, "Pour qui ?" and "Occasion" filters in the shop. A recipient
+  or occasion only appears once at least one active product has it.
+
+### Landing pages & product cards
+- Universe pages: hero with photo collage and "add a photo / add a text" bubbles, recipient pills, categories as
+  round icons, occasions grid, information tabs, FAQ and real customer reviews; 4 products per row.
+- Product cards: "Photo" / "Texte" badges and a direct button — *Ajouter au panier* (simple product),
+  *Choisir* (variants), *Personnaliser* (personalised product).
+- Home page: "Pour qui ?" and occasions section. Footer: accepted payment methods.
+- Duplicating a product now also copies variants' Arabic texts, personalisation fields, price breaks, bill of
+  materials and recipient / occasion tags.
+
 ## [1.2.0] — 2026-11-28
 
 From a wall-art shop to a complete print shop. Database update: migration `000011` + seed data (run

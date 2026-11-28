@@ -97,6 +97,27 @@ $arrow = is_rtl() ? 'left' : 'right';
 </section>
 <?php endif; ?>
 
+<!-- 2c. Find the perfect gift: by recipient and occasion -->
+<?php $navMenu = \App\Services\Catalog\Navigation::menu(); ?>
+<?php if (($navMenu['recipients'] !== [] || $navMenu['occasions'] !== []) && app()->router()->has('shop.recipient')): ?>
+<section class="section-sm">
+    <div class="container text-center">
+        <h2 class="section-title mb-2"><?= e(__('gifts.home_title')) ?></h2>
+        <p class="text-muted-bwa mb-4"><?= e(__('gifts.home_lead')) ?></p>
+        <?php if ($navMenu['recipients'] !== []): ?>
+            <div class="pill-row justify-content-center mb-4">
+                <?php foreach ($navMenu['recipients'] as $r): ?><a class="pill" href="<?= e(route('shop.recipient', ['slug' => $r['slug']])) ?>"><?= e($r['name']) ?></a><?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        <?php if ($navMenu['occasions'] !== []): ?>
+            <div class="occasion-grid">
+                <?php foreach ($navMenu['occasions'] as $o): ?><a class="occasion-card" href="<?= e(route('shop.occasion', ['slug' => $o['slug']])) ?>"><i class="bi bi-<?= e((string) ($o['icon'] ?: 'calendar-heart')) ?>"></i><span><?= e($o['name']) ?></span></a><?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- 3. Custom photo wall art -->
 <section class="section custom-section">
     <div class="container">

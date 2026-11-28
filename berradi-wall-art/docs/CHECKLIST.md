@@ -232,3 +232,15 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Laser job: 4040 pre-selected on the engraving stage; engraving books 3 keyrings and 3 × 0.02 plywood sheet | ✅ | integration |
 | Back office: template library, personalisation fields FR/AR, tiers (must grow with quantity), bill of materials, option variant generator, Arabic RTL | ✅ | HTTP + Playwright |
 | Storefront: universes pages and home section, option chips, personalisation form, live price (25 mugs → 71.10, back engraving +5), private photo upload through the file picker, no “Sur mon mur” on non-wall products; 1366 / 390 px, FR / AR, no overflow or JS error | ✅ | HTTP + Playwright |
+
+## v1.3: gift-shop storefront — mega menus, recipients & occasions, announcement strip, landing pages ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Migration 000012 (`product_tags`, `product_tag_map`) up / down / up; 12 recipients + 12 occasions FR/AR seeded, idempotent | ✅ | integration |
+| Tags saved from the product form (unknown ids ignored), copied by duplicate together with variants' AR texts, fields, tiers, components | ✅ | integration + HTTP |
+| Shop filters `for` / `occasion` (malformed slug ignored), recipient / occasion pages, unknown slug → 404, AR titles | ✅ | integration + HTTP |
+| Mega menus grouped by universe from categories with products; tags without products hidden | ✅ | integration + HTTP |
+| Announcement strip FR / AR, unsafe link (`javascript:`) refused | ✅ | HTTP |
+| Landing hero, pills, type circles, occasions, info tabs, FAQ, reviews; direct add-to-basket form; footer payment chips | ✅ | HTTP |
+| Desktop mega hover and mobile accordion, 1440 / 390 px, FR / AR, no overflow or JS error | ✅ | Playwright |

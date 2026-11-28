@@ -1803,6 +1803,62 @@ $t->test('order: personalised photo becomes a customisation to approve; laser jo
     $t->contains('Lina', (string) $db->value('SELECT specifications FROM invoice_items WHERE invoice_id = ? AND description LIKE ?', [$invId, '%clés%']));
 });
 
+$t->section('v1.3 gift-shop style: recipients, occasions, menus, landing data');
+$t->test('recipients & occasions seeded (FR/AR), templates tagged, shop filters by recipient and occasion', function (TestRunner $t) use ($db): void {
+    $T = \App\Services\Catalog\Tags::class;
+    $T::forget();
+    $t->equals(12, count($T::all('recipient', false)));
+    $t->equals(12, count($T::all('occasion', false)));
+    $t->equals('لماما', (string) $db->value("SELECT t.value FROM translations t JOIN product_tags g ON g.id = t.entity_id WHERE t.entity_type = 'product_tag' AND g.slug = 'maman'"));
+    $mug = (int) $db->value("SELECT id FROM products WHERE sku = 'MUG-PHOTO'");
+    $tags = $db->fetchAll('SELECT g.tag_type, g.slug FROM product_tag_map m JOIN product_tags g ON g.id = m.tag_id WHERE m.product_id = ?', [$mug]);
+    $t->assert(in_array(['tag_type' => 'recipient', 'slug' => 'maman'], $tags, true), 'mug for Maman');
+    $t->assert(in_array(['tag_type' => 'occasion', 'slug' => 'fete-des-meres'], $tags, true));
+    $L = \App\Services\CatalogService::class;
+    $ids = fn (array $f) => array_map(fn ($p) => (int) $p['id'], $L::listing($f, 100, 1)->items);
+    $t->assert(in_array($mug, $ids(['for' => 'maman']), true), 'filter by recipient');
+    $t->assert(!in_array($mug, $ids(['for' => 'bebe']), true));
+    $t->assert(in_array($mug, $ids(['occasion' => 'anniversaire', 'family' => 'gift']), true), 'occasion + universe');
+    $t->assert(!in_array($mug, $ids(['occasion' => 'anniversaire', 'family' => 'laser']), true));
+    $t->equals($ids([]), $ids(['for' => "x' OR 1=1 --"]), 'malformed slug ignored (same as no filter), never put in the SQL');
+    $T::saveForProduct($mug, [(int) $db->value("SELECT id FROM product_tags WHERE slug = 'bebe'"), 999999]);
+    $t->equals(1, (int) $db->value('SELECT COUNT(*) FROM product_tag_map WHERE product_id = ?', [$mug]), 'unknown tag ids dropped');
+    $t->assert(in_array($mug, $ids(['for' => 'bebe']), true));
+});
+$t->test('menus: categories grouped under their universe, photo tiles and tags only when they have products', function (TestRunner $t) use ($db): void {
+    \App\Services\Catalog\Navigation::forget();
+    \App\Services\Catalog\Tags::forget();
+    $m = \App\Services\Catalog\Navigation::menu();
+    $names = fn (string $f) => array_column($m[$f]['categories'], 'name');
+    $t->assert(in_array('Mugs & gourdes', $names('gift'), true), 'gift sub-category in the gift menu');
+    $t->assert(in_array('Porte-clés & accessoires', $names('gift'), true));
+    $t->assert(in_array('Nature & Paysages', $names('wall'), true), 'wall-art categories in the wall menu');
+    $t->assert(!in_array('Cadeaux personnalisés', $names('wall'), true), 'universe parents are not wall categories');
+    $t->assert(!in_array('Mugs & gourdes', $names('wall'), true));
+    foreach (['wall', 'gift', 'laser'] as $f) {
+        foreach ($m[$f]['tiles'] as $tile) {
+            $t->assert($tile['image'] !== null && $tile['count'] > 0, $f . ' tile has a photo and products');
+        }
+    }
+    foreach ($m['recipients'] as $r) {
+        $t->assert($r['product_count'] > 0, 'only recipients with products in the menu');
+    }
+    $t->assert(count(\App\Services\CatalogService::familyImages('wall', 5)) <= 5);
+});
+$t->test('duplicating a gift copies personalisation (with Arabic), price breaks, bill of materials and tags', function (TestRunner $t) use ($db): void {
+    $src = (int) $db->value("SELECT id FROM products WHERE sku = 'PORTE-CLES-BOIS'");
+    $copy = \App\Services\Admin\CatalogAdmin::duplicate($src);
+    foreach (['product_personalization_fields', 'product_price_tiers', 'product_components', 'product_tag_map', 'product_variants'] as $table) {
+        $t->equals((int) $db->value("SELECT COUNT(*) FROM {$table} WHERE product_id = ?", [$src]), (int) $db->value("SELECT COUNT(*) FROM {$table} WHERE product_id = ?", [$copy]), $table);
+    }
+    $t->equals(
+        (int) $db->value("SELECT COUNT(*) FROM translations t JOIN product_personalization_fields f ON f.id = t.entity_id WHERE t.entity_type = 'personalization_field' AND f.product_id = ?", [$src]),
+        (int) $db->value("SELECT COUNT(*) FROM translations t JOIN product_personalization_fields f ON f.id = t.entity_id WHERE t.entity_type = 'personalization_field' AND f.product_id = ?", [$copy]),
+        'Arabic labels copied'
+    );
+    $t->equals(0, (int) $db->value('SELECT is_active FROM products WHERE id = ?', [$copy]), 'copy hidden');
+});
+
 $demo->remove();
 
 exit($t->finish());

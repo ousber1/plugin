@@ -45,6 +45,24 @@
             });
         }
 
+        // ------------------------------------------------ mega menus: tap to open on phones / tablets
+        document.querySelectorAll('[data-mega-menu] .mega-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const li = btn.closest('.has-mega');
+                const open = !li.classList.contains('open');
+                li.classList.toggle('open', open);
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        });
+        // Escape closes a desktop mega menu opened with the keyboard
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && document.activeElement && document.activeElement.closest('.mega')) {
+                const link = document.activeElement.closest('.has-mega').querySelector('.cat-link');
+                if (link) link.focus();
+                document.activeElement.blur();
+            }
+        });
+
         // ------------------------------------------------ personalised gifts: private photo upload (same endpoint as the photo builder)
         const perso = document.querySelector('[data-perso]');
         if (perso) {

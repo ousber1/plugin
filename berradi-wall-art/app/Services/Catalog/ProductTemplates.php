@@ -20,6 +20,28 @@ use App\Services\TranslationService;
  */
 final class ProductTemplates
 {
+    /** Recipients and occasions given to each template (the owner can change them on the product). */
+    private const TAGS = [
+        'mug_ceramic' => [['maman', 'papa', 'femme', 'mari', 'grand-mere', 'grand-pere', 'amis', 'collegues'], ['anniversaire', 'fete-des-meres', 'fete-des-peres', 'merci', 'entreprise']],
+        'mug_magic' => [['femme', 'mari', 'couple', 'amis'], ['anniversaire', 'saint-valentin']],
+        'bottle_steel' => [['enfants', 'amis', 'collegues', 'enseignants'], ['entreprise', 'diplome', 'merci']],
+        'tshirt_photo' => [['enfants', 'amis', 'couple', 'collegues'], ['anniversaire', 'entreprise']],
+        'cushion_photo' => [['maman', 'grand-mere', 'couple', 'bebe'], ['naissance', 'fete-des-meres', 'saint-valentin', 'cremaillere']],
+        'puzzle_photo' => [['enfants', 'grand-mere', 'grand-pere', 'couple'], ['anniversaire']],
+        'notebook_a5' => [['enseignants', 'collegues', 'enfants'], ['diplome', 'entreprise', 'merci']],
+        'keychain_wood' => [['amis', 'collegues', 'couple', 'papa'], ['mariage', 'naissance', 'entreprise', 'merci']],
+        'cutting_board' => [['maman', 'grand-mere', 'couple'], ['cremaillere', 'mariage', 'fete-des-meres']],
+        'wood_box' => [['couple', 'femme', 'mari', 'bebe'], ['mariage', 'naissance', 'saint-valentin']],
+        'acrylic_led_lamp' => [['couple', 'enfants', 'bebe', 'femme'], ['saint-valentin', 'naissance', 'anniversaire']],
+        'wood_photo_frame' => [['couple', 'grand-mere', 'grand-pere', 'maman'], ['mariage', 'naissance', 'fete-des-meres']],
+        'name_sign_wood' => [['bebe', 'enfants'], ['naissance', 'anniversaire', 'cremaillere']],
+        'wall_decor_wood' => [['couple'], ['cremaillere', 'ramadan', 'aid']],
+        'coasters_wood' => [['couple', 'amis', 'collegues'], ['cremaillere', 'entreprise']],
+        'leather_keychain' => [['papa', 'mari', 'collegues'], ['fete-des-peres', 'entreprise']],
+        'bookmark_wood' => [['enseignants', 'enfants', 'amis'], ['diplome', 'merci']],
+        'acrylic_sign' => [['collegues'], ['entreprise']],
+    ];
+
     /** Field helper: [type, key, label FR, label AR, required, max length, choices, extra price, print w, print h, placeholder FR] */
     private static function f(string $type, string $key, string $fr, string $ar, bool $req = false, ?int $max = null, array $choices = [], string $price = '0', ?float $pw = null, ?float $ph = null, string $ph_fr = ''): array
     {
@@ -266,6 +288,8 @@ final class ProductTemplates
                     $db->insert('product_components', ['product_id' => $id, 'material_id' => (int) $mid, 'quantity' => number_format((float) $qty, 3, '.', '')]);
                 }
             }
+            [$recipients, $occasions] = self::TAGS[$key] ?? [[], []];
+            Tags::attachSlugs($id, $recipients, $occasions);
             ActivityLogger::log('product.created_from_template', 'product', $id, $key);
             Personalization::forget();
             return $id;

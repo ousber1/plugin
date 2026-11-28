@@ -39,6 +39,8 @@ $router->get('/offers', [ShopController::class, 'offers'])->name('shop.offers');
 $router->get('/wall-art', [ShopController::class, 'wallArt'])->name('shop.wall');
 $router->get('/personalized-gifts', [ShopController::class, 'gifts'])->name('shop.gifts');
 $router->get('/laser-engraving', [ShopController::class, 'laser'])->name('shop.laser');
+$router->get('/gifts-for/{slug}', [ShopController::class, 'recipient'])->name('shop.recipient');
+$router->get('/occasion/{slug}', [ShopController::class, 'occasion'])->name('shop.occasion');
 $router->get('/collections', [CollectionController::class, 'index'])->name('collections.index');
 $router->get('/collections/{slug}', [CollectionController::class, 'show'])->name('collections.show');
 $router->get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');

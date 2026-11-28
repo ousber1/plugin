@@ -314,13 +314,13 @@ $t->test('homepage shows real catalogue sections and JSON-LD', function (TestRun
 $t->test('shop listing, filters, sorting, search and pagination', function (TestRunner $t) use ($b): void {
     $b->get('/shop');
     $t->equals(200, $b->status);
-    $t->contains('19 œuvre(s)', $b->body);
+    $t->contains('19 produit(s)', $b->body);
     $t->equals(19, substr_count($b->body, '<article class="product-card">'), 'all 19 cards on one page (24 per page)');
     $b->get('/shop?q=dunes');
-    $t->contains('2 œuvre(s)', $b->body);
+    $t->contains('2 produit(s)', $b->body);
     $t->contains('noindex', $b->body, 'filtered pages not indexed');
     $b->get('/shop?type=framed&sort=price_desc');
-    $t->contains('3 œuvre(s)', $b->body);
+    $t->contains('3 produit(s)', $b->body);
     $b->get('/shop?min=abc&max=%27%20OR%201=1&sort=%3Cscript%3E&type=zzz');
     $t->equals(200, $b->status, 'garbage filters are ignored safely');
     $t->assert(!str_contains($b->body, '<script>'), 'no reflected script');
@@ -2026,6 +2026,76 @@ $t->test('ordering personalised gifts: required photo, private upload, extras, p
     $t->equals(200, $o->status, 'gift photo in the artwork queue');
     $o->get('/admin/orders/' . $oid . '/print');
     $t->contains('Adam', $o->body, 'work order shows what to engrave');
+});
+
+$t->section('v1.3 gift-shop style: header, mega menus, recipients & occasions, landing pages, card buttons');
+$t->test('announcement strip edited in the back office (FR/AR, safe links)', function (TestRunner $t) use ($o, $base): void {
+    $o->post('/admin/content-announcements', ['promo_bar_1_text' => '−10 % sur les mugs avec MUG10', 'promo_bar_1_text_ar' => 'تخفيض 10 % على الأكواب', 'promo_bar_1_link' => 'javascript:alert(1)'], '/admin/content');
+    $o->follow();
+    $t->assert(str_contains($o->body, 'is-invalid') || str_contains($o->body, 'alert-danger'), 'unsafe link refused');
+    $o->post('/admin/content-announcements', ['promo_bar_1_text' => '−10 % sur les mugs avec MUG10', 'promo_bar_1_text_ar' => 'تخفيض 10 % على الأكواب', 'promo_bar_1_link' => '/personalized-gifts', 'promo_bar_2_text' => 'Livraison partout au Maroc'], '/admin/content');
+    $g = new Browser($base);
+    $g->get('/');
+    $t->contains('−10 % sur les mugs avec MUG10', $g->body);
+    $t->contains('class="promo-strip"', $g->body);
+    $t->contains('Livraison partout au Maroc', $g->body);
+    $g->get('/lang/ar');
+    $g->get('/');
+    $t->contains('تخفيض 10 % على الأكواب', $g->body);
+    $g->get('/lang/fr');
+});
+$t->test('header: big search, mega menus built from the catalogue, recipients and occasions with products', function (TestRunner $t) use ($base): void {
+    $g = new Browser($base);
+    $g->get('/');
+    $t->contains('class="header-search"', $g->body);
+    $t->contains('data-mega-menu', $g->body);
+    $t->contains('href="/gifts-for/maman"', $g->body, 'mug (active, for Maman) makes the recipient appear');
+    $t->contains('href="/occasion/anniversaire"', $g->body);
+    $t->assert(!str_contains($g->body, 'href="/gifts-for/enseignants"'), 'recipient without active products hidden');
+    $t->contains('Mugs &amp; gourdes', $g->body, 'gift sub-category in the menu');
+});
+$t->test('recipient and occasion pages, filters, unknown tags 404', function (TestRunner $t) use ($base, &$v12): void {
+    $g = new Browser($base);
+    $g->get('/gifts-for/maman');
+    $t->equals(200, $g->status);
+    $t->contains('Cadeaux pour Maman', $g->body);
+    $t->contains('Mug photo personnalisé', $g->body);
+    $t->assert(!str_contains($g->body, 'Porte-clés en bois gravé'), 'keychain is not tagged for Maman');
+    $t->contains('pill is-active', $g->body);
+    $g->get('/occasion/mariage');
+    $t->contains('Porte-clés en bois gravé', $g->body);
+    $g->get('/gifts-for/inconnu');
+    $t->equals(404, $g->status);
+    $g->get('/shop?occasion=fete-des-meres');
+    $t->contains('Mug photo personnalisé', $g->body);
+    $t->contains('Fête des mères <i class="bi bi-x">', $g->body, 'readable filter chip');
+    $g->get('/sitemap.xml');
+    $g->get('/lang/ar');
+    $g->get('/gifts-for/maman');
+    $t->contains('هدايا لماما', $g->body);
+    $g->get('/lang/fr');
+});
+$t->test('gift landing page and product cards: hero, recipient pills, types, info tabs, FAQ, buttons', function (TestRunner $t) use ($base, $o, $q6, $pdo5, &$v12): void {
+    $g = new Browser($base);
+    $g->get('/personalized-gifts');
+    $t->contains('landing-hero', $g->body);
+    $t->contains('Ajoutez une photo', $g->body);
+    $t->contains('Pour Maman', $g->body);
+    $t->contains('type-circle', $g->body);
+    $t->contains('info-tabs', $g->body);
+    $t->contains('Personnaliser', $g->body, 'personalised product: button opens the product');
+    // a simple product without options can go straight to the basket from its card
+    $o->post('/admin/products', ['title' => 'Carte cadeau papier', 'product_type' => 'gift_other', 'selling_price' => '50', 'min_panels' => '1', 'max_panels' => '1', 'is_active' => '1',
+        'tags' => [(string) $q6("SELECT id FROM product_tags WHERE slug = 'amis'")]], '/admin/products/create');
+    $pid = (int) $q6("SELECT id FROM products WHERE title = 'Carte cadeau papier'");
+    $t->assert($pid > 0, 'created');
+    $t->equals('amis', (string) $q6("SELECT g.slug FROM product_tag_map m JOIN product_tags g ON g.id = m.tag_id WHERE m.product_id = {$pid}"), 'tag saved from the product form');
+    $g->get('/gifts-for/amis');
+    $t->assert(preg_match('#<form method="post" action="[^"]*/cart/add">.*?name="product_id" value="' . $pid . '"#s', $g->body) === 1, 'direct add-to-basket form on the card');
+    $g->post('/cart/add', ['product_id' => (string) $pid, 'quantity' => '1'], '/gifts-for/amis');
+    $g->get('/cart');
+    $t->contains('Carte cadeau papier', $g->body);
+    $t->contains('Paiement à la livraison', (function () use ($base) { $x = new Browser($base); $x->get('/'); return $x->body; })(), 'payment methods in the footer');
 });
 
 exit($t->finish());

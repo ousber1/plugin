@@ -7,6 +7,21 @@ $dtl = fn ($d) => $d ? date('Y-m-d\TH:i', strtotime((string) $d)) : '';
 $sw = fn ($n, $v, $l) => '<label class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" role="switch" name="' . $n . '" value="1" ' . ((int) $v ? 'checked' : '') . '><span class="form-check-label small">' . e($l) . '</span></label>';
 ?>
 <?php if (errors() !== []): ?><div class="alert alert-danger"><?php foreach (errors() as $m): ?><div><?= e(is_array($m) ? (string) ($m[0] ?? '') : (string) $m) ?></div><?php endforeach; ?></div><?php endif; ?>
+<form method="post" action="<?= e(route('admin.content.announcements')) ?>" class="admin-card mb-4" id="announcements" novalidate>
+    <?= csrf_field() ?>
+    <div class="card-body">
+        <h2 class="h6"><i class="bi bi-megaphone me-1 text-gold"></i><?= e(__('gifts.announcements')) ?></h2>
+        <p class="small text-muted-bwa"><?= e(__('gifts.announcements_help')) ?></p>
+        <?php foreach ([1, 2] as $n): ?>
+            <div class="row g-2 mb-2">
+                <div class="col-md-4"><?= $lbl(__('gifts.message_n', ['n' => $n]) . ' (FR)') ?><?= $in("promo_bar_{$n}_text", old("promo_bar_{$n}_text", setting("promo_bar_{$n}_text", '')), 'maxlength="120" placeholder="' . e(__('gifts.message_ph')) . '"') ?></div>
+                <div class="col-md-4"><?= $lbl(__('gifts.message_n', ['n' => $n]) . ' (AR)') ?><?= $in("promo_bar_{$n}_text_ar", old("promo_bar_{$n}_text_ar", setting("promo_bar_{$n}_text_ar", '')), 'maxlength="120" dir="rtl"') ?></div>
+                <div class="col-md-4"><?= $lbl(__('content.link')) ?><?= $in("promo_bar_{$n}_link", old("promo_bar_{$n}_link", setting("promo_bar_{$n}_link", '')), 'maxlength="255" dir="ltr" placeholder="/personalized-gifts"') ?></div>
+            </div>
+        <?php endforeach; ?>
+        <button class="btn btn-sm btn-bwa" type="submit"><?= e(__('common.save')) ?></button>
+    </div>
+</form>
 <ul class="nav settings-tabs border-bottom mb-4" role="tablist" data-hash-tabs>
     <?php foreach (['banners', 'gallery', 'faqs'] as $k): ?><li class="nav-item"><button class="nav-link<?= $tab === $k ? ' active' : '' ?>" data-bs-toggle="tab" data-bs-target="#tab-<?= $k ?>" type="button"><?= e(__('content.tab_' . $k)) ?> (<?= count($data[$k]['rows']) ?>)</button></li><?php endforeach; ?>
 </ul>

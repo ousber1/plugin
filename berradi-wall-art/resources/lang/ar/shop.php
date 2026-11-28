@@ -18,7 +18,7 @@ return [
     'filters' => 'التصفية',
     'apply' => 'تطبيق',
     'reset' => 'إعادة التعيين',
-    'count' => ':count عمل فني',
+    'count' => ':count منتج',
     'sort_by' => 'ترتيب حسب',
     'sort_featured' => 'اختياراتنا',
     'sort_newest' => 'الأحدث',

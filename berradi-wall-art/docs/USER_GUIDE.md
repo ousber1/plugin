@@ -261,6 +261,21 @@ bois, décoration murale, sous-verres, porte-clés cuir, marque-page, plaque pro
 
 ---
 
+## 12 bis. Navigation « boutique cadeaux » : Pour qui ?, Occasions, bandeau d'annonces
+
+* **Menus déroulants** : chaque univers (Tableaux, Cadeaux personnalisés, Gravure laser) affiche « Je cherche… »
+  (les catégories qui ont une photo), toutes les catégories, « Pour qui ? » et « Par occasion ». Ils se remplissent
+  tout seuls : une catégorie apparaît dès qu'elle contient un produit actif (et en vignette si elle a une image).
+* **Pour qui ? / Occasions** : dans la fiche produit, cochez les destinataires (Maman, Papa, Couple…) et les
+  occasions (Anniversaire, Mariage, Aïd…). Un destinataire ou une occasion n'apparaît sur le site que s'il a au
+  moins un produit actif. Les pages correspondantes : `/gifts-for/maman`, `/occasion/anniversaire`…
+* **Bandeau d'annonces** : *Contenu boutique → Bandeau d'annonces* — deux messages courts (120 caractères) en
+  français et en arabe, avec un lien facultatif (`/offers` ou une adresse `https://`). Laissez vide pour le masquer.
+* **Cartes produit** : un produit simple s'ajoute au panier directement depuis la liste ; un produit à variantes
+  affiche « Choisir », un produit personnalisable « Personnaliser ».
+
+---
+
 ## 13. Moyens de paiement et paiement par carte (CMI)
 
 Menu **Finance → Moyens de paiement** (Super Admin et Administrator).

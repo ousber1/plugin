@@ -109,6 +109,14 @@ return static function (Database $db): void {
         ['seo_price_range', '', 'seo', 'string'],
         ['maintenance_mode', '0', 'general', 'bool'],
 
+        // announcement strip under the header (empty = hidden)
+        ['promo_bar_1_text', '', 'content', 'string'],
+        ['promo_bar_1_text_ar', '', 'content', 'string'],
+        ['promo_bar_1_link', '', 'content', 'string'],
+        ['promo_bar_2_text', '', 'content', 'string'],
+        ['promo_bar_2_text_ar', '', 'content', 'string'],
+        ['promo_bar_2_link', '', 'content', 'string'],
+
         // tracking & advertising (all empty = nothing loaded)
         ['track_consent_enabled', '1', 'tracking', 'bool'],
         ['track_privacy_url', '', 'tracking', 'string'],
