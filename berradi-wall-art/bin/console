@@ -1,0 +1,158 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * BERRADI WALL ART — command line tool (optional: everything can also be done from the web installer).
+ *
+ *   php bin/console migrate            Run pending migrations
+ *   php bin/console migrate:status     List migrations
+ *   php bin/console migrate:rollback   Roll back the last batch
+ *   php bin/console seed               Run all seeders (idempotent)
+ *   php bin/console key:generate       Print a new APP_KEY
+ *   php bin/console make:admin EMAIL "NAME" PASSWORD   Create/update a super admin
+ *   php bin/console schema:dump        Write database/schema.sql (for phpMyAdmin import)
+ *   php bin/console cron:run           Scheduled maintenance (configure as a cPanel cron job)
+ *   php bin/console demo:install       Install the optional demo catalogue (generated artwork)
+ *   php bin/console demo:remove        Remove everything the demo catalogue created
+ *   php bin/console lint               php -l on every PHP file
+ */
+
+if (PHP_SAPI !== 'cli') {
+    exit(1);
+}
+
+$boot = require dirname(__DIR__) . '/app/bootstrap.php';
+$app = $boot();
+
+use App\Core\Database;
+use App\Core\Migrator;
+use App\Services\Crypt;
+use App\Services\Installer\InstallerService;
+use App\Services\RateLimiter;
+
+$command = $argv[1] ?? 'help';
+$out = static function (string $line): void {
+    fwrite(STDOUT, $line . PHP_EOL);
+};
+$migrator = static fn (): Migrator => new Migrator(Database::instance(), $app->basePath('database/migrations'), $app->basePath('database/seeders'));
+
+try {
+    switch ($command) {
+        case 'migrate':
+            $done = $migrator()->migrate($out);
+            $out($done ? count($done) . ' migration(s) executed.' : 'Nothing to migrate.');
+            break;
+        case 'migrate:status':
+            $m = $migrator();
+            $ran = $m->ran();
+            foreach ($m->files() as $f) {
+                $out((in_array($f, $ran, true) ? '[x] ' : '[ ] ') . $f);
+            }
+            break;
+        case 'migrate:rollback':
+            $done = $migrator()->rollback($out);
+            $out($done ? count($done) . ' migration(s) rolled back.' : 'Nothing to roll back.');
+            break;
+        case 'seed':
+            $migrator()->seed(null, $out);
+            break;
+        case 'key:generate':
+            $out(Crypt::generateKey());
+            break;
+        case 'make:admin':
+            [$email, $name, $password] = [$argv[2] ?? '', $argv[3] ?? '', $argv[4] ?? ''];
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $name === '' || strlen($password) < 8) {
+                throw new RuntimeException('Usage: make:admin EMAIL "NAME" PASSWORD (min 8 chars)');
+            }
+            $id = (new InstallerService($app->basePath()))->createAdmin(Database::instance(), $name, $email, $password);
+            $out("Super admin #{$id} ready: {$email}");
+            break;
+        case 'schema:dump':
+            $sql = "-- BERRADI WALL ART — full schema generated from database/migrations on " . date('Y-m-d H:i') . "\n"
+                . "-- Optional: import with phpMyAdmin, then run the web installer anyway: it detects the\n"
+                . "-- migrations already applied and only inserts the default data (roles, settings...).\n\n"
+                . "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS = 0;\n\n";
+            $sql .= "CREATE TABLE IF NOT EXISTS migrations (\n  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n  migration VARCHAR(191) NOT NULL,\n  batch INT UNSIGNED NOT NULL,\n  ran_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (id),\n  UNIQUE KEY uq_migration (migration)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n";
+            $files = glob($app->basePath('database/migrations/*.php')) ?: [];
+            sort($files);
+            foreach ($files as $file) {
+                $def = require $file;
+                $sql .= '-- ' . basename($file, '.php') . "\n";
+                foreach ($def['up'] as $stmt) {
+                    $sql .= preg_replace('/\n {8}/', "\n", trim($stmt)) . ";\n\n";
+                }
+                $sql .= "INSERT IGNORE INTO migrations (migration, batch) VALUES ('" . basename($file, '.php') . "', 1);\n\n";
+            }
+            $sql .= "SET FOREIGN_KEY_CHECKS = 1;\n";
+            file_put_contents($app->basePath('database/schema.sql'), $sql);
+            $out('database/schema.sql written (' . count($files) . ' migrations).');
+            break;
+        case 'cron:run':
+            $db = Database::instance();
+            $pruned = RateLimiter::prune(7);
+            $tokens = $db->query('DELETE FROM password_resets WHERE expires_at < (NOW() - INTERVAL 7 DAY)')->rowCount();
+            $sessions = 0;
+            foreach (glob($app->storagePath('sessions/sess_*')) ?: [] as $f) {
+                if (filemtime($f) < time() - 86400 * 2) {
+                    @unlink($f);
+                    $sessions++;
+                }
+            }
+            // privacy: delete customer photos whose retention period is over
+            $photos = (new \App\Services\Builder\CustomerUploadService())->purgeExpired(500);
+            // e-mails that could not be sent immediately (SMTP down) are retried
+            $mails = \App\Services\Sales\OrderMailer::retryQueued(30);
+            $expired = \App\Services\Finance\QuotationService::expireDue();
+            $alerts = \App\Services\Notifications\StaffNotifier::dailyChecks();
+            $retention = \App\Services\System\RetentionService::run();
+            $retention['seo_404'] = \App\Services\Seo\RedirectService::purge(180);
+            // server-side conversions (Meta Conversions API), only queued with the visitor's marketing consent
+            $capi = \App\Services\Tracking\TrackingService::sendQueued(50);
+            try {
+                $backup = \App\Services\System\BackupService::daily();
+            } catch (\Throwable $e) {
+                \App\Core\Logger::error('Automatic backup failed: ' . $e->getMessage());
+                $backup = null;
+            }
+            // carts idle for 24 h with items become "abandoned" (follow-up list for the team)
+            $abandoned = $db->query("UPDATE carts c SET c.status = 'abandoned' WHERE c.status = 'active' AND c.last_activity_at < NOW() - INTERVAL 1 DAY
+                AND EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = c.id)")->rowCount();
+            \App\Services\SettingsService::set('last_cron_run', date('Y-m-d H:i:s'), 'general', 'string');
+            $out("cron: {$pruned} login attempts, {$tokens} reset tokens, {$sessions} stale sessions, {$photos} expired customer photos removed, {$mails} queued e-mails sent, {$abandoned} carts marked abandoned, {$expired} quotations expired, {$alerts} team alerts, {$capi} server conversions sent, retention " . json_encode($retention) . ($backup ? ", backup {$backup}" : '') . '.');
+            break;
+        case 'demo:install':
+            $counts = (new \App\Services\Demo\DemoCatalog(Database::instance(), $app->publicPath(), $app->basePath()))->install();
+            $out('Demo catalogue installed: ' . json_encode($counts));
+            break;
+        case 'demo:remove':
+            $counts = (new \App\Services\Demo\DemoCatalog(Database::instance(), $app->publicPath(), $app->basePath()))->remove();
+            $out('Demo catalogue removed: ' . json_encode($counts));
+            break;
+        case 'lint':
+            $errors = 0;
+            $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($app->basePath(), FilesystemIterator::SKIP_DOTS));
+            $count = 0;
+            foreach ($it as $file) {
+                $path = (string) $file;
+                if (!str_ends_with($path, '.php') || str_contains($path, '/vendor/')) {
+                    continue;
+                }
+                $count++;
+                exec('php -l ' . escapeshellarg($path) . ' 2>&1', $o, $code);
+                if ($code !== 0) {
+                    $errors++;
+                    $out(implode("\n", $o));
+                }
+                $o = [];
+            }
+            $out("Linted {$count} files, {$errors} error(s).");
+            exit($errors > 0 ? 1 : 0);
+        default:
+            $out('Commands: migrate, migrate:status, migrate:rollback, seed, key:generate, make:admin, schema:dump, cron:run, demo:install, demo:remove, lint');
+    }
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}

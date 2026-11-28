@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BERRADI WALL ART">
+  <rect width="64" height="64" fill="#171717"/>
+  <rect x="9" y="9" width="46" height="46" fill="none" stroke="#C6A66B" stroke-width="1.5"/>
+  <text x="32" y="41" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="24" fill="#C6A66B" letter-spacing="1">BW</text>
+</svg>

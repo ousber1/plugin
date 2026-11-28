@@ -1,0 +1,71 @@
+<?php
+
+return [
+    'search_placeholder' => 'Je cherche… (mug, prénom en bois, toile)',
+    'track_short' => 'Suivi',
+    'looking_for' => 'Je cherche',
+    'by_category' => 'Par catégorie',
+    'see_all' => 'Tout voir',
+    'by_recipient' => 'Pour qui ?',
+    'by_occasion' => 'Par occasion',
+    'nav_recipient' => 'Pour qui ?',
+    'nav_occasion' => 'Occasions',
+    'admin_recipient' => 'Pour qui ?',
+    'admin_occasion' => 'Occasions',
+    'admin_tags_help' => 'Le produit apparaît dans les menus et pages « Pour qui ? » et « Occasions ».',
+    'recipient_title' => 'Cadeaux pour :name',
+    'recipient_intro' => 'Des cadeaux personnalisés choisis pour :name : à son prénom, avec vos photos ou votre message.',
+    'occasion_title' => 'Cadeaux : :name',
+    'occasion_intro' => 'Nos idées de cadeaux personnalisés pour cette occasion, préparés dans notre atelier.',
+    'announcements' => 'Bandeau d’annonces',
+    'announcements_help' => 'Deux messages affichés sous le menu de la boutique (ex. promotion, délai de livraison). Vide = masqué.',
+    'message_n' => 'Message :n',
+    'message_ph' => 'Ex. −10 % sur les mugs avec le code MUG10',
+    'badge_photo' => 'Photo',
+    'badge_text' => 'Texte',
+    'see_product' => 'Voir le produit',
+    'personalize' => 'Personnaliser',
+    'choose' => 'Choisir',
+    'add_to_basket' => 'Ajouter au panier',
+    'for_name' => 'Pour :name',
+    'discover' => 'Découvrir',
+    'add_photo' => 'Ajoutez une photo',
+    'add_text' => 'Ajoutez un texte',
+    'by_type_wall' => 'Tableaux par thème',
+    'by_type_gift' => 'Cadeaux personnalisés par type',
+    'by_type_laser' => 'Créations laser par type',
+    'by_type_lead_wall' => 'Toiles, cadres et posters pour chaque pièce de la maison.',
+    'by_type_lead_gift' => 'Du mug à votre photo au carnet à son prénom : trouvez le cadeau qui lui ressemble.',
+    'by_type_lead_laser' => 'Bois, acrylique et cuir gravés ou découpés au laser dans notre atelier.',
+    'faq_title' => 'Questions fréquentes',
+    'more_faq' => 'Toutes les questions',
+    'reviews_count' => ':n avis clients',
+    'verified' => 'achat vérifié',
+    'info_vibe_title' => 'Un cadeau pour chacun',
+    'info_easy_title' => 'Personnalisation facile',
+    'info_delivery_title' => 'Fabrication & livraison',
+    'info_vibe_wall' => 'Une toile, un cadre ou un poster donne du caractère à chaque pièce : salon, chambre, bureau.
+Choisissez parmi nos thèmes ou créez votre tableau avec vos photos.',
+    'info_vibe_gift' => 'Mugs, gourdes, t-shirts, coussins, puzzles, carnets… chaque cadeau peut porter un prénom, une photo ou un message.
+Pour un anniversaire, un mariage, l’Aïd, la fête des mères ou un cadeau d’entreprise.',
+    'info_vibe_laser' => 'Prénoms découpés, lampes LED, planches et boîtes gravées, plaques professionnelles : la précision du laser pour des pièces uniques.
+Bois, MDF, contreplaqué, acrylique et cuir.',
+    'info_easy_wall' => 'Choisissez la taille, le support et le cadre : le prix s’affiche immédiatement.
+Avec « Sur mon mur », voyez le tableau chez vous avant de commander.',
+    'info_easy_gift' => 'Sur chaque fiche : ajoutez votre photo, votre texte et choisissez la police. Le prix se met à jour en direct.
+Pour les produits concernés, vous validez une maquette avant la fabrication.',
+    'info_easy_laser' => 'Indiquez le texte à graver, la police et, si vous le souhaitez, votre logo ou votre photo.
+Prix dégressifs pour les mariages, événements et entreprises.',
+    'info_delivery_wall' => 'Chaque tableau est imprimé et monté à la main dans notre atelier, puis livré partout au Maroc.
+Paiement à la livraison disponible.',
+    'info_delivery_gift' => 'Vos cadeaux sont fabriqués à la commande dans notre atelier puis livrés partout au Maroc.
+Le délai de chaque produit est indiqué sur sa fiche ; suivez votre commande à tout moment.',
+    'info_delivery_laser' => 'Gravure et découpe sur notre laser CO2, finitions à la main, emballage soigné.
+Livraison partout au Maroc, paiement à la livraison disponible.',
+    'filter_recipient' => 'Pour qui ?',
+    'filter_occasion' => 'Occasion',
+    'all' => 'Tous',
+    'home_title' => 'Trouvez le cadeau parfait',
+    'home_lead' => 'Choisissez pour qui, ou l’occasion : nous avons l’idée personnalisée.',
+    'payment_methods' => 'Paiement :',
+];

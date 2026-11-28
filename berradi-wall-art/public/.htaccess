@@ -1,0 +1,54 @@
+# BERRADI WALL ART — public web root
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Uncomment to force HTTPS once the SSL certificate is active (cPanel > SSL/TLS Status / AutoSSL)
+    # RewriteCond %{HTTPS} !=on
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Block hidden files (.env, .git, .htpasswd...)
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+    # Never expose the optional deployment path file
+    RewriteRule ^app_path\.php$ - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+<FilesMatch "\.(env|ini|log|sql|sh|bak|lock|json|md|yml|yaml|dist)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    # Theme assets are versioned (?v=…) by the application: cache them for a year
+    <FilesMatch "\.(css|js|woff2?|ttf|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    # Catalogue images (new uploads get new names)
+    <FilesMatch "\.(png|jpe?g|webp|gif|avif)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/xml application/javascript application/json image/svg+xml font/ttf
+</IfModule>
+
+AddType font/woff2 .woff2
+AddType image/webp .webp

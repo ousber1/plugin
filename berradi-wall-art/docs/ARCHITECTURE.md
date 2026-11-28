@@ -1,0 +1,147 @@
+# BERRADI WALL ART — Architecture
+
+## Constraints that shaped the design
+
+| Constraint (cPanel shared hosting) | Decision |
+|---|---|
+| No SSH, no Node, no Redis, no workers | Plain PHP 8.2+ MVC, no build step. `vendor/` is shipped in the ZIP. Web installer runs migrations. |
+| One PHP process per request | Everything is request/response. Periodic work = one cPanel cron (`php bin/console cron:run`). |
+| Limited CPU/RAM | Image editing happens **in the browser** (canvas). Server only validates, re-encodes once and makes one preview (GD). |
+| Shared server, other users | Secrets in `.env` outside the web root, sessions in `storage/sessions`, private uploads in `storage/private_uploads`. |
+
+## Request lifecycle
+
+```
+public/index.php
+  └─ app/bootstrap.php            Composer autoload (+ built-in PSR-4 fallback)
+      └─ App::boot()              .env → Config → timezone → Logger → View → Translator → routes/*.php
+          └─ App::handle(Request)
+               global middleware: SecurityHeaders → Installed → Locale → Maintenance → Csrf
+               Router::dispatch → route middleware (auth.admin, can:perm, guest, throttle, installer)
+               Controller::method(...route params) → Response (HTML view / JSON / redirect / file)
+          exceptions → HttpException (403/404/405/419/429/503 views), ValidationException
+                       (flash errors + old input, redirect back / JSON 422), others → logged 500
+```
+
+## Folder map
+
+```
+app/Core/          Framework: App, Router/Route, Request/Response, Database (PDO), QueryBuilder,
+                   Paginator, Session, Csrf, Validator, View, Translator, Config, Env, Logger, Migrator
+app/Controllers/   Admin/*, Customer/*, Storefront/*, Installer/InstallController
+app/Middleware/    Auth (admin/customer), Guest, Permission (can:), Csrf, Throttle, Locale,
+                   Installed, Installer (lock), Maintenance, SecurityHeaders
+app/Services/      Auth, RateLimiter, SettingsService, Crypt, Mailer, PasswordResetService,
+                   SequenceService, ImageUploadService, ActivityLogger, Installer/*
+app/Helpers/       functions.php (e(), url(), route(), __(), money()…), Money (integer cents), Str
+config/            app, database, uploads, permissions (RBAC matrix)
+database/          migrations/*.php (SQL per module), seeders/*.php (idempotent), schema.sql (generated)
+public/            ONLY web-accessible folder: index.php, .htaccess, assets/, uploads/ (catalogue images)
+resources/         views/ (layouts, partials, storefront, customer, admin, installer, errors, emails), lang/fr|ar
+routes/            installer.php, web.php, admin.php
+storage/           logs, sessions, cache, private_uploads, previews, print_files, invoices, backups (all deny-all)
+tests/             run.php (unit + DB integration), http.php + e2e.sh (HTTP end-to-end)
+```
+
+## Key design decisions
+
+* **Two auth guards.** Staff (`users`, RBAC) and customers (`customers`) never share a session key or a
+  login form. Sessions are bound to a user-agent fingerprint, regenerated on login, invalidated when the
+  password changes elsewhere or the account is deactivated.
+* **RBAC.** `config/permissions.php` → seeded into `permissions`, `roles`, `role_permissions`.
+  `super_admin` bypasses checks and cannot be edited; the last active super admin cannot be removed.
+  Routes use `can:perm`; menus only show entries whose route exists and is permitted, so modules appear
+  automatically as phases are delivered.
+* **Money.** DB columns are `DECIMAL(12,2)`; PHP uses `App\Helpers\Money` on integer centimes
+  (half-up rounding, TVA %/HT↔TTC). No `float` column exists (asserted by a test).
+* **Document numbers.** `SequenceService` uses `document_sequences` + `SELECT … FOR UPDATE` inside a
+  transaction → gap-free `PREFIX-YYYY-000001` per type and year.
+* **Financial immutability.** Invoices get a number only when issued, store a company snapshot and an
+  integrity hash; corrections are credit notes (`invoice_type = credit_note`), cancellation is a status
+  change. FKs use `ON DELETE RESTRICT` on financial rows.
+* **Accounting separation.** Material purchases → `purchases` (become stock, valued in `stock_movements`);
+  consumption → `stock_movements` (production/waste) linked to `production_jobs`; `expenses` holds only
+  operating costs (it has no "materials" category) → no double counting.
+* **Translations.** UI strings in `resources/lang/{fr,ar}`; catalogue content in main columns (French) +
+  `translations` table (Arabic). `<html dir>` switches and Bootstrap RTL is loaded for Arabic.
+* **Private customer photos.** `uploaded_images` stores files under `storage/private_uploads` (never under
+  `public/`), owner token / customer id, checksum and `retention_until` for automatic purge (Phase 3/8).
+* **Security.** Prepared statements everywhere; identifiers validated; CSRF on every POST (form field or
+  `X-CSRF-Token`); `e()` escaping in views; CSP without inline scripts; DB rate limiting; uploads checked
+  by finfo + getimagesize and re-encoded with GD; upload folder has execution disabled; audit log.
+
+## Custom Wall Art Builder (Phase 3)
+
+```
+Browser                                              Server
+───────                                              ──────
+choose photo → canvas preview (≤1600 px JPEG) ──►  POST /builder/upload  (original + preview, CSRF, throttled)
+                                                     · validate original (finfo + getimagesize, size, ≥200 px)
+                                                     · store original untouched in storage/private_uploads/Y/m/uuid.ext
+                                                     · re-encode browser preview (or GD fallback) → storage/previews
+                                                     · uploaded_images row: owner token hash / customer, retention date
+Cropper.js on the preview (fixed print ratio) ◄────  GET /builder/image/{uuid}/preview  (ownership check, no-store)
+options change → POST /builder/price  ◄──────────►  PricingService::quote (authoritative)
+crop → DPI from original pixels (warning / block)
+save → crops in ORIGINAL pixels + mockup data URL ─► POST /builder/design → DesignService::save
+                                                     · re-validate options, ownership, crop bounds & ratio, DPI
+                                                     · re-price, store design + per-panel crops + private preview
+```
+
+Production (Phase 6) prints from the untouched original using the stored crop `{x, y, width, height, rotate}`.
+
+## Operations (Phase 6)
+
+* **Order workflow** — `App\Services\Sales\OrderWorkflow` holds the transition table; every change goes through
+  `change()` (row lock, timestamps, `order_status_history`, side effects, optional customer e-mail). The workshop
+  can only push an order *forward* along the production chain (`advanceProduction()`).
+* **Artwork proofs** — `ArtworkService::sendProof()` e-mails a 64-hex single-use link; only its SHA-256 is stored in
+  `order_customizations.approval_token`. The customer answers on `/artwork/{token}` (noindex, no-referrer).
+  When every image of the order is approved the order moves to *approved for production* and jobs are created.
+* **Production** — one `production_jobs` row per order line, one `production_tasks` row per applicable stage,
+  worked strictly in order. Finishing *print* calls `InventoryService::consumeForJob()` (idempotent).
+  Shipping the order closes the *package* and *ship* stages.
+* **Inventory** — `stock_movements` is the ledger (signed quantity, unit cost, balance after). Valued entries update
+  the weighted average cost; exits are valued at it. Quantities are computed in thousandths, costs in 1/10 000 DH
+  (integers), never floats.
+* **Print-ready files** — `storage/print_files` (deny-all), type checked with finfo, downloads logged.
+
+## Documents & finance (Phase 7)
+
+* **Numbering** — `SequenceService::next()` per type and year (`DEV`, `FAC`, `AV`, `REC`…). Invoice numbers are taken
+  only when a draft is issued, inside the issuing transaction, so a failed issue never consumes a number.
+* **Immutability** — an issued invoice / credit note stores `company_snapshot` (legal identity at issue time) and
+  `integrity_hash` (SHA-256 of number, dates, parties, lines, totals). `InvoiceService::verify()` recomputes it.
+  Corrections are credit notes only; a fully credited invoice becomes *cancelled* and stays in the books.
+* **Amounts** — integer cents everywhere (`Money`), decimal quantities as hundredths (`Money::mulQty`). Invoices built
+  from orders keep the order's TTC total exactly: HT = TTC / (1 + rate) per line, VAT = total − HT.
+* **PDF** — Dompdf with the bundled DejaVu Sans. Arabic is shaped (contextual forms, lam-alef) and put in visual order
+  by `ArabicShaper`, since Dompdf has no bidi support; Arabic documents also emit table columns right-to-left.
+  Issued PDFs are archived under `storage/invoices/YYYY/` (deny-all) and served only through authorised routes.
+* **Customer links** — quotations and invoices e-mailed with a 64-hex secret; only its SHA-256 is stored.
+
+## Performance (Phase 9)
+
+Measured with a synthetic data set of 20 000 orders (≈ 60 000 lines, payments, shipments) on MariaDB 10.11 / PHP 8.3,
+using the debug headers below. Targets for shared hosting: < 300 ms PHP time and < 50 queries per page.
+
+* **Grouped queries instead of loops** — `DashboardStats::monthly()` and `FinanceStats::cashflow()` used to run one set
+  of sums per month (12 × N queries). They now run one `GROUP BY DATE_FORMAT(…, '%Y-%m')` query per measure and fill
+  the months in PHP. Dashboard: 90 → 33 queries; finance page: 189 → 25. A Phase 9 integration test asserts that the
+  grouped results equal the old per-month sums.
+* **Aggregate, then join** — the products report groups order lines on a key
+  (`product_id`, or the title for deleted products / `custom` for builder lines) before joining `products`
+  (166 → 134 ms at 20 000 orders). A rewrite of the sales report was measured slower and was not kept.
+* **Indexes** — the heavy list filters and report ranges use composite indexes (plans checked with `EXPLAIN`):
+  orders `(status, placed_at)` and `(placed_at)`, payments `(status, paid_at)`, invoices `(status, issue_date)` and
+  `(order_id, invoice_type, status)`, quotations `(status, issue_date)` and `(status, valid_until)`.
+* **Caching** — settings are loaded with one query and kept for the request; the sitemap is cached for one hour
+  and rebuilt on catalogue changes; Dompdf font metrics are cached in `storage/cache`.
+* **HTTP** — versioned asset URLs (`?v=mtime`) with `Cache-Control: max-age=31536000, immutable`, images 30 days,
+  gzip for HTML/CSS/JS/JSON/SVG/XML; `loading="lazy"` and `decoding="async"` on catalogue images.
+* **OPcache** — the code has no runtime code generation, so OPcache gives the full benefit; *Maintenance → Update*
+  calls `opcache_reset()`.
+
+**Debug profiling** — with `APP_DEBUG=true`, `Database` counts queries and records those slower than 5 ms;
+`App::handle()` adds `X-Debug-Time` (ms), `X-Debug-Queries`, `X-Debug-Repeated` (same SQL run more than once —
+the N+1 signal) and `X-Debug-Slow` to every response. Nothing is recorded when debug is off.

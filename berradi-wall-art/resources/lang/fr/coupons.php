@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'code' => 'Code',
+    'value' => 'Valeur',
+    'err_percent' => 'Pourcentage entre 0 et 100.',
+    'err_value' => 'Montant supérieur à 0.',
+    'err_code' => 'Ce code existe déjà.',
+    'deactivated_instead' => 'Code déjà utilisé : désactivé (conservé pour l’historique des commandes).',
+    'new' => 'Nouveau code promo',
+    'free_shipping' => 'Livraison gratuite',
+    'used' => ':n / :limit utilisations · :amount accordés',
+    'expired' => 'Expiré',
+    'min_order' => 'Commande min.',
+    'max_discount' => 'Remise max. (%)',
+    'limit' => 'Utilisations max.',
+    'limit_customer' => 'Max. par client',
+    'product' => 'Limité au produit',
+    'all' => 'Tous',
+    'deactivate' => 'Désactiver',
+    't_percent' => 'Pourcentage',
+    't_fixed' => 'Montant fixe',
+    't_free_shipping' => 'Livraison gratuite',
+    'help' => 'Le client saisit le code dans son panier. Les remises sont recalculées au paiement et libérées si la commande est annulée.',
+];

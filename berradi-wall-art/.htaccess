@@ -1,0 +1,15 @@
+# BERRADI WALL ART — project root.
+# Used only if the whole project folder ends up inside a web-accessible directory.
+# Everything is routed to /public and all source folders are denied.
+Options -Indexes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^(app|bin|config|database|docs|resources|routes|storage|tests|vendor)(/|$) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|README\.md|\.env.*)$ - [F,L]
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+<FilesMatch "^\.env|\.(lock|sql|log|md)$">
+    Require all denied
+</FilesMatch>
