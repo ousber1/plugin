@@ -22,7 +22,7 @@ final class SitemapService
         $db = Database::instance();
         $out = [];
         $static = [
-            ['/', '1.0', 'daily'], ['/shop', '0.9', 'daily'], ['/custom-wall-art', '0.9', 'weekly'], ['/collections', '0.8', 'weekly'],
+            ['/', '1.0', 'daily'], ['/shop', '0.9', 'daily'], ['/wall-art', '0.9', 'daily'], ['/personalized-gifts', '0.9', 'daily'], ['/laser-engraving', '0.9', 'daily'], ['/custom-wall-art', '0.9', 'weekly'], ['/collections', '0.8', 'weekly'],
             ['/best-sellers', '0.7', 'weekly'], ['/new-arrivals', '0.7', 'weekly'], ['/offers', '0.6', 'daily'],
             ['/about', '0.5', 'monthly'], ['/contact', '0.5', 'monthly'], ['/faq', '0.5', 'monthly'], ['/terms', '0.3', 'yearly'],
         ];

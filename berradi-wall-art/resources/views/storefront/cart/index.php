@@ -23,6 +23,7 @@
                                 <div class="cl-info">
                                     <a class="cl-title" href="<?= e((string) $l['url']) ?>"><?= e($l['title']) ?></a>
                                     <?php if ($l['details'] !== ''): ?><div class="small text-muted-bwa"><?= e($l['details']) ?></div><?php endif; ?>
+                                    <?= $this->insert('partials/personalization', ['options' => ['personalization' => $l['personalization'] ?? []]]) ?>
                                     <?php if ($l['kind'] === 'design'): ?><span class="badge-status mt-1 d-inline-block"><i class="bi bi-camera me-1"></i><?= e(__('cart.custom_design')) ?></span><?php endif; ?>
                                     <?php if ($l['error']): ?><div class="small text-danger mt-1"><i class="bi bi-exclamation-circle me-1"></i><?= e($l['error']) ?></div><?php endif; ?>
                                     <div class="cl-unit small mt-1"><?= e(money($l['unit_price'])) ?><?php if (!empty($l['regular_price']) && \App\Helpers\Money::compare($l['regular_price'], $l['unit_price']) > 0): ?> <del class="text-muted-bwa"><?= e(money($l['regular_price'])) ?></del><?php endif; ?></div>

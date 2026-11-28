@@ -43,4 +43,5 @@ return [
     'remove_unavailable' => 'Retirez les articles indisponibles pour continuer.',
     'checkout' => 'Commander',
     'secure' => 'Vos données sont protégées et jamais revendues.',
+    'min_quantity' => 'Quantité minimum : :min.',
 ];

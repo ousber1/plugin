@@ -77,7 +77,8 @@ $proofUrl = \App\Core\Session::getFlash('proof_url');
             <div class="stat-line"><span><?= e(__('artwork.overall')) ?></span><span><?= $item['width_cm'] ? e(cm($item['width_cm']) . ' × ' . cm($item['height_cm']) . ' cm') : '—' ?></span></div>
             <?php if (!empty($options['panel_width_cm'])): ?><div class="stat-line"><span><?= e(__('artwork.panel_size')) ?></span><span><?= e(cm($options['panel_width_cm']) . ' × ' . cm($options['panel_height_cm']) . ' cm') ?> × <?= (int) ($options['panels'] ?? 1) ?><?= !empty($options['gap_cm']) ? ' · ' . e(__('artwork.gap', ['cm' => cm($options['gap_cm'])])) : '' ?></span></div><?php endif; ?>
             <div class="stat-line"><span><?= e(__('builder.support')) ?></span><span><?= e((string) $item['material_name']) ?></span></div>
-            <div class="stat-line"><span><?= e(__('builder.frame')) ?></span><span><?= e((string) ($item['frame_name'] ?: __('builder.no_frame'))) ?></span></div>
+            <?php if ((string) $item['material_name'] !== ''): ?><div class="stat-line"><span><?= e(__('builder.frame')) ?></span><span><?= e((string) ($item['frame_name'] ?: __('builder.no_frame'))) ?></span></div><?php endif; ?>
+            <?= $this->insert('partials/personalization', ['options' => $options]) ?>
             <?php if (!empty($options['border']['name'])): ?><div class="stat-line"><span><?= e(__('builder.border')) ?></span><span><?= e($options['border']['name']) ?></span></div><?php endif; ?>
             <?php if (!empty($options['finish']['name'])): ?><div class="stat-line"><span><?= e(__('builder.finish')) ?></span><span><?= e($options['finish']['name']) ?></span></div><?php endif; ?>
             <div class="stat-line"><span><?= e(__('orders.qty')) ?></span><span><?= (int) $item['quantity'] ?></span></div>

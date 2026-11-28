@@ -1903,4 +1903,129 @@ $t->test('RBAC and Arabic on the v1.1 back-office pages', function (TestRunner $
     $o->get('/lang/fr');
 });
 
+$t->section('v1.2 print shop: gifts & laser templates, personalisation, price breaks, universes');
+$v12 = [];
+$t->test('templates library: create a mug and a laser keychain (hidden, complete), configure fields, tiers, materials, variants', function (TestRunner $t) use ($o, $q6, $pdo5, &$v12): void {
+    $o->get('/admin/products/templates');
+    $t->equals(200, $o->status);
+    $t->contains('Lampe LED acrylique personnalisée', $o->body);
+    $t->contains('Porte-clés en bois gravé', $o->body);
+    foreach (['mug_ceramic' => 'MUG-PHOTO', 'keychain_wood' => 'PORTE-CLES-BOIS', 'name_sign_wood' => 'PRENOM-BOIS'] as $key => $sku) {
+        $o->post('/admin/products/templates', ['template' => $key], '/admin/products/templates');
+        $t->assert(preg_match('#^/admin/products/(\d+)/edit$#', $o->location(), $m) === 1, $key . ' → edit page');
+        $v12[$key] = (int) $m[1];
+        $t->equals(0, (int) $q6("SELECT is_active FROM products WHERE id = {$m[1]}"), 'created hidden');
+    }
+    $o->get('/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $t->contains('id="gift"', $o->body);
+    $t->contains('Prénom / texte à graver', $o->body);
+    $t->contains('Surface du laser : 40 × 40 cm', $o->body);
+    // personalisation fields: add a date field, keep the others
+    $fields = [];
+    foreach ($pdo5->query("SELECT * FROM product_personalization_fields WHERE product_id = {$v12['keychain_wood']}")->fetchAll(PDO::FETCH_ASSOC) as $f) {
+        $fields[$f['id']] = ['field_type' => $f['field_type'], 'label' => $f['label'], 'field_key' => $f['field_key'], 'max_length' => (string) $f['max_length'], 'price_add' => $f['price_add'],
+            'is_required' => $f['is_required'] ? '1' : '', 'sort_order' => $f['sort_order'], 'choices' => implode("\n", json_decode((string) $f['choices'], true) ?: [])];
+    }
+    $fields['new'] = ['field_type' => 'date', 'label' => 'Date de l’événement', 'ar_label' => 'تاريخ المناسبة', 'price_add' => '0', 'sort_order' => '9'];
+    $o->post('/admin/products/' . $v12['keychain_wood'] . '/personalization', ['fields' => $fields], '/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $t->equals(4, (int) $q6("SELECT COUNT(*) FROM product_personalization_fields WHERE product_id = {$v12['keychain_wood']}"));
+    $t->equals('تاريخ المناسبة', (string) $q6("SELECT t.value FROM translations t JOIN product_personalization_fields f ON f.id = t.entity_id WHERE t.entity_type = 'personalization_field' AND f.product_id = {$v12['keychain_wood']} AND f.field_type = 'date'"));
+    // price breaks must grow with quantity
+    $o->post('/admin/products/' . $v12['keychain_wood'] . '/tiers', ['tiers' => [['min_qty' => '10', 'discount_percent' => '15'], ['min_qty' => '50', 'discount_percent' => '5']]], '/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $o->follow();
+    $t->contains('doivent augmenter avec la quantité', $o->body);
+    $o->post('/admin/products/' . $v12['keychain_wood'] . '/tiers', ['tiers' => [['min_qty' => '10', 'discount_percent' => '10'], ['min_qty' => '50', 'discount_percent' => '20']]], '/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $t->equals(2, (int) $q6("SELECT COUNT(*) FROM product_price_tiers WHERE product_id = {$v12['keychain_wood']}"));
+    // option variants; a piece bigger than the bed gets a warning
+    $o->post('/admin/products/' . $v12['keychain_wood'] . '/option-variants', ['ov_values1' => 'Étoile, Maison', 'ov_price' => '39', 'ov_width' => '5', 'ov_height' => '5'], '/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $t->equals(5, (int) $q6("SELECT COUNT(*) FROM product_variants WHERE product_id = {$v12['keychain_wood']}"), '3 shapes + 2 new');
+    $o->post('/admin/products/' . $v12['name_sign_wood'] . '/option-variants', ['ov_values1' => 'Acrylique miroir', 'ov_values2' => '60 cm', 'ov_price' => '450', 'ov_width' => '60', 'ov_height' => '20'], '/admin/products/' . $v12['name_sign_wood'] . '/edit');
+    $o->follow();
+    $t->contains('dépasse la surface du laser', $o->body);
+    // bill of materials
+    $ply = (string) $q6("SELECT id FROM materials WHERE sku = 'WOOD-PLY3-4040'");
+    $o->post('/admin/products/' . $v12['keychain_wood'] . '/components', ['components' => [['material_id' => $ply, 'quantity' => '0,025'], ['material_id' => '', 'quantity' => '']]], '/admin/products/' . $v12['keychain_wood'] . '/edit');
+    $t->equals('0.025', (string) $q6("SELECT quantity FROM product_components WHERE product_id = {$v12['keychain_wood']}"));
+    $pdo5->exec("UPDATE products SET is_active = 1 WHERE id IN ({$v12['mug_ceramic']}, {$v12['keychain_wood']})");
+    $o->get('/lang/ar');
+    $o->get('/admin/products/' . $v12['mug_ceramic'] . '/edit');
+    $t->equals(200, $o->status);
+    $t->contains('dir="rtl"', $o->body);
+    $o->get('/admin/products/templates');
+    $t->contains('إنشاء منتج من نموذج', $o->body);
+    $o->get('/lang/fr');
+});
+$t->test('storefront: universes, gift page with personalisation and price breaks, no "Sur mon mur" on a mug', function (TestRunner $t) use ($base, $q6, &$v12): void {
+    $g = new Browser($base);
+    $g->get('/personalized-gifts');
+    $t->equals(200, $g->status);
+    $t->contains('Mug photo personnalisé', $g->body);
+    $t->assert(!str_contains($g->body, 'Porte-clés en bois gravé'), 'laser products in their own universe');
+    $g->get('/laser-engraving');
+    $t->contains('Porte-clés en bois gravé', $g->body);
+    $g->get('/wall-art');
+    $t->assert(!str_contains($g->body, 'Mug photo personnalisé'));
+    $g->get('/');
+    $t->contains('href="/personalized-gifts"', $g->body);
+    $t->contains('universe-card', $g->body, 'universes on the home page');
+    $t->contains('Gravure laser', $g->body, 'menu');
+    $slug = (string) $q6("SELECT slug FROM products WHERE id = {$v12['mug_ceramic']}");
+    $g->get('/product/' . $slug);
+    $t->contains('data-perso', $g->body);
+    $t->contains('name="perso[photo]"', $g->body);
+    $t->contains('Dès 10 pièces : −5 %', $g->body);
+    $t->contains('maquette à valider', $g->body);
+    $t->assert(!str_contains($g->body, 'data-open-wall'), 'no wall studio for a mug');
+    $g->get('/lang/ar');
+    $g->get('/product/' . $slug);
+    $t->contains('كوب بصورة مخصصة', $g->body);
+    $t->contains('صورتك', $g->body);
+    $g->get('/lang/fr');
+    $g->get('/sitemap.xml?fresh=1');
+});
+$t->test('ordering personalised gifts: required photo, private upload, extras, price breaks, separate lines, order and artwork', function (TestRunner $t) use ($base, $o, $q6, $mkJpeg, &$v12): void {
+    $c = new Browser($base);
+    $mugSlug = (string) $q6("SELECT slug FROM products WHERE id = {$v12['mug_ceramic']}");
+    $mugVar = (string) $q6("SELECT id FROM product_variants WHERE product_id = {$v12['mug_ceramic']} ORDER BY sort_order LIMIT 1");
+    $c->post('/cart/add', ['product_id' => (string) $v12['mug_ceramic'], 'variant_id' => $mugVar, 'quantity' => '1', 'perso' => ['text' => 'Pour Maman']], '/product/' . $mugSlug);
+    $c->follow();
+    $t->contains('« Votre photo » est obligatoire', $c->body, 'photo required');
+    $t->contains('value="Pour Maman"', $c->body, 'typed text kept');
+    $c->post('/builder/upload', [], '/product/' . $mugSlug, ['photo' => [$mkJpeg(2400, 1100), 'image/jpeg', 'maman.jpg']]);
+    $up = json_decode($c->body, true);
+    $t->assert(!empty($up['image']['uuid']), 'uploaded privately');
+    $c->post('/cart/add', ['product_id' => (string) $v12['mug_ceramic'], 'variant_id' => $mugVar, 'quantity' => '10', 'perso' => ['photo' => $up['image']['uuid'], 'text' => 'Pour Maman', 'font' => 'Manuscrite']], '/product/' . $mugSlug);
+    $keySlug = (string) $q6("SELECT slug FROM products WHERE id = {$v12['keychain_wood']}");
+    $keyVar = (string) $q6("SELECT id FROM product_variants WHERE product_id = {$v12['keychain_wood']} AND option1 = 'Cœur'");
+    foreach (['Lina', 'Adam'] as $n) {
+        $c->post('/cart/add', ['product_id' => (string) $v12['keychain_wood'], 'variant_id' => $keyVar, 'quantity' => '1', 'perso' => ['name' => $n, 'back' => '2026']], '/product/' . $keySlug);
+    }
+    $c->get('/cart');
+    $t->contains('Pour Maman', $c->body);
+    $t->contains('Lina', $c->body);
+    $t->contains('Adam', $c->body);
+    $t->contains('75,05 DH', $c->body, 'mug 79 − 5 % from 10 pieces');
+    $t->contains('40,00 DH', $c->body, 'keychain 35 + 5 back engraving');
+    $t->contains('830,50', $c->body, '10 × 75.05 + 2 × 40');
+    // someone else cannot use this photo
+    $x = new Browser($base);
+    $x->post('/cart/add', ['product_id' => (string) $v12['mug_ceramic'], 'variant_id' => $mugVar, 'quantity' => '1', 'perso' => ['photo' => $up['image']['uuid']]], '/product/' . $mugSlug);
+    $x->follow();
+    $t->contains('ajoutez votre photo', $x->body, 'photo of another visitor refused');
+    $c->post('/checkout', ['full_name' => 'Nadia Cadeaux', 'phone' => '0661234567', 'email' => 'nadia@client.test', 'country' => 'MA', 'city' => 'Rabat', 'address' => '5 rue des Cadeaux, Agdal', 'payment_method' => 'bank_transfer', 'accept_terms' => '1'], '/checkout');
+    $number = substr($c->location(), strlen('/order/confirmation/'));
+    $c->get($c->location());
+    $t->contains('Lina', $c->body, 'confirmation lists the personalisation');
+    $oid = (int) $q6("SELECT id FROM orders WHERE order_number = '{$number}'");
+    $mugItem = (int) $q6("SELECT id FROM order_items WHERE order_id = {$oid} AND product_id = {$v12['mug_ceramic']}");
+    $t->equals('photo', (string) $q6("SELECT field_key FROM order_customizations WHERE order_item_id = {$mugItem}"));
+    $o->get('/admin/orders/' . $oid);
+    $t->contains('Pour Maman', $o->body);
+    $t->contains('Manuscrite', $o->body);
+    $o->get('/admin/artwork/' . $mugItem);
+    $t->equals(200, $o->status, 'gift photo in the artwork queue');
+    $o->get('/admin/orders/' . $oid . '/print');
+    $t->contains('Adam', $o->body, 'work order shows what to engrave');
+});
+
 exit($t->finish());

@@ -34,7 +34,7 @@ final class ShopController extends Controller
         $filters = array_merge($this->filters(), $fixed);
         $products = CatalogService::listing($filters, 24);
         $categories = CatalogService::categories();
-        $noindex = count(array_diff_key($filters, array_flip(['category', 'flag']))) > 0;
+        $noindex = count(array_diff_key($filters, array_flip(['category', 'flag', 'family']))) > 0;
         $seo = SeoService::page(
             (string) ($context['seo_title'] ?? $context['heading']),
             $context['seo_description'] ?? $context['intro'] ?? null,
@@ -124,5 +124,37 @@ final class ShopController extends Controller
             'canonical' => '/offers',
             'breadcrumbs' => [[__('nav.home'), '/'], [__('shop.offers'), null]],
         ], ['flag' => 'promo']);
+    }
+
+    public function wallArt(): Response
+    {
+        return $this->universe('wall');
+    }
+
+    public function gifts(): Response
+    {
+        return $this->universe('gift');
+    }
+
+    public function laser(): Response
+    {
+        return $this->universe('laser');
+    }
+
+    /** Universes of the print shop: decorative wall art, personalised gifts, laser engraving & cutting. */
+    private function universe(string $family): Response
+    {
+        $paths = ['wall' => '/wall-art', 'gift' => '/personalized-gifts', 'laser' => '/laser-engraving'];
+        if (!isset($paths[$family])) {
+            throw new \App\Core\HttpException(404);
+        }
+        return $this->render([
+            'heading' => __('universe.' . $family . '_title'),
+            'intro' => __('universe.' . $family . '_intro'),
+            'eyebrow' => __('universe.eyebrow'),
+            'action' => url(ltrim($paths[$family], '/')),
+            'canonical' => $paths[$family],
+            'breadcrumbs' => [[__('nav.home'), '/'], [__('universe.' . $family . '_title'), null]],
+        ], ['family' => $family]);
     }
 }

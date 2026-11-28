@@ -169,6 +169,17 @@ final class InventoryService
                 $unlinked[] = (string) $f['name'];
             }
         }
+        // bill of materials of gifts / laser products: blank mug, MDF sheet, LED base… per unit produced
+        if (!empty($item['product_id']) && empty($item['custom_design_id'])) {
+            foreach ($db->fetchAll(
+                'SELECT c.material_id, c.quantity, m.name FROM product_components c JOIN materials m ON m.id = c.material_id
+                 WHERE c.product_id = ? AND (c.product_variant_id IS NULL OR c.product_variant_id <=> ?)',
+                [(int) $item['product_id'], !empty($item['product_variant_id']) ? (int) $item['product_variant_id'] : null]
+            ) as $c) {
+                $amount = (float) $c['quantity'] * $qty;
+                $lines[] = ['material_id' => (int) $c['material_id'], 'quantity' => number_format($amount, 3, '.', ''), 'label' => (string) $c['name']];
+            }
+        }
         return ['lines' => $lines, 'unlinked' => $unlinked];
     }
 

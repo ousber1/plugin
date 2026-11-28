@@ -71,6 +71,32 @@ $arrow = is_rtl() ? 'left' : 'right';
     </div>
 </section>
 
+<!-- 2b. Universes of the print shop -->
+<?php if (!empty($universes)): ?>
+<section class="section pb-0">
+    <div class="container">
+        <div class="section-head text-center mb-4">
+            <span class="eyebrow"><?= e(__('universe.eyebrow')) ?></span>
+            <h2 class="section-title"><?= e(__('universe.home_title')) ?></h2>
+        </div>
+        <div class="row g-3">
+            <?php foreach ($universes as $u): ?>
+                <div class="col-md-4">
+                    <a class="universe-card" href="<?= e($u['url']) ?>">
+                        <?php if ($u['image']): ?><img src="<?= e(upload_url($u['image'])) ?>" alt="" loading="lazy"><?php endif; ?>
+                        <span class="uc-body">
+                            <i class="bi <?= e($u['icon']) ?> uc-icon"></i>
+                            <h3><?= e(__('universe.' . $u['family'] . '_title')) ?></h3>
+                            <p><?= e(__('universe.' . $u['family'] . '_short')) ?></p>
+                        </span>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- 3. Custom photo wall art -->
 <section class="section custom-section">
     <div class="container">

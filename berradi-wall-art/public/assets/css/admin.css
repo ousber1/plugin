@@ -177,3 +177,10 @@ html[dir="rtl"] .prod-col-head { letter-spacing: 0; font-size: .85rem; }
 .tracking-provider { display: flex; align-items: center; gap: .5rem; }
 .tracking-provider .dot { width: 8px; height: 8px; border-radius: 50%; background: #CFCAC2; flex: 0 0 8px; }
 .tracking-provider .dot.is-on { background: var(--bwa-success); }
+.perso-list { list-style: none; padding: 0; margin: .3rem 0; font-size: .82rem; }
+.perso-list li { display: flex; flex-wrap: wrap; gap: .35rem; align-items: baseline; }
+.perso-list i { color: var(--bwa-gold-dark); }
+.perso-label { color: var(--bwa-muted); }
+.perso-label::after { content: " :"; }
+.perso-value { font-weight: 600; }
+.perso-new { background: #FBFAF6; border-style: dashed !important; }

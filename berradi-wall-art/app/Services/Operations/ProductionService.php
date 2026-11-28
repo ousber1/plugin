@@ -17,21 +17,26 @@ use App\Services\SequenceService;
  */
 final class ProductionService
 {
-    public const STAGES = ['receive', 'review_quality', 'approve_artwork', 'prepare_file', 'print', 'cut_finish', 'frame', 'quality_control', 'package', 'ship'];
+    /** Every stage in workshop order (routes per product family: Catalog\ProductFamily). */
+    public const STAGES = \App\Services\Catalog\ProductFamily::STAGES;
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
     /** Order status reached when the slowest/fastest job is at a stage. */
     private const STAGE_TO_ORDER = [
-        'print' => OrderStatus::PRINTING, 'cut_finish' => OrderStatus::PRINTING, 'frame' => OrderStatus::FRAMING,
+        'print' => OrderStatus::PRINTING, 'engrave' => OrderStatus::PRINTING, 'press' => OrderStatus::PRINTING, 'cut_finish' => OrderStatus::PRINTING,
+        'assemble' => OrderStatus::PRINTING, 'frame' => OrderStatus::FRAMING,
         'quality_control' => OrderStatus::QUALITY_CONTROL, 'package' => OrderStatus::QUALITY_CONTROL,
     ];
 
     /** Stages that apply to an order line. @param array<string,mixed> $item @return list<string> */
     public static function stagesFor(array $item): array
     {
-        return array_values(array_filter(self::STAGES, function (string $s) use ($item): bool {
+        // artwork stages only when the line has something to check (builder design, customer photo, proof)
+        $artwork = !empty($item['custom_design_id']) || (!empty($item['id'])
+            && (int) Database::instance()->value('SELECT COUNT(*) FROM order_customizations WHERE order_item_id = ?', [(int) $item['id']]) > 0);
+        return array_values(array_filter(\App\Services\Catalog\ProductFamily::route((string) ($item['product_type'] ?? '')), function (string $s) use ($item, $artwork): bool {
             return match ($s) {
-                'review_quality', 'approve_artwork' => !empty($item['custom_design_id']),
+                'review_quality', 'approve_artwork' => $artwork,
                 'frame' => !empty($item['frame_name']),
                 default => true,
             };
@@ -57,7 +62,8 @@ final class ProductionService
         $db->transaction(function (Database $db) use ($orderId, $userId, $deadline, &$n): void {
             foreach ($db->fetchAll('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [$orderId]) as $item) {
                 $stages = self::stagesFor($item);
-                $approved = !empty($item['custom_design_id'])
+                $customs = (int) $db->value('SELECT COUNT(*) FROM order_customizations WHERE order_item_id = ?', [(int) $item['id']]);
+                $approved = ($customs > 0 || !empty($item['custom_design_id']))
                     && (int) $db->value("SELECT COUNT(*) FROM order_customizations WHERE order_item_id = ? AND approval_status <> 'approved'", [(int) $item['id']]) === 0;
                 $jobId = $db->insert('production_jobs', [
                     'job_number' => SequenceService::next('production'), 'order_id' => $orderId, 'order_item_id' => (int) $item['id'],
@@ -66,8 +72,13 @@ final class ProductionService
                 foreach ($stages as $i => $stage) {
                     // the order is received by definition; artwork already validated needs no second approval
                     $done = $stage === 'receive' || ($approved && in_array($stage, ['review_quality', 'approve_artwork'], true));
+                    // the laser (or press / printer) usually used for this stage is pre-selected; staff can change it
+                    $machineType = \App\Services\Catalog\ProductFamily::machineTypeFor($stage);
+                    $machine = $machineType !== null && !\App\Services\Catalog\ProductFamily::isWallArt((string) $item['product_type'])
+                        ? $db->value("SELECT id FROM machines WHERE machine_type = ? AND status = 'active' ORDER BY id LIMIT 1", [$machineType]) : null;
                     $db->insert('production_tasks', [
                         'production_job_id' => $jobId, 'stage' => $stage, 'status' => $done ? 'done' : 'pending', 'sort_order' => $i,
+                        'machine_id' => $machine !== null ? (int) $machine : null,
                         'completed_at' => $done ? date('Y-m-d H:i:s') : null, 'notes' => $done && $stage !== 'receive' ? 'Visuel déjà approuvé' : null,
                     ]);
                 }
@@ -142,7 +153,9 @@ final class ProductionService
                 }
             }
             $db->update('production_tasks', $values, ['id' => $taskId]);
-            if ($action === 'done' && $t['stage'] === 'print') {
+            // materials are booked when the object is physically made: print (wall art, sublimation), engrave (laser)…
+            if ($action === 'done' && $t['stage'] === \App\Services\Catalog\ProductFamily::consumingStage((string) $db->value(
+                'SELECT oi.product_type FROM production_jobs j JOIN order_items oi ON oi.id = j.order_item_id WHERE j.id = ?', [(int) $t['production_job_id']]))) {
                 InventoryService::consumeForJob((int) $t['production_job_id'], $userId);
             }
             self::refreshJob($db, (int) $t['production_job_id']);
@@ -249,7 +262,7 @@ final class ProductionService
             $db->update('production_jobs', $values, ['id' => $jobId]);
             if (array_key_exists('machine_id', $values)) {
                 // the machine applies to the stages still to come
-                $db->query("UPDATE production_tasks SET machine_id = ? WHERE production_job_id = ? AND status IN ('pending','in_progress') AND stage IN ('print','cut_finish')", [$values['machine_id'], $jobId]);
+                $db->query("UPDATE production_tasks SET machine_id = ? WHERE production_job_id = ? AND status IN ('pending','in_progress') AND stage IN ('print','engrave','press','cut_finish')", [$values['machine_id'], $jobId]);
             }
             ActivityLogger::log('production.job_updated', 'production_job', $jobId, implode(',', array_keys($values)));
         }

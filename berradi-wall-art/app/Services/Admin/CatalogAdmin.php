@@ -17,7 +17,7 @@ use App\Services\TranslationService;
  */
 final class CatalogAdmin
 {
-    public const PRODUCT_AR_FIELDS = ['title', 'short_description', 'description', 'seo_title', 'seo_description'];
+    public const PRODUCT_AR_FIELDS = ['title', 'short_description', 'description', 'seo_title', 'seo_description', 'option1_name', 'option2_name'];
     public const TAXONOMY_AR_FIELDS = ['name', 'description', 'seo_title', 'seo_description'];
 
     /** Unique slug in a table (appends -2, -3… when taken). */

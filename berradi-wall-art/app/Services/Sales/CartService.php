@@ -120,8 +120,8 @@ final class CartService
         }
         $db->transaction(function (Database $db) use ($guest, $own): void {
             foreach ($db->fetchAll('SELECT * FROM cart_items WHERE cart_id = ?', [(int) $guest['id']]) as $it) {
-                $dup = $db->fetch(
-                    'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id <=> ? AND product_variant_id <=> ? AND custom_design_id <=> ?',
+                $dup = $it['options'] !== null ? null : $db->fetch(
+                    'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id <=> ? AND product_variant_id <=> ? AND custom_design_id <=> ? AND options IS NULL',
                     [(int) $own['id'], $it['product_id'], $it['product_variant_id'], $it['custom_design_id']]
                 );
                 if ($dup !== null) {
@@ -144,7 +144,11 @@ final class CartService
     }
 
     /** @return array{ok:bool,error?:string} */
-    public static function addProduct(int $productId, ?int $variantId, int $qty): array
+    /**
+     * @param array<string,mixed>|null $perso personalisation typed by the customer (field_key => value)
+     * @throws \App\Core\ValidationException when the personalisation is incomplete or invalid
+     */
+    public static function addProduct(int $productId, ?int $variantId, int $qty, ?array $perso = null): array
     {
         $item = CatalogService::purchasable($productId, $variantId);
         if ($item === null) {
@@ -153,7 +157,19 @@ final class CartService
         if ($item['is_customizable']) {
             return ['ok' => false, 'error' => __('cart.needs_photo')];
         }
-        return self::addLine(['product_id' => $productId, 'product_variant_id' => $item['variant_id'], 'custom_design_id' => null], $qty, $item['unit_price'], $item);
+        if ($qty < $item['min_qty']) {
+            return ['ok' => false, 'error' => __('cart.min_quantity', ['min' => $item['min_qty']])];
+        }
+        $options = null;
+        $unit = $item['unit_price'];
+        if (\App\Services\Catalog\Personalization::fields($productId) !== []) {
+            $p = \App\Services\Catalog\Personalization::validate($productId, $perso ?? []);
+            if ($p['items'] !== []) {
+                $options = ['personalization' => $p['items'], 'addons' => $p['addons']];
+                $unit = Money::add($unit, $p['addons']);
+            }
+        }
+        return self::addLine(['product_id' => $productId, 'product_variant_id' => $item['variant_id'], 'custom_design_id' => null], $qty, $unit, $item, $options, $item['max_qty']);
     }
 
     /** @return array{ok:bool,error?:string} */
@@ -182,18 +198,19 @@ final class CartService
      * @param array<string,mixed>|null $stockInfo
      * @return array{ok:bool,error?:string}
      */
-    private static function addLine(array $key, int $qty, string $unitPrice, ?array $stockInfo): array
+    private static function addLine(array $key, int $qty, string $unitPrice, ?array $stockInfo, ?array $options = null, int $max = self::MAX_QTY): array
     {
-        if ($qty < 1 || $qty > self::MAX_QTY) {
-            return ['ok' => false, 'error' => __('cart.bad_quantity', ['max' => self::MAX_QTY])];
+        if ($qty < 1 || $qty > $max) {
+            return ['ok' => false, 'error' => __('cart.bad_quantity', ['max' => $max])];
         }
         $cart = self::current(true);
         $db = Database::instance();
-        $dup = $db->fetch(
-            'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id <=> ? AND product_variant_id <=> ? AND custom_design_id <=> ?',
+        // a personalised line is unique (two mugs with two different names are two lines)
+        $dup = $options !== null ? null : $db->fetch(
+            'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id <=> ? AND product_variant_id <=> ? AND custom_design_id <=> ? AND options IS NULL',
             [(int) $cart['id'], $key['product_id'], $key['product_variant_id'], $key['custom_design_id']]
         );
-        $newQty = min(self::MAX_QTY, $qty + (int) ($dup['quantity'] ?? 0));
+        $newQty = min($max, $qty + (int) ($dup['quantity'] ?? 0));
         if ($stockInfo !== null && $stockInfo['track_stock'] && $newQty > (int) $stockInfo['stock']) {
             return ['ok' => false, 'error' => __('cart.stock_left', ['count' => max(0, (int) $stockInfo['stock'])])];
         }
@@ -203,7 +220,8 @@ final class CartService
             if ((int) $db->value('SELECT COUNT(*) FROM cart_items WHERE cart_id = ?', [(int) $cart['id']]) >= self::MAX_LINES) {
                 return ['ok' => false, 'error' => __('cart.too_many_lines')];
             }
-            $db->insert('cart_items', $key + ['cart_id' => (int) $cart['id'], 'quantity' => $newQty, 'unit_price' => $unitPrice]);
+            $db->insert('cart_items', $key + ['cart_id' => (int) $cart['id'], 'quantity' => $newQty, 'unit_price' => $unitPrice,
+                'options' => $options !== null ? json_encode($options, JSON_UNESCAPED_UNICODE) : null]);
         }
         self::touch((int) $cart['id']);
         return ['ok' => true];
@@ -226,6 +244,12 @@ final class CartService
         $qty = min(self::MAX_QTY, $qty);
         if ($item['product_id'] !== null && $item['custom_design_id'] === null) {
             $info = CatalogService::purchasable((int) $item['product_id'], $item['product_variant_id'] !== null ? (int) $item['product_variant_id'] : null);
+            if ($info !== null) {
+                $qty = min($info['max_qty'], $qty);
+                if ($qty < $info['min_qty']) {
+                    return ['ok' => false, 'error' => __('cart.min_quantity', ['min' => $info['min_qty']])];
+                }
+            }
             if ($info !== null && $info['track_stock'] && $qty > $info['stock']) {
                 return ['ok' => false, 'error' => __('cart.stock_left', ['count' => max(0, (int) $info['stock'])])];
             }
@@ -311,14 +335,22 @@ final class CartService
                 }
             } else {
                 $info = CatalogService::purchasable((int) $it['product_id'], $it['product_variant_id'] !== null ? (int) $it['product_variant_id'] : null);
+                // personalisation (price of the extras) and quantity price breaks are applied on top of the catalogue price
+                $opt = json_decode((string) ($it['options'] ?? ''), true) ?: [];
+                $perso = $opt['personalization'] ?? [];
+                $unit = $info !== null
+                    ? \App\Services\Catalog\Personalization::tieredPrice(Money::add($info['unit_price'], Money::normalize((string) ($opt['addons'] ?? '0'))), $qty, \App\Services\Catalog\Personalization::tiers((int) $it['product_id']))
+                    : (string) $it['unit_price'];
                 $line += [
                     'kind' => 'product', 'product_id' => (int) $it['product_id'], 'variant_id' => $it['product_variant_id'] !== null ? (int) $it['product_variant_id'] : null,
                     'design_id' => null, 'category_id' => $info['category_id'] ?? null,
                     'title' => $info['title'] ?? __('cart.unavailable_product'),
-                    'details' => $info ? (string) ($info['variant_name'] ?? '') : '',
+                    'details' => $info ? trim((string) ($info['variant_name'] ?? '')) : '',
+                    'personalization' => $perso,
+                    'addons' => Money::normalize((string) ($opt['addons'] ?? '0')),
                     'url' => $info ? route('product.show', ['slug' => $info['slug']]) : null,
                     'preview_url' => $info && $info['image'] ? upload_url($info['image']) : null,
-                    'unit_price' => $info['unit_price'] ?? (string) $it['unit_price'],
+                    'unit_price' => $unit,
                     'regular_price' => $info['regular_price'] ?? null,
                     'unit_cost' => $info['unit_cost'] ?? '0.00',
                     'snapshot' => $info,
@@ -326,6 +358,9 @@ final class CartService
                 if ($info === null) {
                     $line['available'] = false;
                     $line['error'] = __('cart.unavailable');
+                } elseif ($qty < $info['min_qty']) {
+                    $line['available'] = false;
+                    $line['error'] = __('cart.min_quantity', ['min' => $info['min_qty']]);
                 } elseif ($info['track_stock'] && $qty > $info['stock']) {
                     $line['available'] = false;
                     $line['error'] = __('cart.stock_left', ['count' => max(0, (int) $info['stock'])]);

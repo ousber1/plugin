@@ -16,6 +16,9 @@ final class SeoPages
     public const PAGES = [
         '/' => 'nav.home',
         '/shop' => 'nav.shop',
+        '/wall-art' => 'universe.wall_title',
+        '/personalized-gifts' => 'universe.gift_title',
+        '/laser-engraving' => 'universe.laser_title',
         '/collections' => 'nav.collections',
         '/custom-wall-art' => 'builder.title',
         '/best-sellers' => 'nav.best_sellers',

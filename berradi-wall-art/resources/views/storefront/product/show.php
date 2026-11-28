@@ -34,6 +34,9 @@ $variantJson = array_map(fn ($v) => [
     'material' => (string) ($v['product_material_id'] ?? ''),
     'frame' => (string) ($v['frame_id'] ?? ''),
     'frameColor' => $v['frame_color'],
+    'cents' => \App\Helpers\Money::toCents((string) $v['effective_price']),
+    'o1' => (string) ($v['option1'] ?? ''),
+    'o2' => (string) ($v['option2'] ?? ''),
     'width' => (float) $v['width_cm'],
     'height' => (float) $v['height_cm'],
     'panels' => (int) $v['panels'],
@@ -52,10 +55,12 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
             <div class="col-lg-7">
                 <div class="product-gallery" data-gallery>
                     <div class="gallery-stage">
-                        <div class="gallery-views">
-                            <button type="button" class="view-toggle active" data-view="art"><?= e(__('product.view_art')) ?></button>
-                            <?php if ($default !== null): ?><button type="button" class="view-toggle" data-open-wall aria-haspopup="dialog"><i class="bi bi-house me-1"></i><?= e(__('product.view_room')) ?></button><?php endif; ?>
-                        </div>
+                        <?php if ($default !== null && ($p['family'] === 'wall' || $p['product_type'] === 'laser_cut') && (float) $default['width_cm'] > 0): ?>
+                            <div class="gallery-views">
+                                <button type="button" class="view-toggle active" data-view="art"><?= e(__('product.view_art')) ?></button>
+                                <button type="button" class="view-toggle" data-open-wall aria-haspopup="dialog"><i class="bi bi-house me-1"></i><?= e(__('product.view_room')) ?></button>
+                            </div>
+                        <?php endif; ?>
                         <div class="stage-art" data-stage="art">
                             <span class="art-wall is-large">
                                 <?php if ($images !== []): ?>
@@ -109,13 +114,16 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
 
                     <?php if (!empty($p['short_description'])): ?><p class="product-lead"><?= e($p['short_description']) ?></p><?php endif; ?>
 
-                    <form class="product-form" data-product-form data-variants="<?= e(json_encode($variantJson, JSON_UNESCAPED_UNICODE)) ?>" data-whatsapp="<?= e($whatsapp) ?>"
+                    <form class="product-form" data-product-form data-base-cents="<?= \App\Helpers\Money::toCents((string) ($default['effective_price'] ?? $p['display_price'])) ?>"
+                          data-currency="<?= e((string) setting('currency_symbol', 'DH')) ?>" data-currency-before="<?= setting('currency_position', 'after') === 'before' ? '1' : '0' ?>" data-mode="<?= $p['family'] === 'wall' ? 'wall' : 'options' ?>" data-variants="<?= e(json_encode($variantJson, JSON_UNESCAPED_UNICODE)) ?>" data-whatsapp="<?= e($whatsapp) ?>"
                           method="post" action="<?= e($router->has('cart.add') ? route('cart.add') : '#') ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="product_id" value="<?= (int) $p['id'] ?>">
                         <input type="hidden" name="variant_id" value="<?= (int) ($default['id'] ?? 0) ?>" data-variant-input>
 
-                        <?php if (count($variants) > 0): ?>
+                        <?php if ($p['family'] !== 'wall'): ?>
+                            <?= $this->insert('storefront/product/gift_options', ['p' => $p, 'variants' => $variants, 'default' => $default]) ?>
+                        <?php elseif (count($variants) > 0): ?>
                             <?php if (count($sizes) > 0): ?>
                                 <fieldset class="option-group">
                                     <legend><?= e(__('product.size')) ?> <span class="option-value" data-label="size"><?= e($default['size_label'] ?? '') ?></span></legend>
@@ -156,7 +164,7 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
                         <div class="d-flex flex-wrap gap-2 align-items-stretch mt-4">
                             <div class="qty-input" data-qty>
                                 <button type="button" data-step="-1" aria-label="<?= e(__('product.decrease')) ?>">−</button>
-                                <input type="number" name="quantity" value="1" min="1" max="50" aria-label="<?= e(__('product.quantity')) ?>">
+                                <input type="number" name="quantity" value="<?= (int) old('quantity', max(1, (int) $p['min_qty'])) ?>" min="<?= max(1, (int) $p['min_qty']) ?>" max="<?= max(1, (int) $p['max_qty']) ?>" aria-label="<?= e(__('product.quantity')) ?>">
                                 <button type="button" data-step="1" aria-label="<?= e(__('product.increase')) ?>">+</button>
                             </div>
                             <?php if ((int) $p['is_customizable'] === 1 && $router->has('builder.index')): ?>
@@ -248,7 +256,7 @@ $shipDays = (int) setting('production_days', 3) + (int) setting('shipping_max_da
         <?php endif; ?>
     </div>
 </section>
-<?php if ($default !== null): ?>
+<?php if ($default !== null && ($p['family'] === 'wall' || $p['product_type'] === 'laser_cut') && (float) $default['width_cm'] > 0): ?>
     <?= $this->insert('storefront/product/wall_studio', ['p' => $p, 'effect' => $effect, 'artUrl' => $images !== [] ? upload_url($images[0]['path']) : '']) ?>
     <?php $this->start('scripts'); ?>
     <script src="<?= e(asset('js/wall-studio.js')) ?>"></script>

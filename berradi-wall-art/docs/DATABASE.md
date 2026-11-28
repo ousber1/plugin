@@ -1,6 +1,6 @@
 # Database schema
 
-MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 67 tables (incl. `migrations`) · 111 foreign keys.
+MySQL ≥ 5.7 / MariaDB ≥ 10.3 · InnoDB · utf8mb4_unicode_ci · 70 tables (incl. `migrations`) · 116 foreign keys.
 Source of truth: `database/migrations/*.php`. A single importable file is generated with
 `php bin/console schema:dump` → `database/schema.sql`.
 
@@ -17,6 +17,7 @@ Money: `DECIMAL(12,2)` (unit costs `DECIMAL(12,4)`, quantities `DECIMAL(14,3)`, 
 | 000007 production_finance | `production_jobs`, `production_tasks` (10 workflow stages), `purchases`, `purchase_items`, `supplier_payments`, `stock_movements`, `expenses` |
 | 000008 marketing_content | `reviews`, `newsletter_subscribers`, `banners`, `gallery_items`, `faqs`, `campaigns`, `campaign_products` |
 | 000009 document_access | secret-link hashes on `quotations` / `invoices`, invoice `sent_at` |
+| 000011 print_shop_products (v1.2) | `products.product_type` + gift / laser families, `option1_name`, `option2_name`, `requires_proof`, `min_qty`, `max_qty`, `production_days`; `product_variants.option1/option2/color_hex`; `product_personalization_fields` (text, message, photo, font, choice, date — extra price, printed area), `product_price_tiers` (quantity breaks), `product_components` (bill of materials per product / variant); production stages `engrave`, `press`, `assemble`; `machines.work_width_mm/work_height_mm/power_w`; stock categories `blank`, `wood`, `acrylic`, `leather`, `sublimation`, `textile`; `order_customizations.field_key` |
 | 000010 payments_seo_tracking (v1.1) | `payment_methods` + `min_order_amount`, `max_order_amount`, `test_mode`; `seo_pages` (title / description / noindex per page and language), `seo_redirects` (301/302 with hit counter), `seo_not_found` (404 monitor), `tracking_events` (Meta Conversions API queue, unique per event id) |
 
 ## Order statuses (`orders.status`)
@@ -29,6 +30,6 @@ Every change is written to `order_status_history`.
 `quality_control` → `package` → `ship`.
 
 ## Seed data (idempotent)
-7 roles + 40 permissions, default settings (company, taxes, shipping, mail, SEO, tracking — all trackers empty), 5 payment methods with Arabic texts (online ones inactive), 4 Moroccan
+7 roles + 40 permissions, default settings (company, taxes, shipping, mail, SEO, tracking — all trackers empty), 5 payment methods with Arabic texts (online ones inactive), gift & laser categories, the Laser CO2 4040 machine (40 × 40 cm bed) and common blanks / laser sheets at zero stock, 4 Moroccan
 shipping zones with city rates, 13 categories (FR + AR), 5 print substrates, 6 frames, 17 builder options.
 Prices are editable starting defaults. No fake orders, customers or statistics are ever seeded.

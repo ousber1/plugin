@@ -45,6 +45,60 @@
             });
         }
 
+        // ------------------------------------------------ personalised gifts: private photo upload (same endpoint as the photo builder)
+        const perso = document.querySelector('[data-perso]');
+        if (perso) {
+            const uploadUrl = perso.getAttribute('data-upload-url');
+            const csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+            perso.querySelectorAll('[data-photo-box]').forEach(function (box) {
+                const field = box.closest('[data-perso-field]');
+                const input = box.querySelector('[data-photo-input]');
+                const hidden = field.querySelector('[data-photo-value]');
+                const thumb = box.querySelector('[data-photo-thumb]');
+                const status = box.querySelector('[data-photo-status]');
+                const label = box.querySelector('[data-photo-label]');
+                const lowres = field.querySelector('[data-photo-lowres]');
+                const pw = parseFloat(box.getAttribute('data-print-w') || '0');
+                const ph = parseFloat(box.getAttribute('data-print-h') || '0');
+                if (hidden.value) { thumb.src = uploadUrl.replace(/upload$/, 'image/' + hidden.value + '/thumb'); thumb.classList.remove('d-none'); label.textContent = perso.getAttribute('data-change'); }
+                input.addEventListener('change', function () {
+                    const file = input.files && input.files[0];
+                    if (!file || !uploadUrl) return;
+                    const fd = new FormData();
+                    fd.append('photo', file);
+                    fd.append('_token', csrf);
+                    status.textContent = perso.getAttribute('data-uploading');
+                    status.classList.remove('text-danger');
+                    fetch(uploadUrl, { method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                        .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+                        .then(function (res) {
+                            if (!res || !res.ok) { status.textContent = (res && res.message) || '—'; status.classList.add('text-danger'); return; }
+                            hidden.value = res.image.uuid;
+                            thumb.src = res.image.thumb;
+                            thumb.classList.remove('d-none');
+                            status.textContent = res.image.name || '';
+                            label.textContent = perso.getAttribute('data-change');
+                            if (lowres && pw > 0 && ph > 0) {
+                                const dpi = Math.min(res.image.width / (pw / 2.54), res.image.height / (ph / 2.54));
+                                lowres.classList.toggle('d-none', dpi >= 100);
+                            }
+                            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+                        })
+                        .catch(function () { status.textContent = '—'; status.classList.add('text-danger'); });
+                });
+            });
+            perso.querySelectorAll('[data-count]').forEach(function (el) {
+                const max = parseInt(el.getAttribute('maxlength') || '0', 10);
+                if (!max) return;
+                const out = document.createElement('div');
+                out.className = 'form-text text-end';
+                el.insertAdjacentElement('afterend', out);
+                const show = function () { out.textContent = el.value.length + ' / ' + max; };
+                el.addEventListener('input', show);
+                show();
+            });
+        }
+
         // ------------------------------------------------ quantity steppers
         document.querySelectorAll('[data-qty]').forEach(function (box) {
             const input = box.querySelector('input');
@@ -85,7 +139,65 @@
                 if (el) el.textContent = text;
             };
 
+            const mode = form.getAttribute('data-mode') || 'wall';
+            const priceText = function (cents) {
+                const neg = cents < 0; const abs = Math.abs(Math.round(cents));
+                const str = (neg ? '-' : '') + String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F') + ',' + String(abs % 100).padStart(2, '0');
+                const cur = form.getAttribute('data-currency') || 'DH';
+                return form.getAttribute('data-currency-before') === '1' ? cur + ' ' + str : str + ' ' + cur;
+            };
+            // gifts & laser: base price + personalisation extras, then the quantity price break
+            const refreshPrice = function (baseCents) {
+                if (mode !== 'options' || !priceEl) return;
+                let cents = baseCents;
+                form.querySelectorAll('[data-perso-field]').forEach(function (box) {
+                    const extra = Math.round(parseFloat(box.getAttribute('data-price') || '0') * 100);
+                    if (!extra) return;
+                    const input = box.querySelector('[name^="perso["]');
+                    if (input && String(input.value || '').trim() !== '') cents += extra;
+                });
+                const tiersEl = form.querySelector('[data-tiers]');
+                const qty = parseInt((form.querySelector('input[name="quantity"]') || {}).value || '1', 10) || 1;
+                if (tiersEl) {
+                    let tiers = [];
+                    try { tiers = JSON.parse(tiersEl.getAttribute('data-tiers') || '[]'); } catch (e) { tiers = []; }
+                    for (let i = 0; i < tiers.length; i++) {
+                        if (qty >= tiers[i][0]) { cents = cents - Math.round(cents * tiers[i][1] / 100); break; }
+                    }
+                }
+                priceEl.textContent = priceText(cents);
+            };
+            let currentBase = parseInt(form.getAttribute('data-base-cents') || '0', 10);
+
+            const updateOptions = function () {
+                const o1 = value('opt1');
+                const o2 = value('opt2');
+                let match = null;
+                if (variants.length) {
+                    match = variants.find(function (v) { return (o1 === null || v.o1 === o1) && (o2 === null || v.o2 === o2); }) || null;
+                    form.querySelectorAll('input[name="opt2"]').forEach(function (input) {
+                        const possible = variants.some(function (v) { return (o1 === null || v.o1 === o1) && v.o2 === input.value; });
+                        input.closest('.chip')?.classList.toggle('is-disabled', !possible);
+                    });
+                    ['opt1', 'opt2'].forEach(function (n) {
+                        const c = form.querySelector('input[name="' + n + '"]:checked');
+                        if (c) setLabel(n, c.getAttribute('data-name'));
+                    });
+                    if (unavailable) unavailable.classList.toggle('d-none', !!match);
+                    if (buyBtn) buyBtn.disabled = !match || match.out;
+                    if (match) {
+                        variantInput.value = String(match.id);
+                        currentBase = match.cents;
+                        if (regularEl) { regularEl.textContent = match.regular; regularEl.classList.toggle('d-none', !match.onSale); }
+                        if (skuEl) skuEl.textContent = match.sku;
+                        document.dispatchEvent(new CustomEvent('bwa:variant', { detail: match }));
+                    }
+                }
+                refreshPrice(currentBase);
+            };
+
             const update = function () {
+                if (mode === 'options') { updateOptions(); return; }
                 const size = value('opt_size');
                 const material = value('opt_material');
                 const frame = value('opt_frame');
@@ -136,10 +248,11 @@
             };
 
             form.addEventListener('change', update);
+            form.addEventListener('input', function (e) { if (mode === 'options' && e.target && (e.target.name === 'quantity' || /^perso\[/.test(e.target.name || ''))) refreshPrice(currentBase); });
             form.addEventListener('submit', function (e) {
                 if (form.getAttribute('action') === '#') e.preventDefault();
             });
-            if (variants.length) update();
+            if (variants.length || mode === 'options') update();
         }
 
         // ------------------------------------------------ newsletter (AJAX with graceful fallback)

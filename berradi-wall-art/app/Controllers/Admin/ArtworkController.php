@@ -34,7 +34,8 @@ final class ArtworkController extends Controller
     private function item(string $itemId): array
     {
         $db = Database::instance();
-        $item = $db->fetch('SELECT * FROM order_items WHERE id = ? AND custom_design_id IS NOT NULL', [(int) $itemId]);
+        // photo-builder designs and personalised gifts / laser items (any line with customisations)
+        $item = $db->fetch('SELECT * FROM order_items oi WHERE oi.id = ? AND (oi.custom_design_id IS NOT NULL OR EXISTS (SELECT 1 FROM order_customizations oc WHERE oc.order_item_id = oi.id))', [(int) $itemId]);
         if ($item === null) {
             throw new HttpException(404);
         }

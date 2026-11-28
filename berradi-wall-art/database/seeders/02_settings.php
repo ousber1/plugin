@@ -91,7 +91,7 @@ return static function (Database $db): void {
         ['admin_notification_email', '', 'mail', 'string'],
 
         // seo
-        ['seo_meta_title', 'BERRADI WALL ART — Tableaux & Toiles Personnalisés au Maroc', 'seo', 'string'],
+        ['seo_meta_title', 'BERRADI WALL ART — Tableaux, cadeaux personnalisés & gravure laser au Maroc', 'seo', 'string'],
         ['seo_meta_description', 'Transformez vos souvenirs en œuvres d’art : toiles, cadres et posters personnalisés imprimés au Maroc.', 'seo', 'text'],
         ['seo_og_image', '', 'seo', 'file'],
         ['seo_google_verification', '', 'seo', 'string'],

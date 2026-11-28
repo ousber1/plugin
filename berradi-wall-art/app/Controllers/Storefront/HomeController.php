@@ -28,6 +28,7 @@ final class HomeController extends Controller
             'reviews' => CatalogService::featuredReviews(6),
             'reviewStats' => CatalogService::reviewStats(),
             'gallery' => CatalogService::gallery(8),
+            'universes' => CatalogService::universes(),
             'faqs' => CatalogService::faqs(6),
         ];
         if ($data['categories'] === []) {

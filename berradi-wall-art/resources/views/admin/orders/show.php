@@ -56,6 +56,7 @@ $cod = $method !== null && $method['code'] === 'cod';
                                     <?= e(implode(' · ', array_filter([$it['width_cm'] ? cm($it['width_cm']) . ' × ' . cm($it['height_cm']) . ' cm' : null, $it['material_name'], $it['frame_name'], (int) $it['panels'] > 1 ? __('orders.n_panels', ['n' => (int) $it['panels']]) : null]))) ?>
                                     <?= $it['sku'] ? '<br><code class="small">' . e($it['sku']) . '</code>' : '' ?>
                                 </div>
+                                <?= $this->insert('partials/personalization', ['options' => $it['options']]) ?>
                                 <?php if ($isDesign): $imgs = $art[(int) $it['id']] ?? []; $ok = count(array_filter($imgs, fn ($c) => $c['approval_status'] === 'approved')); ?>
                                     <div class="mt-1 small">
                                         <span class="badge-status <?= $ok === count($imgs) ? 'is-success' : '' ?>"><i class="bi bi-palette me-1"></i><?= e(__('orders.artwork_n', ['ok' => $ok, 'n' => count($imgs)])) ?></span>

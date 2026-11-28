@@ -8,6 +8,7 @@
                     $it['width_cm'] ? cm($it['width_cm']) . ' × ' . cm($it['height_cm']) . ' cm' : null, $it['material_name'], $it['frame_name'],
                     (int) $it['panels'] > 1 ? (int) $it['panels'] . ' ' . __('cart.panels') : null,
                 ]))) ?></span><br>
+                <?= $this->insert('partials/personalization', ['options' => $it['options'] ?? null, 'plain' => true]) ?>
                 <span style="color:#6F6A62;font-size:12px"><?= (int) $it['quantity'] ?> × <?= e(money($it['unit_price'])) ?></span>
             </td>
             <td style="padding:10px 0;border-bottom:1px solid #E6E1D7;text-align:<?= is_rtl() ? 'left' : 'right' ?>;white-space:nowrap"><?= e(money($it['line_total'])) ?></td>

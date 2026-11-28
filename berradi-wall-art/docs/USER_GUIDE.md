@@ -15,11 +15,11 @@ dans `ADMIN_PATH`). Chaque membre de l'équipe ne voit que les menus autorisés 
 4. **Paramètres → Livraison** : tarif par défaut, seuil de livraison gratuite, délais. Les tarifs par ville sont
    dans **Livraison** (§ 11).
 5. **Moyens de paiement** : vérifiez les textes FR/AR, le plafond éventuel du paiement à la livraison et, si vous avez
-   un contrat CMI, configurez le paiement par carte (§ 12). Puis **Outils SEO** (vérification Google) et **Suivi &
-   pixels** (§ 14 et 15).
+   un contrat CMI, configurez le paiement par carte (§ 13). Puis **Outils SEO** (vérification Google) et **Suivi &
+   pixels** (§ 15 et 16).
 6. **Supports & cadres** : vérifiez vos prix au m², prix minimum, coût de revient, et prix des cadres au mètre.
    Ces prix alimentent le configurateur photo et la génération des variantes.
-7. **Équipe** : créez un compte par personne avec le bon rôle (voir § 17). Ne partagez jamais un compte.
+7. **Équipe** : créez un compte par personne avec le bon rôle (voir § 18). Ne partagez jamais un compte.
 8. **Maintenance** : si vous aviez installé le catalogue de démonstration, supprimez-le avant l'ouverture.
    Consultez le **Contrôle de sécurité** en bas de la page : tous les points doivent être verts.
 
@@ -78,7 +78,7 @@ Sur la fiche d'un visuel :
 * Quand tous les visuels d'une commande sont validés, elle passe seule en production.
 
 Les photos des clients sont privées : chaque téléchargement de l'original est journalisé. Elles sont supprimées
-automatiquement après le délai de conservation (§ 16).
+automatiquement après le délai de conservation (§ 17).
 
 ---
 
@@ -221,7 +221,47 @@ Menu **Newsletter** : inscrits (avec leur consentement, la langue et la date) et
 
 ---
 
-## 12. Moyens de paiement et paiement par carte (CMI)
+## 12. Cadeaux personnalisés et produits laser
+
+La boutique a trois univers : **Tableaux**, **Cadeaux personnalisés** (mugs, gourdes, t-shirts, coussins, puzzles,
+carnets…) et **Gravure laser** (bois, acrylique, cuir : prénoms découpés, lampes LED, plaques, porte-clés…).
+Chaque produit appartient à un univers par son **type** (onglet Général).
+
+### Créer un produit en un clic
+**Produits → Modèles cadeaux & laser** : 19 produits prêts (mug photo, mug magique, gourde, t-shirt, coussin,
+puzzle, carnet A5, porte-clés bois, planche à découper, boîte en bois, lampe LED acrylique, cadre gravé, prénom en
+bois, décoration murale, sous-verres, porte-clés cuir, marque-page, plaque professionnelle). Le produit est créé
+**masqué** avec des prix indicatifs : ajoutez vos photos, vérifiez prix et coûts, puis cochez « Actif ».
+
+### Onglet « Cadeau & personnalisation » du produit
+* **Options** : nom de l'option 1 et 2 (ex. Couleur / Taille), en français et en arabe. Les variantes se créent dans
+  l'onglet Variantes → « Créer les variantes » (ex. `Blanc, Noir` × `S, M, L, XL`), puis prix, couleur, dimensions
+  et traduction arabe de chaque valeur dans le tableau.
+* **Quantité minimum / maximum**, **délai de fabrication**, **maquette (BAT) à valider** par le client.
+* **Champs de personnalisation** : texte court, message, photo, police, liste de choix, date. Pour chacun : libellé
+  FR/AR, obligatoire ou non, nombre de caractères, supplément de prix (ex. +5 DH pour une gravure au dos) et, pour une
+  photo, la zone imprimée en cm (la résolution est vérifiée : sous 100 DPI, le client est prévenu).
+* **Prix dégressifs** : ex. dès 10 pièces −10 %, dès 50 pièces −20 % (sur une même ligne du panier).
+* **Matières consommées** : ce que chaque pièce utilise dans le stock (1 mug vierge + 1 feuille sublimation,
+  0,02 plaque de contreplaqué + 1 anneau…). C'est déduit automatiquement à la fabrication.
+
+### Côté client et atelier
+* Le client choisit ses options, remplit la personnalisation et voit le prix se mettre à jour (suppléments et
+  prix dégressifs). Sa photo reste privée. Deux prénoms différents = deux lignes dans le panier.
+* La personnalisation apparaît partout : panier, e-mails, commande, **bon de préparation** (ce qu'il faut graver ou
+  imprimer), fiche de production, facture.
+* Une photo ou un produit « avec BAT » passe par **Visuels clients** (validation ou épreuve envoyée au client).
+* **Production** : chaque famille a son parcours — sublimation : impression → **pressage à chaud** ; laser :
+  **gravure / découpe laser** → finition ; tableaux : impression → découpe → encadrement. Le **Laser CO2 4040** est
+  proposé automatiquement à l'étape de gravure ; les matières sont déduites quand l'objet est fabriqué.
+* **Machines** : renseignez le coût horaire du laser (il s'ajoute au coût réel de chaque fiche). Sa surface de travail
+  (40 × 40 cm) est contrôlée : une variante plus grande affiche un avertissement (pièce en plusieurs parties).
+* **Stock** : les articles courants (mugs vierges, papier sublimation, MDF, contreplaqué, acrylique, socles LED, cuir,
+  anneaux…) sont déjà créés à zéro : enregistrez vos achats pour avoir les quantités et le coût moyen.
+
+---
+
+## 13. Moyens de paiement et paiement par carte (CMI)
 
 Menu **Finance → Moyens de paiement** (Super Admin et Administrator).
 
@@ -249,7 +289,7 @@ PayPal n'est pas proposé : PayPal n'accepte pas le dirham marocain.
 
 ---
 
-## 13. « Sur mon mur » (aperçu du tableau chez le client)
+## 14. « Sur mon mur » (aperçu du tableau chez le client)
 
 Sur chaque fiche produit, le bouton **Sur mon mur** ouvre un studio plein écran, à taille réelle :
 
@@ -269,7 +309,7 @@ connexion **https** (voir le guide d'installation).
 
 ---
 
-## 14. Outils SEO
+## 15. Outils SEO
 
 Menu **Marketing → Outils SEO** :
 
@@ -291,7 +331,7 @@ Menu **Marketing → Outils SEO** :
 
 ---
 
-## 15. Suivi & pixels publicitaires
+## 16. Suivi & pixels publicitaires
 
 Menu **Marketing → Suivi & pixels**. Collez seulement les identifiants (le format est vérifié) :
 
@@ -319,7 +359,7 @@ Menu **Marketing → Suivi & pixels**. Collez seulement les identifiants (le for
 
 ---
 
-## 16. Sauvegardes, conservation des données, clients
+## 17. Sauvegardes, conservation des données, clients
 
 * **Sauvegardes** : sauvegarde automatique chaque nuit (avec la tâche cron) et bouton « Sauvegarder
   maintenant ». Téléchargez régulièrement une sauvegarde sur un support sûr. Restauration : phpMyAdmin → Importer.
@@ -331,7 +371,7 @@ Menu **Marketing → Suivi & pixels**. Collez seulement les identifiants (le for
 
 ---
 
-## 17. Rôles de l'équipe
+## 18. Rôles de l'équipe
 
 | Rôle | Accès principal |
 |---|---|
@@ -348,7 +388,7 @@ Les rôles se modifient dans **Rôles & droits**. Désactivez le compte d'une pe
 
 ---
 
-## 18. En cas de problème
+## 19. En cas de problème
 
 * **Les e-mails ne partent pas** : **Journal des e-mails** (statut, erreur, bouton « Renvoyer ») et vérifiez le SMTP.
 * **Une alerte « cron » dans le contrôle de sécurité** : la tâche planifiée ne tourne pas (voir le guide

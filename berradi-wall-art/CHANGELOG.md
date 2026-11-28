@@ -4,6 +4,34 @@ All notable changes to BERRADI WALL ART. Versions follow [semantic versioning](h
 Database changes are applied by *Maintenance → Update* (or `php bin/console migrate`); they only add tables,
 columns and indexes.
 
+## [1.2.0] — 2026-11-28
+
+From a wall-art shop to a complete print shop. Database update: migration `000011` + seed data (run
+*Maintenance → Update*). Existing products, orders and the photo builder are unchanged.
+
+### Personalised gifts & CO2 laser
+- New product families: printed gifts (sublimation / DTF), textiles, stationery, other gifts, laser engraving,
+  laser cutting — next to the six wall-art types. Storefront universes `/wall-art`, `/personalized-gifts`,
+  `/laser-engraving` (menu, home page, sitemap, SEO pages).
+- **Option variants** (up to two dimensions, e.g. Colour × Size) with colour swatches, Arabic values and a generator.
+- **Personalisation fields** per product: short text, message, photo, font, choice list, date — required or not,
+  length limits, extra price, printed area for photos (resolution check); FR/AR labels.
+- Private photo upload on the product page (same protected storage as the photo builder); someone else's photo is refused.
+- **Quantity price breaks** (corporate gifts, weddings), minimum / maximum quantity, lead time, **proof (BAT)** before production.
+- Personalised lines are never merged in the cart; the personalisation follows the order everywhere: cart,
+  confirmation, e-mails, customer area, admin order, work order, production job, artwork review, invoice line.
+- **Template library** (19 products): photo mug, magic mug, steel bottle, t-shirt, cushion, puzzle, A5 notebook,
+  wooden keychain, engraved cutting board, wooden box, acrylic LED lamp, engraved photo frame, cut-out name sign,
+  wall decoration, coasters, leather keychain, bookmark, acrylic office sign — created hidden with indicative prices.
+
+### Production & stock
+- Production route per family: sublimation `print → press`, laser `engrave → assemble`, stationery
+  `print → cut → assemble`, wall art unchanged; the laser (or press / printer) is pre-selected on the stage.
+- **Bill of materials** per product or variant (blank mug, plywood sheet fraction, LED base…), consumed when the
+  object is made (print for printed goods, engraving for laser).
+- Machines record their work area: the **Laser CO2 4040** (40 × 40 cm) is seeded; laser variants larger than the
+  bed show a warning. Common blanks and laser sheets are seeded as stock items at zero quantity and zero cost.
+
 ## [1.1.0] — 2026-11-27
 
 Database update: migration `000010` (run *Maintenance → Update*). Nothing changes on the storefront until you

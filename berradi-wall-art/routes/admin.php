@@ -95,6 +95,8 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
         });
         $router->group(['middleware' => ['can:products.manage']], function ($router): void {
             $router->get('/products/create', [ProductController::class, 'create'])->name('products.create');
+            $router->get('/products/templates', [\App\Controllers\Admin\ProductExtrasController::class, 'templates'])->name('products.templates');
+            $router->post('/products/templates', [\App\Controllers\Admin\ProductExtrasController::class, 'createFromTemplate'])->name('products.templates.create');
             $router->post('/products', [ProductController::class, 'store'])->name('products.store');
             $router->post('/products/bulk', [ProductController::class, 'bulk'])->name('products.bulk');
             $router->get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
@@ -105,6 +107,12 @@ $router->group(['prefix' => $adminPath, 'name' => 'admin.'], function ($router):
             $router->post('/products/{id}/images/{imageId}', [ProductController::class, 'imageAction'])->name('products.image');
             $router->post('/products/{id}/variants', [ProductController::class, 'saveVariants'])->name('products.variants');
             $router->post('/products/{id}/variants/add', [ProductController::class, 'addVariant'])->name('products.variants.add');
+            // gifts & laser: options, personalisation, price breaks, bill of materials, templates
+            $px = \App\Controllers\Admin\ProductExtrasController::class;
+            $router->post('/products/{id}/option-variants', [$px, 'optionVariants'])->name('products.option_variants');
+            $router->post('/products/{id}/personalization', [$px, 'personalization'])->name('products.personalization');
+            $router->post('/products/{id}/tiers', [$px, 'tiers'])->name('products.tiers');
+            $router->post('/products/{id}/components', [$px, 'components'])->name('products.components');
             $router->post('/products/{id}/variants/generate', [ProductController::class, 'generateVariants'])->name('products.variants.generate');
             $router->get('/print-options', [OptionController::class, 'index'])->name('options.index');
             $router->post('/print-options/materials', [OptionController::class, 'saveMaterial'])->name('options.materials.store');

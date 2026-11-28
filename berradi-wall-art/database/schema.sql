@@ -1,4 +1,4 @@
--- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-27 13:55
+-- BERRADI WALL ART — full schema generated from database/migrations on 2026-11-28 13:18
 -- Optional: import with phpMyAdmin, then run the web installer anyway: it detects the
 -- migrations already applied and only inserts the default data (roles, settings...).
 
@@ -1421,5 +1421,84 @@ CREATE TABLE IF NOT EXISTS tracking_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000010_payments_seo_tracking', 1);
+
+-- 2026_01_01_000011_print_shop_products
+ALTER TABLE products
+    MODIFY product_type ENUM('canvas','framed','poster','photo_print','multi_panel','limited',
+                             'gift_print','textile','stationery','laser_engraving','laser_cut','gift_other') NOT NULL DEFAULT 'canvas',
+    ADD COLUMN option1_name VARCHAR(60) NULL COMMENT 'e.g. Couleur' AFTER allow_custom_size,
+    ADD COLUMN option2_name VARCHAR(60) NULL COMMENT 'e.g. Taille' AFTER option1_name,
+    ADD COLUMN requires_proof TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'customer validates a proof before production' AFTER option2_name,
+    ADD COLUMN min_qty INT UNSIGNED NOT NULL DEFAULT 1 AFTER requires_proof,
+    ADD COLUMN max_qty INT UNSIGNED NOT NULL DEFAULT 50 AFTER min_qty,
+    ADD COLUMN production_days TINYINT UNSIGNED NULL COMMENT 'lead time override' AFTER max_qty,
+    ADD KEY idx_products_type (product_type, is_active);
+
+ALTER TABLE product_variants
+    ADD COLUMN option1 VARCHAR(80) NULL AFTER name,
+    ADD COLUMN option2 VARCHAR(80) NULL AFTER option1,
+    ADD COLUMN color_hex CHAR(7) NULL AFTER option2;
+
+CREATE TABLE IF NOT EXISTS product_personalization_fields (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    field_key VARCHAR(40) NOT NULL,
+    field_type ENUM('text','textarea','photo','font','select','date') NOT NULL DEFAULT 'text',
+    label VARCHAR(120) NOT NULL,
+    help VARCHAR(255) NULL,
+    placeholder VARCHAR(120) NULL,
+    is_required TINYINT(1) NOT NULL DEFAULT 0,
+    max_length SMALLINT UNSIGNED NULL,
+    choices JSON NULL COMMENT 'select / font values',
+    price_add DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    print_width_cm DECIMAL(6,1) NULL COMMENT 'photo: printed size, for the resolution check',
+    print_height_cm DECIMAL(6,1) NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_ppf_key (product_id, field_key),
+    CONSTRAINT fk_ppf_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS product_price_tiers (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    min_qty INT UNSIGNED NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_ppt (product_id, min_qty),
+    CONSTRAINT fk_ppt_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS product_components (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    product_variant_id INT UNSIGNED NULL COMMENT 'NULL = every variant',
+    material_id INT UNSIGNED NOT NULL,
+    quantity DECIMAL(14,3) NOT NULL COMMENT 'per unit produced, in the material unit',
+    PRIMARY KEY (id),
+    KEY idx_pc_product (product_id),
+    CONSTRAINT fk_pc_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_variant FOREIGN KEY (product_variant_id) REFERENCES product_variants (id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_material FOREIGN KEY (material_id) REFERENCES materials (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE production_tasks
+    MODIFY stage ENUM('receive','review_quality','approve_artwork','prepare_file','print','engrave','press','cut_finish',
+                      'assemble','frame','quality_control','package','ship') NOT NULL;
+
+ALTER TABLE machines
+    ADD COLUMN work_width_mm SMALLINT UNSIGNED NULL COMMENT 'laser / printer bed' AFTER hourly_cost,
+    ADD COLUMN work_height_mm SMALLINT UNSIGNED NULL AFTER work_width_mm,
+    ADD COLUMN power_w SMALLINT UNSIGNED NULL AFTER work_height_mm;
+
+ALTER TABLE materials
+    MODIFY category ENUM('canvas','bache','vinyl','poster_paper','photo_paper','ink','frame','mdf','accessory','packaging','other',
+                         'blank','wood','acrylic','leather','sublimation','textile') NOT NULL;
+
+ALTER TABLE order_customizations ADD COLUMN field_key VARCHAR(40) NULL COMMENT 'personalisation field of a gift' AFTER panel_index;
+
+INSERT IGNORE INTO migrations (migration, batch) VALUES ('2026_01_01_000011_print_shop_products', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;

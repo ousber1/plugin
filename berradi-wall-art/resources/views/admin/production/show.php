@@ -32,7 +32,8 @@ $opt = json_decode((string) $j['options'], true) ?: [];
                         <div class="stat-line"><span><?= e(__('artwork.overall')) ?></span><span><?= $j['width_cm'] ? e(cm($j['width_cm']) . ' × ' . cm($j['height_cm']) . ' cm') : '—' ?></span></div>
                         <?php if (!empty($opt['panel_width_cm'])): ?><div class="stat-line"><span><?= e(__('artwork.panel_size')) ?></span><span><?= e(cm($opt['panel_width_cm']) . ' × ' . cm($opt['panel_height_cm']) . ' cm') ?> × <?= (int) ($opt['panels'] ?? 1) ?></span></div><?php endif; ?>
                         <div class="stat-line"><span><?= e(__('builder.support')) ?></span><span><?= e((string) $j['material_name']) ?></span></div>
-                        <div class="stat-line"><span><?= e(__('builder.frame')) ?></span><span><?= e((string) ($j['frame_name'] ?: __('builder.no_frame'))) ?></span></div>
+                        <?php if ((string) $j['material_name'] !== ''): ?><div class="stat-line"><span><?= e(__('builder.frame')) ?></span><span><?= e((string) ($j['frame_name'] ?: __('builder.no_frame'))) ?></span></div><?php endif; ?>
+                        <?= $this->insert('partials/personalization', ['options' => $j['options']]) ?>
                         <?php if (!empty($opt['border']['name'])): ?><div class="stat-line"><span><?= e(__('builder.border')) ?></span><span><?= e($opt['border']['name']) ?></span></div><?php endif; ?>
                         <?php if (!empty($opt['finish']['name'])): ?><div class="stat-line"><span><?= e(__('builder.finish')) ?></span><span><?= e($opt['finish']['name']) ?></span></div><?php endif; ?>
                         <?php if ($j['custom_design_id']): ?>

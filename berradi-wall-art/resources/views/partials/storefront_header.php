@@ -3,11 +3,11 @@
 $router = app()->router();
 $nav = array_filter([
     ['route' => 'home', 'label' => __('nav.home')],
-    ['route' => 'shop.index', 'label' => __('nav.shop')],
+    ['route' => 'shop.wall', 'label' => __('universe.nav_wall')],
+    ['route' => 'shop.gifts', 'label' => __('universe.nav_gift')],
+    ['route' => 'shop.laser', 'label' => __('universe.nav_laser')],
     ['route' => 'builder.index', 'label' => __('nav.custom')],
-    ['route' => 'collections.index', 'label' => __('nav.collections')],
-    ['route' => 'shop.best_sellers', 'label' => __('nav.best_sellers')],
-    ['route' => 'page.about', 'label' => __('nav.about')],
+    ['route' => 'shop.index', 'label' => __('nav.shop')],
     ['route' => 'page.contact', 'label' => __('nav.contact')],
     ['route' => 'order.track', 'label' => __('nav.track')],
 ], fn ($i) => $router->has($i['route']));

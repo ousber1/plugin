@@ -258,7 +258,7 @@ $t->test('seeders run and are idempotent', function (TestRunner $t) use ($migrat
     $migrator->seed();
     $t->equals($first, $counts(), 'second run changes nothing');
     $t->equals(7, $first[0], 'roles');
-    $t->equals(13, $first[7], 'categories');
+    $t->equals(24, $first[7], 'categories');
     $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM payment_methods WHERE is_online = 1 AND is_active = 1"), 'online payments inactive by default');
 });
 
@@ -315,9 +315,9 @@ $t->test('query builder binds values safely', function (TestRunner $t) use ($db)
     $t->throws(fn () => $db->table('users')->orderBy('id; --')->get(), InvalidArgumentException::class);
     $t->throws(fn () => $db->table('users')->delete(), LogicException::class);
     $p = $db->table('categories')->orderBy('sort_order')->paginate(5, 2);
-    $t->equals(13, $p->total);
+    $t->equals(24, $p->total);
     $t->equals(5, count($p->items));
-    $t->equals(3, $p->lastPage());
+    $t->equals(5, $p->lastPage());
 });
 
 $t->section('Authentication & RBAC');
@@ -572,7 +572,7 @@ $t->test('demo catalogue removal deletes everything it created', function (TestR
     $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM faqs"));
     $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type IN ('product','collection','faq')"));
     $t->equals(0, (int) $db->value("SELECT COUNT(*) FROM categories WHERE image LIKE 'products/demo/%'"));
-    $t->equals(13, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type = 'category'"), 'seeded category translations kept');
+    $t->equals(24, (int) $db->value("SELECT COUNT(*) FROM translations WHERE entity_type = 'category'"), 'seeded category translations kept');
     $t->equals([], glob($tmpPublic . '/uploads/products/demo/*.jpg') ?: []);
     $t->equals(0, CatalogService::listing([], 60, 1)->total);
 });
@@ -1684,6 +1684,123 @@ $t->test('consent cookie, Meta Conversions API queued only with consent, sent by
     foreach (['track_meta_pixel_id', 'track_ga4_id'] as $k) { \App\Services\SettingsService::set($k, '', 'tracking'); }
     \App\Services\SettingsService::set('track_meta_capi_token', '', 'tracking', 'encrypted');
     $t->equals([], $T::enabled());
+});
+
+$t->section('v1.2 print shop: gifts, laser CO2, personalisation, price breaks, bill of materials');
+$t->test('families, production routes and quantity price breaks', function (TestRunner $t): void {
+    $F = \App\Services\Catalog\ProductFamily::class;
+    $t->equals('laser', $F::of('laser_cut'));
+    $t->equals('gift', $F::of('textile'));
+    $t->equals('wall', $F::of('canvas'));
+    $t->assert(in_array('engrave', $F::route('laser_engraving'), true) && !in_array('print', $F::route('laser_engraving'), true), 'laser route engraves, no printing');
+    $t->assert(in_array('press', $F::route('gift_print'), true), 'sublimation route has the heat press');
+    $t->assert(!in_array('frame', $F::route('gift_print'), true));
+    $t->equals('engrave', $F::consumingStage('laser_cut'));
+    $t->equals('print', $F::consumingStage('poster'));
+    $P = \App\Services\Catalog\Personalization::class;
+    $tiers = [['min_qty' => 50, 'discount_percent' => '20.00'], ['min_qty' => 10, 'discount_percent' => '10.00']];
+    $t->equals('100.00', $P::tieredPrice('100.00', 9, $tiers));
+    $t->equals('90.00', $P::tieredPrice('100.00', 10, $tiers));
+    $t->equals('80.00', $P::tieredPrice('100.00', 60, $tiers));
+    $t->equals('67.15', $P::tieredPrice('79.00', 25, [['min_qty' => 25, 'discount_percent' => '15.00']]), 'rounded to the cent');
+});
+$t->test('templates create complete hidden products; every laser piece fits the 40 × 40 cm bed', function (TestRunner $t) use ($db): void {
+    $T = \App\Services\Catalog\ProductTemplates::class;
+    $t->equals('400', (string) $db->value("SELECT work_width_mm FROM machines WHERE code = 'LASER-4040'"), 'Laser CO2 4040 seeded');
+    $t->equals([400, 400], \App\Services\Admin\ProductExtras::laserBed());
+    foreach ($T::all() as $key => $tpl) {
+        $id = $T::create($key);
+        $p = $db->fetch('SELECT * FROM products WHERE id = ?', [$id]);
+        $t->equals(0, (int) $p['is_active'], $key . ' hidden until checked');
+        $t->equals($tpl['type'], $p['product_type'], $key);
+        $t->equals(count($tpl['fields']), (int) $db->value('SELECT COUNT(*) FROM product_personalization_fields WHERE product_id = ?', [$id]), $key . ' fields');
+        $t->equals(count($tpl['variants']), (int) $db->value('SELECT COUNT(*) FROM product_variants WHERE product_id = ?', [$id]), $key . ' variants');
+        $t->equals(count($tpl['tiers']), (int) $db->value('SELECT COUNT(*) FROM product_price_tiers WHERE product_id = ?', [$id]), $key . ' tiers');
+        $t->equals(count($tpl['components']), (int) $db->value('SELECT COUNT(*) FROM product_components WHERE product_id = ?', [$id]), $key . ' bill of materials linked to seeded stock');
+        $t->assert((string) $db->value("SELECT value FROM translations WHERE entity_type = 'product' AND entity_id = ? AND locale = 'ar' AND field = 'title'", [$id]) !== '', $key . ' Arabic title');
+        foreach ($db->fetchAll('SELECT width_cm, height_cm FROM product_variants WHERE product_id = ?', [$id]) as $v) {
+            $t->equals(null, \App\Services\Admin\ProductExtras::laserWarning($tpl['type'], (float) $v['width_cm'], (float) $v['height_cm']), $key . ' fits the laser');
+        }
+    }
+    $t->assert(\App\Services\Admin\ProductExtras::laserWarning('laser_cut', 50, 30) !== null, 'too big for the bed');
+    $t->equals(null, \App\Services\Admin\ProductExtras::laserWarning('gift_print', 50, 30), 'not a laser product');
+    $t->equals(null, \App\Services\Admin\ProductExtras::laserWarning('laser_cut', 30, 39), 'rotated fits');
+});
+$t->test('personalisation: validation, extras, price breaks and one cart line per personalisation', function (TestRunner $t) use ($db): void {
+    \App\Services\Sales\CartService::setToken(str_repeat('7', 64));
+    $kid = (int) $db->value("SELECT id FROM products WHERE sku = 'PORTE-CLES-BOIS'");
+    $db->query('UPDATE products SET is_active = 1 WHERE id = ?', [$kid]);
+    $vid = (int) $db->value('SELECT id FROM product_variants WHERE product_id = ? AND option1 = ?', [$kid, 'Rond']);
+    $P = \App\Services\Catalog\Personalization::class;
+    $err = function (array $in) use ($P, $kid): array {
+        try { $P::validate($kid, $in); return []; } catch (\App\Core\ValidationException $e) { return $e->errors; }
+    };
+    $t->assert(isset($err([])['perso_name']), 'name required');
+    $t->assert(isset($err(['name' => str_repeat('x', 16)])['perso_name']), 'max 15 characters');
+    $t->assert(isset($err(['name' => 'Sara', 'font' => 'Comic Sans'])['perso_font']), 'font from the list only');
+    $ok = $P::validate($kid, ['name' => '  Sara ', 'font' => 'Manuscrite', 'back' => '12.06.2026']);
+    $t->equals('5.00', $ok['addons'], 'back engraving extra');
+    $t->equals('Sara', $ok['items'][0]['value'], 'trimmed');
+    $t->contains('Sara', $P::summary($ok['items']));
+    $C = \App\Services\Sales\CartService::class;
+    $t->throws(fn () => $C::addProduct($kid, $vid, 1, []), \App\Core\ValidationException::class);
+    $t->equals(true, $C::addProduct($kid, $vid, 10, ['name' => 'Sara', 'font' => 'Manuscrite', 'back' => '2026'])['ok']);
+    $t->equals(true, $C::addProduct($kid, $vid, 1, ['name' => 'Youssef'])['ok']);
+    $t->equals(true, $C::addProduct($kid, $vid, 1, ['name' => 'Youssef'])['ok']);
+    $lines = $C::lines($C::current(false));
+    $t->equals(3, count($lines), 'two personalisations = two lines, never merged');
+    $t->equals('36.00', $lines[0]['unit_price'], '(35 + 5) − 10 % from 10 pieces');
+    $t->equals('35.00', $lines[1]['unit_price']);
+    $t->equals('Sara', $lines[0]['personalization'][0]['value']);
+    $db->query('UPDATE products SET min_qty = 5 WHERE id = ?', [$kid]);
+    $t->equals(false, $C::addProduct($kid, $vid, 2, ['name' => 'Ali'])['ok'], 'minimum quantity');
+    $t->equals(false, $C::lines($C::current(false))[1]['available'], 'existing line below the minimum is blocked');
+    $db->query('UPDATE products SET min_qty = 1 WHERE id = ?', [$kid]);
+    foreach ($lines as $l) { $C::remove($l['id']); }
+});
+$t->test('order: personalised photo becomes a customisation to approve; laser job engraves on the 4040 and books the bill of materials', function (TestRunner $t) use ($db, $upload, $jpeg, $place): void {
+    \App\Services\Sales\CartService::setToken(str_repeat('8', 64));
+    $mug = (int) $db->value("SELECT id FROM products WHERE sku = 'MUG-PHOTO'");
+    $key = (int) $db->value("SELECT id FROM products WHERE sku = 'PORTE-CLES-BOIS'");
+    $db->query('UPDATE products SET is_active = 1 WHERE id IN (?, ?)', [$mug, $key]);
+    $img = $upload($jpeg(1600, 700), 'famille.jpg');
+    $C = \App\Services\Sales\CartService::class;
+    $C::addProduct($mug, (int) $db->value('SELECT id FROM product_variants WHERE product_id = ? ORDER BY sort_order LIMIT 1', [$mug]), 2, ['photo' => $img['uuid'], 'text' => 'Bonne fête Maman']);
+    $C::addProduct($key, (int) $db->value('SELECT id FROM product_variants WHERE product_id = ? ORDER BY sort_order LIMIT 1', [$key]), 3, ['name' => 'Lina']);
+    $r = $place();
+    $oid = (int) $r['order']['id'];
+    $items = $db->fetchAll('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [$oid]);
+    $t->equals(2, count($items));
+    $opt = json_decode((string) $items[0]['options'], true);
+    $t->equals('Bonne fête Maman', $opt['personalization'][1]['value']);
+    $c = $db->fetch('SELECT * FROM order_customizations WHERE order_item_id = ?', [(int) $items[0]['id']]);
+    $t->equals('photo', $c['field_key']);
+    $t->equals(203, (int) $c['effective_dpi'], '1600 px over 20 cm = 203 DPI, 700 px over 8.5 cm = 209 DPI: the smaller wins');
+    $t->equals('ordered', (string) $db->value('SELECT status FROM uploaded_images WHERE uuid = ?', [$img['uuid']]));
+    $t->equals(0, (int) $db->value('SELECT COUNT(*) FROM order_customizations WHERE order_item_id = ?', [(int) $items[1]['id']]), 'keychain: no proof');
+    $inv = \App\Services\Finance\InvoiceService::class;
+    // production: approve the mug photo, then jobs
+    \App\Services\Operations\ArtworkService::approve((int) $items[0]['id'], 1);
+    $db->query("UPDATE orders SET status = 'approved_for_production' WHERE id = ?", [$oid]);
+    \App\Services\Operations\ProductionService::createJobsForOrder($oid, 1);
+    $stages = fn (int $itemId) => array_column($db->fetchAll('SELECT t.stage FROM production_tasks t JOIN production_jobs j ON j.id = t.production_job_id WHERE j.order_item_id = ? ORDER BY t.sort_order', [$itemId]), 'stage');
+    $t->equals(['receive', 'review_quality', 'approve_artwork', 'prepare_file', 'print', 'press', 'quality_control', 'package', 'ship'], $stages((int) $items[0]['id']));
+    $t->equals(['receive', 'prepare_file', 'engrave', 'assemble', 'quality_control', 'package', 'ship'], $stages((int) $items[1]['id']));
+    $laser = (int) $db->value("SELECT id FROM machines WHERE code = 'LASER-4040'");
+    $task = $db->fetch("SELECT t.* FROM production_tasks t JOIN production_jobs j ON j.id = t.production_job_id WHERE j.order_item_id = ? AND t.stage = 'engrave'", [(int) $items[1]['id']]);
+    $t->equals($laser, (int) $task['machine_id'], 'laser pre-selected');
+    $before = (float) $db->value("SELECT stock_quantity FROM materials WHERE sku = 'BLANK-KEYRING'");
+    $P = \App\Services\Operations\ProductionService::class;
+    foreach ($db->fetchAll("SELECT t.* FROM production_tasks t JOIN production_jobs j ON j.id = t.production_job_id WHERE j.order_item_id = ? AND t.status = 'pending' ORDER BY t.sort_order", [(int) $items[1]['id']]) as $tk) {
+        if ($tk['stage'] === 'quality_control') { break; }
+        $P::act((int) $tk['id'], 'start', 1);
+        $P::act((int) $tk['id'], 'done', 1);
+    }
+    $t->equals($before - 3, (float) $db->value("SELECT stock_quantity FROM materials WHERE sku = 'BLANK-KEYRING'"), '3 keyrings consumed at engraving');
+    $t->equals('-0.060', (string) $db->value("SELECT m.quantity FROM stock_movements m JOIN materials x ON x.id = m.material_id WHERE x.sku = 'WOOD-PLY3-4040' AND m.order_id = ?", [$oid]), '3 × 0.02 plywood sheet');
+    // invoice line mentions the personalisation
+    $invId = $inv::fromOrder($oid, 1);
+    $t->contains('Lina', (string) $db->value('SELECT specifications FROM invoice_items WHERE invoice_id = ? AND description LIKE ?', [$invId, '%clés%']));
 });
 
 $demo->remove();

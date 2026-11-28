@@ -18,6 +18,7 @@
                     (int) $it['panels'] > 1 ? (int) $it['panels'] . ' ' . __('cart.panels') : null,
                     !empty($it['custom_design_id']) ? __('cart.custom_design') : null,
                 ]))) ?></small>
+                <?= $this->insert('partials/personalization', ['options' => $it['options'] ?? null]) ?>
                 <small><?= (int) $it['quantity'] ?> × <?= e(money($it['unit_price'])) ?></small>
             </span>
             <span class="ol-total"><?= e(money($it['line_total'])) ?></span>

@@ -25,7 +25,7 @@ $socials = array_filter([
             <div class="col-6 col-lg-2">
                 <h6><?= e(__('nav.shop')) ?></h6>
                 <ul class="list-unstyled d-grid gap-2">
-                    <?php foreach (['shop.index' => 'nav.shop', 'builder.index' => 'nav.custom', 'collections.index' => 'nav.collections', 'shop.best_sellers' => 'nav.best_sellers', 'shop.new' => 'shop.new_arrivals', 'shop.offers' => 'shop.offers'] as $r => $label): ?>
+                    <?php foreach (['shop.wall' => 'universe.nav_wall', 'shop.gifts' => 'universe.nav_gift', 'shop.laser' => 'universe.nav_laser', 'shop.index' => 'nav.shop', 'builder.index' => 'nav.custom', 'collections.index' => 'nav.collections', 'shop.best_sellers' => 'nav.best_sellers', 'shop.new' => 'shop.new_arrivals', 'shop.offers' => 'shop.offers'] as $r => $label): ?>
                         <?php if (app()->router()->has($r)): ?><li><a href="<?= e(route($r)) ?>"><?= e(__($label)) ?></a></li><?php endif; ?>
                     <?php endforeach; ?>
                 </ul>

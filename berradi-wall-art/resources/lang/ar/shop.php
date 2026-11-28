@@ -49,4 +49,10 @@ return [
     'new_arrivals_intro' => 'أحدث الأعمال الخارجة من الورشة.',
     'offers' => 'عروض خاصة',
     'offers_intro' => 'مجموعة من الأعمال بأسعار مخفضة لفترة محدودة.',
+    'type_gift_print' => 'هدية مطبوعة (كوب، وسادة...)',
+    'type_textile' => 'ملابس مخصصة',
+    'type_stationery' => 'قرطاسية',
+    'type_gift_other' => 'هدية أخرى',
+    'type_laser_engraving' => 'نقش بالليزر',
+    'type_laser_cut' => 'قص بالليزر',
 ];

@@ -86,6 +86,8 @@ final class InvoiceService
             $spec = array_filter([
                 $it['width_cm'] ? cm($it['width_cm']) . ' × ' . cm($it['height_cm']) . ' cm' : null,
                 $it['material_name'], $it['frame_name'], (int) $it['panels'] > 1 ? $it['panels'] . ' panneaux' : null, $it['sku'],
+                // personalised gift / laser line: what was written on it
+                \App\Services\Catalog\Personalization::summary((json_decode((string) ($it['options'] ?? ''), true) ?: [])['personalization'] ?? [], 200) ?: null,
             ]);
             $lines[] = [
                 'order_item_id' => (int) $it['id'], 'description' => mb_substr((string) $it['title'], 0, 500), 'specifications' => $spec ? implode(' · ', $spec) : null,

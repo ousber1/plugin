@@ -29,6 +29,7 @@
                             <?= e((string) $it['material_name']) ?><?= $it['frame_name'] ? ' · ' . e($it['frame_name']) : '' ?><br>
                             <?= e(__('orders.qty')) ?> : <?= (int) $it['quantity'] ?>
                         </p>
+                        <?= $this->insert('partials/personalization', ['options' => $it['options'] ?? null]) ?>
                     </div></div>
                     <form method="post" action="<?= e(url('artwork/' . $token)) ?>" class="card-bwa" novalidate>
                         <div class="card-body p-4">

@@ -35,6 +35,10 @@ $router->get('/shop/category/{slug}', [ShopController::class, 'category'])->name
 $router->get('/best-sellers', [ShopController::class, 'bestSellers'])->name('shop.best_sellers');
 $router->get('/new-arrivals', [ShopController::class, 'newArrivals'])->name('shop.new');
 $router->get('/offers', [ShopController::class, 'offers'])->name('shop.offers');
+// universes of the print shop
+$router->get('/wall-art', [ShopController::class, 'wallArt'])->name('shop.wall');
+$router->get('/personalized-gifts', [ShopController::class, 'gifts'])->name('shop.gifts');
+$router->get('/laser-engraving', [ShopController::class, 'laser'])->name('shop.laser');
 $router->get('/collections', [CollectionController::class, 'index'])->name('collections.index');
 $router->get('/collections/{slug}', [CollectionController::class, 'show'])->name('collections.show');
 $router->get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');

@@ -13,6 +13,7 @@ $sortLink = function (string $col, string $label) use ($filters): string {
     <div class="page-actions">
         <?php if ($manage): ?>
             <a class="btn btn-sm btn-outline-bwa" href="<?= e(route('admin.options.index')) ?>"><i class="bi bi-sliders me-1"></i><?= e(__('admin.nav_options')) ?></a>
+            <a class="btn btn-sm btn-outline-bwa" href="<?= e(route('admin.products.templates')) ?>"><i class="bi bi-gift me-1"></i><?= e(__('templates.button')) ?></a>
             <a class="btn btn-sm btn-bwa" href="<?= e(route('admin.products.create')) ?>"><i class="bi bi-plus-lg me-1"></i><?= e(__('admin.qa_add_product')) ?></a>
         <?php endif; ?>
     </div>

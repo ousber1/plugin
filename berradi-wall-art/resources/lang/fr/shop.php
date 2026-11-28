@@ -49,4 +49,10 @@ return [
     'new_arrivals_intro' => 'Les dernières œuvres sorties de l’atelier.',
     'offers' => 'Offres spéciales',
     'offers_intro' => 'Une sélection d’œuvres à prix doux, pour une durée limitée.',
+    'type_gift_print' => 'Cadeau imprimé (mug, coussin…)',
+    'type_textile' => 'Textile personnalisé',
+    'type_stationery' => 'Papeterie',
+    'type_gift_other' => 'Autre cadeau',
+    'type_laser_engraving' => 'Gravure laser',
+    'type_laser_cut' => 'Découpe laser',
 ];

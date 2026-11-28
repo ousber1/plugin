@@ -20,7 +20,9 @@ use App\Helpers\Money;
 final class CatalogService
 {
     public const SORTS = ['featured', 'newest', 'price_asc', 'price_desc', 'popular', 'name'];
-    public const TYPES = ['canvas', 'framed', 'poster', 'photo_print', 'multi_panel', 'limited'];
+    /** Every product type, grouped by family in Catalog\ProductFamily (wall art, personalised gifts, laser). */
+    public const TYPES = ['canvas', 'framed', 'poster', 'photo_print', 'multi_panel', 'limited',
+        'gift_print', 'textile', 'stationery', 'gift_other', 'laser_engraving', 'laser_cut'];
     public const FLAGS = ['featured', 'best_seller', 'new', 'promo', 'customizable'];
 
     private const PRODUCT_FIELDS = ['title', 'short_description', 'description', 'seo_title', 'seo_description'];
@@ -140,7 +142,12 @@ final class CatalogService
             $w[] = 'p.collection_id = :col';
             $params['col'] = (int) $f['collection'];
         }
-        if (!empty($f['type']) && in_array($f['type'], self::TYPES, true)) {
+        // universes: wall art / personalised gifts / laser (Catalog\ProductFamily)
+        if (!empty($f['family']) && isset(Catalog\ProductFamily::FAMILIES[$f['family']])) {
+            $types = Catalog\ProductFamily::FAMILIES[$f['family']];
+            $w[] = "p.product_type IN ('" . implode("','", $types) . "')"; // constants, not user input
+        }
+                if (!empty($f['type']) && in_array($f['type'], self::TYPES, true)) {
             $w[] = 'p.product_type = :ptype';
             $params['ptype'] = $f['type'];
         }
@@ -242,12 +249,16 @@ final class CatalogService
         }
         $extra = $db->fetch(
             'SELECT description, seo_title, seo_description, promo_price, promo_ends_at, promo_starts_at, base_price,
-                    min_panels, max_panels, allow_custom_size, collection_id
+                    min_panels, max_panels, allow_custom_size, collection_id, option1_name, option2_name, requires_proof, min_qty, max_qty, production_days
              FROM products WHERE id = ?',
             [(int) $row['id']]
         ) ?? [];
         $product = self::decorate([array_merge($row, $extra)])[0];
         $product = TranslationService::applyOne('product', $product, self::PRODUCT_FIELDS);
+        $product = TranslationService::applyOne('product', $product, ['option1_name', 'option2_name']);
+        $product['family'] = Catalog\ProductFamily::of((string) $product['product_type']);
+        $product['personalization'] = Catalog\Personalization::fields((int) $product['id']);
+        $product['tiers'] = Catalog\Personalization::tiers((int) $product['id']);
         $promoOpen = $product['promo_price'] !== null
             && ($product['promo_starts_at'] === null || strtotime((string) $product['promo_starts_at']) <= time())
             && ($product['promo_ends_at'] === null || strtotime((string) $product['promo_ends_at']) >= time());
@@ -255,7 +266,7 @@ final class CatalogService
         $product['images'] = $db->fetchAll('SELECT id, path, thumb_path, alt FROM product_images WHERE product_id = ? ORDER BY sort_order, id', [(int) $product['id']]);
 
         $variants = $db->fetchAll(
-            'SELECT v.id, v.sku, v.name, v.width_cm, v.height_cm, v.panels, v.price, v.promo_price, v.stock_quantity, v.is_default,
+            'SELECT v.id, v.sku, v.name, v.option1, v.option2, v.color_hex, v.width_cm, v.height_cm, v.panels, v.price, v.promo_price, v.stock_quantity, v.is_default,
                     v.product_material_id, m.name AS material_name, v.frame_id, f.name AS frame_name, f.color_hex AS frame_color
              FROM product_variants v
              LEFT JOIN product_materials m ON m.id = v.product_material_id
@@ -269,8 +280,15 @@ final class CatalogService
                 ? Money::normalize((string) $v['promo_price'])
                 : Money::normalize((string) $v['price']);
             $v['regular_price'] = Money::normalize((string) $v['price']);
-            $v['size_label'] = cm($v['width_cm']) . ' × ' . cm($v['height_cm']) . ' cm';
+            $v['size_label'] = (float) $v['width_cm'] > 0 ? cm($v['width_cm']) . ' × ' . cm($v['height_cm']) . ' cm' : '';
             $v['out_of_stock'] = (int) $product['track_stock'] === 1 && (int) $v['stock_quantity'] <= 0;
+        }
+        unset($v);
+        // option values in the visitor's language (the original value stays the matching key)
+        $labels = TranslationService::apply('product_variant', array_map(fn ($v) => ['id' => $v['id'], 'option1' => $v['option1'], 'option2' => $v['option2']], $variants), ['option1', 'option2']);
+        foreach ($variants as $i => &$v) {
+            $v['option1_label'] = $labels[$i]['option1'] ?? $v['option1'];
+            $v['option2_label'] = $labels[$i]['option2'] ?? $v['option2'];
         }
         unset($v);
         $product['variants'] = $variants;
@@ -451,7 +469,7 @@ final class CatalogService
         $db = Database::instance();
         $p = $db->fetch(
             'SELECT id, slug, sku, title, product_type, main_image, category_id, selling_price, promo_price, promo_starts_at, promo_ends_at,
-                    cost_price, track_stock, stock_quantity, is_customizable,
+                    cost_price, track_stock, stock_quantity, is_customizable, requires_proof, min_qty, max_qty,
                     (SELECT COUNT(*) FROM product_variants WHERE product_id = products.id AND is_active = 1) AS variant_count
              FROM products WHERE id = ? AND is_active = 1 AND deleted_at IS NULL',
             [$productId]
@@ -468,6 +486,8 @@ final class CatalogService
             'product_type' => $p['product_type'], 'image' => $p['main_image'], 'category_id' => $p['category_id'] !== null ? (int) $p['category_id'] : null,
             'variant_name' => null, 'width_cm' => null, 'height_cm' => null, 'material_name' => null, 'frame_name' => null, 'panels' => 1,
             'track_stock' => (int) $p['track_stock'] === 1, 'stock' => (int) $p['stock_quantity'], 'is_customizable' => (int) $p['is_customizable'] === 1,
+            'requires_proof' => (int) $p['requires_proof'] === 1, 'min_qty' => max(1, (int) $p['min_qty']), 'max_qty' => max(1, (int) $p['max_qty']),
+            'family' => Catalog\ProductFamily::of((string) $p['product_type']),
         ];
         if ((int) $p['variant_count'] > 0) {
             if ($variantId === null) {
@@ -494,5 +514,30 @@ final class CatalogService
         return array_merge($out, [
             'unit_price' => Money::normalize($price), 'regular_price' => Money::normalize((string) $p['selling_price']), 'unit_cost' => Money::normalize((string) $p['cost_price']),
         ]);
+    }
+
+    /**
+     * The three universes of the print shop with a cover photo taken from their products; a universe without any
+     * active product is not shown.
+     *
+     * @return list<array{family:string,url:string,icon:string,image:?string,count:int}>
+     */
+    public static function universes(): array
+    {
+        $db = Database::instance();
+        $out = [];
+        foreach (['wall' => ['shop.wall', 'bi-image'], 'gift' => ['shop.gifts', 'bi-gift'], 'laser' => ['shop.laser', 'bi-lightning-charge']] as $family => [$route, $icon]) {
+            $in = "'" . implode("','", Catalog\ProductFamily::FAMILIES[$family]) . "'";
+            $row = $db->fetch(
+                "SELECT COUNT(*) AS n,
+                        (SELECT main_image FROM products WHERE product_type IN ({$in}) AND is_active = 1 AND deleted_at IS NULL AND main_image IS NOT NULL
+                         ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT 1) AS img
+                 FROM products WHERE product_type IN ({$in}) AND is_active = 1 AND deleted_at IS NULL"
+            );
+            if ((int) ($row['n'] ?? 0) > 0) {
+                $out[] = ['family' => $family, 'url' => route($route), 'icon' => $icon, 'image' => $row['img'] ?: null, 'count' => (int) $row['n']];
+            }
+        }
+        return $out;
     }
 }

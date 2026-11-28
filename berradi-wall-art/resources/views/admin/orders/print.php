@@ -41,7 +41,7 @@ use App\Services\Sales\OrderStatus;
         <tbody>
         <?php foreach ($items as $it): ?>
             <tr><td><span class="check"></span></td><td><strong><?= e($it['title']) ?></strong><br><span class="muted"><?= e((string) $it['sku']) ?></span></td>
-                <td><?= $it['width_cm'] ? e(cm($it['width_cm']) . ' × ' . cm($it['height_cm']) . ' cm') . '<br>' : '' ?><?= e((string) $it['material_name']) ?><?= $it['frame_name'] ? '<br>' . e($it['frame_name']) : '' ?><?= (int) $it['panels'] > 1 ? '<br>' . e(__('orders.n_panels', ['n' => (int) $it['panels']])) : '' ?></td>
+                <td><?= $it['width_cm'] ? e(cm($it['width_cm']) . ' × ' . cm($it['height_cm']) . ' cm') . '<br>' : '' ?><?= e((string) $it['material_name']) ?><?= $it['frame_name'] ? '<br>' . e($it['frame_name']) : '' ?><?= (int) $it['panels'] > 1 ? '<br>' . e(__('orders.n_panels', ['n' => (int) $it['panels']])) : '' ?><?= $this->insert('partials/personalization', ['options' => $it['options'], 'plain' => true]) ?></td>
                 <td><strong><?= (int) $it['quantity'] ?></strong></td></tr>
         <?php endforeach; ?>
         </tbody>

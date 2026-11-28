@@ -216,3 +216,19 @@ Legend: ✅ done and verified by an executed test · 🟡 done, verified manuall
 | Meta Conversions API: queued only with advertising consent, hashed data, one event per order, cron sender with retries, token masked in errors | ✅ | integration (sender replaced by a stub: no request to Meta from the test environment) |
 | RBAC (designer 403) and Arabic RTL on the new back-office pages; 390/1280 px FR/AR without overflow or JS errors | ✅ | HTTP + Playwright |
 | Not verified against the real services (no credentials in the test environment): a live CMI test-gateway payment, real delivery of pixel and Conversions API events to Google/Meta/TikTok | 🟡 | to do with the merchant's test credentials (see DEPLOYMENT_CPANEL § 10) |
+
+## v1.2: print shop — personalised gifts, CO2 laser, personalisation, price breaks, bill of materials ✅
+
+| Item | Status | Verified by |
+|---|---|---|
+| Migration 000011 (families, options, personalisation fields, price tiers, components, stages, machine bed, stock categories) up / down / up | ✅ | integration (migrate → rollback → migrate) |
+| Seed: gift & laser categories (FR/AR), Laser CO2 4040 with 40 × 40 cm bed, blanks and laser sheets at zero stock; idempotent | ✅ | integration (seeders twice → same counts) |
+| Production routes per family (sublimation print → press, laser engrave → assemble, wall art unchanged), consuming stage | ✅ | integration |
+| Quantity price breaks rounded to the cent (79 − 15 % = 67.15) | ✅ | integration |
+| 19 templates create hidden products with fields, variants, tiers, bill of materials linked to seeded stock, Arabic texts; every laser variant fits the 40 × 40 cm bed; oversize warning | ✅ | integration + HTTP |
+| Personalisation validation: required, length, font / choice list, real dates, photo owned by this visitor (another visitor's photo refused) | ✅ | integration + HTTP |
+| Cart: extras added, price break on quantity, personalised lines never merged, minimum quantity enforced (new and existing lines) | ✅ | integration + HTTP (10 mugs at 75.05 + 2 keychains at 40 = 830.50) |
+| Order: personalisation stored on the line, photo → customisation with DPI (203) and retention, proof only when needed; confirmation, admin order, work order, artwork page, invoice line show it | ✅ | integration + HTTP |
+| Laser job: 4040 pre-selected on the engraving stage; engraving books 3 keyrings and 3 × 0.02 plywood sheet | ✅ | integration |
+| Back office: template library, personalisation fields FR/AR, tiers (must grow with quantity), bill of materials, option variant generator, Arabic RTL | ✅ | HTTP + Playwright |
+| Storefront: universes pages and home section, option chips, personalisation form, live price (25 mugs → 71.10, back engraving +5), private photo upload through the file picker, no “Sur mon mur” on non-wall products; 1366 / 390 px, FR / AR, no overflow or JS error | ✅ | HTTP + Playwright |

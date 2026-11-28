@@ -105,8 +105,9 @@ final class OrderController extends Controller
         $items = OrderService::items((int) $o['id']);
         $art = [];
         foreach ($items as $it) {
-            if ($it['custom_design_id'] !== null) {
-                $art[(int) $it['id']] = ArtworkService::forItem((int) $it['id']);
+            $c = ArtworkService::forItem((int) $it['id']);
+            if ($it['custom_design_id'] !== null || $c !== []) {
+                $art[(int) $it['id']] = $c;
             }
         }
         $hasArtwork = $art !== [];

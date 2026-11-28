@@ -1,8 +1,9 @@
 # BERRADI WALL ART
 
-E-commerce and business management system for a Moroccan wall-art printing company: personalised canvas
-prints, framed photos, posters and multi-panel art — from the online shop and the photo builder to
-artwork proofs, production, stock, invoices, payments and reports.
+E-commerce and business management system for a Moroccan printing workshop: decorative wall art (canvas,
+framed photos, posters, multi-panel), personalised gifts (mugs, bottles, t-shirts, cushions, puzzles, notebooks…)
+and CO2-laser products (engraving and cutting: wood, acrylic, leather) — from the online shop, the photo builder
+and gift personalisation to artwork proofs, production, stock, invoices, payments and reports.
 
 Built for **ordinary cPanel shared hosting**: PHP 8.2–8.4, MySQL 5.7+/MariaDB 10.4+, Apache.
 No Node, Docker, Redis, queue workers or SSH required — a cron job every 15 minutes is enough.
@@ -19,9 +20,10 @@ No Node, Docker, Redis, queue workers or SSH required — a cron job every 15 mi
 | Photo builder | Private photo upload, cropping per panel (1–5 panels), supports, frames, borders, finishes, live server-side pricing, print-quality (DPI) warnings, saved designs |
 | Checkout | Cart (guest or account), coupons, shipping by city/zone with free-shipping thresholds, VAT included or added, payment methods configured in the back office (cash on delivery, bank transfer, custom offline methods, **CMI card payment** with signed callbacks), account creation, confirmation and tracking e-mails |
 | Customer area | Orders, invoices (PDF), designs, photos (delete now), addresses, profile |
+| Gifts & laser (v1.2) | Three universes (wall art / personalised gifts / laser); option variants (Colour × Size…); personalisation fields (text, message, photo, font, choice, date) with extra prices and private photo upload with resolution check; quantity price breaks; min / max quantities; proof before production; bill of materials consumed at the right stage; laser bed check (Laser CO2 4040); library of 19 ready-made gift & laser products |
 | Orders | Status workflow with history and customer e-mails, phone/WhatsApp orders, shipments with tracking and cash on delivery, offline payments and refunds, printable work order |
 | Artwork | Review of customer photos (DPI, crop, original), single-use proof links for the customer, print-ready files |
-| Production | One job per order line, ordered stages, kanban board, operators, machines, real costs; stock consumed at printing |
+| Production | One job per order line with a route per family (print → press for sublimation, engrave → finish for laser, print → cut → frame for wall art), kanban board, operators, machines (laser pre-selected), real costs; stock consumed where the object is made |
 | Stock & purchasing | Materials with weighted average cost, movements, physical counts, low-stock alerts, suppliers, purchases and supplier payments |
 | Documents & finance | Quotations (customer accepts online, converted to order), invoices and credit notes (numbered at issue, integrity hash, FR/AR PDF), expenses with receipts, finance overview, VAT position |
 | Marketing & content | Shipping zones and city rates, coupons, review moderation (verified purchases), banners, customer gallery (with consent), FAQ, newsletter list and export — all in French and Arabic. **SEO tools** (per-page meta FR/AR, verification codes, local business schema, redirects, 404 monitor, catalogue audit) and **tracking** (GA4, GTM, Google Ads, Meta Pixel + Conversions API, TikTok, Snapchat, Pinterest, Clarity) behind a consent banner |
@@ -45,7 +47,7 @@ Updating an existing installation is described in the same guide (replace code, 
 | [docs/DEPLOYMENT_CPANEL.md](docs/DEPLOYMENT_CPANEL.md) | Installing, updating, cron, backups, troubleshooting |
 | [docs/SECURITY.md](docs/SECURITY.md) | Protections, data retention, operator checklist |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Developers: request lifecycle, folders, design decisions |
-| [docs/DATABASE.md](docs/DATABASE.md) | Schema (67 tables), statuses, seed data |
+| [docs/DATABASE.md](docs/DATABASE.md) | Schema (70 tables), statuses, seed data |
 | [docs/CHECKLIST.md](docs/CHECKLIST.md) | What was built and how each item was verified |
 | [CHANGELOG.md](CHANGELOG.md) | Versions |
 

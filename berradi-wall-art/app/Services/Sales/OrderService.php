@@ -183,15 +183,18 @@ final class OrderService
                     $db->update('custom_designs', ['status' => 'ordered', 'customer_id' => $design['customer_id'] ?? $customerId], ['id' => $l['design_id']]);
                 } else {
                     $s = $l['snapshot'];
-                    $db->insert('order_items', [
+                    $perso = $l['personalization'] ?? [];
+                    $itemId = $db->insert('order_items', [
                         'order_id' => $orderId, 'product_id' => $l['product_id'], 'product_variant_id' => $l['variant_id'],
                         'sku' => $s['sku'], 'title' => mb_substr((string) $s['title'], 0, 191), 'product_type' => $s['product_type'],
                         'width_cm' => $s['width_cm'], 'height_cm' => $s['height_cm'], 'material_name' => $s['material_name'], 'frame_name' => $s['frame_name'],
                         'panels' => (int) $s['panels'], 'quantity' => (int) $l['quantity'], 'unit_price' => $l['unit_price'], 'unit_cost' => $l['unit_cost'],
                         'tax_rate' => $totals['tax_rate'], 'line_total' => $l['line_total'],
-                        'options' => json_encode(['variant' => $s['variant_name'], 'slug' => $s['slug']], JSON_UNESCAPED_UNICODE),
+                        'options' => json_encode(array_filter(['variant' => $s['variant_name'], 'slug' => $s['slug'],
+                            'personalization' => $perso ?: null, 'addons' => $perso ? ($l['addons'] ?? null) : null]), JSON_UNESCAPED_UNICODE),
                         'preview_path' => $s['image'],
                     ]);
+                    self::attachPersonalization($db, $itemId, $perso, (bool) ($s['requires_proof'] ?? false), $customerId, $retention);
                 }
             }
 
@@ -343,5 +346,29 @@ final class OrderService
         }
         $digits = fn (string $p) => substr((string) preg_replace('/\D+/', '', $p), -9);
         return strlen($digits($contact)) >= 9 && $digits($contact) === $digits((string) $o['customer_phone']) ? $o : null;
+    }
+
+    /**
+     * Personalised gift / laser line: every photo becomes a private customisation of the line (artwork review, print
+     * file, retention); a product that requires a proof gets one approval even without photo (text layout, engraving).
+     *
+     * @param list<array<string,mixed>> $perso
+     */
+    private static function attachPersonalization(Database $db, int $itemId, array $perso, bool $requiresProof, ?int $customerId, ?string $retention): void
+    {
+        $n = 0;
+        foreach ($perso as $p) {
+            if (($p['type'] ?? '') !== 'photo' || empty($p['image_id'])) {
+                continue;
+            }
+            $db->insert('order_customizations', [
+                'order_item_id' => $itemId, 'uploaded_image_id' => (int) $p['image_id'], 'panel_index' => $n++, 'field_key' => mb_substr((string) $p['key'], 0, 40),
+                'effective_dpi' => isset($p['dpi']) ? (int) $p['dpi'] : null, 'approval_status' => 'pending',
+            ]);
+            $db->query("UPDATE uploaded_images SET status = 'ordered', retention_until = ?, customer_id = COALESCE(customer_id, ?) WHERE id = ?", [$retention, $customerId, (int) $p['image_id']]);
+        }
+        if ($n === 0 && $requiresProof) {
+            $db->insert('order_customizations', ['order_item_id' => $itemId, 'uploaded_image_id' => null, 'panel_index' => 0, 'field_key' => 'proof', 'approval_status' => 'pending']);
+        }
     }
 }

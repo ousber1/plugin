@@ -100,6 +100,14 @@ final class ProductController extends Controller
             'images' => $id ? $db->fetchAll('SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order, id', [$id]) : [],
             'variants' => $id ? $db->fetchAll('SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order, id', [$id]) : [],
             'orderCount' => $id ? (int) $db->value('SELECT COUNT(*) FROM order_items WHERE product_id = ?', [$id]) : 0,
+            // gifts & laser
+            'family' => \App\Services\Catalog\ProductFamily::of((string) ($product['product_type'] ?? 'canvas')),
+            'persoFields' => $id ? \App\Services\Admin\ProductExtras::fieldsForForm($id) : [],
+            'tiers' => $id ? $db->fetchAll('SELECT * FROM product_price_tiers WHERE product_id = ? ORDER BY min_qty', [$id]) : [],
+            'components' => $id ? $db->fetchAll('SELECT c.*, m.name, m.unit, m.sku FROM product_components c JOIN materials m ON m.id = c.material_id WHERE c.product_id = ? ORDER BY c.id', [$id]) : [],
+            'stockItems' => $db->fetchAll('SELECT id, sku, name, unit FROM materials WHERE is_active = 1 ORDER BY category, name'),
+            'variantAr' => $id ? \App\Services\Admin\ProductExtras::variantTranslations($id) : [],
+            'laserBed' => \App\Services\Admin\ProductExtras::laserBed(),
         ];
     }
 
@@ -153,6 +161,14 @@ final class ProductController extends Controller
             'ar_description' => 'nullable|max:20000',
             'ar_seo_title' => 'nullable|max:191',
             'ar_seo_description' => 'nullable|max:320',
+            // gifts & laser: option names, quantities, proof, lead time
+            'option1_name' => 'nullable|max:60',
+            'option2_name' => 'nullable|max:60',
+            'ar_option1_name' => 'nullable|max:60',
+            'ar_option2_name' => 'nullable|max:60',
+            'min_qty' => 'nullable|integer|between:1,10000',
+            'max_qty' => 'nullable|integer|between:1,10000',
+            'production_days' => 'nullable|integer|between:0,60',
         ], [
             'title' => __('admin.p_title'), 'selling_price' => __('admin.p_selling_price'), 'promo_price' => __('admin.p_promo_price'),
             'product_type' => __('shop.product_type'), 'sku' => __('product.sku'),
@@ -162,6 +178,9 @@ final class ProductController extends Controller
         }
         if (!empty($d['promo_starts_at']) && !empty($d['promo_ends_at']) && strtotime((string) $d['promo_ends_at']) <= strtotime((string) $d['promo_starts_at'])) {
             throw new ValidationException(['promo_ends_at' => __('admin.dates_order')], $this->request->all());
+        }
+        if ((int) ($d['max_qty'] ?: 50) < (int) ($d['min_qty'] ?: 1)) {
+            throw new ValidationException(['max_qty' => __('personalize.err_qty_order')], $this->request->all());
         }
         if ((int) $d['max_panels'] < (int) $d['min_panels']) {
             throw new ValidationException(['max_panels' => __('admin.panels_order')], $this->request->all());
@@ -183,6 +202,10 @@ final class ProductController extends Controller
             'is_featured' => $this->request->bool('is_featured') ? 1 : 0, 'is_best_seller' => $this->request->bool('is_best_seller') ? 1 : 0,
             'is_new' => $this->request->bool('is_new') ? 1 : 0, 'is_active' => $this->request->bool('is_active') ? 1 : 0,
             'sort_order' => (int) ($d['sort_order'] ?? 0), 'seo_title' => $d['seo_title'], 'seo_description' => $d['seo_description'],
+            'option1_name' => trim((string) ($d['option1_name'] ?? '')) ?: null, 'option2_name' => trim((string) ($d['option2_name'] ?? '')) ?: null,
+            'requires_proof' => $this->request->bool('requires_proof') ? 1 : 0,
+            'min_qty' => max(1, (int) ($d['min_qty'] ?: 1)), 'max_qty' => max(1, (int) ($d['max_qty'] ?: 50)),
+            'production_days' => ($d['production_days'] ?? '') !== '' && $d['production_days'] !== null ? (int) $d['production_days'] : null,
         ];
         $ar = [];
         foreach (CatalogAdmin::PRODUCT_AR_FIELDS as $f) {
@@ -311,7 +334,8 @@ final class ProductController extends Controller
         $rows = $this->request->input('variants', []);
         $default = $this->request->int('default_variant');
         $errors = [];
-        $db->transaction(function (Database $db) use ($p, $rows, $default, &$errors): void {
+        $laser = [];
+        $db->transaction(function (Database $db) use ($p, $rows, $default, &$errors, &$laser): void {
             foreach (is_array($rows) ? $rows : [] as $vid => $v) {
                 $variant = $db->fetch('SELECT id FROM product_variants WHERE id = ? AND product_id = ?', [(int) $vid, (int) $p['id']]);
                 if ($variant === null || !is_array($v)) {
@@ -339,12 +363,22 @@ final class ProductController extends Controller
                     'is_active' => !empty($v['is_active']) ? 1 : 0,
                     'is_default' => (int) $vid === $default ? 1 : 0,
                     'sort_order' => (int) ($v['sort_order'] ?? 0),
-                ], ['id' => (int) $vid]);
+                ] + $this->optionColumns($v), ['id' => (int) $vid]);
+                if (array_key_exists('ar_option1', $v) || array_key_exists('ar_option2', $v)) {
+                    \App\Services\TranslationService::save('product_variant', (int) $vid, 'ar', [
+                        'option1' => trim((string) ($v['ar_option1'] ?? '')) ?: null, 'option2' => trim((string) ($v['ar_option2'] ?? '')) ?: null,
+                    ]);
+                }
+                $warn = \App\Services\Admin\ProductExtras::laserWarning((string) $p['product_type'], (float) str_replace(',', '.', (string) ($v['width_cm'] ?? 0)), (float) str_replace(',', '.', (string) ($v['height_cm'] ?? 0)));
+                if ($warn !== null) {
+                    $laser[] = $warn;
+                }
             }
             CatalogAdmin::syncFromVariants((int) $p['id']);
         });
         ActivityLogger::log('product.variants_saved', 'product', (int) $p['id']);
-        $this->flash($errors ? 'warning' : 'success', $errors ? __('admin.variant_errors', ['list' => implode(', ', $errors)]) : __('common.saved'));
+        $msg = $errors ? __('admin.variant_errors', ['list' => implode(', ', $errors)]) : __('common.saved');
+        $this->flash($errors || $laser ? 'warning' : 'success', trim(implode(' ', array_unique($laser)) . ' ' . $msg));
         return $this->redirect(route('admin.products.edit', ['id' => $p['id']]) . '#variants');
     }
 
@@ -452,5 +486,31 @@ final class ProductController extends Controller
         ActivityLogger::log('product.bulk_' . $action, 'product', null, implode(',', $ids));
         $this->flash('success', __('admin.bulk_done', ['n' => $n]));
         return $this->back();
+    }
+
+    /**
+     * Option values, colour swatch and dimensions of a variant row (gifts / laser); only the keys sent are changed.
+     *
+     * @param array<string,mixed> $v
+     * @return array<string,mixed>
+     */
+    private function optionColumns(array $v): array
+    {
+        $out = [];
+        foreach (['option1', 'option2'] as $k) {
+            if (array_key_exists($k, $v)) {
+                $out[$k] = mb_substr(trim((string) $v[$k]), 0, 80) ?: null;
+            }
+        }
+        if (array_key_exists('color_hex', $v)) {
+            $out['color_hex'] = empty($v['no_color']) && preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $v['color_hex']) ? strtoupper((string) $v['color_hex']) : null;
+        }
+        foreach (['width_cm', 'height_cm'] as $k) {
+            if (array_key_exists($k, $v)) {
+                $n = str_replace(',', '.', trim((string) $v[$k]));
+                $out[$k] = is_numeric($n) && (float) $n >= 0 && (float) $n <= 500 ? number_format((float) $n, 1, '.', '') : '0.0';
+            }
+        }
+        return $out;
     }
 }

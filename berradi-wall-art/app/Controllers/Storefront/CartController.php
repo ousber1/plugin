@@ -48,7 +48,13 @@ final class CartController extends Controller
         $design = $this->request->str('design');
         $productId = $this->request->int('product_id');
         $variantId = $this->request->int('variant_id');
-        $result = $design !== '' ? CartService::addDesign($design, $qty) : CartService::addProduct($productId, $variantId > 0 ? $variantId : null, $qty);
+        // personalisation of gifts / laser products (invalid or missing fields: back to the product with the errors)
+        $perso = $this->request->input('perso', []);
+        try {
+            $result = $design !== '' ? CartService::addDesign($design, $qty) : CartService::addProduct($productId, $variantId > 0 ? $variantId : null, $qty, is_array($perso) ? $perso : []);
+        } catch (\App\Core\ValidationException $e) {
+            throw new \App\Core\ValidationException($e->errors, $this->request->all());
+        }
         if ($result['ok']) {
             // analytics: the line just added (fired on the next page)
             $cart = CartService::current(false);
